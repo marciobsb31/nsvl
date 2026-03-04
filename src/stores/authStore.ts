@@ -52,16 +52,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     /**
-     * Processa o callback do SSO GOV.BR e carrega o usuário
+     * Processa o callback do SSO GOV.BR e extrai o token da URL
      */
     async function handleCallback(): Promise<void> {
         isLoading.value = true
         error.value = null
         try {
-            await authService.handleCallback()
-            user.value = await authService.getUser()
+            const params = new URLSearchParams(window.location.search)
+            const token = params.get('token')
+
+            if (token) {
+                authService.setToken(token)
+                user.value = await authService.getUser()
+            } else {
+                throw new Error('Token não encontrado na URL de callback')
+            }
         } catch (err) {
-            console.error('[AuthStore] Erro no callback OIDC:', err)
+            console.error('[AuthStore] Erro no callback de autenticação:', err)
             error.value = 'Falha na autenticação. Por favor, tente novamente.'
             user.value = null
         } finally {

@@ -1,101 +1,72 @@
-import { UserManager, WebStorageStateStore, type User } from 'oidc-client-ts'
-import type { GovBrUser, OidcConfig } from '@/types/auth'
+import api from './ApiService'
+import type { GovBrUser } from '@/types/auth'
 
 /**
- * AuthService — Serviço de autenticação GOV.BR via OAuth2/OIDC (PKCE)
+ * AuthService — Serviço de autenticação NVSL integrado ao Backend Laravel
  *
  * Responsabilidades:
- *  - Iniciar fluxo de login (redireciona ao SSO GOV.BR)
- *  - Processar callback após autenticação
- *  - Obter usuário autenticado
+ *  - Iniciar fluxo de login via API do Backend
+ *  - Obter usuário autenticado (da base do backend via Sanctum)
  *  - Realizar logout
- *
- * Tokens são armazenados em sessionStorage (não localStorage)
- * por questões de segurança — são limpados ao fechar a aba.
  */
 
-function buildOidcConfig(): OidcConfig {
-    return {
-        authority: import.meta.env.VITE_GOVBR_SSO_URL,
-        clientId: import.meta.env.VITE_GOVBR_CLIENT_ID,
-        redirectUri: import.meta.env.VITE_GOVBR_REDIRECT_URI,
-        postLogoutRedirectUri: import.meta.env.VITE_GOVBR_POST_LOGOUT_REDIRECT_URI,
-        scope: import.meta.env.VITE_GOVBR_SCOPES,
-    }
-}
-
 class AuthService {
-    private userManager: UserManager
-
-    constructor() {
-        const config = buildOidcConfig()
-
-        this.userManager = new UserManager({
-            authority: config.authority,
-            client_id: config.clientId,
-            redirect_uri: config.redirectUri,
-            post_logout_redirect_uri: config.postLogoutRedirectUri,
-            scope: config.scope,
-            response_type: 'code',
-            // PKCE é habilitado por padrão no oidc-client-ts
-            // Tokens em sessionStorage — não persiste além da aba
-            userStore: new WebStorageStateStore({ store: window.sessionStorage }),
-            // Carrega dados do usuário a partir do access_token/id_token
-            loadUserInfo: true,
-        })
-    }
-
     /**
-     * Inicia o fluxo de autenticação — redireciona ao SSO GOV.BR
+     * Inicia o fluxo de autenticação — redireciona ao backend que por sua vez 
+     * redireciona ao SSO GOV.BR
      */
     async login(): Promise<void> {
-        await this.userManager.signinRedirect()
+        try {
+            const { data } = await api.get<{ url: string }>('/auth/redirect')
+            window.location.href = data.url
+        } catch (error) {
+            console.error('Erro ao iniciar login:', error)
+            throw error
+        }
     }
 
     /**
-     * Processa o callback após redirecionamento do SSO GOV.BR
-     * Deve ser chamado na rota /callback
+     * Define o token de autenticação no storage
      */
-    async handleCallback(): Promise<User> {
-        return await this.userManager.signinRedirectCallback()
+    setToken(token: string): void {
+        sessionStorage.setItem('nvsl_token', token)
     }
 
     /**
      * Retorna o usuário autenticado ou null
      */
     async getUser(): Promise<GovBrUser | null> {
-        const user = await this.userManager.getUser()
-        if (!user || user.expired) return null
+        try {
+            const token = sessionStorage.getItem('nvsl_token')
+            if (!token) return null
 
-        return {
-            sub: user.profile.sub,
-            name: user.profile.name ?? '',
-            email: user.profile.email,
-            picture: user.profile.picture,
-            amr: user.profile.amr as string[] | undefined,
+            const { data } = await api.get<GovBrUser>('/user')
+            return data
+        } catch (error) {
+            console.error('Erro ao obter usuário:', error)
+            return null
         }
     }
 
     /**
-     * Verifica se o usuário está autenticado (token válido e não expirado)
+     * Verifica se o usuário está autenticado
      */
     async isAuthenticated(): Promise<boolean> {
-        const user = await this.userManager.getUser()
-        return !!(user && !user.expired)
+        return !!sessionStorage.getItem('nvsl_token')
     }
 
     /**
-     * Realiza logout — redireciona ao endpoint de logout do SSO GOV.BR
+     * Realiza logout — revoga o token no backend e limpa storage local
      */
     async logout(): Promise<void> {
-        await this.userManager.signoutRedirect()
-    }
-
-    /**
-     * Renova o access token silenciosamente (via iframe)
-     */
-    async renewToken(): Promise<User | null> {
-        return await this.userManager.signinSilent()
+        try {
+            await api.post('/auth/logout')
+        } catch (error) {
+            console.error('Erro ao deslogar:', error)
+        } finally {
+            sessionStorage.removeItem('nvsl_token')
+            window.location.href = '/login'
+        }
     }
 }
 
