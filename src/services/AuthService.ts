@@ -1,5 +1,5 @@
 import api from './ApiService'
-import type { GovBrUser } from '@/types/auth'
+import type { GovBrUser } from '@/core/types/auth'
 
 /**
  * AuthService — Serviço de autenticação NVSL integrado ao Backend Laravel

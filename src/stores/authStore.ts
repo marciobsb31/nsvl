@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authService } from '@/services/AuthService'
-import type { GovBrUser } from '@/types/auth'
+import type { GovBrUser } from '@/core/types/auth'
 
 /**
  * authStore — estado global de autenticação

@@ -29,7 +29,7 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthLayout from '@/layouts/AuthLayout.vue'
-import { useAuth } from '@/composables/useAuth'
+import { useAuth } from '@/core/composables/useAuth'
 
 defineOptions({ name: 'CallbackPage' })
 

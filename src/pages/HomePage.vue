@@ -64,7 +64,7 @@
 
 <script setup lang="ts">
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import { useAuth } from '@/composables/useAuth'
+import { useAuth } from '@/core/composables/useAuth'
 
 defineOptions({ name: 'HomePage' })
 

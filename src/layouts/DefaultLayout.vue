@@ -47,7 +47,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
+import { useAuth } from '@/core/composables/useAuth'
 
 const router = useRouter()
 const { isAuthenticated, userName, isLoading, logout } = useAuth()
