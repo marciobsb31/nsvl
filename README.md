@@ -66,7 +66,7 @@ Veja [`.env.example`](.env.example) para todas as variáveis necessárias.
 
 ## Estrutura Geral
 
-    app/
+    src/
     ├── main.ts
     ├── App.vue
     ├── router/
@@ -74,10 +74,12 @@ Veja [`.env.example`](.env.example) para todas as variáveis necessárias.
     ├── styles/
     ├── core/
     └── features/
+    └── stores/
+    └── services/
 
-### app/
+### src/
 
-A pasta `app` é responsável por **criar, configurar e iniciar o
+A pasta `src` é responsável por **criar, configurar e iniciar o
 aplicativo Vue**.
 
 Tudo aqui é **global**, ou seja, não pertence a nenhuma feature ou
