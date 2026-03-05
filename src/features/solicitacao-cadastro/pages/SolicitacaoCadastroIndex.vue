@@ -1,4 +1,5 @@
 <template>
+  <DefaultLayout>
   <section class="container-solicitacao">
     <h1 class="text-blue-warm-vivid-70 text-weight-semi-bold">Solicitação de cadastro</h1>
     <Card title="Dados do solicitante" subtitle="Nome e CPF são obtidos pelo GOV.BR">
@@ -41,13 +42,13 @@
         <div class="col-6">
           <div class="br-input">
             <label for="input-default">Esfera de atuação<span class="text-red-50 text-up-01"> *</span></label>
-            <input id="input-default" type="text" placeholder="Esfera de atuação" disabled />
+            <input id="input-default" type="text" placeholder="Esfera de atuação"  />
           </div>
         </div>
         <div class="col-6">
           <div class="br-input">
             <label for="input-default">UF*<span class="text-red-50 text-up-01">*</span></label>
-            <input id="input-default" type="text" placeholder="CPF" disabled />
+            <input id="input-default" type="text" placeholder="CPF"  />
           </div>
         </div>
         <div class="col-6">
@@ -86,10 +87,12 @@
   </button>
     </div>
   </section>
+  </DefaultLayout>
 </template>
 <script setup lang="ts">
 import Card from '@/core/components/Card/Card.vue';
 import SolicitacaoFormulario from '../components/SolicitacaoFormulario.vue';
+import DefaultLayout from '@/layouts/DefaultLayout.vue';
 
 defineOptions({
   name: 'SolicitacaoCadastroIndex'

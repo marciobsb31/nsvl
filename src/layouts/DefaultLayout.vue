@@ -2,13 +2,13 @@
   <div class="layout-default">
     <!-- Cabeçalho GOV.BR -->
     <header role="banner">
-      <br-header
+      <!-- <br-header
         title="NVSL"
         subtitle="Sistema de Gestão"
         logo-image="/favicon.ico"
         logo-alt="Logo NVSL"
       >
-        <!-- Informações do usuário autenticado -->
+
         <template v-if="isAuthenticated">
           <div class="header-user" slot="links">
             <span aria-label="Usuário autenticado">{{ userName }}</span>
@@ -23,7 +23,8 @@
             </button>
           </div>
         </template>
-      </br-header>
+      </br-header> -->
+      <Header title="NVSL" subtitle="Sistema de Gestão" />
     </header>
 
     <!-- Conteúdo principal -->
@@ -48,6 +49,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/core/composables/useAuth'
+import Header from '@/core/components/Header/Header.vue'
 
 const router = useRouter()
 const { isAuthenticated, userName, isLoading, logout } = useAuth()
@@ -78,3 +80,4 @@ async function handleLogout() {
   gap: 1rem;
 }
 </style>
+

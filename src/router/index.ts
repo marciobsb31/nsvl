@@ -15,7 +15,7 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/pages/LoginPage.vue'),
+      component: () => import('@/features/autenticacao/pages/LoginPage.vue'),
       meta: {
         title: 'Entrar — NVSL',
         requiresGuest: true, // só para não autenticados
@@ -24,7 +24,7 @@ const router = createRouter({
     {
       path: '/callback',
       name: 'callback',
-      component: () => import('@/pages/CallbackPage.vue'),
+      component: () => import('@/features/autenticacao/pages/CallbackPage.vue'),
       meta: {
         title: 'Autenticando — NVSL',
       },
@@ -32,7 +32,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/pages/HomePage.vue'),
+      component: () => import('@/features/home/pages/HomePage.vue'),
       meta: {
         title: 'Início — NVSL',
         requiresAuth: true,
@@ -41,7 +41,7 @@ const router = createRouter({
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: () => import('@/pages/NotFoundPage.vue'),
+      component: () => import('@/features/erro/pages/NotFoundPage.vue'),
       meta: {
         title: 'Página não encontrada — NVSL',
       },
