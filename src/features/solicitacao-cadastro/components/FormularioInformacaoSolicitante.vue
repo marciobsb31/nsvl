@@ -5,7 +5,8 @@
           label="Esfera de atuação"
           placeholder="Esfera de atuação"
           :options="esfera"
-          required />
+          required
+          v-model="esferaAtuacao" />
           <Feedback v-if="errors.esferaAtuacao" :message="errors.esferaAtuacao" type="danger" />
         </div>
         <div class="col-md-6 col-sm-12">
@@ -13,7 +14,8 @@
           label="UF"
           placeholder="UF"
           :options="estados"
-          required/>
+          required
+          v-model="uf" />
           <Feedback v-if="errors.uf" :message="errors.uf" type="danger" />
         </div>
         <div class="col-md-6 col-sm-12">

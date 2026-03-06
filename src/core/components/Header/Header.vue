@@ -14,7 +14,7 @@
 
                 </div>
                 <div class="logo" v-if="logoGOV">
-                    <img :src="logoGOV" alt="Logo GOV" height="40" />
+                    <img :src="logoGOV" alt="Logo GOV" class="logo-gov" />
                 </div>
             </div>
         </div>
@@ -55,10 +55,17 @@ const goToHome = () => {
     align-items: center;
 }
 
+.logo-gov{
+    height: 40px;
+}
+
 @media (max-width: 768px) {
 
     .header-subtitle {
         display: block !important;
+    }
+    .logo-gov{
+        height: 30px;
     }
 }
 

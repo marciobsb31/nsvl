@@ -23,11 +23,11 @@ export const DadosSolicitanteSchema = yup.object({
 export const InformacaoSolicitanteSchema = yup.object({
   esferaAtuacao: yup
     .string()
-    // .required('Esfera de atuação é obrigatória')
+    .required('Esfera de atuação é obrigatória')
     .trim(),
   uf: yup
     .string()
-    // .required('UF é obrigatória')
+    .required('UF é obrigatória')
     .trim(),
   municipio: yup
     .string()
