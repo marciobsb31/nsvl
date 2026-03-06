@@ -2,19 +2,20 @@
 
     <header class="br-header">
         <div class="container-lg">
-            <div class="header-bottom">
+            <div class="header-top">
                 <div class="header-menu menu" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="header-info">
                         <div class="header-title text-blue-warm-vivid-70" @click="goToHome">{{ title }}</div>
                         <div class="header-subtitle text-gray-80">{{ subtitle }}</div>
                     </div>
-                    <div class="logo">
-                        <img v-if="logo" :src="logo" alt="Logo" height="70" />
-                        <p>NVSL</p>
+                    <div class="header-actions">
+                        <slot name="actions"></slot>                        
+                    </div>                    
 
-                    </div>
                 </div>
-
+                <div class="logo" v-if="logoGOV">
+                    <img :src="logoGOV" alt="Logo GOV" height="40" />
+                </div>
             </div>
         </div>
     </header>
@@ -22,10 +23,13 @@
 </template>
 
 <script setup lang="ts">
+defineOptions({
+    name: 'Header'
+});
 defineProps({
     title: String,
     subtitle: String,
-    logo: {
+    logoGOV: {
         type: String,
         required: false
     }
@@ -37,6 +41,11 @@ const goToHome = () => {
 </script>
 
 <style scoped>
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 .header-title {
     cursor: pointer;
 }
@@ -52,10 +61,5 @@ const goToHome = () => {
         display: block !important;
     }
 }
-@media (max-width: 480px) {
-    .logo {
-        display: none;
-    }
-    
-}
+
 </style>
