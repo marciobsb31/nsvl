@@ -56,7 +56,7 @@ const goToHome = () => {
 }
 
 .logo-gov{
-    height: 40px;
+    height: 80px;
 }
 
 @media (max-width: 768px) {
@@ -65,7 +65,7 @@ const goToHome = () => {
         display: block !important;
     }
     .logo-gov{
-        height: 30px;
+        height: 50px;
     }
 }
 

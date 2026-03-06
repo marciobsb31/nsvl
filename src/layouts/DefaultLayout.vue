@@ -47,7 +47,7 @@ const router = useRouter()
 const { isAuthenticated, userName, isLoading, logout } = useAuth()
 
 const currentYear = computed(() => new Date().getFullYear())
-const logo = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Gov.br_logo.svg/1280px-Gov.br_logo.svg.png'
+const logo = 'https://imagens.ebc.com.br/j7o_Jz5Kpzxz2x7wUVy3Qii1DeA=/1600x800/https://agenciabrasil.ebc.com.br/sites/default/files/thumbnails/image/2025/08/29/2025.ago_br_govfederal_manual-de-uso_v1.2-4.jpg?itok=O9p5o_di'
 
 async function handleLogout() {
   await logout()
