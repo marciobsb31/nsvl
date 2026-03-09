@@ -3,18 +3,21 @@
     <header class="br-header">
         <div class="container-lg">
             <div class="header-top">
-                <div class="header-menu menu" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="header-menu" :class="{'menu-desktop': isDesktop, 'menu-mobile': isMobile }">
                     <div class="header-info">
-                        <div class="header-title text-blue-warm-vivid-70" @click="goToHome">{{ title }}</div>
-                        <div class="header-subtitle text-gray-80">{{ subtitle }}</div>
+                        <img v-if="logo" :src="logo" alt="Logo GOV" class="logo" @click="goToHome" />
+                        <template v-else>
+                            <div class="header-title text-blue-warm-vivid-70" @click="goToHome">{{ title }}</div>
+                            <div class="header-subtitle text-gray-80">{{ subtitle }}</div>
+                        </template>
                     </div>
                     <div class="header-actions">
                         <slot name="actions"></slot>                        
                     </div>                    
 
                 </div>
-                <div class="logo" v-if="logo">
-                    <img :src="logo" alt="Logo GOV" class="logo-gov" />
+                <div v-if="logoGov && isDesktop">
+                    <img :src="logoGov" alt="Logo GOV" class="logo-gov" />
                 </div>
             </div>
         </div>
@@ -23,13 +26,18 @@
 </template>
 
 <script setup lang="ts">
+import logo from '@/assets/images/logo/logo_novo_viver.png'
+import { useBreakpoint } from '@/core/composables/useBreakpoint'
+
+const { isMobile, isDesktop } = useBreakpoint()
+
 defineOptions({
     name: 'Header'
 });
 defineProps({
     title: String,
     subtitle: String,
-    logo: {
+    logoGov: {
         type: String,
         required: false
     }
@@ -37,6 +45,7 @@ defineProps({
 const goToHome = () => {
     window.location.href = '/';
 };
+
 
 </script>
 
@@ -49,14 +58,24 @@ const goToHome = () => {
 .header-title {
     cursor: pointer;
 }
-.menu{
+.menu-desktop{
     display: flex !important;
     justify-content: space-between !important;
     align-items: center;
 }
+.menu-mobile{
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center;
+}
 
 .logo-gov{
-    height: 80px;
+    height: 60px;
+}
+
+.logo{
+    height: 60px;
+    cursor: pointer;
 }
 
 @media (max-width: 768px) {

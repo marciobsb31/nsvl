@@ -2,7 +2,7 @@
   <div class="layout-default">
     <!-- Cabeçalho GOV.BR -->
 
-      <Header title="NVSL" subtitle="Sistema de Gestão" :logo="!isAuthenticated ? logo : ''">
+      <Header title="NVSL" subtitle="Sistema de Gestão" :logoGov="!isAuthenticated ? logoGov : ''">
         <template #actions v-if="isAuthenticated">
           <div class="header-user">
             <span aria-label="Usuário autenticado">{{ userName }}</span>
@@ -28,6 +28,9 @@
 
     <Footer inverted>
       <template #info>
+        <div v-if="isMobile" class="mt-3">
+          <img :src="logoGov" alt="Logo GOV" class="logo-gov" />
+        </div>
         <div class="footer">
           © {{ currentYear }} NVSL — Todos os direitos reservados
         </div>
@@ -42,12 +45,15 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '@/core/composables/useAuth'
 import Header from '@/core/components/Header/Header.vue'
 import Footer from '@/core/components/Footer/Footer.vue'
+import { useBreakpoint } from '@/core/composables/useBreakpoint'
+import logoGov from '@/assets/images/logo/mdh_com_gov.png'
+
+const { isMobile } = useBreakpoint()
 
 const router = useRouter()
 const { isAuthenticated, userName, isLoading, logout } = useAuth()
 
 const currentYear = computed(() => new Date().getFullYear())
-const logo = 'https://upload.wikimedia.org/wikipedia/commons/6/6f/Brazilian_government_logo_%282025%29.png'
 
 async function handleLogout() {
   await logout()
@@ -76,6 +82,10 @@ async function handleLogout() {
 
 .footer {
   margin: 1rem;
+}
+
+.logo-gov {
+  height: 40px;
 }
 </style>
 
