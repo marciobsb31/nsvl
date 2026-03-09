@@ -1,0 +1,99 @@
+trigger:
+  branches:
+    include:
+      - refs/heads/dev
+
+name: $(date:yyyyMMdd)$(rev:.r)
+
+variables:
+  - group: DEV-ENV-FRONTEND
+  - name: GIT_BRANCH
+    value: $(Build.SourceBranchName)
+  - name: GIT_COMMIT
+    value: $(Build.SourceVersion)
+  - name: IS_DEV
+    value: $[eq(variables['Build.SourceBranch'], 'refs/heads/dev')]
+
+pool:
+  name: AZURE-DEVOPS-SERPRO-$(GIT_BRANCH)
+
+stages:
+  - stage: BuildAPP
+    jobs:
+      - job: Job_2
+        displayName: Build da Aplicação
+        steps:
+          - task: CopyFiles@2
+            displayName: Copia dos Arquivos
+            inputs:
+              SourceFolder: './'
+              Contents: '**'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+              OverWrite: true
+          - task: PublishBuildArtifacts@1
+            displayName: Publicando os Arquivos
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+  - stage: DeployToDEV
+    jobs:
+      - job: Job_3
+        condition: eq(variables['Build.SourceBranch'], 'refs/heads/dev')
+        displayName: Deploy em Desenvolvimento
+        variables:
+          - group: DEV-APP-FRONTEND
+        steps:
+          - task: AWSShellScript@1
+            displayName: Login Registry AWS
+            inputs:
+              regionName: 'sa-east-1'
+              scriptType: 'inline'
+              inlineScript: |
+                echo "Logging in to AWS ECR"
+                aws --version
+                aws ecr get-login-password --region sa-east-1 | docker login --username AWS --password-stdin $(aws_ecr_registry)
+          - task: Bash@3
+            displayName: Substituíndo as variáveis de ambiente
+            inputs:
+              targetType: 'inline'
+              script: |
+                envsubst < config/prod.env.js > config/prod.env
+                mv config/prod.env config/prod.env.js
+                cat config/prod.env.js
+          - task: Docker@2
+            displayName: Build e Push da Imagem
+            inputs:
+              repository: '$(aws_ecr_registry)/$(aws_ecr_repository)'
+              command: 'buildAndPush'
+              Dockerfile: './Dockerfile-frontend'
+              tags: |
+                $(GIT_COMMIT)-$(Build.BuildId)
+          - task: AWSShellScript@1
+            displayName: Updating task definition
+            inputs:
+              regionName: 'sa-east-1'
+              scriptType: 'inline'
+              inlineScript: |
+                echo "Obtendo a definição de task atual..."
+                aws ecs describe-task-definition --task-definition $(aws_ecs_task) > task-def.json
+                NEW_IMAGE="$(aws_ecr_registry)/$(aws_ecr_repository):$(GIT_COMMIT)-$(Build.BuildId)"
+                echo "Criando nova definição de task com a nova imagem ($NEW_IMAGE)..."
+                NEW_TASK_DEF=$(jq --arg IMAGE "$NEW_IMAGE" '.taskDefinition | {containerDefinitions, family, taskRoleArn, executionRoleArn, networkMode, requiresCompatibilities, cpu, memory} | .containerDefinitions[0].image = $IMAGE' task-def.json)
+                echo "$NEW_TASK_DEF" > new-task-def.json
+                echo "Registrando a nova definição de task..."
+                TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-task-def.json | jq -r '.taskDefinition.taskDefinitionArn')
+                echo "Atualizando o serviço ECS com a nova task definition"
+                aws ecs update-service --cluster $(aws_ecs_cluster) --service $(aws_ecs_service) --task-definition $TASK_DEF_ARN
+  - stage: CleanUp
+    condition: succeededOrFailed()
+    jobs:
+      - job: Job_4
+        displayName: Limpando arquivos
+        steps:
+          - task: Bash@3
+            displayName: Removing docker images
+            inputs:
+              targetType: 'inline'
+              script: |
+                docker system prune --all --force
