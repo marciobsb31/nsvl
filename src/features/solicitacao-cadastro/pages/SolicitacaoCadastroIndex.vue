@@ -4,7 +4,7 @@
     <div class="titulo">
     <h1 class="text-blue-warm-vivid-70 text-weight-semi-bold">Solicitação de cadastro</h1>
     </div>
-    <Card title="Dados do solicitante" subtitle="Nome e CPF são obtidos pelo GOV.BR">
+    <Card title="Dados do(a) solicitante" subtitle="Nome e CPF são obtidos pelo GOV.BR">
       <FormularioDadosSolicitante :submitForm="submitForm" />
     </Card>
     <Card title="Informação do(a) solicitante" subtitle="Informações de atuação institucional do solicitante"

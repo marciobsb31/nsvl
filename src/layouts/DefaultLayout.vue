@@ -2,7 +2,7 @@
   <div class="layout-default">
     <!-- Cabeçalho GOV.BR -->
 
-      <Header title="NVSL" subtitle="Sistema de Gestão" :logoGOV="logo">
+      <Header title="NVSL" subtitle="Sistema de Gestão" :logo="!isAuthenticated ? logo : ''">
         <template #actions v-if="isAuthenticated">
           <div class="header-user">
             <span aria-label="Usuário autenticado">{{ userName }}</span>
@@ -47,7 +47,7 @@ const router = useRouter()
 const { isAuthenticated, userName, isLoading, logout } = useAuth()
 
 const currentYear = computed(() => new Date().getFullYear())
-const logo = 'https://imagens.ebc.com.br/j7o_Jz5Kpzxz2x7wUVy3Qii1DeA=/1600x800/https://agenciabrasil.ebc.com.br/sites/default/files/thumbnails/image/2025/08/29/2025.ago_br_govfederal_manual-de-uso_v1.2-4.jpg?itok=O9p5o_di'
+const logo = 'https://upload.wikimedia.org/wikipedia/commons/6/6f/Brazilian_government_logo_%282025%29.png'
 
 async function handleLogout() {
   await logout()
@@ -65,6 +65,7 @@ async function handleLogout() {
 .layout-default__main {
   flex: 1;
   padding: 2rem 0;
+  background-color: var(--gray-warm-2);
 }
 
 .header-user {

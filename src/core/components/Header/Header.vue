@@ -13,8 +13,8 @@
                     </div>                    
 
                 </div>
-                <div class="logo" v-if="logoGOV">
-                    <img :src="logoGOV" alt="Logo GOV" class="logo-gov" />
+                <div class="logo" v-if="logo">
+                    <img :src="logo" alt="Logo GOV" class="logo-gov" />
                 </div>
             </div>
         </div>
@@ -29,7 +29,7 @@ defineOptions({
 defineProps({
     title: String,
     subtitle: String,
-    logoGOV: {
+    logo: {
         type: String,
         required: false
     }
