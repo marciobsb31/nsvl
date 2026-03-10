@@ -1,83 +1,56 @@
-# Arquitetura da Aplicação — NVSL Frontend
+# Arquitetura do Frontend NVSL
 
-## Visão Geral
+## Stack
 
-O NVSL Frontend é uma Single Page Application (SPA) desenvolvida com **Vue 3** e **Vite**, seguindo princípios de Clean Code, segurança e acessibilidade. A aplicação consome o GOV.BR Design System e integra autenticação via GOV.BR SSO (OAuth2/OIDC).
-
-## Stack Tecnológica
-
-| Tecnologia | Versão | Finalidade |
+| Tecnologia | Versão | Uso |
 |---|---|---|
-| Vue 3 | ^3.5 | Framework reativo (Composition API) |
-| Vite | ^6 | Build tool e dev server |
-| TypeScript | ^5 | Tipagem estática |
-| Vue Router | ^4 | Roteamento SPA |
-| Pinia | ^2 | Gerenciamento de estado |
-| @govbr-ds/core | latest | Tokens e estilos GOV.BR DS |
-| @govbr-ds/webcomponents | latest | Web Components GOV.BR |
-| @govbr-ds/webcomponents-vue | latest | Wrapper Vue para GOV.BR DS |
-| oidc-client-ts | ^3 | Fluxo OAuth2/OIDC PKCE |
-| Axios | ^1 | HTTP client |
+| Vue 3 | ^3.5 | Framework SPA |
+| TypeScript | ~5.9 | Tipagem estática |
+| Vite | ^7.3 | Build + Dev server |
+| Vue Router | ^5.0 | Roteamento SPA |
+| Pinia | ^3.0 | Estado global |
+| Axios | ^1.13 | HTTP client |
+| GovBR DS | ^3.7 | Design System |
+| oidc-client-ts | ^3.4 | Suporte OIDC (futuro) |
+| Vitest | ^3.0 | Testes unitários |
 
-## Estrutura de Pastas
+## Estrutura de Diretórios
 
 ```
 src/
-├── assets/
-│   └── styles/
-│       └── main.css          # Estilos globais + GOV.BR DS tokens
-├── composables/
-│   ├── useAuth.ts            # Composable de autenticação
-│   └── useNotification.ts    # Composable de notificações
-├── layouts/
-│   ├── DefaultLayout.vue     # Layout padrão (autenticado)
-│   └── AuthLayout.vue        # Layout de autenticação (login/callback)
-├── pages/
-│   ├── HomePage.vue          # Página inicial (protegida)
-│   ├── LoginPage.vue         # Página de login GOV.BR
-│   ├── CallbackPage.vue      # Callback OIDC
-│   └── NotFoundPage.vue      # Página 404
-├── router/
-│   └── index.ts              # Configuração de rotas + navigation guards
+├── assets/           # Estilos globais e imagens
+├── core/
+│   ├── components/   # Componentes reutilizáveis
+│   ├── composables/  # Hooks Vue (useAuth, etc.)
+│   └── types/        # Types TypeScript globais (auth.ts)
+├── features/         # Módulos de domínio
+│   ├── autenticacao/ # Login + Callback pages
+│   ├── home/         # Página inicial
+│   ├── solicitacao-cadastro/
+│   └── erro/         # 404
+├── layouts/          # Layouts de página
+├── router/           # Configuração de rotas + guards
 ├── services/
-│   └── AuthService.ts        # Serviço OIDC (UserManager)
-├── stores/
-│   └── authStore.ts          # Estado global de autenticação (Pinia)
-├── types/
-│   └── auth.ts               # Tipos TypeScript para autenticação
-├── App.vue                   # Componente raiz
-└── main.ts                   # Entry point da aplicação
+│   ├── ApiService.ts   # Axios singleton + interceptors
+│   └── AuthService.ts  # Fluxo de auth GOV.BR
+└── stores/
+    └── authStore.ts    # Estado de autenticação (Pinia)
 ```
 
-## Fluxo de Dados
+## Fluxo de Autenticação
 
-```
-main.ts → bootstrap()
-    ├── createApp(App)
-    ├── createPinia()
-    ├── router
-    └── authStore.loadUser()   → AuthService.getUser() → UserManager (OIDC)
-                                                                  ↓
-                                                        sessionStorage (tokens)
-```
+1. Usuário acessa rota protegida → guard redireciona para `/login`
+2. Clique em "Entrar" → `authStore.login()` → `GET /api/auth/redirect`
+3. Backend retorna URL do SSO → `window.location.href = url`
+4. GOV.BR autentica → redireciona para `/callback?code=...&state=...`
+5. `CallbackPage` → `authStore.handleCallback()` → `GET /api/auth/callback`
+6. Backend retorna `{ token, user }` → armazenado em `sessionStorage`
+7. `ApiService` injeta `Authorization: Bearer {token}` em todas as requisições
 
-## Padrão Arquitetural
+## Testes
 
-- **Composition API + Composables**: Lógica reutilizável encapsulada em `composables/`
-- **Store (Pinia)**: Estado global centralizado para autenticação
-- **Service Layer**: `AuthService.ts` encapsula toda lógica OIDC (single responsibility)
-- **Layouts**: Separação clara entre layout de autenticação e layout autenticado
-- **Lazy Loading**: Todas as páginas são carregadas sob demanda via `() => import()`
-
-## Diagrama de Componentes
-
-```
-App.vue
-└── RouterView
-    ├── AuthLayout (login, callback)
-    │   ├── LoginPage
-    │   └── CallbackPage
-    └── DefaultLayout (rotas protegidas)
-        ├── HomePage
-        └── NotFoundPage
+```bash
+npm run test          # Modo watch
+npm run test:run      # Execução única
+npm run test:coverage # Com relatório de cobertura
 ```
