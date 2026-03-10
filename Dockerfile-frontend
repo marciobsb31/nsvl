@@ -4,19 +4,14 @@
 # ============================================================
 FROM node:20-alpine AS build
 
-# Define diretório de trabalho
 WORKDIR /app
 
-# Copia arquivos de dependência primeiro (cache de camadas)
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-# Instala dependências com CI (reproducível, mais seguro)
-RUN npm ci --prefer-offline
+RUN npm ci
 
-# Copia o restante do código-fonte
 COPY . .
 
-# Executa o build de produção
 RUN npm run build
 
 # ============================================================
