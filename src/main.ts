@@ -3,6 +3,7 @@ import './assets/styles/main.css'
 // GOV.BR Design System — Importação global dos Web Components
 import '@govbr-ds/webcomponents'
 import '@govbr-ds/core/dist/core.min.js'
+import './assets/themes/dark.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

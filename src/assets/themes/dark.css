@@ -1,0 +1,38 @@
+[data-theme="dark"] {
+  --background: var(--background-dark);
+  --background-rgb: var(--background-dark-rgb);
+
+  --background-light: var(--blue-warm-vivid-90);
+  --background-light-rgb: var(--blue-warm-vivid-90-rgb);
+
+  --background-alternative: var(--gray-cool-80);
+  --background-alternative-rgb: var(--gray-cool-80-rgb);
+
+  --border-color: var(--gray-cool-60);
+  --border-color-alternative: var(--gray-cool-50);
+
+  --color: var(--color-dark);
+  --color-rgb: var(--color-dark-rgb);
+
+  --color-light: var(--pure-0);
+  --color-light-rgb: var(--pure-0-rgb);
+
+  --interactive: var(--interactive-dark);
+  --interactive-rgb: var(--interactive-dark-rgb);
+
+  --hover: var(--hover-dark);
+  --pressed: var(--pressed-dark);
+
+  --focus-color: var(--focus-color-dark);
+
+  --visited: var(--visited-dark);
+
+  --off: var(--gray-cool-60);
+  --off-rgb: var(--gray-cool-60-rgb);
+
+  --on: var(--blue-warm-vivid-30);
+  --on-rgb: var(--blue-warm-vivid-30-rgb);
+
+  --active: var(--blue-warm-vivid-40);
+  --active-rgb: var(--blue-warm-vivid-40-rgb);
+}
