@@ -5,7 +5,7 @@
             <div class="header-top">
                 <div class="header-menu" :class="{'menu-desktop': isDesktop, 'menu-mobile': isMobile }">
                     <div class="header-info">
-                        <img v-if="logo" :src="logo" alt="Logo GOV" class="logo" @click="goToHome" />
+                        <img v-if="logo" :src="logoAtual" alt="Logo GOV" class="logo" @click="goToHome" />
                         <template v-else>
                             <div class="header-title text-blue-warm-vivid-70" @click="goToHome">{{ title }}</div>
                             <div class="header-subtitle text-gray-80">{{ subtitle }}</div>
@@ -32,13 +32,13 @@
 
 <script setup lang="ts">
 import logo from '@/assets/images/logo/logo_novo_viver.png'
+import logobranca from '@/assets/images/logo/logo_novo_viver_branca.png'
 import { useBreakpoint } from '@/core/composables/useBreakpoint'
 import { useTheme } from '@/core/composables/useTheme';
+import { computed } from 'vue';
 
 const { isMobile, isDesktop } = useBreakpoint()
 const { setMode, mode } = useTheme()
-
-
 
 defineOptions({
     name: 'Header'
@@ -51,13 +51,20 @@ defineProps({
         required: false
     }
 });
+
+const emit = defineEmits(['theme-change']);
 const goToHome = () => {
     window.location.href = '/';
 };
 
 const toggleTheme = () => {
     setMode(mode.value === 'dark' ? 'light' : 'dark');
+    emit('theme-change', mode.value);
 };
+
+const logoAtual = computed(() => {
+    return mode.value === 'dark' ? logobranca : logo;
+});
 
 
 </script>
