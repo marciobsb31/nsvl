@@ -37,6 +37,8 @@
   --active-rgb: var(--blue-warm-vivid-40-rgb);
 
   --color-text-h1: var(--color-secondary-01);
+  --border-login-color: var(--pure-0);
+  --background-gray: var(--gray-warm-90);
 }
 
 [data-theme="dark"] .br-header {
@@ -52,6 +54,7 @@
 [data-theme="dark"] .br-select button {
     color: var(--pure-0);
 }
+
 
 
 

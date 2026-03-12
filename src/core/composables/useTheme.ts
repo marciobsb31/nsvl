@@ -30,7 +30,6 @@ export function useTheme() {
     mode.value = saved || 'light';
     applyTheme(mode.value);
 
-
   });
 
   return {

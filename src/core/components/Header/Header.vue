@@ -21,7 +21,7 @@
                     <img :src="logoGov" alt="Logo GOV" class="logo-gov" />
                 </div>
                 <div>
-                     <button class="br-button circle small ml-3" type="button" aria-label="Tema Dark" ><i class="fas fa-adjust" aria-hidden="true" @click="toggleTheme" ></i>
+                     <button class="br-button circle small ml-3" type="button" aria-label="Tema Dark" title="Alternar tema" ><i class="fas fa-adjust" aria-hidden="true" @click="toggleTheme" ></i>
                          </button>
                 </div>
             </div>

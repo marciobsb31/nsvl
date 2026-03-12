@@ -1,5 +1,7 @@
 [data-theme="light"] {
   --color-text-h1: var(--blue-warm-vivid-70);
-  --background: var(--gray-warm-2)
+  --background: var(--gray-warm-2);
+  --border-login-color: var(--cyan-vivid-40);
+  --background-gray: var(--gray-warm-10);
 }
 
