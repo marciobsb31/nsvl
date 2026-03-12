@@ -1,9 +1,9 @@
 [data-theme="dark"] {
-  --background: var(--background-dark);
+  --background: var(--pure-100);
   --background-rgb: var(--background-dark-rgb);
 
-  --background-light: var(--blue-warm-vivid-90);
-  --background-light-rgb: var(--blue-warm-vivid-90-rgb);
+  --background-light: var(--gray-warm-90);
+  --background-light-rgb: var(--gray-warm-90-rgb);
 
   --background-alternative: var(--gray-cool-80);
   --background-alternative-rgb: var(--gray-cool-80-rgb);
@@ -35,4 +35,23 @@
 
   --active: var(--blue-warm-vivid-40);
   --active-rgb: var(--blue-warm-vivid-40-rgb);
+
+  --color-text-h1: var(--color-secondary-01);
 }
+
+[data-theme="dark"] .br-header {
+    background: var(--background-light);
+}
+
+[data-theme="dark"] .br-button.is-primary, [data-theme="dark"] .br-button.primary, [data-theme="dark"] .br-button[primary] {
+    --interactive-rgb: var(--color-dark-rgb);
+    background-color: var(--interactive-dark);
+    color: var(--pure-100);
+}
+
+[data-theme="dark"] .br-select button {
+    color: var(--pure-0);
+}
+
+
+

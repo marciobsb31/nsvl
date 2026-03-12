@@ -4,6 +4,7 @@ import './assets/styles/main.css'
 import '@govbr-ds/webcomponents'
 import '@govbr-ds/core/dist/core.min.js'
 import './assets/themes/dark.css'
+import './assets/themes/light.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

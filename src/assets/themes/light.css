@@ -1,0 +1,5 @@
+[data-theme="light"] {
+  --color-text-h1: var(--blue-warm-vivid-70);
+  --background: var(--gray-warm-2)
+}
+

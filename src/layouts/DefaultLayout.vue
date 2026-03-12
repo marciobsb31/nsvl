@@ -85,7 +85,7 @@ onMounted(() => {
 .layout-default__main {
   flex: 1;
   padding: 2rem 0;
-  background-color: var(--gray-warm-2);
+  background-color: var(--background);
 }
 
 .header-user {

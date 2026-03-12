@@ -2,7 +2,7 @@
   <DefaultLayout>
   <section class="container-solicitacao">
     <div class="titulo">
-    <h1 class="text-blue-warm-vivid-70 text-weight-semi-bold">Solicitação de cadastro</h1>
+    <h1 class="color-text text-weight-semi-bold">Solicitação de cadastro</h1>
     </div>
     <Card title="Dados do(a) solicitante" subtitle="Nome e CPF são obtidos pelo GOV.BR">
       <FormularioDadosSolicitante :submitForm="submitForm" />
@@ -61,6 +61,10 @@ onMounted(() => {
 .actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.color-text{
+  color: var(--color-text-h1)
 }
 
 @media (max-width: 768px) {
