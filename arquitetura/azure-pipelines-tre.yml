@@ -58,9 +58,9 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                envsubst < config/prod.env.js > config/prod.env
-                mv config/prod.env config/prod.env.js
-                cat config/prod.env.js
+                envsubst < .env.example > .env
+                mv .env .env.example
+                cat .env.example
           - task: Docker@2
             displayName: Build e Push da Imagem
             inputs:
