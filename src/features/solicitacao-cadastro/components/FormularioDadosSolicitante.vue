@@ -3,14 +3,14 @@
         <div class="col-md-6 col-sm-12">
             <div class="br-input mb-2">
                 <label for="input-default">Nome<span class="text-red-50 text-up-01"> *</span></label>
-                <input id="input-default" type="text" placeholder="Nome" disabled/>
+                <input id="input-default" type="text" placeholder="Nome" disabled v-model="nome"/>
                 <Feedback v-if="errors.nome" :message="errors.nome" type="danger" />
             </div>            
         </div>
         <div class="col-md-6 col-sm-12">
             <div class="br-input mb-2">
                 <label for="input-default">CPF<span class="text-red-50 text-up-01">*</span></label>
-                <input id="input-default" type="text" placeholder="CPF" disabled  v-maska="'###.###.###-##'"/>
+                <input id="input-default" type="text" placeholder="CPF" disabled  v-model="CPF" v-maska="'###.###.###-##'"/>
                 <Feedback v-if="errors.CPF" :message="errors.CPF" type="danger" />
             </div>            
         </div>
@@ -51,8 +51,12 @@ const props = defineProps<{
   submitForm: boolean;
 }>();
 
-const { handleSubmit, errors, isSubmitting } = useForm<any>({
+const { handleSubmit, errors } = useForm<any>({
     validationSchema: DadosSolicitanteSchema,
+    initialValues: {
+      nome: 'Usuario Teste',
+      CPF: '12345678901',
+    },
 });
 
 const { value: emailInstitucional } = useField<string>('emailInstitucional')

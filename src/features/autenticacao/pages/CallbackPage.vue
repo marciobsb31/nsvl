@@ -1,5 +1,4 @@
 <template>
-  <AuthLayout>
     <div class="callback-page" role="status" aria-live="polite" aria-label="Autenticando">
       <template v-if="error">
         <br-message
@@ -22,13 +21,11 @@
         <p>Autenticando com GOV.BR...</p>
       </template>
     </div>
-  </AuthLayout>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import AuthLayout from '@/layouts/AuthLayout.vue'
 import { useAuth } from '@/core/composables/useAuth'
 
 defineOptions({ name: 'CallbackPage' })
