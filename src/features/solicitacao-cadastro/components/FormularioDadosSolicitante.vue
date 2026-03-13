@@ -31,7 +31,7 @@
           <div class="col-md-6 col-sm-12">
             <div class="br-input mb-2">
                 <label for="input-default">Telefone pessoal</label>
-                <input id="input-default" type="text" placeholder="Telefone de pessoal do solicitante." v-model="telefonePessoal" v-maska="'(##) #####-####'"/>
+                <input id="input-default" type="text" placeholder="Telefone pessoal do solicitante." v-model="telefonePessoal" v-maska="'(##) #####-####'"/>
                 <Feedback v-if="errors.telefonePessoal" :message="errors.telefonePessoal" type="danger" />
             </div>            
         </div>

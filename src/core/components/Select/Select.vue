@@ -11,7 +11,8 @@
         type="text"
         :placeholder="props.placeholder"
         :value="selectedLabel"
-        readonly
+        :readonly="props.readonly"
+        :disabled="props.disabled"
       />
 
       <button
@@ -66,6 +67,8 @@ const props = defineProps<{
   options: SelectOption[]
   required?: boolean
   modelValue?: string | number | null
+  disabled?: boolean
+  readonly?: boolean
 }>()
 
 const emit = defineEmits<{
