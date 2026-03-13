@@ -6,7 +6,7 @@
     <section class="login-page" aria-labelledby="login-title">
       <Card custom-class="login-card">
         <div class="row">
-          <div class="col-lg-6 col-sm-12 logos" v-if="isMobile">
+          <div class="col-lg-6 col-sm-12 logos margin-bottom" v-if="isMobile">
             <img :src="logoNovoViver" alt="Logo" class="logo-novo-viver" />
           </div>
           <div class="col-lg-6 col-sm-12 acessos">
@@ -16,7 +16,7 @@
             <button class="br-button success block" type="button">Solicitar Cadastro
             </button>
           </div>
-          <div class="col-lg-6 col-sm-12 logos" :class="{ 'border-left': !isMobile }">
+          <div class="col-lg-6 col-sm-12 logos" :class="{ 'border-left': !isMobile, 'margin-top': isMobile }">
             <img v-if="!isMobile" :src="logoNovoViver" alt="Logo" class="logo-novo-viver" />
             <img :src="logoGov" alt="Logo Branca" class="logo-gov" />
           </div>
@@ -149,5 +149,19 @@ const toggleTheme = () => {
   position: absolute;
   top: 1rem;
   right: 1rem;
+}
+
+.margin-bottom {
+  margin-bottom: 3rem;
+}
+
+.margin-top {
+  margin-top: 3rem;
+}
+
+@media (max-width: 768px) {
+  .row {
+    height: 450px;
+  }
 }
 </style>
