@@ -53,7 +53,7 @@
 import { computed } from 'vue'
 
 defineOptions({
-  name: 'Select'
+  name: 'SelectComponent'
 })
 
 type SelectOption = {

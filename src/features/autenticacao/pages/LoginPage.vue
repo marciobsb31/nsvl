@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/core/composables/useAuth'
 import Card from '@/core/components/Card/Card.vue'
@@ -44,7 +44,7 @@ import { useBreakpoint } from '@/core/composables/useBreakpoint'
 defineOptions({ name: 'LoginPage' })
 
 const router = useRouter()
-const { isLoading, error, isAuthenticated, login, clearError } = useAuth()
+const { isLoading, isAuthenticated, login } = useAuth()
 const { mode, setMode } = useTheme()
 const { isMobile } = useBreakpoint()
 
