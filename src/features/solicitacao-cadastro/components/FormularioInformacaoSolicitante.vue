@@ -96,7 +96,7 @@ const estados = ref([
 
 
 
-const { handleSubmit, errors, isSubmitting } = useForm<any>({
+const { handleSubmit, errors } = useForm<any>({
     validationSchema: InformacaoSolicitanteSchema,
 });
 

@@ -41,7 +41,7 @@ const { isMobile, isDesktop } = useBreakpoint()
 const { setMode, mode } = useTheme()
 
 defineOptions({
-    name: 'Header'
+    name: 'HeaderComponent'
 });
 defineProps({
     title: String,
