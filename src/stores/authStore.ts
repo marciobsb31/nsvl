@@ -38,12 +38,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     /**
      * Inicia o fluxo de login — redireciona para GOV.BR SSO
+     * @param redirectTo - Rota para redirecionar após login (ex: 'solicitacao-cadastro')
      */
-    async function login(): Promise<void> {
+    async function login(redirectTo?: string): Promise<void> {
         isLoading.value = true
         error.value = null
         try {
-            await authService.login()
+            await authService.login(redirectTo)
         } catch (err) {
             console.error('[AuthStore] Erro ao iniciar login:', err)
             error.value = 'Não foi possível iniciar o login. Tente novamente.'
@@ -59,8 +60,14 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null
         try {
             const params = new URLSearchParams(window.location.search)
-            const token = params.get('token')
+            const errorParam = params.get('error')
+            if (errorParam) {
+                error.value = errorParam
+                user.value = null
+                return
+            }
 
+            const token = params.get('token')
             if (token) {
                 authService.setToken(token)
                 user.value = await authService.getUser()
@@ -69,7 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
             }
         } catch (err) {
             console.error('[AuthStore] Erro no callback de autenticação:', err)
-            error.value = 'Falha na autenticação. Por favor, tente novamente.'
+            error.value = (err as Error).message || 'Falha na autenticação. Por favor, tente novamente.'
             user.value = null
         } finally {
             isLoading.value = false
@@ -79,11 +86,11 @@ export const useAuthStore = defineStore('auth', () => {
     /**
      * Realiza logout — limpa estado e redireciona para SSO
      */
-    async function logout(): Promise<void> {
+    async function logout(redirectTo?: string): Promise<void> {
         isLoading.value = true
         try {
             user.value = null
-            await authService.logout()
+            await authService.logout(redirectTo)
         } catch (err) {
             console.error('[AuthStore] Erro ao realizar logout:', err)
             isLoading.value = false

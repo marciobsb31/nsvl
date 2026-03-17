@@ -9,10 +9,10 @@ export function useBreakpoint() {
 
   const update = () => {
     width.value = window.innerWidth
-
-    isMobile.value = width.value < 768
-    isTablet.value = width.value >= 768 && width.value < 1024
-    isDesktop.value = width.value >= 1024
+    // Breakpoints GOV.BR: sm 576 | md 992 | lg 1280 | xl 1600
+    isMobile.value = width.value < 576
+    isTablet.value = width.value >= 576 && width.value < 992
+    isDesktop.value = width.value >= 992
   }
 
   onMounted(() => {

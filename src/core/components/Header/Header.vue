@@ -11,7 +11,7 @@
                             <div class="header-subtitle text-gray-80">{{ subtitle }}</div>
                         </template>
                     </div>
-      
+
                     <div class="header-actions">                         
                         <slot name="actions"></slot>                        
                     </div>                    
@@ -78,6 +78,7 @@ const logoAtual = computed(() => {
 .header-title {
     cursor: pointer;
 }
+
 .menu-desktop{
     display: flex !important;
     justify-content: space-between !important;
@@ -98,14 +99,24 @@ const logoAtual = computed(() => {
     cursor: pointer;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 575px) {
+  .header-subtitle {
+    display: block !important;
+  }
 
-    .header-subtitle {
-        display: block !important;
-    }
-    .logo-gov{
-        height: 50px;
-    }
+  .logo-gov {
+    height: 50px;
+  }
+
+  .header-user span {
+    display: none;
+  }
+}
+
+@media (max-width: 991px) {
+  .logo-gov {
+    height: 50px;
+  }
 }
 
 </style>

@@ -83,12 +83,7 @@ body {
    Layout Utilitários
    ========================================================================== */
 
-.container {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
+/* Container — responsividade em responsive.css */
 
 /* Tela de carregamento */
 .loading-overlay {

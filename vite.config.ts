@@ -5,6 +5,14 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_BASE_URL?.replace(/\/api\/?$/, '') || 'http://localhost:8081',
+        changeOrigin: true,
+      },
+    },
+  },
   plugins: [
     vue({
       template: {

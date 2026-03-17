@@ -12,18 +12,13 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { vMaska } from 'maska/vue'
-import { useAuthStore } from '@/stores/authStore'
 
-async function bootstrap() {
+function bootstrap() {
     const app = createApp(App)
     const pinia = createPinia()
 
     app.use(pinia)
     app.use(router)
-
-    // Carrega o estado de autenticação antes de montar a aplicação
-    const authStore = useAuthStore()
-    await authStore.loadUser()
 
     app.directive('maska', vMaska)
     app.mount('#app')

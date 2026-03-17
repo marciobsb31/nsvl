@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
 import { solicitacaoRoutes } from '@/features/solicitacao-cadastro/solicitacaoCadastroRoutes'
+import { gerenciarSolicitacaoCadastroRoutes } from '@/features/gerenciar-solicitacao-cadastro/gerenciarSolicitacaoCadastroRoutes'
 
 /**
  * Roteador principal da aplicação
@@ -18,15 +18,6 @@ const router = createRouter({
       component: () => import('@/features/autenticacao/pages/LoginPage.vue'),
       meta: {
         title: 'Entrar — NVSL',
-        requiresGuest: true, // só para não autenticados
-      },
-    },
-    {
-      path: '/callback',
-      name: 'callback',
-      component: () => import('@/features/autenticacao/pages/CallbackPage.vue'),
-      meta: {
-        title: 'Autenticando — NVSL',
       },
     },
     {
@@ -35,8 +26,39 @@ const router = createRouter({
       component: () => import('@/features/home/pages/HomePage.vue'),
       meta: {
         title: 'Início — NVSL',
-        requiresAuth: true,
       },
+    },
+    ...gerenciarSolicitacaoCadastroRoutes,
+    ...solicitacaoRoutes,
+    {
+      path: '/relatorios',
+      name: 'relatorios',
+      component: () => import('@/features/relatorios/pages/RelatoriosPage.vue'),
+      meta: { title: 'Relatórios — NVSL' },
+    },
+    {
+      path: '/plano-acao',
+      name: 'plano-acao',
+      component: () => import('@/features/plano-acao/pages/PlanoAcaoPage.vue'),
+      meta: { title: 'Plano de Ação — NVSL' },
+    },
+    {
+      path: '/gestao-planos-acao',
+      name: 'gestao-planos-acao',
+      component: () => import('@/features/plano-acao/pages/PlanoAcaoPage.vue'),
+      meta: { title: 'Gestão de Planos de ação — NVSL' },
+    },
+    {
+      path: '/enviar-plano-acao',
+      name: 'enviar-plano-acao',
+      component: () => import('@/features/plano-acao/pages/PlanoAcaoPage.vue'),
+      meta: { title: 'Enviar plano de ação — NVSL' },
+    },
+    {
+      path: '/gerenciar-perfis',
+      name: 'gerenciar-perfis',
+      component: () => import('@/features/gerenciar-perfis/pages/GerenciarPerfisPage.vue'),
+      meta: { title: 'Gerenciar Perfis — NVSL' },
     },
     {
       path: '/:pathMatch(.*)*',
@@ -45,32 +67,13 @@ const router = createRouter({
       meta: {
         title: 'Página não encontrada — NVSL',
       },
-    },
-    ...solicitacaoRoutes
+    }
   ],
 })
 
-// Navigation guard global: autenticação e título de página
-router.beforeEach(async (to) => {
-  // Atualiza o título da página (acessibilidade)
+// Navigation guard global: título de página
+router.beforeEach((to) => {
   document.title = (to.meta.title as string) ?? 'NVSL'
-
-  const authStore = useAuthStore()
-
-  // Garante que o estado de auth foi carregado
-  if (!authStore.isAuthenticated && !authStore.isLoading) {
-    await authStore.loadUser()
-  }
-
-  // Rota protegida e usuário não autenticado → redireciona para login
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return { name: 'login' }
-  }
-
-  // Rota de guest e usuário já autenticado → redireciona para home
-  if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    return { name: 'home' }
-  }
 })
 
 export default router

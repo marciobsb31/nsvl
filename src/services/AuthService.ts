@@ -12,17 +12,10 @@ import type { GovBrUser } from '@/core/types/auth'
 
 class AuthService {
     /**
-     * Inicia o fluxo de autenticação — redireciona ao backend que por sua vez 
-     * redireciona ao SSO GOV.BR
+     * Inicia o fluxo de autenticação (desativado)
      */
-    async login(): Promise<void> {
-        try {
-            const { data } = await api.get<{ url: string }>('/auth/redirect')
-            window.location.href = data.url
-        } catch (error) {
-            console.error('Erro ao iniciar login:', error)
-            throw error
-        }
+    async login(_redirectTo?: string): Promise<void> {
+        // Login desativado
     }
 
     /**
@@ -58,14 +51,14 @@ class AuthService {
     /**
      * Realiza logout — revoga o token no backend e limpa storage local
      */
-    async logout(): Promise<void> {
+    async logout(redirectTo?: string): Promise<void> {
         try {
             await api.post('/auth/logout')
         } catch (error) {
             console.error('Erro ao deslogar:', error)
         } finally {
             sessionStorage.removeItem('nvsl_token')
-            window.location.href = '/login'
+            window.location.href = redirectTo || '/login'
         }
     }
 }

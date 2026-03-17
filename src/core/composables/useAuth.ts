@@ -19,8 +19,8 @@ export function useAuth() {
         userName: computed(() => authStore.userName),
         userEmail: computed(() => authStore.userEmail),
 
-        // Ações
-        login: authStore.login,
+        // Ações (login(redirectTo?) — redirectTo ex: 'solicitacao-cadastro')
+        login: authStore.login as (redirectTo?: string) => Promise<void>,
         logout: authStore.logout,
         handleCallback: authStore.handleCallback,
         clearError: authStore.clearError,

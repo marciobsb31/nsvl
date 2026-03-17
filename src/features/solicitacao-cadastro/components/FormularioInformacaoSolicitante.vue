@@ -1,62 +1,57 @@
 <template>
-      <section class="row">
+    <section class="row">
         <div class="col-md-6 col-sm-12">
-        <Select 
-          label="Esfera de atuação"
-          placeholder="Esfera de atuação"
-          :options="esfera"
-          required
-          v-model="esferaAtuacao" />
-          <Feedback v-if="errors.esferaAtuacao" :message="errors.esferaAtuacao" type="danger" />
+            <Select
+                label="Esfera de atuação"
+                placeholder="Esfera de atuação"
+                :options="esfera"
+                required
+                v-model="esferaAtuacao"
+            />
+            <Feedback v-if="errorsEsfera" :message="errorsEsfera" type="danger" />
         </div>
         <div class="col-md-6 col-sm-12">
-        <Select
-          label="UF"
-          placeholder="UF"
-          :options="estados"
-          required
-          v-model="uf" />
-          <Feedback v-if="errors.uf" :message="errors.uf" type="danger" />
+            <Select
+                label="UF"
+                placeholder="UF"
+                :options="estados"
+                required
+                v-model="uf"
+            />
+            <Feedback v-if="errorsUf" :message="errorsUf" type="danger" />
         </div>
         <div class="col-md-6 col-sm-12">
-          <div class="br-input mb-2">
-            <label for="input-default">Município<span class="text-red-50 text-up-01">*</span></label>
-            <input id="input-default" type="text" placeholder="Município" v-model="municipio" />
-            <Feedback v-if="errors.municipio" :message="errors.municipio" type="danger" />
-          </div>
+            <div class="br-input mb-2">
+                <label for="input-municipio">Município<span class="text-red-50 text-up-01">*</span></label>
+                <input id="input-municipio" type="text" placeholder="Município" v-model="municipio" />
+                <Feedback v-if="errorsMunicipio" :message="errorsMunicipio" type="danger" />
+            </div>
         </div>
         <div class="col-md-6 col-sm-12">
-          <div class="br-input mb-2">
-            <label for="input-default">Orgão de atuação<span class="text-red-50 text-up-01">*</span></label>
-            <input id="input-default" type="text" placeholder="Órgão/secretaria responsável pela atuação no NVSL." v-model="orgao" />
-            <Feedback v-if="errors.orgao" :message="errors.orgao" type="danger" />
-          </div>
+            <div class="br-input mb-2">
+                <label for="input-orgao">Órgão de atuação<span class="text-red-50 text-up-01">*</span></label>
+                <input id="input-orgao" type="text" placeholder="Órgão/secretaria responsável pela atuação no NVSL." v-model="orgao" />
+                <Feedback v-if="errorsOrgao" :message="errorsOrgao" type="danger" />
+            </div>
         </div>
         <div class="col-md-6 col-sm-12">
-          <div class="br-input mb-2">
-            <label for="input-default">Cargo /Função<span class="text-red-50 text-up-01">*</span></label>
-            <input id="input-default" type="text" placeholder="Cargo ou função." v-model="cargo" />
-            <Feedback v-if="errors.cargo" :message="errors.cargo" type="danger" />
-          </div>
+            <div class="br-input mb-2">
+                <label for="input-cargo">Cargo / Função<span class="text-red-50 text-up-01">*</span></label>
+                <input id="input-cargo" type="text" placeholder="Cargo ou função." v-model="cargo" />
+                <Feedback v-if="errorsCargo" :message="errorsCargo" type="danger" />
+            </div>
         </div>
-      </section>
-
+    </section>
 </template>
 <script setup lang="ts">
 import Select from '@/core/components/Select/Select.vue';
 import { ref } from 'vue';
-import { InformacaoSolicitanteSchema } from '../validators/solicitacaoCadastro.schema';
+import { useField } from 'vee-validate';
 import Feedback from '@/core/components/Feedback/Feedback.vue';
-import { watch } from 'vue';
-import { useForm, useField } from 'vee-validate';
 
 defineOptions({
   name: 'FormularioInformacaoSolicitante'
 })
-
-const props = defineProps<{
-  submitForm: boolean;
-}>();
 
 const esfera = ref([
   { value: 'federal', label: 'Federal' },
@@ -96,26 +91,11 @@ const estados = ref([
 
 
 
-const { handleSubmit, errors } = useForm<any>({
-    validationSchema: InformacaoSolicitanteSchema,
-});
-
-const { value: esferaAtuacao } = useField<string>('esferaAtuacao')
-const { value: uf } = useField<string>('uf')
-const { value: municipio } = useField<string>('municipio')
-const { value: orgao } = useField<string>('orgao')
-const { value: cargo } = useField<string>('cargo')
-
-const onSubmit = handleSubmit(values => {
-   console.log(values);
-});
-
-watch(() => props.submitForm, (newValue) => {
-  if (newValue) {
-    console.log('Submitting form');
-    onSubmit();
-  }
-});
+const { value: esferaAtuacao, errorMessage: errorsEsfera } = useField<string>('esferaAtuacao')
+const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
+const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
+const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
+const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
 
 
 

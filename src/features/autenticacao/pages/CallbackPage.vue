@@ -36,7 +36,12 @@ const { handleCallback, error } = useAuth()
 onMounted(async () => {
   await handleCallback()
   if (!error.value) {
-    router.replace({ name: 'home' })
+    const redirect = new URLSearchParams(window.location.search).get('redirect')
+    if (redirect) {
+      router.replace({ path: `/${redirect}` })
+    } else {
+      router.replace({ name: 'home' })
+    }
   }
 })
 </script>

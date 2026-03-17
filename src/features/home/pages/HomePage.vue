@@ -36,12 +36,13 @@
           class="feature-card br-card"
           role="listitem"
           tabindex="0"
-          aria-labelledby="card-servicos-title"
+          aria-labelledby="card-gerenciar-title"
+          @click="irParaGerenciarCadastros"
         >
           <div class="card-content">
             <span class="feature-card__icon" aria-hidden="true">📋</span>
-            <h2 id="card-servicos-title" class="feature-card__title">Serviços</h2>
-            <p class="feature-card__desc">Acesse os serviços disponíveis para você.</p>
+            <h2 id="card-gerenciar-title" class="feature-card__title">Gerenciar Cadastros</h2>
+            <p class="feature-card__desc">Consulte e gerencie as solicitações de cadastro.</p>
           </div>
         </article>
 
@@ -63,12 +64,18 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { useAuth } from '@/core/composables/useAuth'
 
 defineOptions({ name: 'HomePage' })
 
+const router = useRouter()
 const { userName } = useAuth()
+
+function irParaGerenciarCadastros() {
+  router.push({ name: 'gerenciar-cadastros' })
+}
 </script>
 
 <style scoped>
@@ -81,10 +88,16 @@ const { userName } = useAuth()
 }
 
 .home-page__title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-primary-default, #1351b4);
   margin: 0 0 0.5rem;
+}
+
+@media (min-width: 576px) {
+  .home-page__title {
+    font-size: 1.75rem;
+  }
 }
 
 .home-page__subtitle {
@@ -99,8 +112,22 @@ const { userName } = useAuth()
 
 .home-page__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 576px) {
+  .home-page__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .home-page__grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
 }
 
 .feature-card {

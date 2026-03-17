@@ -10,11 +10,7 @@
             <img :src="logoNovoViver" alt="Logo" class="logo-novo-viver" />
           </div>
           <div class="col-lg-6 col-sm-12 acessos">
-            <button class="br-button primary block" type="button" :disabled="isLoading" :aria-busy="isLoading"
-              aria-label="Entrar com a conta GOV.BR" @click="handleLogin">Entrar com o GOV.BR
-            </button>
-            <button class="br-button success block" type="button">Solicitar Cadastro
-            </button>
+            <p class="text-muted">Login em desenvolvimento</p>
           </div>
           <div class="col-lg-6 col-sm-12 logos" :class="{ 'border-left': !isMobile, 'margin-top': isMobile }">
             <img v-if="!isMobile" :src="logoNovoViver" alt="Logo" class="logo-novo-viver" />
@@ -29,8 +25,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuth } from '@/core/composables/useAuth'
 import Card from '@/core/components/Card/Card.vue'
 import logoGovColor from '@/assets/images/logo/mdh_com_gov.png'
 import logoGovBranca from '@/assets/images/logo/mdh_com_gov_branca.png'
@@ -39,19 +33,10 @@ import logoBranca from '@/assets/images/logo/logo_novo_viver_branca.png'
 import { useTheme } from '@/core/composables/useTheme'
 import { useBreakpoint } from '@/core/composables/useBreakpoint'
 
-
-
 defineOptions({ name: 'LoginPage' })
 
-const router = useRouter()
-const { isLoading, isAuthenticated, login } = useAuth()
 const { mode, setMode } = useTheme()
 const { isMobile } = useBreakpoint()
-
-// Se já autenticado, redireciona (guard de rota também cobre isso)
-if (isAuthenticated.value) {
-  router.replace({ name: 'home' })
-}
 
 const logoNovoViver = computed(() => {
   return mode.value === 'dark' ? logoBranca : logo;
@@ -60,10 +45,6 @@ const logoNovoViver = computed(() => {
 const logoGov = computed(() => {
   return mode.value === 'dark' ? logoGovBranca : logoGovColor;
 });
-
-async function handleLogin() {
-  await login()
-}
 
 const toggleTheme = () => {
   setMode(mode.value === 'dark' ? 'light' : 'dark');
@@ -159,7 +140,22 @@ const toggleTheme = () => {
   margin-top: 3rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 575px) {
+  .row {
+    height: auto;
+    min-height: 400px;
+  }
+
+  .login-card {
+    padding: 1rem !important;
+  }
+
+  .acessos {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 991px) {
   .row {
     height: 450px;
   }
