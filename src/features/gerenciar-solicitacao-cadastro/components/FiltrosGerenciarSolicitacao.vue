@@ -30,21 +30,19 @@
             v-model="filtrosLocal.uf"
             label="Estado (UF)"
             placeholder="Selecione"
-            :options="OPCOES_UF"
+            :options="opcoesUf"
           />
         </div>
       </div>
       <div class="filtros-row">
         <div class="filtros-col">
-          <div class="br-input mb-2">
-            <label for="filtro-municipio">Município</label>
-            <input
-              id="filtro-municipio"
-              type="text"
-              placeholder="Município"
-              v-model="filtrosLocal.municipio"
-            />
-          </div>
+          <SelectAutocomplete
+            v-model="filtrosLocal.municipio"
+            label="Município"
+            :placeholder="filtrosLocal.uf ? 'Selecione o município' : 'Selecione primeiro a UF'"
+            :options="opcoesMunicipio"
+            :disabled="!filtrosLocal.uf"
+          />
         </div>
         <div class="filtros-col">
           <div class="br-input mb-2">
@@ -62,7 +60,7 @@
             v-model="filtrosLocal.esfera"
             label="Esfera de atuação"
             placeholder="Selecione"
-            :options="OPCOES_ESFERA"
+            :options="opcoesEsfera"
           />
         </div>
       </div>
@@ -84,32 +82,33 @@
         @click="limparFiltros"
         aria-label="Limpar filtros"
       >
-        Limpar filtros
+        Limpar Filtro
       </button>
       <button
         class="br-button primary"
         type="button"
         @click="listar"
         :disabled="carregando"
-        aria-label="Listar solicitações"
+        aria-label="Pesquisar solicitações"
       >
-        Listar
+        Pesquisar
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, onMounted, watch } from 'vue'
 import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
-import {
-  OPCOES_ESFERA,
-  OPCOES_UF,
-  OPCOES_STATUS,
-} from '../constants/opcoesFiltro'
+import { OPCOES_STATUS } from '../constants/opcoesFiltro'
+import { useEsferas } from '@/core/composables/useEsferas'
+import { useLocalidades } from '@/core/composables/useLocalidades'
 import type { FiltrosGerenciarSolicitacao } from '@/services/GerenciarSolicitacaoCadastroService'
 
 defineOptions({ name: 'FiltrosGerenciarSolicitacao' })
+
+const { opcoesUf, opcoesMunicipio, carregarUfs, carregarMunicipios } = useLocalidades()
+const { opcoesEsfera, carregarEsferas } = useEsferas()
 
 const props = defineProps<{
   carregando?: boolean
@@ -153,6 +152,20 @@ function limparFiltros() {
   filtrosLocal.status = undefined
   emit('limpar')
 }
+
+onMounted(() => {
+  carregarUfs()
+  carregarEsferas()
+})
+
+watch(
+  () => filtrosLocal.uf,
+  (uf) => {
+    filtrosLocal.municipio = undefined
+    carregarMunicipios(uf ?? '')
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>

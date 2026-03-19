@@ -1,31 +1,37 @@
 <template>
     <section class="row">
         <div class="col-md-6 col-sm-12">
-            <Select
+            <SelectAutocomplete
+                v-model="esferaAtuacao"
                 label="Esfera de atuação"
                 placeholder="Esfera de atuação"
-                :options="esfera"
+                :options="opcoesEsferaFiltradas"
+                :disabled="esferaBloqueada"
                 required
-                v-model="esferaAtuacao"
             />
             <Feedback v-if="errorsEsfera" :message="errorsEsfera" type="danger" />
         </div>
         <div class="col-md-6 col-sm-12">
-            <Select
-                label="UF"
-                placeholder="UF"
-                :options="estados"
-                required
+            <SelectAutocomplete
                 v-model="uf"
+                label="Estado (UF)"
+                placeholder="Selecione"
+                :options="opcoesUfFiltradas"
+                :disabled="ufBloqueada"
+                required
             />
             <Feedback v-if="errorsUf" :message="errorsUf" type="danger" />
         </div>
         <div class="col-md-6 col-sm-12">
-            <div class="br-input mb-2">
-                <label for="input-municipio">Município<span class="text-red-50 text-up-01">*</span></label>
-                <input id="input-municipio" type="text" placeholder="Município" v-model="municipio" />
-                <Feedback v-if="errorsMunicipio" :message="errorsMunicipio" type="danger" />
-            </div>
+            <SelectAutocomplete
+                v-model="municipio"
+                label="Município"
+                placeholder="Município"
+                :options="opcoesMunicipioFiltradas"
+                :disabled="!uf || municipioBloqueado"
+                required
+            />
+            <Feedback v-if="errorsMunicipio" :message="errorsMunicipio" type="danger" />
         </div>
         <div class="col-md-6 col-sm-12">
             <div class="br-input mb-2">
@@ -44,56 +50,119 @@
     </section>
 </template>
 <script setup lang="ts">
-import Select from '@/core/components/Select/Select.vue';
-import { ref } from 'vue';
-import { useField } from 'vee-validate';
-import Feedback from '@/core/components/Feedback/Feedback.vue';
+import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
+import { onMounted, watch, computed } from 'vue'
+import { useField } from 'vee-validate'
+import Feedback from '@/core/components/Feedback/Feedback.vue'
+import { useEsferas } from '@/core/composables/useEsferas'
+import { useLocalidades } from '@/core/composables/useLocalidades'
 
 defineOptions({
   name: 'FormularioInformacaoSolicitante'
 })
 
-const esfera = ref([
-  { value: 'federal', label: 'Federal' },
-  { value: 'estadual', label: 'Estadual' },
-  { value: 'municipal', label: 'Municipal' },
-])
+const props = withDefaults(
+  defineProps<{
+    aplicarRegrasHierarquia?: boolean
+    usuarioLogado?: {
+      esfera_atuacao?: string
+      uf_lotacao?: string
+      municipio_lotacao?: string
+    } | null
+  }>(),
+  { aplicarRegrasHierarquia: false, usuarioLogado: null }
+)
 
-const estados = ref([
-  { value: 'AC', label: 'AC' },
-  { value: 'AL', label: 'AL' },
-  { value: 'AP', label: 'AP' },
-  { value: 'AM', label: 'AM' },
-  { value: 'BA', label: 'BA' },
-  { value: 'CE', label: 'CE' },
-  { value: 'DF', label: 'DF' },
-  { value: 'ES', label: 'ES' },
-  { value: 'GO', label: 'GO' },
-  { value: 'MA', label: 'MA' },
-  { value: 'MT', label: 'MT' },
-  { value: 'MS', label: 'MS' },
-  { value: 'MG', label: 'MG' },
-  { value: 'PA', label: 'PA' },
-  { value: 'PB', label: 'PB' },
-  { value: 'PR', label: 'PR' },
-  { value: 'PE', label: 'PE' },
-  { value: 'PI', label: 'PI' },
-  { value: 'RJ', label: 'RJ' },
-  { value: 'RN', label: 'RN' },
-  { value: 'RS', label: 'RS' },
-  { value: 'RO', label: 'RO' },
-  { value: 'RR', label: 'RR' },
-  { value: 'SC', label: 'SC' },
-  { value: 'SP', label: 'SP' },
-  { value: 'SE', label: 'SE' },
-  { value: 'TO', label: 'TO' },
-])
-
-
+const { opcoesEsfera, carregarEsferas } = useEsferas()
 
 const { value: esferaAtuacao, errorMessage: errorsEsfera } = useField<string>('esferaAtuacao')
 const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
 const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
+
+const { opcoesUf, opcoesMunicipio, carregarUfs } = useLocalidades(uf)
+
+const esferaUsuarioLogado = computed(() =>
+  String(props.usuarioLogado?.esfera_atuacao ?? '').toLowerCase()
+)
+
+const aplicarHierarquia = computed(() => !!props.aplicarRegrasHierarquia)
+
+const esferaBloqueada = computed(
+  () => aplicarHierarquia.value && (esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal')
+)
+const ufBloqueada = computed(
+  () => aplicarHierarquia.value && (esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal')
+)
+const municipioBloqueado = computed(
+  () => aplicarHierarquia.value && esferaUsuarioLogado.value === 'municipal'
+)
+
+const opcoesEsferaFiltradas = computed(() => {
+  if (!aplicarHierarquia.value) return opcoesEsfera.value
+  if (esferaUsuarioLogado.value === 'estadual') {
+    return opcoesEsfera.value.filter((o) => String(o.value).toLowerCase() === 'estadual')
+  }
+  if (esferaUsuarioLogado.value === 'municipal') {
+    return opcoesEsfera.value.filter((o) => String(o.value).toLowerCase() === 'municipal')
+  }
+  return opcoesEsfera.value
+})
+
+const opcoesUfFiltradas = computed(() => {
+  if (!ufBloqueada.value || !props.usuarioLogado?.uf_lotacao) return opcoesUf.value
+  const ufLotacao = String(props.usuarioLogado.uf_lotacao).toUpperCase()
+  return opcoesUf.value.filter((o) => String(o.value).toUpperCase() === ufLotacao)
+})
+
+const opcoesMunicipioFiltradas = computed(() => {
+  if (!municipioBloqueado.value || !props.usuarioLogado?.municipio_lotacao) return opcoesMunicipio.value
+  const municipioLotacao = String(props.usuarioLogado.municipio_lotacao).toLowerCase()
+  return opcoesMunicipio.value.filter((o) => String(o.label).toLowerCase() === municipioLotacao)
+})
+
+onMounted(() => {
+  carregarUfs()
+  carregarEsferas()
+})
+
+watch(uf, () => {
+  if (municipioBloqueado.value && props.usuarioLogado?.municipio_lotacao) {
+    municipio.value = String(props.usuarioLogado.municipio_lotacao)
+    return
+  }
+  municipio.value = ''
+})
+
+watch(
+  () => props.usuarioLogado,
+  (usuario) => {
+    if (!aplicarHierarquia.value || !usuario) return
+
+    const esfera = String(usuario.esfera_atuacao ?? '').toLowerCase()
+    if (esfera === 'estadual') {
+      esferaAtuacao.value = 'estadual'
+      if (usuario.uf_lotacao) uf.value = String(usuario.uf_lotacao).toUpperCase()
+      return
+    }
+    if (esfera === 'municipal') {
+      esferaAtuacao.value = 'municipal'
+      if (usuario.uf_lotacao) uf.value = String(usuario.uf_lotacao).toUpperCase()
+      if (usuario.municipio_lotacao) municipio.value = String(usuario.municipio_lotacao)
+    }
+  },
+  { immediate: true, deep: true }
+)
+
+watch(opcoesMunicipioFiltradas, (opcoes) => {
+  if (!municipioBloqueado.value || !props.usuarioLogado?.municipio_lotacao) return
+  const municipioLotacao = String(props.usuarioLogado.municipio_lotacao).toLowerCase()
+  const opcao = opcoes.find((o) => String(o.label).toLowerCase() === municipioLotacao)
+  if (opcao) {
+    municipio.value = String(opcao.value ?? opcao.label)
+  } else {
+    municipio.value = String(props.usuarioLogado.municipio_lotacao)
+  }
+})
 const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
 const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
 

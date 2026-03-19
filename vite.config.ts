@@ -6,6 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 // https://vite.dev/config/
 export default defineConfig({
   server: {
+    port: 5174,
     proxy: {
       '/api': {
         target: process.env.VITE_API_BASE_URL?.replace(/\/api\/?$/, '') || 'http://localhost:8081',

@@ -45,6 +45,48 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Parágrafos — espaçamento ABNT NBR 17225 (WCAG 1.4.12) */
+p {
+  margin-bottom: 2em;
+  line-height: 1.5;
+}
+
+/* Suporte a text-spacing do usuário — não cortar conteúdo */
+p, li, div {
+  max-width: 100%;
+}
+
+/* Elementos interativos — área mínima de toque 24×24px (WCAG 2.5.8 AA) */
+button.br-button.circle,
+[role="button"].br-button.circle {
+  min-height: 24px;
+  min-width: 24px;
+}
+
+/* Botões circulares em mobile — área 44×44px (WCAG 2.5.5) */
+@media (max-width: 991px) {
+  button.br-button.circle,
+  [role="button"].br-button.circle {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Respeitar preferência de reduzir animações (WCAG 2.2.2) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 /* ==========================================================================
    Acessibilidade
    ========================================================================== */
@@ -85,6 +127,28 @@ body {
 
 /* Container — responsividade em responsive.css */
 
+/* VLibras — posicionamento no canto inferior */
+[vw] {
+  position: fixed !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  z-index: 9998;
+}
+
+[vw-access-button] {
+  bottom: 0.25rem !important;
+  right: 0.75rem !important;
+  position: fixed !important;
+}
+
+@media (max-width: 991px) {
+  [vw-access-button] {
+    bottom: 0.25rem !important;
+    left: 1.25rem !important;
+    right: auto !important;
+  }
+}
+
 /* Tela de carregamento */
 .loading-overlay {
   display: flex;
@@ -93,4 +157,35 @@ body {
   min-height: 100vh;
   flex-direction: column;
   gap: 1rem;
+}
+
+/* ==========================================================================
+   Tabelas (padrão eGov)
+   ========================================================================== */
+.br-table th {
+  font-weight: 700;
+}
+
+.br-table .th-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.br-table .th-sort-btn:focus-visible {
+  outline: 2px solid var(--color-primary-default, #1351b4);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.br-table .th-sort-icon {
+  font-size: 0.75rem;
+  color: var(--color-secondary-07, #555);
 }

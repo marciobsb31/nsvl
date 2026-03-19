@@ -44,3 +44,32 @@ export async function listarSolicitacoesGerenciar(
   const { data } = await api.get<{ data: SolicitacaoGerenciarItem[] }>(url)
   return data.data ?? []
 }
+
+export interface AprovarPayload {
+  perfilId?: string | number | null
+  vigenciaInicio?: string
+  vigenciaFim?: string
+}
+
+export async function aprovarSolicitacao(
+  id: number,
+  payload?: AprovarPayload
+): Promise<void> {
+  const body: Record<string, unknown> = { status: 'aprovado' }
+  if (payload?.perfilId != null) body.perfil_id = payload.perfilId
+  if (payload?.vigenciaInicio) body.vigencia_inicio = payload.vigenciaInicio
+  if (payload?.vigenciaFim) body.vigencia_fim = payload.vigenciaFim
+  await api.patch(`/solicitacoes-cadastro/${id}`, body)
+}
+
+export async function reprovarSolicitacao(id: number): Promise<void> {
+  await api.patch(`/solicitacoes-cadastro/${id}`, { status: 'reprovado' })
+}
+
+export async function ativarPerfilVinculado(solicitacaoId: number, perfilUsuarioId: number): Promise<void> {
+  await api.patch(`/solicitacoes-cadastro/${solicitacaoId}/perfis/${perfilUsuarioId}/ativar`)
+}
+
+export async function desativarPerfilVinculado(solicitacaoId: number, perfilUsuarioId: number): Promise<void> {
+  await api.patch(`/solicitacoes-cadastro/${solicitacaoId}/perfis/${perfilUsuarioId}/desativar`)
+}

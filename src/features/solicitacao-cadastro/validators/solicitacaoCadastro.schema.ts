@@ -1,4 +1,10 @@
 import * as yup from 'yup'
+import { verificarCpfDisponivel } from '@/services/SolicitacaoCadastroService'
+
+const MENSAGENS_CPF_EM_USO: Record<string, string> = {
+  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está em uso. Faça login ou solicite recuperação de acesso.',
+  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde o retorno.',
+}
 
 /**
  * Valida CPF conforme algoritmo oficial (dígitos verificadores)
@@ -45,22 +51,32 @@ export const SolicitacaoCadastroSchema = yup.object({
     .matches(regexSomenteLetras, 'Nome deve conter apenas letras'),
   CPF: yup
     .string()
-    .required('CPF é obrigatório')
+    .required('Informe o CPF.')
     .trim()
-    .test('cpf-valido', 'CPF inválido', (value) => {
+    .test('cpf-valido', 'CPF inválido. Confira os números digitados.', (value) => {
       if (!value) return false
       return validarCPF(value)
+    })
+    .test('cpf-disponivel', 'Verificando...', async (value) => {
+      if (!value || !validarCPF(value)) return true
+      const digitos = value.replace(/\D/g, '')
+      if (digitos.length !== 11) return true
+      try {
+        const res = await verificarCpfDisponivel(digitos)
+        if (!res.disponivel) {
+          throw new yup.ValidationError(MENSAGENS_CPF_EM_USO[res.mensagem] ?? res.mensagem)
+        }
+        return true
+      } catch (err) {
+        if (err instanceof yup.ValidationError) throw err
+        return true
+      }
     }),
   emailInstitucional: yup
     .string()
     .required('E-mail institucional é obrigatório')
     .trim()
-    .email('Informe um e-mail válido')
-    .test('govbr', 'E-mail deve ser corporativo (domínio .gov.br)', (value) => {
-      if (!value) return false
-      const dominio = value.split('@')[1]?.toLowerCase()
-      return !!dominio?.endsWith('.gov.br')
-    }),
+    .email('Informe um e-mail válido'),
   telefoneInstitucional: yup
     .string()
     .required('Telefone institucional é obrigatório')
@@ -115,12 +131,7 @@ export const SolicitacaoCadastroSchemaGovBr = yup.object({
     .string()
     .required('E-mail institucional é obrigatório')
     .trim()
-    .email('Informe um e-mail válido')
-    .test('govbr', 'E-mail deve ser corporativo (domínio .gov.br)', (value) => {
-      if (!value) return false
-      const dominio = value.split('@')[1]?.toLowerCase()
-      return !!dominio?.endsWith('.gov.br')
-    }),
+    .email('Informe um e-mail válido'),
   telefoneInstitucional: yup
     .string()
     .required('Telefone institucional é obrigatório')
@@ -178,12 +189,7 @@ export const DadosSolicitanteSchema = yup.object({
     .string()
     .required('E-mail institucional é obrigatório')
     .trim()
-    .email('Informe um e-mail válido')
-    .test('govbr', 'E-mail deve ser corporativo (domínio .gov.br)', (value) => {
-      if (!value) return false
-      const dominio = value.split('@')[1]?.toLowerCase()
-      return !!dominio?.endsWith('.gov.br')
-    }),
+    .email('Informe um e-mail válido'),
   telefoneInstitucional: yup
     .string()
     .required('Telefone institucional é obrigatório')
@@ -216,12 +222,7 @@ export const SolicitacaoCadastroSchemaEdicao = yup.object({
     .string()
     .required('E-mail institucional é obrigatório')
     .trim()
-    .email('Informe um e-mail válido')
-    .test('govbr', 'E-mail deve ser corporativo (domínio .gov.br)', (value) => {
-      if (!value) return false
-      const dominio = value.split('@')[1]?.toLowerCase()
-      return !!dominio?.endsWith('.gov.br')
-    }),
+    .email('Informe um e-mail válido'),
   telefoneInstitucional: yup
     .string()
     .required('Telefone institucional é obrigatório')
@@ -282,4 +283,25 @@ export const InformacaoSolicitanteSchema = yup.object({
     .string()
     .required('Cargo é obrigatório')
     .trim(),
+})
+
+/**
+ * Schema para cadastro via painel Gerenciar Cadastros (usuário logado cadastra outro).
+ * Inclui perfil e vigência obrigatórios.
+ */
+export const SolicitacaoCadastroSchemaGerenciar = SolicitacaoCadastroSchema.shape({
+  perfil: yup
+    .mixed()
+    .required('Selecione o perfil.')
+    .test('perfil-valido', 'Selecione o perfil.', (v) => v != null && v !== ''),
+  vigenciaInicio: yup.string().trim().required('Informe a vigência inicial.'),
+  vigenciaFim: yup
+    .string()
+    .trim()
+    .test('vigencia-fim', 'A data de fim deve ser igual ou posterior à data de início.', (value, ctx) => {
+      if (!value) return true
+      const inicio = ctx.parent.vigenciaInicio as string
+      if (!inicio) return true
+      return value >= inicio
+    }),
 })

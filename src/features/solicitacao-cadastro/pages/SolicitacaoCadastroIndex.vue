@@ -1,29 +1,21 @@
 <template>
-  <DefaultLayout>
+  <PublicLayout full-width>
     <section class="container-solicitacao">
       <div class="titulo">
         <h1 class="color-text text-weight-semi-bold">Solicitação de cadastro</h1>
       </div>
-      <div v-for="n in notifications" :key="n.id" class="mb-3">
-        <div class="br-message" :class="n.type">
-          <div class="icon"><i class="fas fa-info-circle" aria-hidden="true"></i></div>
-          <div class="content" role="alert">{{ n.message }}</div>
-          <div class="close">
-            <button class="br-button circle small" type="button" aria-label="Fechar" @click="removeNotification(n.id)">
-              <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-      <div v-if="solicitacaoEnviada" class="br-message success mb-3" role="alert">
-        <div class="icon"><i class="fas fa-check-circle" aria-hidden="true"></i></div>
-        <div class="content">
-          Solicitação de cadastro enviada com sucesso. Aguarde a análise.
-        </div>
-      </div>
-      <Form :key="formKey" :validation-schema="SolicitacaoCadastroSchemaGovBr" :initial-values="initialValues" @submit="onSubmit">
-        <Card title="Dados do(a) solicitante" subtitle="Nome e CPF são obtidos pelo GOV.BR">
-          <FormularioDadosSolicitante :modo-gov-br="true" />
+      <Form
+        v-slot="{ values: formValues }"
+        :key="formKey"
+        :validation-schema="schemaSolicitacao"
+        :initial-values="initialValues"
+        @submit="onSubmit"
+      >
+        <Card
+          title="Dados do(a) solicitante"
+          subtitle="Preencha seus dados para solicitar acesso"
+        >
+          <FormularioDadosSolicitante :modo-gov-br="false" />
         </Card>
         <Card title="Informação do(a) solicitante" subtitle="Informações de atuação institucional do solicitante"
           custom-class="mt-4">
@@ -39,76 +31,15 @@
         </Card>
         <div class="mt-3 actions">
           <button class="br-button secondary mr-3" type="button" @click="onCancel">Cancelar</button>
-          <button class="br-button primary mr-3" type="submit" :disabled="isSubmitting">
+          <button
+            class="br-button primary mr-3"
+            type="submit"
+            :disabled="isSubmitting || !camposObrigatoriosPreenchidos(formValues)"
+          >
             {{ isSubmitting ? 'Enviando...' : 'Confirmar/Enviar solicitação' }}
           </button>
         </div>
       </Form>
-
-      <Card title="Solicitações enviadas" subtitle="Listagem das solicitações de cadastro" custom-class="mt-4">
-        <div class="listagem-header">
-          <span class="text-muted small">id | nome | status | created_at</span>
-          <button
-            class="br-button secondary small"
-            type="button"
-            :disabled="carregandoLista"
-            @click="carregarLista"
-            title="Atualizar listagem"
-          >
-            <i class="fas fa-sync-alt" :class="{ 'fa-spin': carregandoLista }" aria-hidden="true"></i>
-            Atualizar
-          </button>
-        </div>
-        <div v-if="carregandoLista" class="p-3 text-center">Carregando...</div>
-        <div v-else-if="solicitacoes.length === 0" class="p-3 text-center text-muted">
-          Nenhuma solicitação encontrada.
-        </div>
-        <div v-else class="table-responsive">
-          <table class="br-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Status</th>
-                <th>Data</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="s in solicitacoes" :key="s.id">
-                <td>{{ s.id }}</td>
-                <td>{{ s.nome }}</td>
-                <td>
-                  <span class="br-tag" :class="statusClass(s.status)">{{ statusLabel(s.status) }}</span>
-                </td>
-                <td>{{ formatarData(s.created_at) }}</td>
-                <td>
-                  <button class="br-button secondary small" type="button" @click="visualizar(s.id)" title="Visualizar">
-                    <i class="fas fa-eye" aria-hidden="true"></i>
-                  </button>
-                  <button
-                    class="br-button secondary small ml-1"
-                    type="button"
-                    @click="editar(s.id)"
-                    title="Editar"
-                    :disabled="s.status !== 'em_analise'"
-                  >
-                    <i class="fas fa-edit" aria-hidden="true"></i>
-                  </button>
-                  <button
-                    class="br-button secondary small ml-1"
-                    type="button"
-                    @click="confirmarExcluir(s)"
-                    title="Excluir"
-                  >
-                    <i class="fas fa-trash" aria-hidden="true"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </Card>
 
       <Modal
         v-if="modalVisualizar"
@@ -168,7 +99,7 @@
         </div>
       </Modal>
     </section>
-  </DefaultLayout>
+  </PublicLayout>
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
@@ -176,12 +107,11 @@ import { Form } from 'vee-validate';
 import Card from '@/core/components/Card/Card.vue';
 import FormularioDadosSolicitante from '../components/FormularioDadosSolicitante.vue';
 import FormularioInformacaoSolicitante from '../components/FormularioInformacaoSolicitante.vue';
-import DefaultLayout from '@/layouts/DefaultLayout.vue';
+import PublicLayout from '@/layouts/PublicLayout.vue';
 import { initializeSelect } from '@/core/composables/useGov';
-import { SolicitacaoCadastroSchemaGovBr, SolicitacaoCadastroSchemaEdicao } from '../validators/solicitacaoCadastro.schema';
+import { SolicitacaoCadastroSchema, SolicitacaoCadastroSchemaEdicao } from '../validators/solicitacaoCadastro.schema';
 import {
   enviarSolicitacaoCadastro,
-  listarSolicitacoesCadastro,
   obterSolicitacaoCadastro,
   atualizarSolicitacaoCadastro,
   excluirSolicitacaoCadastro,
@@ -192,7 +122,6 @@ import {
 } from '@/services/SolicitacaoCadastroService';
 import { useNotification } from '@/core/composables/useNotification';
 import { useRouter } from 'vue-router';
-import { useAuth } from '@/core/composables/useAuth';
 import Modal from '@/core/components/Modal/Modal.vue';
 
 defineOptions({
@@ -200,16 +129,11 @@ defineOptions({
 })
 
 const router = useRouter();
-const { notifications, success, error, remove } = useNotification();
-const { user, logout } = useAuth();
+const { success, error } = useNotification();
 
-function removeNotification(id: string) {
-  remove(id);
-}
+const schemaSolicitacao = SolicitacaoCadastroSchema;
 
-const initialValues = computed(() => ({
-  nome: user.value?.name ?? '',
-  CPF: '***.***.***-**',
+const initialValues = {
   emailInstitucional: '',
   telefoneInstitucional: '',
   telefonePessoal: '',
@@ -218,14 +142,12 @@ const initialValues = computed(() => ({
   municipio: '',
   orgao: '',
   cargo: '',
-}));
+};
 
 const isSubmitting = ref(false);
-const solicitacaoEnviada = ref(false);
 const formKey = ref(0);
 
 const solicitacoes = ref<SolicitacaoCadastroItem[]>([]);
-const carregandoLista = ref(true);
 const modalVisualizar = ref<number | null>(null);
 const detalheVisualizar = ref<SolicitacaoCadastroDetalhe | null>(null);
 const modalEditar = ref<number | null>(null);
@@ -234,18 +156,6 @@ const editando = ref(false);
 const modalExcluir = ref<boolean>(false);
 const solicitacaoExcluir = ref<SolicitacaoCadastroItem | null>(null);
 const excluindo = ref(false);
-
-async function carregarLista() {
-  carregandoLista.value = true;
-  try {
-    solicitacoes.value = await listarSolicitacoesCadastro();
-  } catch {
-    solicitacoes.value = [];
-    error('Não foi possível carregar a listagem de solicitações. Verifique se o backend está em execução.');
-  } finally {
-    carregandoLista.value = false;
-  }
-}
 
 function formatarData(data: string | undefined) {
   if (!data) return '-';
@@ -337,7 +247,6 @@ async function executarExcluir() {
     await excluirSolicitacaoCadastro(solicitacaoExcluir.value.id);
     success('Solicitação excluída com sucesso.');
     fecharModalExcluir();
-    await carregarLista();
   } catch (err: unknown) {
     const msg = err && typeof err === 'object' && 'response' in err
       ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
@@ -369,7 +278,6 @@ async function onSubmitEditar(values: Record<string, unknown>) {
     await atualizarSolicitacaoCadastro(modalEditar.value, payload);
     success('Solicitação atualizada com sucesso.');
     fecharModalEditar();
-    await carregarLista();
   } catch (err: unknown) {
     const msg = err && typeof err === 'object' && 'response' in err
       ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
@@ -382,7 +290,6 @@ async function onSubmitEditar(values: Record<string, unknown>) {
 
 async function onSubmit(values: Record<string, unknown>) {
   isSubmitting.value = true;
-  solicitacaoEnviada.value = false;
   try {
     const payload: SolicitacaoCadastroPayload = {
       nome: values.nome as string,
@@ -400,24 +307,39 @@ async function onSubmit(values: Record<string, unknown>) {
       payload.CPF = cpfVal;
     }
     await enviarSolicitacaoCadastro(payload);
-    await logout('/login?solicitacao=enviada');
+    success('Solicitação enviada com sucesso! Aguarde a análise da equipe.');
+    formKey.value++;
   } catch (err: unknown) {
     const msg = err && typeof err === 'object' && 'response' in err
       ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-      : 'Erro ao enviar solicitação. Tente novamente.';
-    error(msg || 'Erro ao enviar solicitação. Tente novamente.');
+      : 'Não foi possível enviar. Verifique os dados e tente novamente.';
+    error(msg || 'Não foi possível enviar. Verifique os dados e tente novamente.');
   } finally {
     isSubmitting.value = false;
   }
 }
 
+function camposObrigatoriosPreenchidos(values: Record<string, unknown>) {
+  const obrigatorios = [
+    'nome',
+    'CPF',
+    'emailInstitucional',
+    'telefoneInstitucional',
+    'esferaAtuacao',
+    'uf',
+    'municipio',
+    'orgao',
+    'cargo',
+  ]
+  return obrigatorios.every((campo) => String(values[campo] ?? '').trim() !== '')
+}
+
 function onCancel() {
-  router.push({ name: 'login' });
+  router.push({ name: 'home' });
 }
 
 onMounted(() => {
   initializeSelect();
-  carregarLista();
 });
 </script>
 

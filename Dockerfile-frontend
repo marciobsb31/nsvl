@@ -7,6 +7,10 @@ FROM node:20-alpine AS build
 # Define diretório de trabalho
 WORKDIR /app
 
+# Build args para variáveis Vite (API URL relativa = proxy no nginx)
+ARG VITE_API_BASE_URL=/api
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Copia arquivos de dependência primeiro (cache de camadas)
 COPY package*.json ./
 

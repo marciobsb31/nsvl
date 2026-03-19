@@ -24,7 +24,15 @@
                     v-model="CPF"
                     v-maska="modoGovBr ? undefined : '###.###.###-##'"
                     :readonly="modoGovBr"
+                    :disabled="verificandoCpf"
+                    @blur="onCpfBlur"
                 />
+                <span v-if="verificandoCpf" class="input-hint input-hint--loading">
+                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Verificando CPF...
+                </span>
+                <span v-else-if="cpfDisponivel && cpfPreenchido" class="input-hint input-hint--success">
+                    <i class="fas fa-check-circle" aria-hidden="true"></i> CPF disponível
+                </span>
                 <Feedback v-if="errorsCPF" :message="errorsCPF" type="danger" />
             </div>
         </div>
@@ -34,7 +42,7 @@
                 <input
                     id="input-email"
                     type="email"
-                    placeholder="seu.nome@orgao.gov.br"
+                    placeholder="seu.nome@email.com"
                     v-model="emailInstitucional"
                 />
                 <Feedback v-if="errorsEmail" :message="errorsEmail" type="danger" />
@@ -69,14 +77,21 @@
     </section>
 </template>
 <script setup lang="ts">
-import { useField } from 'vee-validate';
-import Feedback from '@/core/components/Feedback/Feedback.vue';
+import { ref, computed } from 'vue'
+import { useField, useForm } from 'vee-validate'
+import Feedback from '@/core/components/Feedback/Feedback.vue'
+import { verificarCpfDisponivel } from '@/services/SolicitacaoCadastroService'
+import { validarCpf } from '@/core/utils/validarCpf'
 
 defineOptions({
   name: 'FormularioDadosSolicitante'
 })
 
-const props = withDefaults(defineProps<{ modoEdicao?: boolean; modoGovBr?: boolean }>(), { modoEdicao: false, modoGovBr: false })
+const props = withDefaults(defineProps<{
+  modoEdicao?: boolean
+  modoGovBr?: boolean
+  verificarCpfEmUso?: boolean
+}>(), { modoEdicao: false, modoGovBr: false, verificarCpfEmUso: true })
 
 const { value: nome, errorMessage: errorsNome } = useField<string>('nome')
 const { value: CPF, errorMessage: errorsCPF } = useField<string>('CPF')
@@ -84,8 +99,64 @@ const { value: emailInstitucional, errorMessage: errorsEmail } = useField<string
 const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<string>('telefoneInstitucional')
 const { value: telefonePessoal, errorMessage: errorsTelPessoal } = useField<string>('telefonePessoal')
 
+const { setFieldError } = useForm()
+const verificandoCpf = ref(false)
+const cpfDisponivel = ref<boolean | null>(null)
+
+const cpfPreenchido = computed(() => {
+  const d = String(CPF.value ?? '').replace(/\D/g, '')
+  return d.length === 11
+})
+
 // Máscara dinâmica: fixo (##) ####-#### ou celular (##) #####-####
 const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
+
+const MENSAGENS_CPF_EM_USO: Record<string, string> = {
+  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está em uso. Faça login ou solicite recuperação de acesso.',
+  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde o retorno.',
+  'CPF inválido. Verifique os dígitos informados.': 'CPF inválido. Confira os números digitados.',
+  'Informe um CPF com 11 dígitos.': 'Informe os 11 dígitos do CPF.',
+}
+
+function mensagemCriativa(original: string): string {
+  return MENSAGENS_CPF_EM_USO[original] ?? original
+}
+
+async function onCpfBlur() {
+  if (props.modoGovBr || !props.verificarCpfEmUso) return
+
+  const digitos = String(CPF.value ?? '').replace(/\D/g, '')
+  if (digitos.length !== 11) {
+    cpfDisponivel.value = null
+    return
+  }
+
+  if (!validarCpf(digitos)) {
+    setFieldError('CPF', 'CPF inválido. Confira os números digitados.')
+    cpfDisponivel.value = false
+    return
+  }
+
+  verificandoCpf.value = true
+  cpfDisponivel.value = null
+  setFieldError('CPF', undefined)
+
+  try {
+    const res = await verificarCpfDisponivel(digitos)
+    if (res.disponivel) {
+      cpfDisponivel.value = true
+      setFieldError('CPF', undefined)
+    } else {
+      cpfDisponivel.value = false
+      setFieldError('CPF', mensagemCriativa(res.mensagem))
+    }
+  } catch {
+    cpfDisponivel.value = null
+    setFieldError('CPF', 'Não foi possível verificar o CPF. Tente novamente.')
+  } finally {
+    verificandoCpf.value = false
+  }
+}
 
 function filtrarSomenteLetras(event: Event) {
   const input = event.target as HTMLInputElement
@@ -95,5 +166,15 @@ function filtrarSomenteLetras(event: Event) {
 </script>
 
 <style scoped>
-
+.input-hint {
+  display: block;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+.input-hint--loading {
+  color: var(--color-secondary-07, #555);
+}
+.input-hint--success {
+  color: var(--color-success, #168821);
+}
 </style>

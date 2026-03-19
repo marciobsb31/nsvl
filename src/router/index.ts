@@ -1,13 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { solicitacaoRoutes } from '@/features/solicitacao-cadastro/solicitacaoCadastroRoutes'
 import { gerenciarSolicitacaoCadastroRoutes } from '@/features/gerenciar-solicitacao-cadastro/gerenciarSolicitacaoCadastroRoutes'
+import { useAuthStore } from '@/stores/authStore'
 
 /**
  * Roteador principal da aplicação
- *
- * Rotas protegidas usam meta.requiresAuth = true
- * O navigation guard garante que apenas usuários autenticados
- * acessem rotas protegidas, redirecionando para /login caso contrário.
  */
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,9 +13,7 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: () => import('@/features/autenticacao/pages/LoginPage.vue'),
-      meta: {
-        title: 'Entrar — NVSL',
-      },
+      meta: { title: 'Entrar — NVSL', public: true },
     },
     {
       path: '/',
@@ -71,9 +66,32 @@ const router = createRouter({
   ],
 })
 
-// Navigation guard global: título de página
-router.beforeEach((to) => {
+// Navigation guard: título e autenticação
+router.beforeEach(async (to) => {
   document.title = (to.meta.title as string) ?? 'NVSL'
+
+  const publicRoutes = ['login', 'solicitacao-cadastro']
+  if (publicRoutes.includes(to.name as string)) return true
+
+  const token = sessionStorage.getItem('nvsl_token')
+  const authStore = useAuthStore()
+
+  if (!token) {
+    return { name: 'login' }
+  }
+
+  if (!authStore.user && to.name !== 'login') {
+    try {
+      const api = (await import('@/services/ApiService')).default
+      const { data } = await api.get<Record<string, unknown>>('/user')
+      authStore.setUser(data)
+    } catch {
+      sessionStorage.removeItem('nvsl_token')
+      return { name: 'login' }
+    }
+  }
+
+  return true
 })
 
 export default router

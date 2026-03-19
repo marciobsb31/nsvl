@@ -12,47 +12,68 @@
       </button>
     </div>
 
-    <Form :validation-schema="schema" :initial-values="initialValues" @submit="onSubmit">
+    <form novalidate @submit="handleSubmit(onSubmit, onInvalid)">
       <div class="formulario-secao">
         <h3 class="secao-titulo">Dados do solicitante</h3>
         <div class="secao-grid">
           <div class="br-input mb-2">
-            <label for="cad-nome">Nome</label>
+            <label for="cad-nome">Nome<span class="obrigatorio">*</span></label>
             <input
               id="cad-nome"
               type="text"
-              placeholder="(GOV.BR) Nome do Usuário"
+              placeholder="Nome de usuário."
               v-model="nome"
+              required
+              :aria-invalid="!!errorsNome"
+              aria-describedby="cad-nome-err"
+              @blur="() => validateField('nome')"
             />
+            <Feedback v-if="errorsNome" id="cad-nome-err" :message="errorsNome" type="danger" />
           </div>
           <div class="br-input mb-2">
-            <label for="cad-cpf">CPF</label>
+            <label for="cad-cpf">CPF<span class="obrigatorio">*</span></label>
             <input
               id="cad-cpf"
               type="text"
               placeholder="000.000.000-00"
               v-model="cpf"
               v-maska="'###.###.###-##'"
+              required
+              :aria-invalid="!!errorsCpf"
+              aria-describedby="cad-cpf-err cad-cpf-hint"
+              @blur="() => validateField('CPF')"
             />
+            <Feedback v-if="errorsCpf" id="cad-cpf-err" :message="errorsCpf" type="danger" />
+            <span id="cad-cpf-hint" class="input-hint">Use um CPF ainda não cadastrado no sistema.</span>
           </div>
           <div class="br-input mb-2">
             <label for="cad-email">E-mail Institucional<span class="obrigatorio">*</span></label>
             <input
               id="cad-email"
               type="email"
-              placeholder="seu.nome@orgao.gov.br"
+              placeholder="seu.nome@email.com"
               v-model="emailInstitucional"
+              required
+              :aria-invalid="!!errorsEmail"
+              aria-describedby="cad-email-err"
+              @blur="() => validateField('emailInstitucional')"
             />
+            <Feedback v-if="errorsEmail" id="cad-email-err" :message="errorsEmail" type="danger" />
           </div>
           <div class="br-input mb-2">
             <label for="cad-tel-inst">Telefone Institucional<span class="obrigatorio">*</span></label>
             <input
               id="cad-tel-inst"
               type="tel"
-              placeholder="(00) 00000-0000"
+              placeholder="(00) 0000-0000"
               v-model="telefoneInstitucional"
-              v-maska="'(##) #####-####'"
+              v-maska="telefoneMaskInst"
+              required
+              :aria-invalid="!!errorsTelInst"
+              aria-describedby="cad-tel-inst-err"
+              @blur="() => validateField('telefoneInstitucional')"
             />
+            <Feedback v-if="errorsTelInst" id="cad-tel-inst-err" :message="errorsTelInst" type="danger" />
           </div>
           <div class="br-input mb-2">
             <label for="cad-tel-pessoal">Telefone Pessoal (opcional)</label>
@@ -61,8 +82,12 @@
               type="tel"
               placeholder="(00) 00000-0000"
               v-model="telefonePessoal"
-              v-maska="'(##) #####-####'"
+              v-maska="telefoneMaskPessoal"
+              :aria-invalid="!!errorsTelPessoal"
+              aria-describedby="cad-tel-pessoal-err"
+              @blur="() => validateField('telefonePessoal')"
             />
+            <Feedback v-if="errorsTelPessoal" id="cad-tel-pessoal-err" :message="errorsTelPessoal" type="danger" />
           </div>
         </div>
       </div>
@@ -72,31 +97,56 @@
         <p class="secao-subtitulo">Informações de atuação institucional do solicitante.</p>
         <div class="secao-info-solicitante">
           <div class="secao-linha">
-            <SelectAutocomplete
-              v-model="esferaAtuacao"
-              label="Esfera de atuação"
-              placeholder="Selecione"
-              :options="OPCOES_ESFERA"
-            />
-            <SelectAutocomplete
-              v-model="uf"
-              label="UF"
-              placeholder="Selecione"
-              :options="OPCOES_UF"
-            />
-            <div class="br-input mb-2">
-              <label for="cad-municipio">Município<span class="obrigatorio">*</span></label>
-              <input id="cad-municipio" type="text" placeholder="Município" v-model="municipio" />
+            <div class="field-with-feedback">
+              <SelectAutocomplete
+                ref="esferaRef"
+                v-model="esferaAtuacao"
+                label="Esfera de atuação"
+                placeholder="Selecione"
+                :options="opcoesEsferaFiltradas"
+                :disabled="isEsferaBloqueada"
+                input-id="cad-esfera"
+                required
+              />
+              <Feedback v-if="errorsEsfera" :message="errorsEsfera" type="danger" />
+            </div>
+            <div class="field-with-feedback">
+              <SelectAutocomplete
+                ref="ufRef"
+                v-model="uf"
+                label="Estado (UF)"
+                placeholder="Selecione"
+                :options="opcoesUfFiltradas"
+                :disabled="isUfBloqueada"
+                input-id="cad-uf"
+                required
+              />
+              <Feedback v-if="errorsUf" :message="errorsUf" type="danger" />
+            </div>
+            <div class="field-with-feedback">
+              <SelectAutocomplete
+                ref="municipioRef"
+                v-model="municipio"
+                label="Município"
+                placeholder="Selecione o município."
+                :options="opcoesMunicipioFiltradas"
+                :disabled="!uf || isMunicipioBloqueado"
+                input-id="cad-municipio"
+                required
+              />
+              <Feedback v-if="uf && errorsMunicipio" :message="errorsMunicipio" type="danger" />
             </div>
           </div>
           <div class="secao-linha">
             <div class="br-input mb-2">
               <label for="cad-orgao">Órgão de atuação<span class="obrigatorio">*</span></label>
-              <input id="cad-orgao" type="text" placeholder="Órgão" v-model="orgao" />
+              <input id="cad-orgao" type="text" placeholder="Órgão" v-model="orgao" required :aria-invalid="!!errorsOrgao" @blur="() => validateField('orgao')" />
+              <Feedback v-if="errorsOrgao" :message="errorsOrgao" type="danger" />
             </div>
             <div class="br-input mb-2">
               <label for="cad-cargo">Cargo/Função<span class="obrigatorio">*</span></label>
-              <input id="cad-cargo" type="text" placeholder="Cargo ou função" v-model="cargo" />
+              <input id="cad-cargo" type="text" placeholder="Cargo ou função" v-model="cargo" required :aria-invalid="!!errorsCargo" @blur="() => validateField('cargo')" />
+              <Feedback v-if="errorsCargo" :message="errorsCargo" type="danger" />
             </div>
           </div>
         </div>
@@ -105,31 +155,49 @@
       <div class="formulario-secao">
         <h3 class="secao-titulo">Dados de Perfil</h3>
         <div class="secao-perfil-linha">
-          <SelectAutocomplete
-            v-model="perfil"
-            label="Perfil"
-            placeholder="Selecione"
-            :options="OPCOES_PERFIL"
-          />
-          <div class="br-input mb-2">
-            <label for="cad-vigencia-inicio">Vigência (início)</label>
-            <input
-              id="cad-vigencia-inicio"
-              type="text"
-              placeholder="dd/mm/aaaa"
-              v-model="vigenciaInicio"
-              v-maska="'##/##/####'"
+          <div class="field-with-feedback">
+            <SelectAutocomplete
+              ref="perfilRef"
+              v-model="perfil"
+              label="Perfil"
+              placeholder="Selecione o perfil"
+              :options="opcoesPerfilFiltradas"
+              input-id="cad-perfil"
+              required
             />
+            <Feedback v-if="errorsPerfil" :message="errorsPerfil" type="danger" />
+          </div>
+          <div class="br-input mb-2">
+            <label for="cad-vigencia-inicio">Vigência (início)<span class="obrigatorio">*</span></label>
+            <div class="input-date-wrapper">
+              <input
+                id="cad-vigencia-inicio"
+                type="date"
+                v-model="vigenciaInicio"
+                :max="vigenciaFim || undefined"
+                aria-label="Data de início da vigência"
+                :aria-invalid="!!errorsVigenciaInicio"
+                @blur="() => validateField('vigenciaInicio')"
+              />
+              <i class="fas fa-calendar-alt input-date-icon" aria-hidden="true"></i>
+            </div>
+            <Feedback v-if="errorsVigenciaInicio" :message="errorsVigenciaInicio" type="danger" />
           </div>
           <div class="br-input mb-2">
             <label for="cad-vigencia-fim">Vigência (fim)</label>
-            <input
-              id="cad-vigencia-fim"
-              type="text"
-              placeholder="dd/mm/aaaa"
-              v-model="vigenciaFim"
-              v-maska="'##/##/####'"
-            />
+            <div class="input-date-wrapper">
+              <input
+                id="cad-vigencia-fim"
+                type="date"
+                v-model="vigenciaFim"
+                :min="vigenciaInicio || undefined"
+                aria-label="Data de fim da vigência"
+                :aria-invalid="!!errorsVigenciaFim"
+                @blur="() => validateField('vigenciaFim')"
+              />
+              <i class="fas fa-calendar-alt input-date-icon" aria-hidden="true"></i>
+            </div>
+            <Feedback v-if="errorsVigenciaFim" :message="errorsVigenciaFim" type="danger" />
           </div>
         </div>
       </div>
@@ -138,28 +206,52 @@
         <button class="br-button secondary" type="button" @click="$emit('voltar')">
           Cancelar
         </button>
-        <button class="br-button primary" type="submit" :disabled="enviando">
+        <button class="br-button primary" type="submit" :disabled="enviando || !camposObrigatoriosPreenchidos">
           {{ enviando ? 'Confirmando...' : 'Confirmar' }}
         </button>
       </div>
-    </Form>
+    </form>
+
+    <Modal
+      v-if="modalErroVisivel"
+      title="Dados incompletos"
+      :content="mensagemErroModal"
+      :show-actions="true"
+      @close="fecharModalErro"
+      @confirm="fecharModalErro"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Form, useField } from 'vee-validate'
+import { ref, onMounted, watch, nextTick, computed } from 'vue'
+import { useForm, useField } from 'vee-validate'
 import * as yup from 'yup'
 import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
-import { OPCOES_ESFERA, OPCOES_UF } from '../constants/opcoesFiltro'
+import Modal from '@/core/components/Modal/Modal.vue'
+import Feedback from '@/core/components/Feedback/Feedback.vue'
+import { useEsferas } from '@/core/composables/useEsferas'
+import { useLocalidades } from '@/core/composables/useLocalidades'
+import { usePerfis } from '@/core/composables/usePerfis'
+import { validarCpf } from '@/core/utils/validarCpf'
+import type { PerfilOption } from '@/services/PerfilService'
 
-const OPCOES_PERFIL = [
-  { value: 'gestor', label: 'Gestor' },
-  { value: 'analista', label: 'Analista' },
-  { value: 'visualizador', label: 'Visualizador' },
-]
+const regexSomenteLetras = /^[a-zA-ZáàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\s]+$/
 
 defineOptions({ name: 'FormularioCadastrarUsuario' })
+
+const props = withDefaults(defineProps<{
+  usuarioLogado?: {
+    id?: number
+    name?: string
+    email?: string
+    esfera_atuacao?: string
+    uf_lotacao?: string
+    municipio_lotacao?: string
+  } | null
+}>(), {
+  usuarioLogado: null,
+})
 
 const emit = defineEmits<{
   (e: 'voltar'): void
@@ -167,21 +259,73 @@ const emit = defineEmits<{
 }>()
 
 const enviando = ref(false)
+const modalErroVisivel = ref(false)
+const mensagemErroModal = ref('')
+
+const esferaRef = ref<InstanceType<typeof SelectAutocomplete> | null>(null)
+const ufRef = ref<InstanceType<typeof SelectAutocomplete> | null>(null)
+const municipioRef = ref<InstanceType<typeof SelectAutocomplete> | null>(null)
+const perfilRef = ref<InstanceType<typeof SelectAutocomplete> | null>(null)
+
+const telefoneMaskInst = '(##) ####-####'
+const telefoneMaskPessoal = '(##) #####-####'
 
 const schema = yup.object({
-  nome: yup.string(),
-  CPF: yup.string(),
-  emailInstitucional: yup.string().email('E-mail inválido').required('Obrigatório'),
-  telefoneInstitucional: yup.string().required('Obrigatório'),
-  telefonePessoal: yup.string(),
-  esferaAtuacao: yup.string().required('Obrigatório'),
-  uf: yup.string().required('Obrigatório'),
-  municipio: yup.string().required('Obrigatório'),
-  orgao: yup.string().required('Obrigatório'),
-  cargo: yup.string().required('Obrigatório'),
-  perfil: yup.string(),
-  vigenciaInicio: yup.string(),
-  vigenciaFim: yup.string(),
+  nome: yup
+    .string()
+    .required('Informe o nome do usuário.')
+    .trim()
+    .matches(regexSomenteLetras, 'O nome deve conter apenas letras.'),
+  CPF: yup
+    .string()
+    .required('Informe o CPF.')
+    .trim()
+    .test('cpf-valido', 'CPF inválido. Verifique os dígitos informados.', (value) => validarCpf(value)),
+  emailInstitucional: yup
+    .string()
+    .required('Informe o e-mail institucional.')
+    .trim()
+    .email('Informe um e-mail válido.'),
+  telefoneInstitucional: yup
+    .string()
+    .required('Informe o telefone institucional.')
+    .trim()
+    .test('telefone', 'Informe um telefone válido com 10 ou 11 dígitos (ex: (11) 3333-4444 ou (11) 99999-8888).', (value) => {
+      if (!value) return false
+      const digitos = value.replace(/\D/g, '')
+      return digitos.length >= 10 && digitos.length <= 11
+    }),
+  telefonePessoal: yup
+    .string()
+    .trim()
+    .test('telefone', 'Informe um telefone válido com 11 dígitos (ex: (11) 99999-8888).', (value) => {
+      if (!value) return true
+      const digitos = value.replace(/\D/g, '')
+      return digitos.length === 11
+    }),
+  esferaAtuacao: yup.string().required('Selecione a esfera de atuação.').trim(),
+  uf: yup.string().required('Selecione o estado (UF).').trim(),
+  municipio: yup
+    .string()
+    .trim()
+    .when('uf', {
+      is: (uf: string) => !!uf?.trim(),
+      then: (s) => s.required('Selecione o município.'),
+      otherwise: (s) => s,
+    }),
+  orgao: yup.string().required('Informe o órgão de atuação.').trim(),
+  cargo: yup.string().required('Informe o cargo ou função.').trim(),
+  perfil: yup.mixed().required('Selecione o perfil.').test('perfil-valido', 'Selecione o perfil.', (v) => v != null && v !== ''),
+  vigenciaInicio: yup.string().trim().required('Informe a vigência inicial.'),
+  vigenciaFim: yup
+    .string()
+    .trim()
+    .test('vigencia-fim', 'A data de fim deve ser igual ou posterior à data de início.', (value, ctx) => {
+      if (!value) return true
+      const inicio = ctx.parent.vigenciaInicio as string
+      if (!inicio) return true
+      return value >= inicio
+    }),
 })
 
 const initialValues = {
@@ -195,32 +339,228 @@ const initialValues = {
   municipio: '',
   orgao: '',
   cargo: '',
-  perfil: '',
+  perfil: null,
   vigenciaInicio: '',
   vigenciaFim: '',
 }
 
-const { value: nome } = useField<string>('nome')
-const { value: cpf } = useField<string>('CPF')
-const { value: emailInstitucional } = useField<string>('emailInstitucional')
-const { value: telefoneInstitucional } = useField<string>('telefoneInstitucional')
-const { value: telefonePessoal } = useField<string>('telefonePessoal')
-const { value: esferaAtuacao } = useField<string>('esferaAtuacao')
-const { value: uf } = useField<string>('uf')
-const { value: municipio } = useField<string>('municipio')
-const { value: orgao } = useField<string>('orgao')
-const { value: cargo } = useField<string>('cargo')
-const { value: perfil } = useField<string>('perfil')
-const { value: vigenciaInicio } = useField<string>('vigenciaInicio')
-const { value: vigenciaFim } = useField<string>('vigenciaFim')
+const { handleSubmit, validateField } = useForm({
+  validationSchema: schema,
+  initialValues,
+})
+
+const { value: nome, errorMessage: errorsNome } = useField<string>('nome')
+const { value: cpf, errorMessage: errorsCpf } = useField<string>('CPF')
+const { value: emailInstitucional, errorMessage: errorsEmail } = useField<string>('emailInstitucional')
+const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<string>('telefoneInstitucional')
+const { value: telefonePessoal, errorMessage: errorsTelPessoal } = useField<string>('telefonePessoal')
+const { value: esferaAtuacao, errorMessage: errorsEsfera } = useField<string>('esferaAtuacao')
+const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
+const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
+
+const { opcoesUf, opcoesMunicipio, carregarUfs } = useLocalidades(uf)
+const { opcoesEsfera, carregarEsferas } = useEsferas()
+const { opcoesPerfil, carregarPerfis } = usePerfis()
+const esferaUsuarioLogado = computed(() => String(props.usuarioLogado?.esfera_atuacao ?? '').toLowerCase())
+const isEsferaBloqueada = computed(() => esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal')
+const isUfBloqueada = computed(() => esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal')
+const isMunicipioBloqueado = computed(() => esferaUsuarioLogado.value === 'municipal')
+const opcoesEsferaFiltradas = computed(() => {
+  if (esferaUsuarioLogado.value === 'estadual') {
+    return opcoesEsfera.value.filter((o) => String(o.value).toLowerCase() === 'estadual')
+  }
+  if (esferaUsuarioLogado.value === 'municipal') {
+    return opcoesEsfera.value.filter((o) => String(o.value).toLowerCase() === 'municipal')
+  }
+  return opcoesEsfera.value
+})
+const opcoesUfFiltradas = computed(() => {
+  if (isUfBloqueada.value && props.usuarioLogado?.uf_lotacao) {
+    return opcoesUf.value.filter((o) => String(o.value).toUpperCase() === String(props.usuarioLogado?.uf_lotacao).toUpperCase())
+  }
+  return opcoesUf.value
+})
+const opcoesMunicipioFiltradas = computed(() => {
+  if (isMunicipioBloqueado.value && props.usuarioLogado?.municipio_lotacao) {
+    return opcoesMunicipio.value.filter(
+      (o) => String(o.label).toLowerCase() === String(props.usuarioLogado?.municipio_lotacao).toLowerCase()
+    )
+  }
+  return opcoesMunicipio.value
+})
+const opcoesPerfilFiltradas = computed(() => {
+  if (esferaUsuarioLogado.value === 'estadual') {
+    return opcoesPerfil.value.filter((p) => String(p.label).toLowerCase().includes('estadual'))
+  }
+  if (esferaUsuarioLogado.value === 'municipal') {
+    return opcoesPerfil.value.filter((p) => String(p.label).toLowerCase().includes('municipal'))
+  }
+  return opcoesPerfil.value
+})
+
+onMounted(() => {
+  carregarUfs()
+  carregarEsferas()
+  carregarPerfis()
+})
+
+watch(uf, () => {
+  municipio.value = ''
+}, { immediate: true })
+
+watch(
+  () => props.usuarioLogado,
+  (usuario) => {
+    if (!usuario) return
+
+    if (esferaUsuarioLogado.value === 'estadual') {
+      esferaAtuacao.value = 'estadual'
+      if (usuario.uf_lotacao) uf.value = usuario.uf_lotacao
+      return
+    }
+
+    if (esferaUsuarioLogado.value === 'municipal') {
+      esferaAtuacao.value = 'municipal'
+      if (usuario.uf_lotacao) uf.value = usuario.uf_lotacao
+      if (usuario.municipio_lotacao) municipio.value = usuario.municipio_lotacao
+    }
+  },
+  { immediate: true, deep: true }
+)
+
+watch(opcoesPerfilFiltradas, (opcoes) => {
+  if (!opcoes.length) {
+    perfil.value = null
+    return
+  }
+  if (perfil.value == null) return
+  const existe = opcoes.some((op) => String(op.value) === String(perfil.value))
+  if (!existe) perfil.value = null
+})
+
+watch(opcoesMunicipioFiltradas, (opcoes) => {
+  if (!isMunicipioBloqueado.value) return
+  const municipioLotacao = String(props.usuarioLogado?.municipio_lotacao ?? '')
+  if (!municipioLotacao) return
+  const opcao = opcoes.find((o) => String(o.label).toLowerCase() === municipioLotacao.toLowerCase())
+  if (opcao) municipio.value = String(opcao.value ?? opcao.label)
+})
+
+const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
+const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
+const { value: perfil, errorMessage: errorsPerfil } = useField<string | number | null>('perfil')
+const { value: vigenciaInicio, errorMessage: errorsVigenciaInicio } = useField<string>('vigenciaInicio')
+const { value: vigenciaFim, errorMessage: errorsVigenciaFim } = useField<string>('vigenciaFim')
+const camposObrigatoriosPreenchidos = computed(() => {
+  const obrigatoriosTexto = [
+    nome.value,
+    cpf.value,
+    emailInstitucional.value,
+    telefoneInstitucional.value,
+    esferaAtuacao.value,
+    uf.value,
+    municipio.value,
+    orgao.value,
+    cargo.value,
+    vigenciaInicio.value,
+  ]
+  const textosOk = obrigatoriosTexto.every((valor) => String(valor ?? '').trim() !== '')
+  const perfilOk = perfil.value !== null && String(perfil.value).trim() !== ''
+  return textosOk && perfilOk
+})
+
+const MAPA_CAMPO_PARA_FOCO: Record<string, string> = {
+  nome: 'cad-nome',
+  CPF: 'cad-cpf',
+  emailInstitucional: 'cad-email',
+  telefoneInstitucional: 'cad-tel-inst',
+  telefonePessoal: 'cad-tel-pessoal',
+  esferaAtuacao: 'focusEsfera',
+  uf: 'focusUf',
+  municipio: 'focusMunicipio',
+  orgao: 'cad-orgao',
+  cargo: 'cad-cargo',
+  perfil: 'focusPerfil',
+  vigenciaInicio: 'cad-vigencia-inicio',
+  vigenciaFim: 'cad-vigencia-fim',
+}
+
+function focusarCampo(campo: string) {
+  nextTick(() => {
+    const alvo = MAPA_CAMPO_PARA_FOCO[campo]
+    if (typeof alvo === 'string' && alvo.startsWith('cad-')) {
+      const el = document.getElementById(alvo)
+      el?.focus()
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    } else if (alvo === 'focusEsfera') {
+      esferaRef.value?.focus()
+    } else if (alvo === 'focusUf') {
+      ufRef.value?.focus()
+    } else if (alvo === 'focusMunicipio') {
+      municipioRef.value?.focus()
+    } else if (alvo === 'focusPerfil') {
+      perfilRef.value?.focus()
+    }
+  })
+}
+
+function onInvalid(ctx: { errors: Partial<Record<string, string>> }) {
+  const erros = ctx.errors
+  const primeiroCampo = Object.keys(erros)[0]
+  const mensagem = primeiroCampo ? (erros[primeiroCampo] ?? 'Preencha os campos obrigatórios.') : 'Preencha os campos obrigatórios.'
+  mensagemErroModal.value = mensagem
+  modalErroVisivel.value = true
+  if (primeiroCampo) focusarCampo(primeiroCampo)
+}
+
+function fecharModalErro() {
+  modalErroVisivel.value = false
+  mensagemErroModal.value = ''
+}
 
 async function onSubmit(values: Record<string, unknown>) {
+  const erroRegra = validarHierarquiaNoFrontend(values)
+  if (erroRegra) {
+    mensagemErroModal.value = erroRegra
+    modalErroVisivel.value = true
+    return
+  }
+
   enviando.value = true
   try {
     emit('confirmar', values)
   } finally {
     enviando.value = false
   }
+}
+
+function validarHierarquiaNoFrontend(values: Record<string, unknown>): string | null {
+  const esfera = String(values.esferaAtuacao ?? '').toLowerCase()
+  const ufValor = String(values.uf ?? '').toUpperCase()
+  const municipioValor = String(values.municipio ?? '').toLowerCase().trim()
+  const perfilSelecionado = opcoesPerfil.value.find((op: PerfilOption) => String(op.value) === String(values.perfil ?? ''))
+  const tipoPerfil = inferirTipoPerfilPorNome(perfilSelecionado?.label ?? '')
+
+  if (esferaUsuarioLogado.value === 'estadual') {
+    if (tipoPerfil !== 'estadual' || esfera !== 'estadual') return 'Acesso não permitido.'
+    if (ufValor !== String(props.usuarioLogado?.uf_lotacao ?? '').toUpperCase()) return 'Acesso não permitido.'
+  }
+
+  if (esferaUsuarioLogado.value === 'municipal') {
+    if (tipoPerfil !== 'municipal' || esfera !== 'municipal') return 'Acesso não permitido.'
+    if (ufValor !== String(props.usuarioLogado?.uf_lotacao ?? '').toUpperCase()) return 'Acesso não permitido.'
+    if (municipioValor !== String(props.usuarioLogado?.municipio_lotacao ?? '').toLowerCase().trim()) return 'Acesso não permitido.'
+  }
+
+  return null
+}
+
+function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'municipal' | 'desconhecido' {
+  const label = nome.toLowerCase()
+  if (label.includes('nacional')) return 'federal'
+  if (label.includes('estadual')) return 'estadual'
+  if (label.includes('municipal')) return 'municipal'
+  return 'desconhecido'
 }
 </script>
 
@@ -298,6 +638,37 @@ async function onSubmit(values: Record<string, unknown>) {
 
 .obrigatorio {
   color: var(--color-primary-default, #1351b4);
+}
+
+.input-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-secondary-07, #555);
+  margin-top: 0.25rem;
+}
+
+.field-with-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Campos de data com ícone de calendário */
+.input-date-wrapper {
+  position: relative;
+}
+
+.input-date-wrapper input[type="date"] {
+  padding-right: 2.5rem;
+}
+
+.input-date-icon {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-secondary-06, #888);
+  pointer-events: none;
 }
 
 .formulario-acoes {

@@ -1,5 +1,5 @@
 <template>
-  <div class="br-select mb-2 select-autocomplete" :class="{ 'is-open': isOpen }">
+  <div class="mb-2 select-autocomplete" :class="{ 'is-open': isOpen }">
     <div class="br-input">
       <label :for="inputId">
         {{ label }}
@@ -83,15 +83,17 @@ const props = withDefaults(
     required?: boolean
     modelValue?: string | number | null
     disabled?: boolean
+    /** ID do input para foco e acessibilidade (ex: cad-esfera) */
+    inputId?: string
   }>(),
-  { required: false, modelValue: null, disabled: false }
+  { required: false, modelValue: null, disabled: false, inputId: undefined }
 )
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string | number | null): void
 }>()
 
-const inputId = `select-ac-${props.label.replace(/\s/g, '-')}-${Math.random().toString(36).slice(2, 8)}`
+const inputId = props.inputId ?? `select-ac-${props.label.replace(/\s/g, '-')}-${Math.random().toString(36).slice(2, 8)}`
 const inputRef = ref<HTMLInputElement | null>(null)
 const isOpen = ref(false)
 const searchText = ref('')
@@ -131,27 +133,19 @@ function onInput(e: Event) {
 
 function onFocus() {
   isOpen.value = true
-  if (!searchText.value && props.modelValue != null) {
-    const selected = props.options.find((o) => o.value === props.modelValue)
-    searchText.value = selected?.label ?? ''
-  }
+  highlightedIndex.value = 0
 }
 
 function onBlur() {
   setTimeout(() => {
     isOpen.value = false
-    if (props.modelValue != null) {
-      const selected = props.options.find((o) => o.value === props.modelValue)
-      searchText.value = selected?.label ?? ''
-    } else {
-      searchText.value = ''
-    }
+    searchText.value = ''
   }, 200)
 }
 
 function selectOption(option: SelectAutocompleteOption) {
   emit('update:modelValue', option.value)
-  searchText.value = option.label
+  searchText.value = ''
   isOpen.value = false
 }
 
@@ -193,6 +187,12 @@ function onListKeydown(e: KeyboardEvent) {
   else if (e.key === 'Enter') selectHighlighted()
   else if (e.key === 'Escape') close()
 }
+
+function focus() {
+  inputRef.value?.focus()
+}
+
+defineExpose({ focus })
 </script>
 
 <style scoped>
