@@ -26,15 +26,15 @@
             </button>
           </div>
 
-          <!-- Perfil de acesso (apenas para testes locais — descomentar quando necessário)
+          <!-- Perfil de acesso (apenas para testes locais — comentar quando não necessário) -->
           <div class="login-divider">
             <span>ou</span>
           </div>
 
           <form @submit.prevent="entrar" class="login-form">
-            <div class="br-input mb-3">
-              <label for="perfil">Perfil de acesso</label>
-              <select id="perfil" v-model="perfil" class="br-select login-select" required>
+            <div class="login-perfil-field mb-3">
+              <label for="perfil" class="login-perfil-label">Perfil de acesso</label>
+              <select id="perfil" v-model="perfil" class="login-perfil-select" required>
                 <option value="federal">Federal — acesso a todas as solicitações</option>
                 <option value="estadual">Estadual (GO) — apenas solicitações da UF GO</option>
                 <option value="municipal">Municipal (Alexânia/GO) — apenas Alexânia</option>
@@ -50,15 +50,15 @@
               {{ carregando ? 'Entrando...' : 'Entrar' }}
             </button>
           </form>
-          -->
 
           <button
             type="button"
             class="br-button success block mt-3 login-register-button"
+            :disabled="carregandoGovBr"
             aria-label="Solicitar cadastro"
-            @click="solicitarCadastro"
+            @click="entrarComGovBr"
           >
-            Solicitar cadastro
+            {{ carregandoGovBr ? 'Redirecionando...' : 'Solicitar cadastro' }}
           </button>
 
         </div>
@@ -96,14 +96,10 @@ defineOptions({ name: 'LoginPage' })
 const router = useRouter()
 const authStore = useAuthStore()
 
-const perfil = ref<'federal' | 'estadual' | 'municipal'>('federal')
-const carregando = ref(false)
 const carregandoGovBr = ref(false)
+const carregando = ref(false)
+const perfil = ref<'federal' | 'estadual' | 'municipal'>('federal')
 const erro = ref('')
-
-onMounted(() => {
-  processarRetornoGovBr()
-})
 
 async function entrar() {
   carregando.value = true
@@ -115,14 +111,18 @@ async function entrar() {
     )
     sessionStorage.setItem('nvsl_token', data.token)
     authStore.setUser(data.user)
-    router.replace({ name: 'gerenciar-cadastros' })
+    await router.replace({ name: 'gerenciar-cadastros' })
   } catch (e: unknown) {
-    const res = (e as { response?: { data?: { message?: string }; status?: number } })?.response
-    erro.value = res?.data?.message ?? (res?.status === 404 ? 'Usuários de teste não encontrados. Execute o seeder.' : 'Erro ao entrar.')
+    const res = (e as { response?: { data?: { message?: string } } })?.response
+    erro.value = res?.data?.message ?? 'Falha ao obter token de teste.'
   } finally {
     carregando.value = false
   }
 }
+
+onMounted(() => {
+  processarRetornoGovBr()
+})
 
 async function entrarComGovBr() {
   carregandoGovBr.value = true
@@ -141,10 +141,6 @@ async function entrarComGovBr() {
   }
 }
 
-function solicitarCadastro() {
-  router.push({ name: 'solicitacao-cadastro' })
-}
-
 async function processarRetornoGovBr() {
   const hash = window.location.hash.replace(/^#/, '')
   if (!hash) return
@@ -159,6 +155,20 @@ async function processarRetornoGovBr() {
 
   if (govbrError) {
     erro.value = govbrError
+    const govbrNome = params.get('govbr_nome')
+    const govbrCpf = params.get('govbr_cpf')
+    if (
+      govbrError === 'Solicitar acesso e aguardar avaliação' &&
+      govbrNome &&
+      govbrCpf
+    ) {
+      setTimeout(() => {
+        router.push({
+          name: 'solicitacao-cadastro',
+          query: { nome: govbrNome, cpf: govbrCpf },
+        })
+      }, 2500)
+    }
     return
   }
 
@@ -273,8 +283,35 @@ async function processarRetornoGovBr() {
   width: 100%;
 }
 
-.login-select {
+.login-perfil-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.login-perfil-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-secondary-08, #333);
+}
+
+.login-perfil-select {
   width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--color-secondary-09, #333);
+  background-color: var(--bg-color, #fff);
+  border: 1px solid var(--color-secondary-04, #ccc);
+  border-radius: 6px;
+  appearance: auto;
+  cursor: pointer;
+}
+
+.login-perfil-select:focus {
+  outline: 3px solid var(--color-support-05, #ffcd07);
+  outline-offset: 2px;
+  border-color: var(--color-primary-default, #1351b4);
 }
 
 .login-register-button {

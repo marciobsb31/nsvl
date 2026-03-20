@@ -12,82 +12,86 @@
       </button>
     </div>
 
-    <form novalidate @submit="handleSubmit(onSubmit, onInvalid)">
+    <form novalidate @submit.prevent="onConfirmar">
       <div class="formulario-secao">
         <h3 class="secao-titulo">Dados do solicitante</h3>
-        <div class="secao-grid">
-          <div class="br-input mb-2">
-            <label for="cad-nome">Nome<span class="obrigatorio">*</span></label>
-            <input
-              id="cad-nome"
-              type="text"
-              placeholder="Nome de usuário."
-              v-model="nome"
-              required
-              :aria-invalid="!!errorsNome"
-              aria-describedby="cad-nome-err"
-              @blur="() => validateField('nome')"
-            />
-            <Feedback v-if="errorsNome" id="cad-nome-err" :message="errorsNome" type="danger" />
+        <div class="secao-dados-solicitante">
+          <div class="secao-linha secao-linha--3cols">
+            <div class="br-input mb-2">
+              <label for="cad-nome">Nome<span class="obrigatorio">*</span></label>
+              <input
+                id="cad-nome"
+                type="text"
+                placeholder="Nome de usuário."
+                v-model="nome"
+                required
+                :aria-invalid="!!errorsNome"
+                aria-describedby="cad-nome-err"
+                @blur="() => validateField('nome')"
+              />
+              <Feedback v-if="errorsNome" id="cad-nome-err" :message="errorsNome" type="danger" />
+            </div>
+            <div class="br-input mb-2">
+              <label for="cad-cpf">CPF<span class="obrigatorio">*</span></label>
+              <input
+                id="cad-cpf"
+                type="text"
+                placeholder="000.000.000-00"
+                v-model="cpf"
+                v-maska="'###.###.###-##'"
+                required
+                :aria-invalid="!!errorsCpf"
+                aria-describedby="cad-cpf-err cad-cpf-hint"
+                @blur="() => validateField('CPF')"
+              />
+              <Feedback v-if="errorsCpf" id="cad-cpf-err" :message="errorsCpf" type="danger" />
+              <span id="cad-cpf-hint" class="input-hint">Use um CPF ainda não cadastrado no sistema.</span>
+            </div>
+            <div class="br-input mb-2">
+              <label for="cad-email">E-mail Institucional<span class="obrigatorio">*</span></label>
+              <input
+                id="cad-email"
+                type="email"
+                placeholder="seu.nome@email.com"
+                v-model="emailInstitucional"
+                required
+                :aria-invalid="!!errorsEmail"
+                aria-describedby="cad-email-err"
+                @blur="() => validateField('emailInstitucional')"
+              />
+              <Feedback v-if="errorsEmail" id="cad-email-err" :message="errorsEmail" type="danger" />
+            </div>
           </div>
-          <div class="br-input mb-2">
-            <label for="cad-cpf">CPF<span class="obrigatorio">*</span></label>
-            <input
-              id="cad-cpf"
-              type="text"
-              placeholder="000.000.000-00"
-              v-model="cpf"
-              v-maska="'###.###.###-##'"
-              required
-              :aria-invalid="!!errorsCpf"
-              aria-describedby="cad-cpf-err cad-cpf-hint"
-              @blur="() => validateField('CPF')"
-            />
-            <Feedback v-if="errorsCpf" id="cad-cpf-err" :message="errorsCpf" type="danger" />
-            <span id="cad-cpf-hint" class="input-hint">Use um CPF ainda não cadastrado no sistema.</span>
-          </div>
-          <div class="br-input mb-2">
-            <label for="cad-email">E-mail Institucional<span class="obrigatorio">*</span></label>
-            <input
-              id="cad-email"
-              type="email"
-              placeholder="seu.nome@email.com"
-              v-model="emailInstitucional"
-              required
-              :aria-invalid="!!errorsEmail"
-              aria-describedby="cad-email-err"
-              @blur="() => validateField('emailInstitucional')"
-            />
-            <Feedback v-if="errorsEmail" id="cad-email-err" :message="errorsEmail" type="danger" />
-          </div>
-          <div class="br-input mb-2">
-            <label for="cad-tel-inst">Telefone Institucional<span class="obrigatorio">*</span></label>
-            <input
-              id="cad-tel-inst"
-              type="tel"
-              placeholder="(00) 0000-0000"
-              v-model="telefoneInstitucional"
-              v-maska="telefoneMaskInst"
-              required
-              :aria-invalid="!!errorsTelInst"
-              aria-describedby="cad-tel-inst-err"
-              @blur="() => validateField('telefoneInstitucional')"
-            />
-            <Feedback v-if="errorsTelInst" id="cad-tel-inst-err" :message="errorsTelInst" type="danger" />
-          </div>
-          <div class="br-input mb-2">
-            <label for="cad-tel-pessoal">Telefone Pessoal (opcional)</label>
-            <input
-              id="cad-tel-pessoal"
-              type="tel"
-              placeholder="(00) 00000-0000"
-              v-model="telefonePessoal"
-              v-maska="telefoneMaskPessoal"
-              :aria-invalid="!!errorsTelPessoal"
-              aria-describedby="cad-tel-pessoal-err"
-              @blur="() => validateField('telefonePessoal')"
-            />
-            <Feedback v-if="errorsTelPessoal" id="cad-tel-pessoal-err" :message="errorsTelPessoal" type="danger" />
+          <div class="secao-linha secao-linha--2cols">
+            <div class="br-input mb-2">
+              <label for="cad-tel-inst">Telefone Institucional<span class="obrigatorio">*</span></label>
+              <input
+                id="cad-tel-inst"
+                type="tel"
+                placeholder="(00) 0000-0000"
+                v-model="telefoneInstitucional"
+                v-maska="telefoneMaskInst"
+                required
+                :aria-invalid="!!errorsTelInst"
+                aria-describedby="cad-tel-inst-err"
+                @blur="() => validateField('telefoneInstitucional')"
+              />
+              <Feedback v-if="errorsTelInst" id="cad-tel-inst-err" :message="errorsTelInst" type="danger" />
+            </div>
+            <div class="br-input mb-2">
+              <label for="cad-tel-pessoal">Telefone Pessoal (opcional)</label>
+              <input
+                id="cad-tel-pessoal"
+                type="tel"
+                placeholder="(00) 00000-0000"
+                v-model="telefonePessoal"
+                v-maska="telefoneMaskPessoal"
+                :aria-invalid="!!errorsTelPessoal"
+                aria-describedby="cad-tel-pessoal-err"
+                @blur="() => validateField('telefonePessoal')"
+              />
+              <Feedback v-if="errorsTelPessoal" id="cad-tel-pessoal-err" :message="errorsTelPessoal" type="danger" />
+            </div>
           </div>
         </div>
       </div>
@@ -98,42 +102,45 @@
         <div class="secao-info-solicitante">
           <div class="secao-linha">
             <div class="field-with-feedback">
-              <SelectAutocomplete
-                ref="esferaRef"
-                v-model="esferaAtuacao"
-                label="Esfera de atuação"
-                placeholder="Selecione"
-                :options="opcoesEsferaFiltradas"
-                :disabled="isEsferaBloqueada"
-                input-id="cad-esfera"
-                required
-              />
-              <Feedback v-if="errorsEsfera" :message="errorsEsfera" type="danger" />
-            </div>
-            <div class="field-with-feedback">
-              <SelectAutocomplete
-                ref="ufRef"
-                v-model="uf"
-                label="Estado (UF)"
-                placeholder="Selecione"
-                :options="opcoesUfFiltradas"
-                :disabled="isUfBloqueada"
-                input-id="cad-uf"
-                required
-              />
-              <Feedback v-if="errorsUf" :message="errorsUf" type="danger" />
-            </div>
-            <div class="field-with-feedback">
-              <SelectAutocomplete
-                ref="municipioRef"
-                v-model="municipio"
-                label="Município"
-                placeholder="Selecione o município."
-                :options="opcoesMunicipioFiltradas"
-                :disabled="!uf || isMunicipioBloqueado"
-                input-id="cad-municipio"
-                required
-              />
+            <SelectAutocomplete
+              ref="esferaRef"
+              :model-value="esferaAtuacao"
+              @update:model-value="onEsferaChange"
+              label="Esfera de atuação"
+              placeholder="Selecione"
+              :options="opcoesEsferaFiltradas"
+              :disabled="isEsferaBloqueada"
+              input-id="cad-esfera"
+              required
+            />
+            <Feedback v-if="errorsEsfera" :message="errorsEsfera" type="danger" />
+          </div>
+          <div class="field-with-feedback">
+            <SelectAutocomplete
+              ref="ufRef"
+              :model-value="uf"
+              @update:model-value="onUfChange"
+              label="Estado (UF)"
+              placeholder="Selecione"
+              :options="opcoesUfFiltradas"
+              :disabled="isUfBloqueada"
+              input-id="cad-uf"
+              required
+            />
+            <Feedback v-if="errorsUf" :message="errorsUf" type="danger" />
+          </div>
+          <div class="field-with-feedback">
+            <SelectAutocomplete
+              ref="municipioRef"
+              :model-value="municipio"
+              @update:model-value="onMunicipioChange"
+              label="Município"
+              placeholder="Selecione o município."
+              :options="opcoesMunicipioFiltradas"
+              :disabled="!uf || isMunicipioBloqueado"
+              input-id="cad-municipio"
+              required
+            />
               <Feedback v-if="uf && errorsMunicipio" :message="errorsMunicipio" type="danger" />
             </div>
           </div>
@@ -158,7 +165,8 @@
           <div class="field-with-feedback">
             <SelectAutocomplete
               ref="perfilRef"
-              v-model="perfil"
+              :model-value="perfil"
+              @update:model-value="onPerfilChange"
               label="Perfil"
               placeholder="Selecione o perfil"
               :options="opcoesPerfilFiltradas"
@@ -214,7 +222,7 @@
 
     <Modal
       v-if="modalErroVisivel"
-      title="Dados incompletos"
+      :title="tituloModalErro"
       :content="mensagemErroModal"
       :show-actions="true"
       @close="fecharModalErro"
@@ -225,6 +233,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useForm, useField } from 'vee-validate'
 import * as yup from 'yup'
 import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
@@ -233,7 +242,9 @@ import Feedback from '@/core/components/Feedback/Feedback.vue'
 import { useEsferas } from '@/core/composables/useEsferas'
 import { useLocalidades } from '@/core/composables/useLocalidades'
 import { usePerfis } from '@/core/composables/usePerfis'
+import { useNotification } from '@/core/composables/useNotification'
 import { validarCpf } from '@/core/utils/validarCpf'
+import { enviarSolicitacaoCadastro, type SolicitacaoCadastroPayload } from '@/services/SolicitacaoCadastroService'
 import type { PerfilOption } from '@/services/PerfilService'
 
 const regexSomenteLetras = /^[a-zA-ZáàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\s]+$/
@@ -255,12 +266,33 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   (e: 'voltar'): void
-  (e: 'confirmar', values: Record<string, unknown>): void
+  (e: 'sucesso'): void
 }>()
+
+const router = useRouter()
+const { success, error } = useNotification()
+
+const MENSAGENS_CPF: Record<string, string> = {
+  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está em uso. Faça login ou solicite recuperação de acesso.',
+  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde o retorno.',
+  'O CPF informado é inválido.': 'CPF inválido. Confira os números digitados.',
+}
+
+function mapearMensagemCpf(original: string): string {
+  return MENSAGENS_CPF[original] ?? original
+}
+
+function mapearMensagemCadastro(original: string): string {
+  if (original === 'Acesso não permitido.') {
+    return 'Acesso não permitido para os dados informados. No cadastro interno, use a mesma esfera/UF/município da sua lotação.'
+  }
+  return original
+}
 
 const enviando = ref(false)
 const modalErroVisivel = ref(false)
 const mensagemErroModal = ref('')
+const tituloModalErro = ref('Dados incompletos')
 
 const esferaRef = ref<InstanceType<typeof SelectAutocomplete> | null>(null)
 const ufRef = ref<InstanceType<typeof SelectAutocomplete> | null>(null)
@@ -344,7 +376,7 @@ const initialValues = {
   vigenciaFim: '',
 }
 
-const { handleSubmit, validateField } = useForm({
+const { validateField, setFieldValue, validate } = useForm({
   validationSchema: schema,
   initialValues,
 })
@@ -504,10 +536,72 @@ function focusarCampo(campo: string) {
   })
 }
 
+function onEsferaChange(val: string | number | null) {
+  esferaAtuacao.value = val != null ? String(val) : ''
+  setFieldValue('esferaAtuacao', esferaAtuacao.value)
+}
+
+function onUfChange(val: string | number | null) {
+  uf.value = val != null ? String(val) : ''
+  setFieldValue('uf', uf.value)
+}
+
+function onMunicipioChange(val: string | number | null) {
+  municipio.value = val != null ? String(val) : ''
+  setFieldValue('municipio', municipio.value)
+}
+
+function onPerfilChange(val: string | number | null) {
+  perfil.value = val
+  setFieldValue('perfil', val as never)
+}
+
+function lerValoresDosRefs(): Record<string, unknown> {
+  return {
+    nome: nome.value,
+    CPF: cpf.value,
+    emailInstitucional: emailInstitucional.value,
+    telefoneInstitucional: telefoneInstitucional.value,
+    telefonePessoal: telefonePessoal.value,
+    esferaAtuacao: esferaAtuacao.value,
+    uf: uf.value,
+    municipio: municipio.value,
+    orgao: orgao.value,
+    cargo: cargo.value,
+    perfil: perfil.value,
+    vigenciaInicio: vigenciaInicio.value,
+    vigenciaFim: vigenciaFim.value,
+  }
+}
+
+async function onConfirmar() {
+  setFieldValue('perfil', perfil.value as never)
+  setFieldValue('esferaAtuacao', esferaAtuacao.value)
+  setFieldValue('uf', uf.value)
+  setFieldValue('municipio', municipio.value)
+
+  const resultado = await validate()
+
+  if (!resultado.valid) {
+    const erros = resultado.errors as Record<string, string | undefined>
+    const primeiroCampo = Object.keys(erros)[0]
+    const mensagem = primeiroCampo ? (erros[primeiroCampo] ?? 'Preencha os campos obrigatórios.') : 'Preencha os campos obrigatórios.'
+    tituloModalErro.value = 'Dados incompletos'
+    mensagemErroModal.value = mensagem
+    modalErroVisivel.value = true
+    if (primeiroCampo) focusarCampo(primeiroCampo)
+    return
+  }
+
+  const values = lerValoresDosRefs()
+  await onSubmit(values)
+}
+
 function onInvalid(ctx: { errors: Partial<Record<string, string>> }) {
   const erros = ctx.errors
   const primeiroCampo = Object.keys(erros)[0]
   const mensagem = primeiroCampo ? (erros[primeiroCampo] ?? 'Preencha os campos obrigatórios.') : 'Preencha os campos obrigatórios.'
+  tituloModalErro.value = 'Dados incompletos'
   mensagemErroModal.value = mensagem
   modalErroVisivel.value = true
   if (primeiroCampo) focusarCampo(primeiroCampo)
@@ -518,36 +612,90 @@ function fecharModalErro() {
   mensagemErroModal.value = ''
 }
 
+function montarPayload(): SolicitacaoCadastroPayload {
+  const cpfVal = String(cpf.value ?? '').replace(/\D/g, '')
+  const perfilNum = perfil.value != null && perfil.value !== '' ? Number(perfil.value) : NaN
+  return {
+    nome: String(nome.value ?? '').trim(),
+    CPF: cpfVal || undefined,
+    emailInstitucional: String(emailInstitucional.value ?? '').trim(),
+    telefoneInstitucional: String(telefoneInstitucional.value ?? '').replace(/\D/g, ''),
+    telefonePessoal: telefonePessoal.value ? String(telefonePessoal.value).replace(/\D/g, '') : undefined,
+    esferaAtuacao: String(esferaAtuacao.value ?? '').toLowerCase(),
+    uf: String(uf.value ?? '').toUpperCase(),
+    municipio: String(municipio.value ?? '').trim(),
+    orgao: String(orgao.value ?? '').trim(),
+    cargo: String(cargo.value ?? '').trim(),
+    perfilId: !Number.isNaN(perfilNum) && perfilNum > 0 ? perfilNum : undefined,
+    vigenciaInicio: String(vigenciaInicio.value ?? '').trim() || undefined,
+    vigenciaFim: String(vigenciaFim.value ?? '').trim() || undefined,
+  }
+}
+
 async function onSubmit(values: Record<string, unknown>) {
   const erroRegra = validarHierarquiaNoFrontend(values)
   if (erroRegra) {
-    mensagemErroModal.value = erroRegra
+    tituloModalErro.value = 'Erro ao cadastrar'
+    mensagemErroModal.value = mapearMensagemCadastro(erroRegra)
     modalErroVisivel.value = true
     return
   }
 
   enviando.value = true
   try {
-    emit('confirmar', values)
+    const payload = montarPayload()
+    console.debug('[Cadastro] Payload final:', JSON.stringify(payload, null, 2))
+    console.debug('[Cadastro] perfil.value =', perfil.value, '| perfilId =', payload.perfilId)
+    await enviarSolicitacaoCadastro(payload)
+    const msgSucesso = 'Cadastro realizado com sucesso! A solicitação foi registrada com status "Em análise" e está disponível na lista.'
+    success(msgSucesso)
+    emit('sucesso')
+    await router.push({ name: 'gerenciar-cadastros' })
+  } catch (e: unknown) {
+    const res = (e as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } })?.response
+    const data = res?.data
+    let msg = data?.message ?? 'Não foi possível concluir o cadastro. Verifique os dados e tente novamente.'
+    if (data?.errors && typeof data.errors === 'object') {
+      const firstField = Object.keys(data.errors)[0]
+      const firstMsg = firstField ? data.errors[firstField]?.[0] : null
+      if (firstMsg) msg = firstMsg
+    }
+    if (!res && (e as Error)?.message) {
+      msg = (e as Error).message
+    }
+    const isCpfError =
+      msg.toLowerCase().includes('cpf') ||
+      (data?.errors && 'CPF' in (data?.errors as object))
+    if (isCpfError) {
+      const cpfMsg = data?.errors && typeof data.errors === 'object' && 'CPF' in data.errors
+        ? (data.errors as Record<string, string[]>).CPF?.[0]
+        : msg
+      msg = mapearMensagemCpf(cpfMsg ?? msg)
+    }
+    msg = mapearMensagemCadastro(msg)
+    tituloModalErro.value = 'Erro ao cadastrar'
+    mensagemErroModal.value = msg
+    modalErroVisivel.value = true
+    error(msg)
   } finally {
     enviando.value = false
   }
 }
 
-function validarHierarquiaNoFrontend(values: Record<string, unknown>): string | null {
-  const esfera = String(values.esferaAtuacao ?? '').toLowerCase()
-  const ufValor = String(values.uf ?? '').toUpperCase()
-  const municipioValor = String(values.municipio ?? '').toLowerCase().trim()
-  const perfilSelecionado = opcoesPerfil.value.find((op: PerfilOption) => String(op.value) === String(values.perfil ?? ''))
+function validarHierarquiaNoFrontend(_values: Record<string, unknown>): string | null {
+  const esferaVal = String(esferaAtuacao.value ?? '').toLowerCase()
+  const ufValor = String(uf.value ?? '').toUpperCase()
+  const municipioValor = String(municipio.value ?? '').toLowerCase().trim()
+  const perfilSelecionado = opcoesPerfil.value.find((op: PerfilOption) => String(op.value) === String(perfil.value ?? ''))
   const tipoPerfil = inferirTipoPerfilPorNome(perfilSelecionado?.label ?? '')
 
   if (esferaUsuarioLogado.value === 'estadual') {
-    if (tipoPerfil !== 'estadual' || esfera !== 'estadual') return 'Acesso não permitido.'
+    if (tipoPerfil !== 'estadual' || esferaVal !== 'estadual') return 'Acesso não permitido.'
     if (ufValor !== String(props.usuarioLogado?.uf_lotacao ?? '').toUpperCase()) return 'Acesso não permitido.'
   }
 
   if (esferaUsuarioLogado.value === 'municipal') {
-    if (tipoPerfil !== 'municipal' || esfera !== 'municipal') return 'Acesso não permitido.'
+    if (tipoPerfil !== 'municipal' || esferaVal !== 'municipal') return 'Acesso não permitido.'
     if (ufValor !== String(props.usuarioLogado?.uf_lotacao ?? '').toUpperCase()) return 'Acesso não permitido.'
     if (municipioValor !== String(props.usuarioLogado?.municipio_lotacao ?? '').toLowerCase().trim()) return 'Acesso não permitido.'
   }
@@ -607,6 +755,25 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 }
 
 .secao-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* Dados do solicitante: linha 1 = Nome, CPF, E-mail | linha 2 = Telefones */
+.secao-dados-solicitante {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.secao-linha--3cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.secao-linha--2cols {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
@@ -691,7 +858,9 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
     grid-template-columns: 1fr;
   }
 
-  .secao-linha {
+  .secao-linha,
+  .secao-linha--3cols,
+  .secao-linha--2cols {
     grid-template-columns: 1fr;
   }
 
@@ -717,7 +886,9 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .secao-linha {
+  .secao-linha,
+  .secao-linha--3cols,
+  .secao-linha--2cols {
     grid-template-columns: repeat(2, 1fr);
   }
 

@@ -35,61 +35,65 @@
     <!-- Bloco: Aguardando Avaliação (somente quando em_analise e usuário tem privilégio) -->
     <div v-if="detalhe?.status === 'em_analise' && detalhe?.pode_avaliar !== false" class="painel-secao">
       <h3 class="secao-titulo">Aguardando Avaliação</h3>
-      <div class="secao-grid-readonly">
-        <div class="br-input">
-          <label>Esfera de atuação</label>
-          <input type="text" :value="labelEsfera(detalhe.esfera_atuacao)" readonly />
+      <div class="secao-aguardando-avaliacao">
+        <div class="secao-linha-3cols">
+          <div class="br-input">
+            <label>Esfera de atuação</label>
+            <input type="text" :value="labelEsfera(detalhe.esfera_atuacao)" readonly />
+          </div>
+          <div class="br-input">
+            <label>UF</label>
+            <input type="text" :value="detalhe.uf" readonly />
+          </div>
+          <div class="br-input">
+            <label>Município</label>
+            <input type="text" :value="detalhe.municipio" readonly />
+          </div>
         </div>
-        <div class="br-input">
-          <label>UF</label>
-          <input type="text" :value="detalhe.uf" readonly />
+        <div class="secao-linha-orgao-cargo">
+          <div class="br-input orgao-maior">
+            <label>Órgão de atuação</label>
+            <input type="text" :value="detalhe.orgao" readonly />
+          </div>
+          <div class="br-input cargo-menor">
+            <label>Cargo/Função</label>
+            <input type="text" :value="detalhe.cargo" readonly />
+          </div>
         </div>
-        <div class="br-input">
-          <label>Município</label>
-          <input type="text" :value="detalhe.municipio" readonly />
-        </div>
-        <div class="br-input">
-          <label>Órgão de atuação</label>
-          <input type="text" :value="detalhe.orgao" readonly />
-        </div>
-        <div class="br-input">
-          <label>Cargo/Função</label>
-          <input type="text" :value="detalhe.cargo" readonly />
-        </div>
-      </div>
-      <div class="secao-avaliacao-campos">
-        <div class="br-select mb-2 perfil-select">
-          <label for="perfil-selecao">Perfil</label>
-          <select
-            id="perfil-selecao"
-            v-model="perfilSelecionado"
-            :disabled="opcoesPerfil.length === 0"
-          >
-            <option :value="null" disabled>Selecione o perfil</option>
-            <option
-              v-for="opcao in opcoesPerfil"
-              :key="String(opcao.value)"
-              :value="opcao.value"
+        <div class="secao-linha-3cols secao-avaliacao-campos">
+          <div class="br-select mb-2 perfil-select">
+            <label for="perfil-selecao">Perfil</label>
+            <select
+              id="perfil-selecao"
+              v-model="perfilSelecionado"
+              :disabled="opcoesPerfil.length === 0"
             >
-              {{ opcao.label }}
-            </option>
-          </select>
-        </div>
-        <div class="br-input">
-          <label for="vigencia-inicio">Vigência (inicial)</label>
-          <input
-            id="vigencia-inicio"
-            type="date"
-            v-model="vigenciaInicio"
-          />
-        </div>
-        <div class="br-input">
-          <label for="vigencia-fim">Vigência (fim)</label>
-          <input
-            id="vigencia-fim"
-            type="date"
-            v-model="vigenciaFim"
-          />
+              <option :value="null" disabled>Selecione o perfil</option>
+              <option
+                v-for="opcao in opcoesPerfil"
+                :key="String(opcao.value)"
+                :value="opcao.value"
+              >
+                {{ opcao.label }}
+              </option>
+            </select>
+          </div>
+          <div class="br-input">
+            <label for="vigencia-inicio">Vigência (inicial)</label>
+            <input
+              id="vigencia-inicio"
+              type="date"
+              v-model="vigenciaInicio"
+            />
+          </div>
+          <div class="br-input">
+            <label for="vigencia-fim">Vigência (fim)</label>
+            <input
+              id="vigencia-fim"
+              type="date"
+              v-model="vigenciaFim"
+            />
+          </div>
         </div>
       </div>
       <div class="secao-acoes">
@@ -115,26 +119,30 @@
     <!-- Bloco: Dados do Solicitante -->
     <div class="painel-secao">
       <h3 class="secao-titulo">Dados do Solicitante</h3>
-      <div class="secao-grid-dados">
-        <div class="br-input">
-          <label>Nome</label>
-          <input type="text" :value="detalhe?.nome" readonly />
+      <div class="secao-dados-solicitante-layout">
+        <div class="secao-linha-3cols">
+          <div class="br-input">
+            <label>Nome</label>
+            <input type="text" :value="detalhe?.nome" readonly />
+          </div>
+          <div class="br-input">
+            <label>CPF</label>
+            <input type="text" :value="detalhe?.cpf ?? '***.***.***-**'" readonly />
+          </div>
+          <div class="br-input">
+            <label>E-mail Institucional</label>
+            <input type="text" :value="detalhe?.email_institucional" readonly />
+          </div>
         </div>
-        <div class="br-input">
-          <label>CPF</label>
-          <input type="text" :value="detalhe?.cpf ?? '***.***.***-**'" readonly />
-        </div>
-        <div class="br-input">
-          <label>E-mail Institucional</label>
-          <input type="text" :value="detalhe?.email_institucional" readonly />
-        </div>
-        <div class="br-input">
-          <label>Telefone Institucional</label>
-          <input type="text" :value="formatarTelefone(detalhe?.telefone_institucional)" readonly />
-        </div>
-        <div class="br-input">
-          <label>Telefone Pessoal (Opcional)</label>
-          <input type="text" :value="formatarTelefone(detalhe?.telefone_pessoal) || '—'" readonly />
+        <div class="secao-linha-2cols">
+          <div class="br-input">
+            <label>Telefone Institucional</label>
+            <input type="text" :value="formatarTelefone(detalhe?.telefone_institucional)" readonly />
+          </div>
+          <div class="br-input">
+            <label>Telefone Pessoal (Opcional)</label>
+            <input type="text" :value="formatarTelefone(detalhe?.telefone_pessoal) || '—'" readonly />
+          </div>
         </div>
       </div>
     </div>
@@ -552,6 +560,45 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
   margin-bottom: 1rem;
 }
 
+/* Aguardando Avaliação: linha 1 = Esfera, UF, Município | linha 2 = Órgão (maior), Cargo | linha 3 = Perfil, Vigências */
+.secao-aguardando-avaliacao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.secao-dados-solicitante-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.secao-linha-3cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.secao-linha-2cols {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.secao-linha-orgao-cargo {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+
+.secao-linha-orgao-cargo .orgao-maior {
+  min-width: 0;
+}
+
+.secao-linha-orgao-cargo .cargo-menor {
+  min-width: 0;
+}
+
 .secao-avaliacao-campos {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -719,8 +766,23 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
     grid-template-columns: 1fr;
   }
 
+  .secao-linha-3cols,
+  .secao-linha-2cols,
+  .secao-linha-orgao-cargo,
   .secao-avaliacao-campos {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 991px) {
+  .secao-linha-3cols,
+  .secao-linha-2cols,
+  .secao-avaliacao-campos {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .secao-linha-orgao-cargo {
+    grid-template-columns: 1fr 1fr;
   }
 }
 </style>

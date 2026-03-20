@@ -128,56 +128,12 @@
           class="painel-cadastro"
           aria-label="Formulário cadastrar usuário"
         >
-          <div v-if="sucessoCadastro" class="br-message success mb-3" role="status">
-            <div class="content">{{ sucessoCadastro }}</div>
-          </div>
-          <div v-if="erroCadastro" class="br-message danger mb-3" role="alert">
-            <div class="content">{{ erroCadastro }}</div>
-          </div>
           <div class="painel-cadastro-inner">
-            <div class="formulario-header">
-              <h2 class="formulario-titulo">Cadastrar usuário</h2>
-              <button
-                class="br-button secondary small"
-                type="button"
-                @click="fecharPainelCadastro"
-                aria-label="Voltar"
-              >
-                Voltar
-              </button>
-            </div>
-            <Form
-              :key="formKeyCadastro"
-              v-slot="{ values: formValues }"
-              :validation-schema="schemaCadastro"
-              :initial-values="initialValuesCadastro"
-              :on-invalid-submit="onValidacaoInvalida"
-              @submit="onConfirmarCadastro"
-              class="form-cadastro"
-            >
-              <div class="formulario-secao">
-                <h3 class="secao-titulo">Dados do solicitante</h3>
-                <FormularioDadosSolicitante :modo-gov-br="false" />
-              </div>
-              <div class="formulario-secao">
-                <h3 class="secao-titulo">Informação do(a) solicitante</h3>
-                <p class="secao-subtitulo">Informações de atuação institucional do solicitante.</p>
-                <FormularioInformacaoSolicitante :aplicar-regras-hierarquia="true" :usuario-logado="user" />
-              </div>
-              <FormularioDadosPerfil :usuario-logado="user" />
-              <div class="formulario-acoes">
-                <button class="br-button secondary" type="button" @click="fecharPainelCadastro">
-                  Cancelar
-                </button>
-                <button
-                  class="br-button primary"
-                  type="submit"
-                  :disabled="enviandoCadastro"
-                >
-                  {{ enviandoCadastro ? 'Confirmando...' : 'Confirmar' }}
-                </button>
-              </div>
-            </Form>
+            <FormularioCadastrarUsuario
+              :usuario-logado="user ?? undefined"
+              @voltar="fecharPainelCadastro"
+              @sucesso="onCadastroSucesso"
+            />
           </div>
         </aside>
       </Transition>
@@ -202,17 +158,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { Form } from 'vee-validate'
+import { ref, computed, onMounted } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Card from '@/core/components/Card/Card.vue'
 import FiltrosGerenciarSolicitacao from '../components/FiltrosGerenciarSolicitacao.vue'
-import FormularioDadosSolicitante from '@/features/solicitacao-cadastro/components/FormularioDadosSolicitante.vue'
-import FormularioInformacaoSolicitante from '@/features/solicitacao-cadastro/components/FormularioInformacaoSolicitante.vue'
-import FormularioDadosPerfil from '../components/FormularioDadosPerfil.vue'
+import FormularioCadastrarUsuario from '../components/FormularioCadastrarUsuario.vue'
 import PainelDetalharSolicitacao from '../components/PainelDetalharSolicitacao.vue'
-import { SolicitacaoCadastroSchemaGerenciar } from '@/features/solicitacao-cadastro/validators/solicitacaoCadastro.schema'
 import {
   listarSolicitacoesGerenciar,
   aprovarSolicitacao as apiAprovar,
@@ -222,18 +173,12 @@ import {
   type SolicitacaoGerenciarItem,
   type FiltrosGerenciarSolicitacao as FiltrosGerenciarSolicitacaoType,
 } from '@/services/GerenciarSolicitacaoCadastroService'
-import {
-  enviarSolicitacaoCadastro,
-  obterSolicitacaoCadastro,
-  type SolicitacaoCadastroDetalhe,
-  type SolicitacaoCadastroPayload,
-} from '@/services/SolicitacaoCadastroService'
+import { obterSolicitacaoCadastro, type SolicitacaoCadastroDetalhe } from '@/services/SolicitacaoCadastroService'
 import { useNotification } from '@/core/composables/useNotification'
 import { useAuth } from '@/core/composables/useAuth'
 
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
-const router = useRouter()
 const { error, success } = useNotification()
 const { user } = useAuth()
 
@@ -293,73 +238,11 @@ const filtrosAtivos = ref<FiltrosGerenciarSolicitacaoType>({})
 const painelDetalharAberto = ref(false)
 const detalheSelecionado = ref<(SolicitacaoCadastroDetalhe & { cpf?: string }) | null>(null)
 const painelCadastroAberto = ref(false)
-const painelCadastroRef = ref<HTMLElement | null>(null)
-const erroCadastro = ref('')
-const sucessoCadastro = ref('')
 const avaliando = ref(false)
-const enviandoCadastro = ref(false)
-const formKeyCadastro = ref(0)
-const schemaCadastro = SolicitacaoCadastroSchemaGerenciar
-const initialValuesCadastro = {
-  nome: '',
-  CPF: '',
-  emailInstitucional: '',
-  telefoneInstitucional: '',
-  telefonePessoal: '',
-  esferaAtuacao: '',
-  uf: '',
-  municipio: '',
-  orgao: '',
-  cargo: '',
-  perfil: null as string | number | null,
-  vigenciaInicio: '',
-  vigenciaFim: '',
-}
 
-const MENSAGENS_CPF: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está em uso. Faça login ou solicite recuperação de acesso.',
-  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde o retorno.',
-  'O CPF informado é inválido.': 'CPF inválido. Confira os números digitados.',
-}
-
-function mapearMensagemCpf(original: string): string {
-  return MENSAGENS_CPF[original] ?? original
-}
-
-function mapearMensagemCadastro(original: string): string {
-  if (original === 'Acesso não permitido.') {
-    return 'Acesso não permitido para os dados informados. No cadastro interno, use a mesma esfera/UF/município da sua lotação.'
-  }
-  return original
-}
-
-async function onValidacaoInvalida(ctx: { values: Record<string, unknown>; errors: Partial<Record<string, string>> }) {
-  const primeiroErro = Object.values(ctx.errors ?? {}).find((e): e is string => typeof e === 'string')
-  erroCadastro.value = primeiroErro ?? 'Preencha todos os campos obrigatórios corretamente.'
-  sucessoCadastro.value = ''
-  await nextTick()
-  painelCadastroRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-function camposObrigatoriosPreenchidos(values: Record<string, unknown>) {
-  const obrigatorios = [
-    'nome',
-    'CPF',
-    'emailInstitucional',
-    'telefoneInstitucional',
-    'esferaAtuacao',
-    'uf',
-    'municipio',
-    'orgao',
-    'cargo',
-    'perfil',
-    'vigenciaInicio',
-  ]
-  return obrigatorios.every((campo) => {
-    const v = values[campo]
-    if (campo === 'perfil') return v != null && v !== ''
-    return String(v ?? '').trim() !== ''
-  })
+function onCadastroSucesso() {
+  fecharPainelCadastro()
+  carregarSolicitacoes()
 }
 
 async function carregarSolicitacoes() {
@@ -390,8 +273,6 @@ function limparEpesquisar() {
 function abrirPainelCadastro() {
   painelDetalharAberto.value = false
   painelCadastroAberto.value = true
-  erroCadastro.value = ''
-  sucessoCadastro.value = ''
 }
 
 function fecharPainelCadastro() {
@@ -406,76 +287,6 @@ function fecharPainelDetalhar() {
 function fecharPainelAberto() {
   if (painelCadastroAberto.value) fecharPainelCadastro()
   if (painelDetalharAberto.value) fecharPainelDetalhar()
-}
-
-async function onConfirmarCadastro(
-  values: Record<string, unknown>,
-  actions?: { setFieldError: (field: string, message: string | undefined) => void }
-) {
-  erroCadastro.value = ''
-  enviandoCadastro.value = true
-  const perfilNum = values.perfil != null && values.perfil !== ''
-    ? Number(values.perfil)
-    : NaN
-  const cpfVal = String(values.CPF ?? '').replace(/\D/g, '')
-  const payload: SolicitacaoCadastroPayload = {
-    nome: String(values.nome ?? ''),
-    CPF: cpfVal || undefined,
-    emailInstitucional: String(values.emailInstitucional ?? ''),
-    telefoneInstitucional: String(values.telefoneInstitucional ?? '').replace(/\D/g, ''),
-    telefonePessoal: values.telefonePessoal
-      ? String(values.telefonePessoal).replace(/\D/g, '')
-      : undefined,
-    esferaAtuacao: String(values.esferaAtuacao ?? ''),
-    uf: String(values.uf ?? '').toUpperCase(),
-    municipio: String(values.municipio ?? ''),
-    orgao: String(values.orgao ?? ''),
-    cargo: String(values.cargo ?? ''),
-    perfilId: !Number.isNaN(perfilNum) && perfilNum > 0 ? perfilNum : undefined,
-    vigenciaInicio: String(values.vigenciaInicio ?? '').trim() || undefined,
-    vigenciaFim: String(values.vigenciaFim ?? '').trim() || undefined,
-  }
-  try {
-    await enviarSolicitacaoCadastro(payload)
-    erroCadastro.value = ''
-    actions?.setFieldError('CPF', undefined)
-    sucessoCadastro.value = 'Cadastro realizado com sucesso! A solicitação foi registrada e está disponível na lista.'
-    success('Cadastro realizado com sucesso! A solicitação foi registrada e está disponível na lista.')
-    formKeyCadastro.value++
-    await carregarSolicitacoes()
-    await new Promise((r) => setTimeout(r, 1500))
-    fecharPainelCadastro()
-  } catch (e: unknown) {
-    sucessoCadastro.value = ''
-    const res = (e as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } })?.response
-    const data = res?.data
-    let msg = data?.message ?? 'Não foi possível concluir o cadastro. Verifique os dados e tente novamente.'
-    if (data?.errors && typeof data.errors === 'object') {
-      const firstField = Object.keys(data.errors)[0]
-      const firstMsg = firstField ? data.errors[firstField]?.[0] : null
-      if (firstMsg) msg = firstMsg
-    }
-    if (!res && (e as Error)?.message) {
-      msg = (e as Error).message
-    }
-    const isCpfError =
-      msg.toLowerCase().includes('cpf') ||
-      (data?.errors && 'CPF' in (data.errors as object))
-    if (isCpfError) {
-      const cpfMsg = data?.errors && typeof data.errors === 'object' && 'CPF' in data.errors
-        ? (data.errors as Record<string, string[]>).CPF?.[0]
-        : msg
-      msg = mapearMensagemCpf(cpfMsg ?? msg)
-      actions?.setFieldError('CPF', msg)
-    }
-    msg = mapearMensagemCadastro(msg)
-    erroCadastro.value = msg
-    error(msg)
-    await nextTick()
-    painelCadastroRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
-  } finally {
-    enviandoCadastro.value = false
-  }
 }
 
 function formatarData(data: string | undefined) {

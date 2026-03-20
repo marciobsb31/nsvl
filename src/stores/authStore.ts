@@ -2,13 +2,23 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/ApiService'
 
+export interface PerfilVigente {
+    id: number
+    nome: string
+    data_inicio_vigencia?: string | null
+    data_fim_vigencia?: string | null
+}
+
 export interface AuthUser {
     id: number
     name: string
     email?: string
+    picture?: string
+    role?: string
     esfera_atuacao?: string
     uf_lotacao?: string
     municipio_lotacao?: string
+    perfis_vigentes: PerfilVigente[]
 }
 
 /**
@@ -28,13 +38,22 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = null
             return
         }
+        const rawPerfis = Array.isArray(data.perfis_vigentes) ? data.perfis_vigentes : []
         user.value = {
             id: Number(data.id),
             name: String(data.name ?? ''),
             email: data.email ? String(data.email) : undefined,
+            picture: data.picture ? String(data.picture) : undefined,
+            role: data.role ? String(data.role) : undefined,
             esfera_atuacao: data.esfera_atuacao ? String(data.esfera_atuacao) : undefined,
             uf_lotacao: data.uf_lotacao ? String(data.uf_lotacao) : undefined,
             municipio_lotacao: data.municipio_lotacao ? String(data.municipio_lotacao) : undefined,
+            perfis_vigentes: rawPerfis.map((p: Record<string, unknown>) => ({
+                id: Number(p.id),
+                nome: String(p.nome ?? ''),
+                data_inicio_vigencia: p.data_inicio_vigencia ? String(p.data_inicio_vigencia) : null,
+                data_fim_vigencia: p.data_fim_vigencia ? String(p.data_fim_vigencia) : null,
+            })),
         }
     }
 

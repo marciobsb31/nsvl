@@ -15,7 +15,7 @@
           title="Dados do(a) solicitante"
           subtitle="Preencha seus dados para solicitar acesso"
         >
-          <FormularioDadosSolicitante :modo-gov-br="false" />
+          <FormularioDadosSolicitante :modo-gov-br="modoGovBr" />
         </Card>
         <Card title="Informação do(a) solicitante" subtitle="Informações de atuação institucional do solicitante"
           custom-class="mt-4">
@@ -103,13 +103,14 @@
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { Form } from 'vee-validate';
 import Card from '@/core/components/Card/Card.vue';
 import FormularioDadosSolicitante from '../components/FormularioDadosSolicitante.vue';
 import FormularioInformacaoSolicitante from '../components/FormularioInformacaoSolicitante.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import { initializeSelect } from '@/core/composables/useGov';
-import { SolicitacaoCadastroSchema, SolicitacaoCadastroSchemaEdicao } from '../validators/solicitacaoCadastro.schema';
+import { SolicitacaoCadastroSchema, SolicitacaoCadastroSchemaGovBr, SolicitacaoCadastroSchemaEdicao } from '../validators/solicitacaoCadastro.schema';
 import {
   enviarSolicitacaoCadastro,
   obterSolicitacaoCadastro,
@@ -129,11 +130,26 @@ defineOptions({
 })
 
 const router = useRouter();
+const route = useRoute();
 const { success, error } = useNotification();
 
-const schemaSolicitacao = SolicitacaoCadastroSchema;
+const govbrNome = (route.query.nome as string) ?? '';
+const govbrCpf = (route.query.cpf as string) ?? '';
+const modoGovBr = !!(govbrNome && govbrCpf);
 
-const initialValues = {
+function formatarCpf(cpf: string): string {
+  const d = String(cpf).replace(/\D/g, '');
+  if (d.length !== 11) return cpf;
+  return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+const schemaSolicitacao = computed(() =>
+  modoGovBr ? SolicitacaoCadastroSchemaGovBr : SolicitacaoCadastroSchema
+);
+
+const initialValues = computed(() => ({
+  nome: modoGovBr ? govbrNome : '',
+  CPF: modoGovBr ? formatarCpf(govbrCpf) : '',
   emailInstitucional: '',
   telefoneInstitucional: '',
   telefonePessoal: '',
@@ -142,7 +158,7 @@ const initialValues = {
   municipio: '',
   orgao: '',
   cargo: '',
-};
+}));
 
 const isSubmitting = ref(false);
 const formKey = ref(0);
