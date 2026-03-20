@@ -69,9 +69,10 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # -------------------------------------------------------
-# Documentação (Markdown)
+# Documentação — README versionado; demais .md ignorados
 # -------------------------------------------------------
 *.md
+!README.md
 
 # -------------------------------------------------------
 # Sistema Operacional
