@@ -22,7 +22,7 @@ cp .env.example .env
 
 # Iniciar servidor de desenvolvimento
 npm run dev
-# → http://localhost:5173
+# → http://localhost:5174
 ```
 
 ## Scripts
