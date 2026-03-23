@@ -401,11 +401,11 @@ async function aprovarSolicitacao(payload?: { perfilId?: string | number | null;
   }
 }
 
-async function reprovarSolicitacao() {
+async function reprovarSolicitacao(payload: { justificativa: string }) {
   if (!detalheSelecionado.value) return
   avaliando.value = true
   try {
-    await apiReprovar(detalheSelecionado.value.id)
+    await apiReprovar(detalheSelecionado.value.id, payload.justificativa)
     success('Solicitação reprovada.')
     fecharPainelDetalhar()
     carregarSolicitacoes()

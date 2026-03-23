@@ -8,5 +8,12 @@ export const solicitacaoRoutes: RouteRecordRaw[] = [
     meta: {
       title: 'Solicitação de cadastro — NVSL',
     },
+    beforeEnter: (to, _from, next) => {
+      if (!to.query.nome || !to.query.cpf) {
+        next({ name: 'login' })
+      } else {
+        next()
+      }
+    },
   },
 ]

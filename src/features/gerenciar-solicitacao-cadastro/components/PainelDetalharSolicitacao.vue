@@ -100,7 +100,7 @@
         <button
           class="br-button danger"
           type="button"
-          @click="$emit('reprovar')"
+          @click="abrirModalReprovar"
           :disabled="avaliando"
         >
           Reprovar
@@ -317,6 +317,44 @@
         </div>
       </form>
     </Modal>
+
+    <!-- Modal Reprovar com Justificativa -->
+    <Modal
+      v-if="modalReprovarVisivel"
+      title="Reprovar Solicitação"
+      :show-actions="false"
+      @close="fecharModalReprovar"
+    >
+      <form @submit.prevent="onSubmitReprovar" class="form-modal-reprovar">
+        <p class="mb-3">Informe o motivo da reprovação. Esta informação ficará registrada no sistema.</p>
+        <div class="br-textarea mb-3">
+          <label for="justificativa-reprovacao">Justificativa <span class="text-red-50">*</span></label>
+          <textarea
+            id="justificativa-reprovacao"
+            v-model="justificativaReprovacao"
+            rows="4"
+            placeholder="Descreva o motivo da reprovação (mínimo 10 caracteres)..."
+            required
+            minlength="10"
+            maxlength="1000"
+          ></textarea>
+          <span class="input-hint">{{ justificativaReprovacao.length }}/1000 caracteres</span>
+        </div>
+        <div v-if="erroReprovar" class="br-message danger mb-3" role="alert">
+          <div class="content">{{ erroReprovar }}</div>
+        </div>
+        <div class="form-modal-acoes">
+          <button class="br-button secondary" type="button" @click="fecharModalReprovar">Cancelar</button>
+          <button
+            class="br-button danger"
+            type="submit"
+            :disabled="justificativaReprovacao.trim().length < 10"
+          >
+            Confirmar Reprovação
+          </button>
+        </div>
+      </form>
+    </Modal>
   </div>
 </template>
 
@@ -339,7 +377,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'voltar'): void
   (e: 'aprovar', payload: { perfilId: string | number | null; vigenciaInicio: string; vigenciaFim: string }): void
-  (e: 'reprovar'): void
+  (e: 'reprovar', payload: { justificativa: string }): void
   (e: 'toggle-perfil', payload: { perfilUsuarioId: number; acao: 'ativar' | 'desativar' }): void
   (e: 'adicionar-perfil', payload: { perfilId: number | string; vigenciaInicio?: string; vigenciaFim?: string }): void
 }>()
@@ -436,6 +474,30 @@ function onSubmitAdicionarPerfil() {
     vigenciaFim: formAdicionarPerfil.vigenciaFim || undefined,
   })
   fecharModalAdicionarPerfil()
+}
+
+const modalReprovarVisivel = ref(false)
+const justificativaReprovacao = ref('')
+const erroReprovar = ref('')
+
+function abrirModalReprovar() {
+  justificativaReprovacao.value = ''
+  erroReprovar.value = ''
+  modalReprovarVisivel.value = true
+}
+
+function fecharModalReprovar() {
+  modalReprovarVisivel.value = false
+}
+
+function onSubmitReprovar() {
+  if (justificativaReprovacao.value.trim().length < 10) {
+    erroReprovar.value = 'A justificativa deve ter pelo menos 10 caracteres.'
+    return
+  }
+  erroReprovar.value = ''
+  emit('reprovar', { justificativa: justificativaReprovacao.value.trim() })
+  fecharModalReprovar()
 }
 
 onMounted(async () => {
@@ -847,13 +909,31 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
   font-family: inherit;
 }
 
-.form-modal-adicionar-perfil .form-modal-acoes {
+.form-modal-adicionar-perfil .form-modal-acoes,
+.form-modal-reprovar .form-modal-acoes {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid var(--color-secondary-04, #ddd);
+}
+
+.form-modal-reprovar textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  border: 1px solid var(--color-secondary-04, #ccc);
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.form-modal-reprovar .input-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-secondary-06, #888);
+  margin-top: 0.25rem;
 }
 
 /* Padrão igual à tabela de Gerenciar solicitação de cadastros */

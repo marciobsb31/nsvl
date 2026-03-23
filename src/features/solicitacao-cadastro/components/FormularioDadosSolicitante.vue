@@ -1,80 +1,87 @@
 <template>
-    <section class="row">
-        <div class="col-md-6 col-sm-12">
-            <div class="br-input mb-2">
-                <label for="input-nome">Nome<span class="text-red-50 text-up-01"> *</span></label>
-                <input
-                    id="input-nome"
-                    type="text"
-                    placeholder="Nome completo (somente letras)"
-                    v-model="nome"
-                    :readonly="modoGovBr"
-                    @input="filtrarSomenteLetras"
-                />
-                <Feedback v-if="errorsNome" :message="errorsNome" type="danger" />
-            </div>
-        </div>
-        <div class="col-md-6 col-sm-12">
-            <div class="br-input mb-2">
-                <label for="input-cpf">CPF<span v-if="!modoEdicao && !modoGovBr" class="text-red-50 text-up-01">*</span><template v-else-if="modoGovBr"> (GOV.BR)</template><template v-else> (opcional)</template></label>
-                <input
-                    id="input-cpf"
-                    type="text"
-                    :placeholder="modoGovBr ? 'Preenchido automaticamente pelo GOV.BR' : (modoEdicao ? 'Informe apenas se desejar alterar' : '000.000.000-00')"
-                    v-model="CPF"
-                    v-maska="modoGovBr ? undefined : '###.###.###-##'"
-                    :readonly="modoGovBr"
-                    :disabled="verificandoCpf"
-                    @blur="onCpfBlur"
-                />
-                <span v-if="verificandoCpf" class="input-hint input-hint--loading">
-                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Verificando CPF...
-                </span>
-                <span v-else-if="cpfDisponivel && cpfPreenchido" class="input-hint input-hint--success">
-                    <i class="fas fa-check-circle" aria-hidden="true"></i> CPF disponível
-                </span>
-                <Feedback v-if="errorsCPF" :message="errorsCPF" type="danger" />
-            </div>
-        </div>
-        <div class="col-md-6 col-sm-12">
-            <div class="br-input mb-2">
-                <label for="input-email">E-mail Institucional<span class="text-red-50 text-up-01">*</span></label>
-                <input
-                    id="input-email"
-                    type="email"
-                    placeholder="seu.nome@email.com"
-                    v-model="emailInstitucional"
-                />
-                <Feedback v-if="errorsEmail" :message="errorsEmail" type="danger" />
-            </div>
-        </div>
-        <div class="col-md-6 col-sm-12">
-            <div class="br-input mb-2">
-                <label for="input-tel-inst">Telefone institucional<span class="text-red-50 text-up-01">*</span></label>
-                <input
-                    id="input-tel-inst"
-                    type="tel"
-                    placeholder="(00) 00000-0000"
-                    v-model="telefoneInstitucional"
-                    v-maska="telefoneMask"
-                />
-                <Feedback v-if="errorsTelInst" :message="errorsTelInst" type="danger" />
-            </div>
-        </div>
-        <div class="col-md-6 col-sm-12">
-            <div class="br-input mb-2">
-                <label for="input-tel-pessoal">Telefone pessoal</label>
-                <input
-                    id="input-tel-pessoal"
-                    type="tel"
-                    placeholder="(00) 00000-0000"
-                    v-model="telefonePessoal"
-                    v-maska="telefoneMask"
-                />
-                <Feedback v-if="errorsTelPessoal" :message="errorsTelPessoal" type="danger" />
-            </div>
-        </div>
-    </section>
+  <section class="row g-3 solicitacao-form-grid">
+    <div class="col-12 col-md-6">
+      <div class="br-input">
+        <label for="input-nome">Nome<span class="text-red-50 text-up-01"> *</span></label>
+        <input
+          id="input-nome"
+          type="text"
+          placeholder="Nome completo (somente letras)"
+          v-model="nome"
+          :readonly="modoGovBr"
+          @input="filtrarSomenteLetras"
+        />
+        <Feedback v-if="errorsNome" :message="errorsNome" type="danger" />
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="br-input">
+        <label for="input-cpf">
+          CPF
+          <span v-if="!modoEdicao && !modoGovBr" class="text-red-50 text-up-01">*</span>
+          <template v-else-if="modoGovBr"> (GOV.BR)</template>
+          <template v-else> (opcional)</template>
+        </label>
+        <input
+          id="input-cpf"
+          type="text"
+          :placeholder="
+            modoGovBr
+              ? 'Preenchido automaticamente pelo GOV.BR'
+              : modoEdicao
+                ? 'Informe apenas se desejar alterar'
+                : '000.000.000-00'
+          "
+          v-model="CPF"
+          v-maska="modoGovBr ? undefined : '###.###.###-##'"
+          :readonly="modoGovBr"
+          :disabled="verificandoCpf"
+          @blur="onCpfBlur"
+        />
+        <span v-if="verificandoCpf" class="input-hint input-hint--loading">
+          <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Verificando CPF...
+        </span>
+        <span v-else-if="cpfDisponivel && cpfPreenchido" class="input-hint input-hint--success">
+          <i class="fas fa-check-circle" aria-hidden="true"></i> CPF disponível
+        </span>
+        <Feedback v-if="errorsCPF" :message="errorsCPF" type="danger" />
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="br-input">
+        <label for="input-email">E-mail institucional<span class="text-red-50 text-up-01"> *</span></label>
+        <input id="input-email" type="email" placeholder="seu.nome@email.com" v-model="emailInstitucional" />
+        <Feedback v-if="errorsEmail" :message="errorsEmail" type="danger" />
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="br-input">
+        <label for="input-tel-inst">Telefone institucional<span class="text-red-50 text-up-01"> *</span></label>
+        <input
+          id="input-tel-inst"
+          type="tel"
+          placeholder="(00) 00000-0000"
+          v-model="telefoneInstitucional"
+          v-maska="telefoneMask"
+        />
+        <Feedback v-if="errorsTelInst" :message="errorsTelInst" type="danger" />
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="br-input">
+        <label for="input-tel-pessoal">Telefone pessoal</label>
+        <input
+          id="input-tel-pessoal"
+          type="tel"
+          placeholder="(00) 00000-0000"
+          v-model="telefonePessoal"
+          v-maska="telefoneMask"
+        />
+        <Feedback v-if="errorsTelPessoal" :message="errorsTelPessoal" type="danger" />
+        <span class="solicitacao-field-hint">Opcional — para contato alternativo.</span>
+      </div>
+    </div>
+  </section>
 </template>
 <script setup lang="ts">
 import { ref, computed } from 'vue'
@@ -166,6 +173,25 @@ function filtrarSomenteLetras(event: Event) {
 </script>
 
 <style scoped>
+.solicitacao-form-grid :deep(.br-input input:not([readonly])) {
+  min-height: 2.5rem;
+  border-radius: 6px;
+}
+
+.solicitacao-form-grid :deep(.br-input label) {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-secondary-09, #333);
+  margin-bottom: 0.25rem;
+}
+
+.solicitacao-field-hint {
+  display: block;
+  font-size: 0.75rem;
+  margin-top: 0.35rem;
+  color: var(--color-secondary-06, #666);
+}
+
 .input-hint {
   display: block;
   font-size: 0.75rem;

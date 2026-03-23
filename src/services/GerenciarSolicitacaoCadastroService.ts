@@ -62,8 +62,8 @@ export async function aprovarSolicitacao(
   await api.patch(`/solicitacoes-cadastro/${id}`, body)
 }
 
-export async function reprovarSolicitacao(id: number): Promise<void> {
-  await api.patch(`/solicitacoes-cadastro/${id}`, { status: 'reprovado' })
+export async function reprovarSolicitacao(id: number, justificativa: string): Promise<void> {
+  await api.patch(`/solicitacoes-cadastro/${id}`, { status: 'reprovado', justificativa })
 }
 
 export async function ativarPerfilVinculado(solicitacaoId: number, perfilUsuarioId: number): Promise<void> {
