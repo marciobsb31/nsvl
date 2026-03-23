@@ -100,7 +100,7 @@
         <button
           class="br-button danger"
           type="button"
-          @click="$emit('reprovar')"
+          @click="abrirModalReprovar"
           :disabled="avaliando"
         >
           Reprovar
@@ -147,13 +147,21 @@
       </div>
     </div>
 
-    <!-- Perfis Vinculados — somente se existir pelo menos um perfil -->
-    <div v-if="temPerfisVinculados" class="painel-secao perfis-vinculados-secao">
-      <h3 class="perfis-vinculados-titulo">Perfis vinculados</h3>
-      <p class="perfis-vinculados-subtitulo">
-        Um usuário pode ter vários perfis. Cada vínculo possui vigência, status e contexto de atuação.
-      </p>
-      <div class="table-responsive">
+    <!-- Perfis Vinculados — visível quando solicitação aprovada -->
+    <div v-if="detalhe?.status === 'aprovado'" class="painel-secao perfis-vinculados-secao">
+      <div class="perfis-vinculados-header">
+        <div>
+          <h3 class="perfis-vinculados-titulo">Perfis vinculados</h3>
+          <p class="perfis-vinculados-subtitulo">
+            Um usuário pode ter vários perfis. Cada vínculo possui vigência, status e contexto de atuação.
+          </p>
+        </div>
+      </div>
+      <div v-if="!temPerfisVinculados" class="perfis-vinculados-vazio">
+        <i class="fas fa-users fa-2x mb-2" aria-hidden="true"></i>
+        <p>Nenhum perfil vinculado. Clique em <strong>Adicionar Perfil</strong> para vincular um novo perfil ao usuário.</p>
+      </div>
+      <div v-else class="table-responsive">
         <table class="br-table tabela-perfis" role="table">
           <thead>
             <tr>
@@ -233,13 +241,127 @@
           </tbody>
         </table>
       </div>
+      <div class="perfis-vinculados-acoes">
+        <button
+          class="br-button primary small"
+          type="button"
+          @click="abrirModalAdicionarPerfil"
+          :disabled="opcoesPerfilDisponiveis.length === 0"
+          aria-label="Adicionar perfil"
+        >
+          Adicionar Perfil
+        </button>
+      </div>
     </div>
+
+    <!-- Modal Adicionar Perfil -->
+    <Modal
+      v-if="modalAdicionarPerfilVisivel"
+      title="Adicionar Perfil"
+      :show-actions="false"
+      @close="fecharModalAdicionarPerfil"
+    >
+      <form @submit.prevent="onSubmitAdicionarPerfil" class="form-modal-adicionar-perfil">
+        <div class="form-modal-linha">
+          <div class="br-select mb-3 form-modal-perfil">
+            <label for="modal-perfil">Perfil</label>
+            <select
+              id="modal-perfil"
+              v-model="formAdicionarPerfil.perfilId"
+              required
+            >
+              <option :value="null" disabled>Selecione o perfil</option>
+              <option
+                v-for="op in opcoesPerfilDisponiveis"
+                :key="String(op.value)"
+                :value="op.value"
+              >
+                {{ op.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="form-modal-linha form-modal-vigencias">
+          <div class="br-input mb-3">
+            <label for="modal-vigencia-inicio">Vigência (início)</label>
+            <input
+              id="modal-vigencia-inicio"
+              type="date"
+              v-model="formAdicionarPerfil.vigenciaInicio"
+            />
+          </div>
+          <div class="br-input mb-3">
+            <label for="modal-vigencia-fim">Vigência (fim)</label>
+            <input
+              id="modal-vigencia-fim"
+              type="date"
+              v-model="formAdicionarPerfil.vigenciaFim"
+              :min="formAdicionarPerfil.vigenciaInicio || undefined"
+            />
+          </div>
+        </div>
+        <div v-if="erroAdicionarPerfil" class="br-message danger mb-3" role="alert">
+          <div class="content">{{ erroAdicionarPerfil }}</div>
+        </div>
+        <div class="form-modal-acoes">
+          <button class="br-button secondary" type="button" @click="fecharModalAdicionarPerfil">
+            Cancelar
+          </button>
+          <button
+            class="br-button primary"
+            type="submit"
+            :disabled="!formAdicionarPerfil.perfilId"
+          >
+            Adicionar
+          </button>
+        </div>
+      </form>
+    </Modal>
+
+    <!-- Modal Reprovar com Justificativa -->
+    <Modal
+      v-if="modalReprovarVisivel"
+      title="Reprovar Solicitação"
+      :show-actions="false"
+      @close="fecharModalReprovar"
+    >
+      <form @submit.prevent="onSubmitReprovar" class="form-modal-reprovar">
+        <p class="mb-3">Informe o motivo da reprovação. Esta informação ficará registrada no sistema.</p>
+        <div class="br-textarea mb-3">
+          <label for="justificativa-reprovacao">Justificativa <span class="text-red-50">*</span></label>
+          <textarea
+            id="justificativa-reprovacao"
+            v-model="justificativaReprovacao"
+            rows="4"
+            placeholder="Descreva o motivo da reprovação (mínimo 10 caracteres)..."
+            required
+            minlength="10"
+            maxlength="1000"
+          ></textarea>
+          <span class="input-hint">{{ justificativaReprovacao.length }}/1000 caracteres</span>
+        </div>
+        <div v-if="erroReprovar" class="br-message danger mb-3" role="alert">
+          <div class="content">{{ erroReprovar }}</div>
+        </div>
+        <div class="form-modal-acoes">
+          <button class="br-button secondary" type="button" @click="fecharModalReprovar">Cancelar</button>
+          <button
+            class="br-button danger"
+            type="submit"
+            :disabled="justificativaReprovacao.trim().length < 10"
+          >
+            Confirmar Reprovação
+          </button>
+        </div>
+      </form>
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, reactive } from 'vue'
 import { usePerfis } from '@/core/composables/usePerfis'
+import Modal from '@/core/components/Modal/Modal.vue'
 import type { SolicitacaoCadastroDetalhe, PerfilVinculado } from '@/services/SolicitacaoCadastroService'
 
 defineOptions({ name: 'PainelDetalharSolicitacao' })
@@ -252,11 +374,12 @@ const props = withDefaults(
   {}
 )
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'voltar'): void
   (e: 'aprovar', payload: { perfilId: string | number | null; vigenciaInicio: string; vigenciaFim: string }): void
-  (e: 'reprovar'): void
+  (e: 'reprovar', payload: { justificativa: string }): void
   (e: 'toggle-perfil', payload: { perfilUsuarioId: number; acao: 'ativar' | 'desativar' }): void
+  (e: 'adicionar-perfil', payload: { perfilId: number | string; vigenciaInicio?: string; vigenciaFim?: string }): void
 }>()
 
 const perfilSelecionado = ref<string | number | null>(null)
@@ -307,6 +430,75 @@ const perfisVinculadosOrdenados = computed<PerfilVinculadoExibicao[]>(() => {
 
   return lista.sort((a, b) => compararValores(a, b, coluna) * direcao)
 })
+
+const modalAdicionarPerfilVisivel = ref(false)
+const erroAdicionarPerfil = ref('')
+const formAdicionarPerfil = reactive<{
+  perfilId: string | number | null
+  vigenciaInicio: string
+  vigenciaFim: string
+}>({
+  perfilId: null,
+  vigenciaInicio: '',
+  vigenciaFim: '',
+})
+
+const opcoesPerfilDisponiveis = computed(() => {
+  const perfisJaVinculados = new Set(
+    perfisVinculadosLista.value.map((p) => String(p.perfil).toLowerCase())
+  )
+  return opcoesPerfil.value.filter(
+    (op) => !perfisJaVinculados.has(String(op.label).toLowerCase())
+  )
+})
+
+function abrirModalAdicionarPerfil() {
+  const hoje = new Date().toISOString().slice(0, 10)
+  formAdicionarPerfil.perfilId = null
+  formAdicionarPerfil.vigenciaInicio = hoje
+  formAdicionarPerfil.vigenciaFim = ''
+  erroAdicionarPerfil.value = ''
+  modalAdicionarPerfilVisivel.value = true
+}
+
+function fecharModalAdicionarPerfil() {
+  modalAdicionarPerfilVisivel.value = false
+}
+
+function onSubmitAdicionarPerfil() {
+  if (!formAdicionarPerfil.perfilId) return
+  erroAdicionarPerfil.value = ''
+  emit('adicionar-perfil', {
+    perfilId: formAdicionarPerfil.perfilId,
+    vigenciaInicio: formAdicionarPerfil.vigenciaInicio || undefined,
+    vigenciaFim: formAdicionarPerfil.vigenciaFim || undefined,
+  })
+  fecharModalAdicionarPerfil()
+}
+
+const modalReprovarVisivel = ref(false)
+const justificativaReprovacao = ref('')
+const erroReprovar = ref('')
+
+function abrirModalReprovar() {
+  justificativaReprovacao.value = ''
+  erroReprovar.value = ''
+  modalReprovarVisivel.value = true
+}
+
+function fecharModalReprovar() {
+  modalReprovarVisivel.value = false
+}
+
+function onSubmitReprovar() {
+  if (justificativaReprovacao.value.trim().length < 10) {
+    erroReprovar.value = 'A justificativa deve ter pelo menos 10 caracteres.'
+    return
+  }
+  erroReprovar.value = ''
+  emit('reprovar', { justificativa: justificativaReprovacao.value.trim() })
+  fecharModalReprovar()
+}
 
 onMounted(async () => {
   await carregarPerfis()
@@ -674,8 +866,74 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
   font-size: 0.9375rem;
   font-weight: 400;
   color: var(--color-secondary-08, #333);
-  margin: 0 0 1rem;
+  margin: 0;
   line-height: 1.4;
+}
+
+.perfis-vinculados-header {
+  margin-bottom: 1rem;
+}
+
+.perfis-vinculados-acoes {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.perfis-vinculados-vazio {
+  padding: 2rem;
+  text-align: center;
+  background: var(--color-secondary-01, #f8f8f8);
+  border-radius: 8px;
+  color: var(--color-secondary-07, #555);
+}
+
+.perfis-vinculados-vazio i {
+  display: block;
+  color: var(--color-secondary-05, #999);
+}
+
+.form-modal-adicionar-perfil .form-modal-linha {
+  margin-bottom: 1rem;
+}
+
+.form-modal-adicionar-perfil .form-modal-vigencias {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.form-modal-adicionar-perfil .form-modal-perfil select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-family: inherit;
+}
+
+.form-modal-adicionar-perfil .form-modal-acoes,
+.form-modal-reprovar .form-modal-acoes {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-secondary-04, #ddd);
+}
+
+.form-modal-reprovar textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  border: 1px solid var(--color-secondary-04, #ccc);
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.form-modal-reprovar .input-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-secondary-06, #888);
+  margin-top: 0.25rem;
 }
 
 /* Padrão igual à tabela de Gerenciar solicitação de cadastros */

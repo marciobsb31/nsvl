@@ -1,45 +1,96 @@
 <template>
   <PublicLayout full-width>
-    <section class="container-solicitacao">
-      <div class="titulo">
-        <h1 class="color-text text-weight-semi-bold">Solicitação de cadastro</h1>
-      </div>
-      <Form
-        v-slot="{ values: formValues }"
-        :key="formKey"
-        :validation-schema="schemaSolicitacao"
-        :initial-values="initialValues"
-        @submit="onSubmit"
-      >
-        <Card
-          title="Dados do(a) solicitante"
-          subtitle="Preencha seus dados para solicitar acesso"
-        >
-          <FormularioDadosSolicitante :modo-gov-br="modoGovBr" />
-        </Card>
-        <Card title="Informação do(a) solicitante" subtitle="Informações de atuação institucional do solicitante"
-          custom-class="mt-4">
-          <FormularioInformacaoSolicitante />
-        </Card>
-        <Card title="Aceite do Termo e uso e Privacidade"
-          subtitle="O aceite ocorre no ato da confirmação e envio da solicitação." custom-class="mt-4">
-          <p><strong>Ao confirmar a solicitação você aceita o seguinte termo de uso e privacidade:</strong> os dados
-            informados serão utilizados exclusivamente para fins de análise, habilitação e gestão de acesso ao sistema NVSL.
+    <section class="solicitacao-page" aria-labelledby="solicitacao-titulo">
+      <div class="solicitacao-page__inner">
+        <nav class="solicitacao-breadcrumb" aria-label="Navegação estrutural">
+          <ol class="solicitacao-breadcrumb__list">
+            <li>
+              <router-link :to="{ name: 'home' }" class="solicitacao-breadcrumb__link">Início</router-link>
+            </li>
+            <li aria-hidden="true" class="solicitacao-breadcrumb__sep">/</li>
+            <li class="solicitacao-breadcrumb__current">Solicitação de cadastro</li>
+          </ol>
+        </nav>
+
+        <header class="solicitacao-hero">
+          <h1 id="solicitacao-titulo" class="solicitacao-hero__title">
+            Solicitação de cadastro
+          </h1>
+          <p class="solicitacao-hero__lead">
+            Preencha os dados abaixo para solicitar acesso ao <strong>NVSL</strong>. Campos marcados com
+            <span class="solicitacao-hero__req">*</span> são obrigatórios.
           </p>
-          <p>O envio da solicitação implica ciência quanto ao tratamento dos dados pessoais e utilização para fins
-            institucionais.</p>
-        </Card>
-        <div class="mt-3 actions">
-          <button class="br-button secondary mr-3" type="button" @click="onCancel">Cancelar</button>
-          <button
-            class="br-button primary mr-3"
-            type="submit"
-            :disabled="isSubmitting || !camposObrigatoriosPreenchidos(formValues)"
+          <div v-if="modoGovBr" class="br-message info solicitacao-govbr-msg" role="status">
+            <div class="content">
+              <strong>Dados do GOV.BR:</strong> nome e CPF foram obtidos na autenticação e não podem ser alterados.
+            </div>
+          </div>
+        </header>
+
+        <Form
+          v-slot="{ values: formValues }"
+          :key="formKey"
+          :validation-schema="schemaSolicitacao"
+          :initial-values="initialValues"
+          class="solicitacao-form"
+          @submit="onSubmit"
+        >
+          <Card
+            title="Dados do solicitante"
+            subtitle="Identificação e contato institucional para análise da solicitação."
+            custom-class="solicitacao-card solicitacao-card--first"
           >
-            {{ isSubmitting ? 'Enviando...' : 'Confirmar/Enviar solicitação' }}
-          </button>
-        </div>
-      </Form>
+            <FormularioDadosSolicitante :modo-gov-br="modoGovBr" />
+          </Card>
+
+          <Card
+            title="Atuação institucional"
+            subtitle="Esfera, localidade e órgão em que você atuará no sistema."
+            custom-class="solicitacao-card"
+          >
+            <FormularioInformacaoSolicitante />
+          </Card>
+
+          <Card
+            title="Termo de uso e privacidade"
+            subtitle="O aceite é registrado no momento da confirmação e envio da solicitação."
+            custom-class="solicitacao-card solicitacao-card--termo"
+          >
+            <div class="solicitacao-termo-box" role="region" aria-labelledby="termo-titulo-visivel">
+              <h3 id="termo-titulo-visivel" class="solicitacao-termo-box__titulo">
+                Declaração de ciência
+              </h3>
+              <p class="solicitacao-termo-box__texto">
+                Ao confirmar, você declara ter lido e aceitado o tratamento dos dados conforme a finalidade do NVSL:
+                os dados informados serão utilizados exclusivamente para <strong>análise</strong>,
+                <strong>habilitação</strong> e <strong>gestão de acesso</strong> ao sistema.
+              </p>
+              <p class="solicitacao-termo-box__texto solicitacao-termo-box__texto--muted">
+                O envio implica ciência quanto ao tratamento de dados pessoais e uso institucional, em conformidade com a
+                legislação aplicável.
+              </p>
+            </div>
+          </Card>
+
+          <div class="solicitacao-acoes">
+            <button
+              class="br-button secondary solicitacao-acoes__btn"
+              type="button"
+              @click="onCancel"
+            >
+              Cancelar
+            </button>
+            <button
+              class="br-button primary solicitacao-acoes__btn solicitacao-acoes__btn--principal"
+              type="submit"
+              :disabled="isSubmitting || !camposObrigatoriosPreenchidos(formValues)"
+              :aria-busy="isSubmitting"
+            >
+              {{ isSubmitting ? 'Enviando...' : 'Confirmar e enviar solicitação' }}
+            </button>
+          </div>
+        </Form>
+      </div>
 
       <Modal
         v-if="modalVisualizar"
@@ -323,8 +374,10 @@ async function onSubmit(values: Record<string, unknown>) {
       payload.CPF = cpfVal;
     }
     await enviarSolicitacaoCadastro(payload);
-    success('Solicitação enviada com sucesso! Aguarde a análise da equipe.');
-    formKey.value++;
+    success('Solicitação enviada com sucesso! Aguarde a análise da equipe. Redirecionando para o login...');
+    setTimeout(() => {
+      router.push({ name: 'login' });
+    }, 3000);
   } catch (err: unknown) {
     const msg = err && typeof err === 'object' && 'response' in err
       ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
@@ -360,48 +413,192 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.container-solicitacao {
-  padding: 1.5rem;
+/* —— Página (Padrão Digital / eGOV) —— */
+.solicitacao-page {
+  width: 100%;
+  padding: 1rem 0 2.5rem;
+  background: linear-gradient(180deg, var(--color-secondary-01, #f8f8f8) 0%, var(--background, #fff) 12rem);
 }
 
-.listagem-header {
+.solicitacao-page__inner {
+  width: 100%;
+  max-width: min(100%, 80rem);
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 576px) {
+  .solicitacao-page__inner {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .solicitacao-page__inner {
+    padding: 0 2rem;
+  }
+}
+
+/* Breadcrumb */
+.solicitacao-breadcrumb {
+  margin-bottom: 1rem;
+}
+
+.solicitacao-breadcrumb__list {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 0.75rem;
+  gap: 0.35rem 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
 }
-.actions {
+
+.solicitacao-breadcrumb__link {
+  color: var(--color-primary-default, #1351b4);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.solicitacao-breadcrumb__link:hover,
+.solicitacao-breadcrumb__link:focus {
+  color: var(--color-primary-darken-01, #0f3d85);
+}
+
+.solicitacao-breadcrumb__sep {
+  color: var(--color-secondary-06, #888);
+  user-select: none;
+}
+
+.solicitacao-breadcrumb__current {
+  color: var(--color-secondary-08, #333);
+  font-weight: 600;
+}
+
+/* Hero */
+.solicitacao-hero {
+  margin-bottom: 1.5rem;
+}
+
+.solicitacao-hero__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-primary-darken-02, #0c326f);
+  letter-spacing: -0.02em;
+}
+
+@media (min-width: 768px) {
+  .solicitacao-hero__title {
+    font-size: 1.75rem;
+  }
+}
+
+.solicitacao-hero__lead {
+  margin: 0;
+  max-width: 62rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--color-secondary-08, #333);
+}
+
+.solicitacao-hero__req {
+  color: var(--color-danger, #e52207);
+  font-weight: 700;
+}
+
+.solicitacao-govbr-msg {
+  margin-top: 1rem;
+}
+.solicitacao-govbr-msg .content {
+  font-size: 0.875rem;
+}
+
+/* Cards empilhados */
+.solicitacao-form {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.color-text{
-  color: var(--color-text-h1)
-}
-
-@media (max-width: 575px) {
-  .actions {
-    flex-direction: column-reverse;
-    justify-content: center;
-    gap: 1rem;
-  }
-
-  .titulo {
-    text-align: center;
-  }
-
-  .titulo h1 {
-    font-size: 1.25rem;
-  }
-
-  .container-solicitacao {
-    padding: 1rem;
+@media (min-width: 768px) {
+  .solicitacao-form {
+    gap: 1.5rem;
   }
 }
 
-@media (max-width: 991px) {
-  .titulo h1 {
-    font-size: 1.5rem;
+:deep(.solicitacao-card) {
+  margin-top: 0 !important;
+}
+
+:deep(.solicitacao-card--first) {
+  margin-top: 0;
+}
+
+/* Caixa do termo */
+.solicitacao-termo-box {
+  padding: 1rem 1.125rem;
+  border-radius: 6px;
+  border-left: 4px solid var(--color-primary-default, #1351b4);
+  background: var(--color-primary-pastel-01, #e8f0ff);
+}
+
+.solicitacao-termo-box__titulo {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-primary-darken-02, #0c326f);
+}
+
+.solicitacao-termo-box__texto {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--color-secondary-09, #333);
+}
+
+.solicitacao-termo-box__texto:last-child {
+  margin-bottom: 0;
+}
+
+.solicitacao-termo-box__texto--muted {
+  color: var(--color-secondary-07, #555);
+  font-size: 0.8125rem;
+}
+
+/* Ações */
+.solicitacao-acoes {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  padding: 1.25rem 0 0;
+  border-top: 1px solid var(--color-secondary-03, #e8e8e8);
+}
+
+.solicitacao-acoes__btn {
+  width: 100%;
+  min-height: 2.75rem;
+  justify-content: center;
+}
+
+@media (min-width: 576px) {
+  .solicitacao-acoes {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .solicitacao-acoes__btn {
+    width: auto;
+    min-width: 10rem;
+  }
+
+  .solicitacao-acoes__btn--principal {
+    min-width: 14rem;
   }
 }
 </style>
