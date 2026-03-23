@@ -1,92 +1,72 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { authService } from '@/services/AuthService'
-import type { GovBrUser } from '@/core/types/auth'
+import api from '@/services/ApiService'
+
+export interface PerfilVigente {
+    id: number
+    nome: string
+    data_inicio_vigencia?: string | null
+    data_fim_vigencia?: string | null
+}
+
+export interface AuthUser {
+    id: number
+    name: string
+    email?: string
+    picture?: string
+    role?: string
+    esfera_atuacao?: string
+    uf_lotacao?: string
+    municipio_lotacao?: string
+    perfis_vigentes: PerfilVigente[]
+}
 
 /**
- * authStore — estado global de autenticação
- *
- * Utiliza Composition API style com defineStore para melhor
- * inferência de tipos e código mais limpo.
+ * authStore — estado de autenticação (token de teste para desenvolvimento)
  */
 export const useAuthStore = defineStore('auth', () => {
-    const user = ref<GovBrUser | null>(null)
+    const user = ref<AuthUser | null>(null)
     const isLoading = ref(false)
     const error = ref<string | null>(null)
 
-    // Getters computados
     const isAuthenticated = computed(() => !!user.value)
     const userName = computed(() => user.value?.name ?? '')
     const userEmail = computed(() => user.value?.email ?? '')
 
-    /**
-     * Carrega o usuário da sessão OIDC (chamado ao iniciar a aplicação)
-     */
-    async function loadUser(): Promise<void> {
-        isLoading.value = true
-        error.value = null
-        try {
-            user.value = await authService.getUser()
-        } catch (err) {
-            console.error('[AuthStore] Erro ao carregar usuário:', err)
-            error.value = 'Falha ao carregar dados do usuário.'
+    function setUser(data: Record<string, unknown> | null): void {
+        if (!data) {
             user.value = null
-        } finally {
-            isLoading.value = false
+            return
+        }
+        const rawPerfis = Array.isArray(data.perfis_vigentes) ? data.perfis_vigentes : []
+        user.value = {
+            id: Number(data.id),
+            name: String(data.name ?? ''),
+            email: data.email ? String(data.email) : undefined,
+            picture: data.picture ? String(data.picture) : undefined,
+            role: data.role ? String(data.role) : undefined,
+            esfera_atuacao: data.esfera_atuacao ? String(data.esfera_atuacao) : undefined,
+            uf_lotacao: data.uf_lotacao ? String(data.uf_lotacao) : undefined,
+            municipio_lotacao: data.municipio_lotacao ? String(data.municipio_lotacao) : undefined,
+            perfis_vigentes: rawPerfis.map((p: Record<string, unknown>) => ({
+                id: Number(p.id),
+                nome: String(p.nome ?? ''),
+                data_inicio_vigencia: p.data_inicio_vigencia ? String(p.data_inicio_vigencia) : null,
+                data_fim_vigencia: p.data_fim_vigencia ? String(p.data_fim_vigencia) : null,
+            })),
         }
     }
 
-    /**
-     * Inicia o fluxo de login — redireciona para GOV.BR SSO
-     */
-    async function login(): Promise<void> {
-        isLoading.value = true
-        error.value = null
-        try {
-            await authService.login()
-        } catch (err) {
-            console.error('[AuthStore] Erro ao iniciar login:', err)
-            error.value = 'Não foi possível iniciar o login. Tente novamente.'
-            isLoading.value = false
-        }
-    }
-
-    /**
-     * Processa o callback do SSO GOV.BR e extrai o token da URL
-     */
-    async function handleCallback(): Promise<void> {
-        isLoading.value = true
-        error.value = null
-        try {
-            const params = new URLSearchParams(window.location.search)
-            const token = params.get('token')
-
-            if (token) {
-                authService.setToken(token)
-                user.value = await authService.getUser()
-            } else {
-                throw new Error('Token não encontrado na URL de callback')
-            }
-        } catch (err) {
-            console.error('[AuthStore] Erro no callback de autenticação:', err)
-            error.value = 'Falha na autenticação. Por favor, tente novamente.'
-            user.value = null
-        } finally {
-            isLoading.value = false
-        }
-    }
-
-    /**
-     * Realiza logout — limpa estado e redireciona para SSO
-     */
     async function logout(): Promise<void> {
-        isLoading.value = true
         try {
+            if (sessionStorage.getItem('nvsl_token')) {
+                await api.post('/auth/logout')
+            }
+        } catch {
+            // Ignora falhas no logout remoto e limpa o estado local mesmo assim.
+        } finally {
+            sessionStorage.removeItem('nvsl_token')
             user.value = null
-            await authService.logout()
-        } catch (err) {
-            console.error('[AuthStore] Erro ao realizar logout:', err)
-            isLoading.value = false
         }
     }
 
@@ -101,9 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
         isAuthenticated,
         userName,
         userEmail,
-        loadUser,
-        login,
-        handleCallback,
+        setUser,
         logout,
         clearError,
     }

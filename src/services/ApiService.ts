@@ -1,7 +1,11 @@
 import axios from 'axios'
 
+// Em dev: usa /api (proxy do Vite redireciona ao backend). Em prod: usa URL completa.
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+    || (import.meta.env.DEV ? '/api' : 'http://localhost:8081/api')
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+    baseURL: apiBaseUrl,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -17,13 +21,16 @@ api.interceptors.request.use((config) => {
     return config
 })
 
-// Interceptador de resposta para tratar expiração de sessão
+// Interceptador de resposta: 401 → redireciona para login (com delay para exibir mensagem de erro)
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
+            console.warn('[API] 401 — redirecionando para login em 1.5s')
             sessionStorage.removeItem('nvsl_token')
-            window.location.href = '/login'
+            setTimeout(() => {
+                window.location.href = '/login'
+            }, 1500)
         }
         return Promise.reject(error)
     }

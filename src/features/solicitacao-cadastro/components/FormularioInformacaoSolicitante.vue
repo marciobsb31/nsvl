@@ -1,121 +1,170 @@
 <template>
-      <section class="row">
+    <section class="row">
         <div class="col-md-6 col-sm-12">
-        <Select 
-          label="Esfera de atuação"
-          placeholder="Esfera de atuação"
-          :options="esfera"
-          required
-          v-model="esferaAtuacao" />
-          <Feedback v-if="errors.esferaAtuacao" :message="errors.esferaAtuacao" type="danger" />
+            <SelectAutocomplete
+                v-model="esferaAtuacao"
+                label="Esfera de atuação"
+                placeholder="Esfera de atuação"
+                :options="opcoesEsferaFiltradas"
+                :disabled="esferaBloqueada"
+                required
+            />
+            <Feedback v-if="errorsEsfera" :message="errorsEsfera" type="danger" />
         </div>
         <div class="col-md-6 col-sm-12">
-        <Select
-          label="UF"
-          placeholder="UF"
-          :options="estados"
-          required
-          v-model="uf" />
-          <Feedback v-if="errors.uf" :message="errors.uf" type="danger" />
+            <SelectAutocomplete
+                v-model="uf"
+                label="Estado (UF)"
+                placeholder="Selecione"
+                :options="opcoesUfFiltradas"
+                :disabled="ufBloqueada"
+                required
+            />
+            <Feedback v-if="errorsUf" :message="errorsUf" type="danger" />
         </div>
         <div class="col-md-6 col-sm-12">
-          <div class="br-input mb-2">
-            <label for="input-default">Município<span class="text-red-50 text-up-01">*</span></label>
-            <input id="input-default" type="text" placeholder="Município" v-model="municipio" />
-            <Feedback v-if="errors.municipio" :message="errors.municipio" type="danger" />
-          </div>
+            <SelectAutocomplete
+                v-model="municipio"
+                label="Município"
+                placeholder="Município"
+                :options="opcoesMunicipioFiltradas"
+                :disabled="!uf || municipioBloqueado"
+                required
+            />
+            <Feedback v-if="errorsMunicipio" :message="errorsMunicipio" type="danger" />
         </div>
         <div class="col-md-6 col-sm-12">
-          <div class="br-input mb-2">
-            <label for="input-default">Orgão de atuação<span class="text-red-50 text-up-01">*</span></label>
-            <input id="input-default" type="text" placeholder="Órgão/secretaria responsável pela atuação no NVSL." v-model="orgao" />
-            <Feedback v-if="errors.orgao" :message="errors.orgao" type="danger" />
-          </div>
+            <div class="br-input mb-2">
+                <label for="input-orgao">Órgão de atuação<span class="text-red-50 text-up-01">*</span></label>
+                <input id="input-orgao" type="text" placeholder="Órgão/secretaria responsável pela atuação no NVSL." v-model="orgao" />
+                <Feedback v-if="errorsOrgao" :message="errorsOrgao" type="danger" />
+            </div>
         </div>
         <div class="col-md-6 col-sm-12">
-          <div class="br-input mb-2">
-            <label for="input-default">Cargo /Função<span class="text-red-50 text-up-01">*</span></label>
-            <input id="input-default" type="text" placeholder="Cargo ou função." v-model="cargo" />
-            <Feedback v-if="errors.cargo" :message="errors.cargo" type="danger" />
-          </div>
+            <div class="br-input mb-2">
+                <label for="input-cargo">Cargo / Função<span class="text-red-50 text-up-01">*</span></label>
+                <input id="input-cargo" type="text" placeholder="Cargo ou função." v-model="cargo" />
+                <Feedback v-if="errorsCargo" :message="errorsCargo" type="danger" />
+            </div>
         </div>
-      </section>
-
+    </section>
 </template>
 <script setup lang="ts">
-import Select from '@/core/components/Select/Select.vue';
-import { ref } from 'vue';
-import { InformacaoSolicitanteSchema } from '../validators/solicitacaoCadastro.schema';
-import Feedback from '@/core/components/Feedback/Feedback.vue';
-import { watch } from 'vue';
-import { useForm, useField } from 'vee-validate';
+import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
+import { onMounted, watch, computed } from 'vue'
+import { useField } from 'vee-validate'
+import Feedback from '@/core/components/Feedback/Feedback.vue'
+import { useEsferas } from '@/core/composables/useEsferas'
+import { useLocalidades } from '@/core/composables/useLocalidades'
 
 defineOptions({
   name: 'FormularioInformacaoSolicitante'
 })
 
-const props = defineProps<{
-  submitForm: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    aplicarRegrasHierarquia?: boolean
+    usuarioLogado?: {
+      esfera_atuacao?: string
+      uf_lotacao?: string
+      municipio_lotacao?: string
+    } | null
+  }>(),
+  { aplicarRegrasHierarquia: false, usuarioLogado: null }
+)
 
-const esfera = ref([
-  { value: 'federal', label: 'Federal' },
-  { value: 'estadual', label: 'Estadual' },
-  { value: 'municipal', label: 'Municipal' },
-])
+const { opcoesEsfera, carregarEsferas } = useEsferas()
 
-const estados = ref([
-  { value: 'AC', label: 'AC' },
-  { value: 'AL', label: 'AL' },
-  { value: 'AP', label: 'AP' },
-  { value: 'AM', label: 'AM' },
-  { value: 'BA', label: 'BA' },
-  { value: 'CE', label: 'CE' },
-  { value: 'DF', label: 'DF' },
-  { value: 'ES', label: 'ES' },
-  { value: 'GO', label: 'GO' },
-  { value: 'MA', label: 'MA' },
-  { value: 'MT', label: 'MT' },
-  { value: 'MS', label: 'MS' },
-  { value: 'MG', label: 'MG' },
-  { value: 'PA', label: 'PA' },
-  { value: 'PB', label: 'PB' },
-  { value: 'PR', label: 'PR' },
-  { value: 'PE', label: 'PE' },
-  { value: 'PI', label: 'PI' },
-  { value: 'RJ', label: 'RJ' },
-  { value: 'RN', label: 'RN' },
-  { value: 'RS', label: 'RS' },
-  { value: 'RO', label: 'RO' },
-  { value: 'RR', label: 'RR' },
-  { value: 'SC', label: 'SC' },
-  { value: 'SP', label: 'SP' },
-  { value: 'SE', label: 'SE' },
-  { value: 'TO', label: 'TO' },
-])
+const { value: esferaAtuacao, errorMessage: errorsEsfera } = useField<string>('esferaAtuacao')
+const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
+const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
 
+const { opcoesUf, opcoesMunicipio, carregarUfs } = useLocalidades(uf)
 
+const esferaUsuarioLogado = computed(() =>
+  String(props.usuarioLogado?.esfera_atuacao ?? '').toLowerCase()
+)
 
-const { handleSubmit, errors } = useForm<any>({
-    validationSchema: InformacaoSolicitanteSchema,
-});
+const aplicarHierarquia = computed(() => !!props.aplicarRegrasHierarquia)
 
-const { value: esferaAtuacao } = useField<string>('esferaAtuacao')
-const { value: uf } = useField<string>('uf')
-const { value: municipio } = useField<string>('municipio')
-const { value: orgao } = useField<string>('orgao')
-const { value: cargo } = useField<string>('cargo')
+const esferaBloqueada = computed(
+  () => aplicarHierarquia.value && (esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal')
+)
+const ufBloqueada = computed(
+  () => aplicarHierarquia.value && (esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal')
+)
+const municipioBloqueado = computed(
+  () => aplicarHierarquia.value && esferaUsuarioLogado.value === 'municipal'
+)
 
-const onSubmit = handleSubmit(values => {
-   console.log(values);
-});
-
-watch(() => props.submitForm, (newValue) => {
-  if (newValue) {
-    console.log('Submitting form');
-    onSubmit();
+const opcoesEsferaFiltradas = computed(() => {
+  if (!aplicarHierarquia.value) return opcoesEsfera.value
+  if (esferaUsuarioLogado.value === 'estadual') {
+    return opcoesEsfera.value.filter((o) => String(o.value).toLowerCase() === 'estadual')
   }
-});
+  if (esferaUsuarioLogado.value === 'municipal') {
+    return opcoesEsfera.value.filter((o) => String(o.value).toLowerCase() === 'municipal')
+  }
+  return opcoesEsfera.value
+})
+
+const opcoesUfFiltradas = computed(() => {
+  if (!ufBloqueada.value || !props.usuarioLogado?.uf_lotacao) return opcoesUf.value
+  const ufLotacao = String(props.usuarioLogado.uf_lotacao).toUpperCase()
+  return opcoesUf.value.filter((o) => String(o.value).toUpperCase() === ufLotacao)
+})
+
+const opcoesMunicipioFiltradas = computed(() => {
+  if (!municipioBloqueado.value || !props.usuarioLogado?.municipio_lotacao) return opcoesMunicipio.value
+  const municipioLotacao = String(props.usuarioLogado.municipio_lotacao).toLowerCase()
+  return opcoesMunicipio.value.filter((o) => String(o.label).toLowerCase() === municipioLotacao)
+})
+
+onMounted(() => {
+  carregarUfs()
+  carregarEsferas()
+})
+
+watch(uf, () => {
+  if (municipioBloqueado.value && props.usuarioLogado?.municipio_lotacao) {
+    municipio.value = String(props.usuarioLogado.municipio_lotacao)
+    return
+  }
+  municipio.value = ''
+})
+
+watch(
+  () => props.usuarioLogado,
+  (usuario) => {
+    if (!aplicarHierarquia.value || !usuario) return
+
+    const esfera = String(usuario.esfera_atuacao ?? '').toLowerCase()
+    if (esfera === 'estadual') {
+      esferaAtuacao.value = 'estadual'
+      if (usuario.uf_lotacao) uf.value = String(usuario.uf_lotacao).toUpperCase()
+      return
+    }
+    if (esfera === 'municipal') {
+      esferaAtuacao.value = 'municipal'
+      if (usuario.uf_lotacao) uf.value = String(usuario.uf_lotacao).toUpperCase()
+      if (usuario.municipio_lotacao) municipio.value = String(usuario.municipio_lotacao)
+    }
+  },
+  { immediate: true, deep: true }
+)
+
+watch(opcoesMunicipioFiltradas, (opcoes) => {
+  if (!municipioBloqueado.value || !props.usuarioLogado?.municipio_lotacao) return
+  const municipioLotacao = String(props.usuarioLogado.municipio_lotacao).toLowerCase()
+  const opcao = opcoes.find((o) => String(o.label).toLowerCase() === municipioLotacao)
+  if (opcao) {
+    municipio.value = String(opcao.value ?? opcao.label)
+  } else {
+    municipio.value = String(props.usuarioLogado.municipio_lotacao)
+  }
+})
+const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
+const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
 
 
 

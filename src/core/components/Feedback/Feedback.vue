@@ -1,5 +1,5 @@
 <template>
-    <span class="feedback" :class="[type, { block }, customClass]" role="alert" id="danger"><i class="fas fa-times-circle" aria-hidden="true"></i>
+    <span class="feedback" :class="[type, { block }, customClass]" role="alert"><i class="fas fa-times-circle" aria-hidden="true"></i>
         <span class="message-body" v-html="message" v-if="message"></span>
         <slot v-else></slot>
     </span>

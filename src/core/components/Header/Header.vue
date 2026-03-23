@@ -3,26 +3,21 @@
     <header class="br-header">
         <div class="container-lg">
             <div class="header-top">
-                <div class="header-menu" :class="{'menu-desktop': isDesktop, 'menu-mobile': isMobile }">
-                    <div class="header-info">
-                        <img v-if="logo" :src="logoAtual" alt="Logo GOV" class="logo" @click="goToHome" />
-                        <template v-else>
-                            <div class="header-title text-blue-warm-vivid-70" @click="goToHome">{{ title }}</div>
-                            <div class="header-subtitle text-gray-80">{{ subtitle }}</div>
-                        </template>
-                    </div>
-      
-                    <div class="header-actions">                         
-                        <slot name="actions"></slot>                        
-                    </div>                    
-
+                <div class="header-info">
+                    <img v-if="logo" :src="logoAtual" alt="Logo GOV" class="logo" @click="goToHome" />
+                    <template v-else>
+                        <div class="header-title text-blue-warm-vivid-70" @click="goToHome">{{ title }}</div>
+                        <div class="header-subtitle text-gray-80">{{ subtitle }}</div>
+                    </template>
                 </div>
-                <div v-if="logoGov && isDesktop">
-                    <img :src="logoGov" alt="Logo GOV" class="logo-gov" />
+                <div class="header-actions header-actions--center">
+                    <slot name="actions"></slot>
                 </div>
-                <div>
-                     <button class="br-button circle small ml-3" type="button" aria-label="Tema Dark" title="Alternar tema" ><i class="fas fa-adjust" aria-hidden="true" @click="toggleTheme" ></i>
-                         </button>
+                <div class="header-right">
+                    <img v-if="logoGov && isDesktop" :src="logoGov" alt="Logo GOV" class="logo-gov" />
+                    <button class="br-button circle small ml-3" type="button" :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'" title="Alternar tema">
+                        <i class="fas fa-adjust" aria-hidden="true" @click="toggleTheme"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -71,22 +66,29 @@ const logoAtual = computed(() => {
 
 <style scoped>
 .header-top {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
+    gap: 1rem;
+}
+.header-info {
+    min-width: 0;
 }
 .header-title {
     cursor: pointer;
 }
-.menu-desktop{
-    display: flex !important;
-    justify-content: space-between !important;
+.header-actions {
+    display: flex;
+    justify-content: center;
     align-items: center;
 }
-.menu-mobile{
-    display: flex !important;
-    justify-content: center !important;
+.header-actions--center {
+    justify-self: center;
+}
+.header-right {
+    display: flex;
     align-items: center;
+    justify-content: flex-end;
 }
 
 .logo-gov{
@@ -98,14 +100,30 @@ const logoAtual = computed(() => {
     cursor: pointer;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 575px) {
+  .header-subtitle {
+    display: block !important;
+  }
 
-    .header-subtitle {
-        display: block !important;
-    }
-    .logo-gov{
-        height: 50px;
-    }
+  .logo-gov {
+    height: 50px;
+  }
+}
+
+@media (max-width: 991px) {
+  .logo-gov {
+    height: 50px;
+  }
+}
+
+@media (max-width: 767px) {
+  .header-top {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "info right" "actions actions";
+  }
+  .header-info { grid-area: info; }
+  .header-actions { grid-area: actions; justify-self: stretch; }
+  .header-right { grid-area: right; }
 }
 
 </style>

@@ -1,167 +1,361 @@
 <template>
-  <main id="main-content" class="layout-auth__main" tabindex="-1">
-    <button class="br-button circle small contraste" type="button" aria-label="Tema Dark" title="Alternar tema"><i class="fas fa-adjust"
-        aria-hidden="true" @click="toggleTheme"></i>
-    </button>
-    <section class="login-page" aria-labelledby="login-title">
-      <Card custom-class="login-card">
-        <div class="row">
-          <div class="col-lg-6 col-sm-12 logos margin-bottom" v-if="isMobile">
-            <img :src="logoNovoViver" alt="Logo" class="logo-novo-viver" />
+  <PublicLayout>
+    <div class="login-page">
+      <div class="login-card br-card">
+        <div class="login-panel login-panel--actions">
+          <div class="login-header">
+            <h1 class="login-title">Acesse o sistema</h1>
+            <p class="login-subtitle">
+              Entre com sua conta GOV.BR para acessar o sistema.
+            </p>
           </div>
-          <div class="col-lg-6 col-sm-12 acessos">
-            <button class="br-button primary block" type="button" :disabled="isLoading" :aria-busy="isLoading"
-              aria-label="Entrar com a conta GOV.BR" @click="handleLogin">Entrar com o GOV.BR
+
+          <div v-if="erro" class="br-message danger mb-3" role="alert">
+            <div class="content">{{ erro }}</div>
+          </div>
+
+          <div class="login-govbr">
+            <button
+              type="button"
+              class="br-button secondary block login-govbr__button"
+              :disabled="carregandoGovBr"
+              aria-label="Entrar com GOV.BR"
+              @click="entrarComGovBr"
+            >
+              {{ carregandoGovBr ? 'Redirecionando...' : 'Entrar com GOV.BR' }}
             </button>
-            <button class="br-button success block" type="button">Solicitar Cadastro
+          </div>
+
+          <!-- Perfil de acesso (apenas para testes locais — comentar quando não necessário) -->
+          <div class="login-divider">
+            <span>ou</span>
+          </div>
+
+          <form @submit.prevent="entrar" class="login-form">
+            <div class="login-perfil-field mb-3">
+              <label for="perfil" class="login-perfil-label">Perfil de acesso</label>
+              <select id="perfil" v-model="perfil" class="login-perfil-select" required>
+                <option value="federal">Federal — acesso a todas as solicitações</option>
+                <option value="estadual">Estadual (GO) — apenas solicitações da UF GO</option>
+                <option value="municipal">Municipal (Alexânia/GO) — apenas Alexânia</option>
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              class="br-button primary block"
+              :disabled="carregando"
+              aria-label="Entrar"
+            >
+              {{ carregando ? 'Entrando...' : 'Entrar' }}
             </button>
-          </div>
-          <div class="col-lg-6 col-sm-12 logos" :class="{ 'border-left': !isMobile, 'margin-top': isMobile }">
-            <img v-if="!isMobile" :src="logoNovoViver" alt="Logo" class="logo-novo-viver" />
-            <img :src="logoGov" alt="Logo Branca" class="logo-gov" />
-          </div>
+          </form>
+
+          <button
+            type="button"
+            class="br-button success block mt-3 login-register-button"
+            :disabled="carregandoGovBr"
+            aria-label="Solicitar cadastro"
+            @click="entrarComGovBr"
+          >
+            {{ carregandoGovBr ? 'Redirecionando...' : 'Solicitar cadastro' }}
+          </button>
+
         </div>
 
-      </Card>
-    </section>
-  </main>
+        <div class="login-divider-vertical" aria-hidden="true"></div>
+
+        <div class="login-panel login-panel--brand">
+          <img
+            class="login-brand-main"
+            :src="logoPrincipal"
+            alt="Novo Viver Sem Limite"
+          />
+          <img
+            class="login-brand-gov"
+            :src="logoGoverno"
+            alt="Ministerio dos Direitos Humanos e da Cidadania e Governo do Brasil"
+          />
+        </div>
+      </div>
+    </div>
+  </PublicLayout>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuth } from '@/core/composables/useAuth'
-import Card from '@/core/components/Card/Card.vue'
-import logoGovColor from '@/assets/images/logo/mdh_com_gov.png'
-import logoGovBranca from '@/assets/images/logo/mdh_com_gov_branca.png'
-import logo from '@/assets/images/logo/logo_novo_viver.png'
-import logoBranca from '@/assets/images/logo/logo_novo_viver_branca.png'
-import { useTheme } from '@/core/composables/useTheme'
-import { useBreakpoint } from '@/core/composables/useBreakpoint'
-
-
+import { useAuthStore } from '@/stores/authStore'
+import api from '@/services/ApiService'
+import PublicLayout from '@/layouts/PublicLayout.vue'
+import logoPrincipal from '@/assets/images/logo/logo_novo_viver.png'
+import logoGoverno from '@/assets/images/logo/mdh_com_gov.png'
 
 defineOptions({ name: 'LoginPage' })
 
 const router = useRouter()
-const { isLoading, isAuthenticated, login } = useAuth()
-const { mode, setMode } = useTheme()
-const { isMobile } = useBreakpoint()
+const authStore = useAuthStore()
 
-// Se já autenticado, redireciona (guard de rota também cobre isso)
-if (isAuthenticated.value) {
-  router.replace({ name: 'home' })
+const carregandoGovBr = ref(false)
+const carregando = ref(false)
+const perfil = ref<'federal' | 'estadual' | 'municipal'>('federal')
+const erro = ref('')
+
+async function entrar() {
+  carregando.value = true
+  erro.value = ''
+  try {
+    const { data } = await api.post<{ token: string; user: Record<string, unknown> }>(
+      '/auth/token-de-teste',
+      { perfil: perfil.value }
+    )
+    sessionStorage.setItem('nvsl_token', data.token)
+    authStore.setUser(data.user)
+    await router.replace({ name: 'gerenciar-cadastros' })
+  } catch (e: unknown) {
+    const res = (e as { response?: { data?: { message?: string } } })?.response
+    erro.value = res?.data?.message ?? 'Falha ao obter token de teste.'
+  } finally {
+    carregando.value = false
+  }
 }
 
-const logoNovoViver = computed(() => {
-  return mode.value === 'dark' ? logoBranca : logo;
-});
+onMounted(() => {
+  processarRetornoGovBr()
+})
 
-const logoGov = computed(() => {
-  return mode.value === 'dark' ? logoGovBranca : logoGovColor;
-});
-
-async function handleLogin() {
-  await login()
+async function entrarComGovBr() {
+  carregandoGovBr.value = true
+  erro.value = ''
+  try {
+    const { data } = await api.get<{ url?: string } | string>('/auth/redirect')
+    const url = typeof data === 'string' ? data : data?.url
+    if (!url) {
+      throw new Error('URL de autenticação GOV.BR não disponível.')
+    }
+    window.location.href = url
+  } catch {
+    erro.value = 'Login GOV.BR indisponível neste ambiente no momento.'
+  } finally {
+    carregandoGovBr.value = false
+  }
 }
 
-const toggleTheme = () => {
-  setMode(mode.value === 'dark' ? 'light' : 'dark');
-};
+async function processarRetornoGovBr() {
+  const hash = window.location.hash.replace(/^#/, '')
+  if (!hash) return
 
+  const params = new URLSearchParams(hash)
+  const loginCode = params.get('govbr_login_code')
+  const govbrError = params.get('govbr_error')
+
+  if (!loginCode && !govbrError) return
+
+  window.history.replaceState({}, document.title, window.location.pathname)
+
+  if (govbrError) {
+    erro.value = govbrError
+    const govbrNome = params.get('govbr_nome')
+    const govbrCpf = params.get('govbr_cpf')
+    if (
+      govbrError === 'Solicitar acesso e aguardar avaliação' &&
+      govbrNome &&
+      govbrCpf
+    ) {
+      setTimeout(() => {
+        router.push({
+          name: 'solicitacao-cadastro',
+          query: { nome: govbrNome, cpf: govbrCpf },
+        })
+      }, 2500)
+    }
+    return
+  }
+
+  carregandoGovBr.value = true
+  erro.value = ''
+  try {
+    const { data } = await api.post<{ token: string; user: Record<string, unknown> }>(
+      '/auth/exchange',
+      { code: loginCode }
+    )
+    sessionStorage.setItem('nvsl_token', data.token)
+    authStore.setUser(data.user)
+    await router.replace({ name: 'gerenciar-cadastros' })
+  } catch (e: unknown) {
+    const res = (e as { response?: { data?: { message?: string } } })?.response
+    erro.value = res?.data?.message ?? 'Falha ao concluir a autenticação com GOV.BR.'
+  } finally {
+    carregandoGovBr.value = false
+  }
+}
 </script>
 
 <style scoped>
 .login-page {
   width: 100%;
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
-  padding: 2rem 1rem;
 }
 
 .login-card {
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
-  padding: 0px !important;
   width: 100%;
-  max-width: 756px;
+  max-width: 680px;
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) 4px minmax(200px, 1fr);
+  align-items: stretch;
+  gap: 1.25rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
 }
 
-.login-card :deep(.card-content) {
-  padding-top: 0px !important;
-  padding-bottom: 0px !important;
+.login-panel {
+  min-width: 0;
 }
 
-.layout-auth {
+.login-panel--actions {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background-color: var(--color-secondary-01, #f8f8f8);
-}
-
-.layout-auth__main {
-  flex: 1;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
-  background-color: var(--background-gray);
-  height: 100vh;
 }
 
-.acessos {
+.login-panel--brand {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  padding: 0rem 3rem;
+  text-align: center;
 }
 
-.logo-novo-viver {
+.login-header {
+  margin-bottom: 1rem;
+}
+
+.login-divider-vertical {
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #00bcd4 0%, #00a0c6 100%);
+}
+
+.login-govbr {
+  margin-bottom: 1rem;
+}
+
+.login-govbr__button {
+  min-height: 2.5rem;
+  font-weight: 600;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0 1rem;
+  color: var(--color-secondary-06, #666);
+  font-size: 0.875rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-secondary-04, #ddd);
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary-default, #1351b4);
+  margin: 0 0 0.5rem;
+}
+
+.login-subtitle {
+  color: var(--color-secondary-07, #555);
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.login-form .block {
   width: 100%;
-  max-width: 250px;
 }
 
-.logo-gov {
-  width: 100%;
-  max-width: 250px;
-}
-
-.logos {
+.login-perfil-field {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3rem;
+  gap: 0.375rem;
 }
 
-.border-left {
-  border-left: 8px solid var(--border-login-color) !important;
+.login-perfil-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-secondary-08, #333);
 }
 
-.row {
-  height: 350px;
+.login-perfil-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--color-secondary-09, #333);
+  background-color: var(--bg-color, #fff);
+  border: 1px solid var(--color-secondary-04, #ccc);
+  border-radius: 6px;
+  appearance: auto;
+  cursor: pointer;
 }
 
-.contraste{
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+.login-perfil-select:focus {
+  outline: 3px solid var(--color-support-05, #ffcd07);
+  outline-offset: 2px;
+  border-color: var(--color-primary-default, #1351b4);
 }
 
-.margin-bottom {
-  margin-bottom: 3rem;
+.login-register-button {
+  width: 100%;
+  min-height: 2.5rem;
+  font-weight: 600;
 }
 
-.margin-top {
-  margin-top: 3rem;
+.login-brand-main {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
 }
 
-@media (max-width: 768px) {
-  .row {
-    height: 450px;
+.login-brand-gov {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+}
+
+@media (max-width: 767px) {
+  .login-card {
+    max-width: 360px;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+
+  .login-divider-vertical {
+    display: none;
+  }
+
+  .login-panel--brand {
+    order: -1;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-secondary-04, #ddd);
+  }
+
+  .login-brand-main {
+    max-width: 220px;
+  }
+
+  .login-brand-gov {
+    max-width: 180px;
   }
 }
 </style>
