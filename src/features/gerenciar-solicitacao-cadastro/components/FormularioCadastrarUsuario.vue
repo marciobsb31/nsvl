@@ -16,7 +16,7 @@
       <div class="formulario-secao">
         <h3 class="secao-titulo">Dados do solicitante</h3>
         <div class="secao-dados-solicitante">
-          <div class="secao-linha secao-linha--3cols">
+          <div class="secao-linha secao-linha--2cols">
             <div class="br-input mb-2">
               <label for="cad-nome">Nome<span class="obrigatorio">*</span></label>
               <input
@@ -47,6 +47,8 @@
               <Feedback v-if="errorsCpf" id="cad-cpf-err" :message="errorsCpf" type="danger" />
               <span id="cad-cpf-hint" class="input-hint">Use um CPF ainda não cadastrado no sistema.</span>
             </div>
+          </div>
+          <div class="secao-linha secao-linha--2cols">
             <div class="br-input mb-2">
               <label for="cad-email">E-mail Institucional<span class="obrigatorio">*</span></label>
               <input
@@ -61,8 +63,6 @@
               />
               <Feedback v-if="errorsEmail" id="cad-email-err" :message="errorsEmail" type="danger" />
             </div>
-          </div>
-          <div class="secao-linha secao-linha--2cols">
             <div class="br-input mb-2">
               <label for="cad-tel-inst">Telefone Institucional<span class="obrigatorio">*</span></label>
               <input
@@ -78,6 +78,8 @@
               />
               <Feedback v-if="errorsTelInst" id="cad-tel-inst-err" :message="errorsTelInst" type="danger" />
             </div>
+          </div>
+          <div class="secao-linha secao-linha--1col">
             <div class="br-input mb-2">
               <label for="cad-tel-pessoal">Telefone Pessoal (opcional)</label>
               <input
@@ -779,6 +781,12 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
   gap: 1rem;
 }
 
+.secao-linha--1col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
 /* Informação do solicitante: linha 1 = Esfera, UF, Município | linha 2 = Órgão, Cargo */
 .secao-info-solicitante {
   display: flex;
@@ -860,7 +868,8 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 
   .secao-linha,
   .secao-linha--3cols,
-  .secao-linha--2cols {
+  .secao-linha--2cols,
+  .secao-linha--1col {
     grid-template-columns: 1fr;
   }
 
@@ -890,6 +899,10 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
   .secao-linha--3cols,
   .secao-linha--2cols {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .secao-linha--1col {
+    grid-template-columns: 1fr;
   }
 
   .secao-linha:last-child {
