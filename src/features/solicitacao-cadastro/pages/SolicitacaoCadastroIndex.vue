@@ -1,17 +1,7 @@
 <template>
   <PublicLayout full-width>
     <section class="solicitacao-page" aria-labelledby="solicitacao-titulo">
-      <div class="solicitacao-page__inner">
-        <nav class="solicitacao-breadcrumb" aria-label="Navegação estrutural">
-          <ol class="solicitacao-breadcrumb__list">
-            <li>
-              <router-link :to="{ name: 'home' }" class="solicitacao-breadcrumb__link">Início</router-link>
-            </li>
-            <li aria-hidden="true" class="solicitacao-breadcrumb__sep">/</li>
-            <li class="solicitacao-breadcrumb__current">Solicitação de cadastro</li>
-          </ol>
-        </nav>
-
+      <div class="solicitacao-page__inner">   
         <header class="solicitacao-hero">
           <h1 id="solicitacao-titulo" class="solicitacao-hero__title">
             Solicitação de cadastro
@@ -224,6 +214,13 @@ const modalExcluir = ref<boolean>(false);
 const solicitacaoExcluir = ref<SolicitacaoCadastroItem | null>(null);
 const excluindo = ref(false);
 
+const links = ref([
+  {
+    label: 'Solicitação de cadastro',
+    active: true
+  }
+]);
+
 function formatarData(data: string | undefined) {
   if (!data) return '-';
   try {
@@ -417,7 +414,7 @@ onMounted(() => {
 .solicitacao-page {
   width: 100%;
   padding: 1rem 0 2.5rem;
-  background: linear-gradient(180deg, var(--color-secondary-01, #f8f8f8) 0%, var(--background, #fff) 12rem);
+  background: var(--background);
 }
 
 .solicitacao-page__inner {
@@ -599,6 +596,10 @@ onMounted(() => {
 
   .solicitacao-acoes__btn--principal {
     min-width: 14rem;
+  }
+
+  br-breadcrumb .crumb-list {
+    display: none;
   }
 }
 </style>
