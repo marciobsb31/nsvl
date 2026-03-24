@@ -1,0 +1,512 @@
+{
+	"info": {
+		"_postman_id": "nvsl-gerenciar-cadastros-001",
+		"name": "NVSL - Gerenciar Cadastros",
+		"description": "Coleção para testar a tela Gerenciar Cadastros do NVSL.\n\n## Como usar:\n1. Importe esta coleção no Postman\n2. Crie um Environment com: base_url = http://localhost:8081\n3. Execute primeiro as requisições de \"1. Autenticação\" para obter o token\n4. Copie o token da resposta e cole em Authorization > Bearer Token (ou use a variável token)\n5. Execute as requisições na ordem dos cenários de teste\n\n## Cenários de teste (História de Usuário):\n- Cenário 1: Token Federal → deve ver TODAS as solicitações\n- Cenário 2: Token Estadual (GO) → deve ver apenas estadual/GO\n- Cenário 3: Token Municipal (Alexânia) → deve ver apenas municipal/GO/Alexânia",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8081"
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "solicitacao_id",
+			"value": "1"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Autenticação",
+			"description": "Obter token de teste para simular login.\n\n**IMPORTANTE:** Execute uma destas requisições ANTES de testar a listagem.\nO token retornado deve ser usado em Authorization > Bearer Token nas demais requisições.\n\n- federal: acesso irrestrito (vê todas)\n- estadual: vê apenas solicitações estadual/GO\n- municipal: vê apenas solicitações municipal/GO/Alexânia",
+			"item": [
+				{
+					"name": "Obter Token - Perfil Federal",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const json = pm.response.json();",
+									"    if (json.token) {",
+									"        pm.collectionVariables.set('token', json.token);",
+									"        console.log('Token salvo na variável da coleção');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"perfil\": \"federal\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/token-de-teste",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "token-de-teste"]
+						},
+						"description": "Cenário 1 - Acesso Federal\n\nComo usuário logado com perfil Federal, ao acessar Gerenciar Cadastros, o sistema deve exibir TODAS as solicitações registradas.\n\n1. Execute esta requisição\n2. Copie o 'token' da resposta\n3. Cole em Authorization > Bearer Token (ou deixe o script salvar automaticamente)\n4. Execute 'Listar Solicitações' → deve retornar todas"
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Token - Perfil Estadual (GO)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const json = pm.response.json();",
+									"    if (json.token) {",
+									"        pm.collectionVariables.set('token', json.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"perfil\": \"estadual\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/token-de-teste",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "token-de-teste"]
+						},
+						"description": "Cenário 2 - Acesso Estadual\n\nComo usuário logado com perfil Estadual da UF GO, ao acessar Gerenciar Cadastros, o sistema deve exibir APENAS solicitações onde a UF do solicitante seja GO e esfera_atuacao = estadual.\n\nNão deve visualizar: municipal, outras UFs (SP, DF, etc.)"
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Token - Perfil Municipal (Alexânia)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const json = pm.response.json();",
+									"    if (json.token) {",
+									"        pm.collectionVariables.set('token', json.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"perfil\": \"municipal\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/token-de-teste",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "token-de-teste"]
+						},
+						"description": "Cenário 3 - Acesso Municipal\n\nComo usuário logado com perfil Municipal do município Alexânia (GO), ao acessar Gerenciar Cadastros, o sistema deve exibir APENAS solicitações onde o Município do solicitante seja Alexânia e esfera_atuacao = municipal.\n\nNão deve visualizar: estadual, outros municípios"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Dados auxiliares",
+			"description": "Endpoints usados pelos filtros da tela (UF, Município, Perfis).",
+			"item": [
+				{
+					"name": "Listar UFs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/localidades/ufs",
+							"host": ["{{base_url}}"],
+							"path": ["api", "localidades", "ufs"]
+						},
+						"description": "Retorna todas as UFs para o combo de filtro.\nSem autenticação."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Municípios por UF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/localidades/municipios?uf=GO",
+							"host": ["{{base_url}}"],
+							"path": ["api", "localidades", "municipios"],
+							"query": [
+								{
+									"key": "uf",
+									"value": "GO",
+									"description": "Sigla da UF (2 letras). Ex: SP, RJ, MG"
+								}
+							]
+						},
+						"description": "Retorna municípios da UF informada.\nParâmetro obrigatório: uf (ex: GO, SP).\nSem autenticação."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Perfis",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/perfis",
+							"host": ["{{base_url}}"],
+							"path": ["api", "perfis"]
+						},
+						"description": "Lista perfis disponíveis. Necessário para aprovar solicitação (perfil_id).\nRequer autenticação."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Listagem (Pesquisar)",
+			"description": "GET /api/solicitacoes-cadastro - Lista solicitações com filtros.\n\nO resultado varia conforme o token usado:\n- Federal: todas\n- Estadual: apenas estadual/UF do usuário\n- Municipal: apenas municipal/UF/município do usuário",
+			"item": [
+				{
+					"name": "Listar todas (sem filtros)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/solicitacoes-cadastro",
+							"host": ["{{base_url}}"],
+							"path": ["api", "solicitacoes-cadastro"]
+						},
+						"description": "Equivalente ao botão Pesquisar sem filtros.\n\nTeste: Execute com token Federal → deve retornar todas.\nExecute com token Estadual → apenas estadual/GO.\nExecute com token Municipal → apenas municipal/GO/Alexânia."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar com filtro status=em_analise",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/solicitacoes-cadastro?status=em_analise",
+							"host": ["{{base_url}}"],
+							"path": ["api", "solicitacoes-cadastro"],
+							"query": [
+								{
+									"key": "status",
+									"value": "em_analise",
+									"description": "em_analise | aprovado | reprovado"
+								}
+							]
+						},
+						"description": "Filtro: apenas solicitações Em análise.\nValores: em_analise, aprovado, reprovado"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar com filtro UF",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/solicitacoes-cadastro?uf=GO",
+							"host": ["{{base_url}}"],
+							"path": ["api", "solicitacoes-cadastro"],
+							"query": [
+								{
+									"key": "uf",
+									"value": "GO",
+									"description": "Sigla UF (2 letras)"
+								}
+							]
+						},
+						"description": "Filtro por UF do solicitante."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar com filtro esfera",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/solicitacoes-cadastro?esfera=estadual",
+							"host": ["{{base_url}}"],
+							"path": ["api", "solicitacoes-cadastro"],
+							"query": [
+								{
+									"key": "esfera",
+									"value": "estadual",
+									"description": "federal | estadual | municipal"
+								}
+							]
+						},
+						"description": "Filtro por esfera de atuação."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar com filtro nome",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/solicitacoes-cadastro?nome=Fernanda",
+							"host": ["{{base_url}}"],
+							"path": ["api", "solicitacoes-cadastro"],
+							"query": [
+								{
+									"key": "nome",
+									"value": "Fernanda",
+									"description": "Busca parcial por nome"
+								}
+							]
+						},
+						"description": "Filtro por nome (busca parcial)."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar com múltiplos filtros",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/solicitacoes-cadastro?status=em_analise&uf=GO&esfera=estadual",
+							"host": ["{{base_url}}"],
+							"path": ["api", "solicitacoes-cadastro"],
+							"query": [
+								{
+									"key": "status",
+									"value": "em_analise"
+								},
+								{
+									"key": "uf",
+									"value": "GO"
+								},
+								{
+									"key": "esfera",
+									"value": "estadual"
+								}
+							]
+						},
+						"description": "Exemplo: Pesquisar com vários filtros combinados.\nEquivalente a preencher CPF, nome, UF, município, órgão, esfera, status e clicar Pesquisar."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Detalhar",
+			"description": "GET /api/solicitacoes-cadastro/{id} - Visualizar detalhes da solicitação.\n\nCenário 4: Botão Detalhar/Analisar (status Em análise) ou Detalhar (outros status).\n403 se o usuário não tiver permissão para ver aquela solicitação.",
+			"item": [
+				{
+					"name": "Detalhar solicitação por ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/solicitacoes-cadastro/{{solicitacao_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "solicitacoes-cadastro", "{{solicitacao_id}}"]
+						},
+						"description": "Cenário 4 - Detalhar/Analisar\n\nQuando status = Em análise → botão \"Detalhar/Analisar\" (permite aprovar/reprovar).\nQuando status ≠ Em análise → botão \"Detalhar\" (somente visualização).\n\nTeste: Use solicitacao_id retornado na listagem. Se 403, o usuário não tem permissão."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "5. Aprovar / Reprovar",
+			"description": "PATCH /api/solicitacoes-cadastro/{id} - Aprovar ou reprovar solicitação em análise.\n\nApenas solicitações com status em_analise podem ser avaliadas.",
+			"item": [
+				{
+					"name": "Aprovar solicitação",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"aprovado\",\n  \"perfil_id\": 1,\n  \"vigencia_inicio\": \"2026-01-01\",\n  \"vigencia_fim\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/solicitacoes-cadastro/{{solicitacao_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "solicitacoes-cadastro", "{{solicitacao_id}}"]
+						},
+						"description": "Aprovar solicitação em análise.\n\nBody obrigatório:\n- status: \"aprovado\"\n- perfil_id: ID do perfil (obtenha em Listar Perfis)\n- vigencia_inicio: data opcional (YYYY-MM-DD)\n- vigencia_fim: data opcional ou null\n\nAltere solicitacao_id para o ID de uma solicitação com status em_analise."
+					},
+					"response": []
+				},
+				{
+					"name": "Reprovar solicitação",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"reprovado\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/solicitacoes-cadastro/{{solicitacao_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "solicitacoes-cadastro", "{{solicitacao_id}}"]
+						},
+						"description": "Reprovar solicitação em análise.\n\nBody: { \"status\": \"reprovado\" }\n\nAltere solicitacao_id para o ID de uma solicitação com status em_analise."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "6. Fluxo completo de teste",
+			"description": "Ordem sugerida para validar a história de usuário:\n\n1. Obter Token Federal\n2. Listar todas → deve retornar todas as solicitações\n3. Obter Token Estadual\n4. Listar todas → deve retornar apenas estadual/GO\n5. Obter Token Municipal\n6. Listar todas → deve retornar apenas municipal/GO/Alexânia\n7. Com token Federal: Detalhar uma solicitação\n8. Com token Municipal: Detalhar solicitação de outra UF → deve retornar 403\n9. Aprovar/Reprovar (com token que tenha permissão)",
+			"item": []
+		}
+	]
+}

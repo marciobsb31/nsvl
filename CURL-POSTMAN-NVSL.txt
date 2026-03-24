@@ -1,0 +1,149 @@
+# ============================================================
+# NVSL - cURL completo para Postman
+# Base API local
+# ============================================================
+
+# 1) Defina a base da API
+# Linux/Mac:
+# export BASE_URL="http://localhost:8081/api"
+# export TOKEN=""
+#
+# PowerShell:
+# $env:BASE_URL="http://localhost:8081/api"
+# $env:TOKEN=""
+
+# ============================================================
+# SISTEMA
+# ============================================================
+curl --location --request GET "$BASE_URL/health"
+
+# ============================================================
+# ESFERAS
+# ============================================================
+curl --location --request GET "$BASE_URL/esferas"
+
+# ============================================================
+# LOCALIDADES
+# ============================================================
+curl --location --request GET "$BASE_URL/localidades/ufs"
+curl --location --request GET "$BASE_URL/localidades/municipios?uf=SP"
+curl --location --request GET "$BASE_URL/localidades/completo"
+
+# ============================================================
+# AUTH GOV.BR
+# ============================================================
+
+# Gera URL de redirecionamento GOV.BR
+curl --location --request GET "$BASE_URL/auth/redirect"
+
+# Callback GOV.BR (normalmente acessado pelo provedor, exemplo manual)
+curl --location --request GET "$BASE_URL/auth/callback?code=SEU_CODE&state=SEU_STATE"
+
+# Troca login_code por token (recebido no hash do frontend: govbr_login_code)
+curl --location --request POST "$BASE_URL/auth/exchange" \
+  --header "Content-Type: application/json" \
+  --data-raw '{
+    "code": "SEU_GOVBR_LOGIN_CODE"
+  }'
+
+# Token de teste (ambiente local/testing)
+curl --location --request POST "$BASE_URL/auth/token-de-teste" \
+  --header "Content-Type: application/json" \
+  --data-raw '{
+    "perfil": "federal"
+  }'
+
+# Opcional: exemplos de perfis de teste
+curl --location --request POST "$BASE_URL/auth/token-de-teste" \
+  --header "Content-Type: application/json" \
+  --data-raw '{"perfil":"estadual"}'
+
+curl --location --request POST "$BASE_URL/auth/token-de-teste" \
+  --header "Content-Type: application/json" \
+  --data-raw '{"perfil":"municipal"}'
+
+# ============================================================
+# USUÁRIO AUTENTICADO
+# ============================================================
+curl --location --request GET "$BASE_URL/user" \
+  --header "Authorization: Bearer $TOKEN"
+
+curl --location --request POST "$BASE_URL/auth/logout" \
+  --header "Authorization: Bearer $TOKEN"
+
+# ============================================================
+# PERFIS (AUTENTICADO)
+# ============================================================
+curl --location --request GET "$BASE_URL/perfis" \
+  --header "Authorization: Bearer $TOKEN"
+
+# ============================================================
+# SOLICITAÇÕES DE CADASTRO (PÚBLICO)
+# ============================================================
+curl --location --request POST "$BASE_URL/solicitacoes-cadastro" \
+  --header "Content-Type: application/json" \
+  --data-raw '{
+    "nome": "Fulano da Silva",
+    "CPF": "12345678909",
+    "emailInstitucional": "fulano@email.com",
+    "telefoneInstitucional": "6133334444",
+    "telefonePessoal": "61999998888",
+    "esferaAtuacao": "federal",
+    "uf": "DF",
+    "municipio": "Brasília",
+    "orgao": "Ministerio dos Direitos Humanos",
+    "cargo": "Analista"
+  }'
+
+# ============================================================
+# SOLICITAÇÕES DE CADASTRO (AUTENTICADO)
+# ============================================================
+
+# Listar sem filtros
+curl --location --request GET "$BASE_URL/solicitacoes-cadastro" \
+  --header "Authorization: Bearer $TOKEN"
+
+# Listar com filtros
+curl --location --request GET "$BASE_URL/solicitacoes-cadastro?status=em_analise&uf=SP&nome=Carlos" \
+  --header "Authorization: Bearer $TOKEN"
+
+# Detalhar por ID
+curl --location --request GET "$BASE_URL/solicitacoes-cadastro/1" \
+  --header "Authorization: Bearer $TOKEN"
+
+# Reprovar por ID
+curl --location --request PATCH "$BASE_URL/solicitacoes-cadastro/1" \
+  --header "Authorization: Bearer $TOKEN" \
+  --header "Content-Type: application/json" \
+  --data-raw '{
+    "status": "reprovado"
+  }'
+
+# Aprovar por ID (com perfil e vigências)
+curl --location --request PATCH "$BASE_URL/solicitacoes-cadastro/1" \
+  --header "Authorization: Bearer $TOKEN" \
+  --header "Content-Type: application/json" \
+  --data-raw '{
+    "status": "aprovado",
+    "perfil_id": 1,
+    "vigencia_inicio": "2026-01-01",
+    "vigencia_fim": "2026-12-31"
+  }'
+
+# Ativar perfil vinculado (cadastro inativo -> ativo)
+curl --location --request PATCH "$BASE_URL/solicitacoes-cadastro/1/perfis/1/ativar" \
+  --header "Authorization: Bearer $TOKEN"
+
+# Desativar perfil vinculado (cadastro ativo -> inativo)
+curl --location --request PATCH "$BASE_URL/solicitacoes-cadastro/1/perfis/1/desativar" \
+  --header "Authorization: Bearer $TOKEN"
+
+# ============================================================
+# DICA POSTMAN
+# ============================================================
+# 1) No Postman, use "Import > Raw text" e cole um comando curl.
+# 2) Crie variável de ambiente:
+#    BASE_URL = http://localhost:8081/api
+#    TOKEN    = (token retornado em /auth/token-de-teste)
+# 3) Substitua "$BASE_URL" e "$TOKEN" por {{BASE_URL}} e {{TOKEN}}
+#    se preferir usar variáveis nativas do Postman.

@@ -1,0 +1,638 @@
+{
+  "info": {
+    "_postman_id": "9c5a76cf-4f1f-4a2d-9fb7-90f95fb5c001",
+    "name": "NVSL API - Collection",
+    "description": "Collection completa da API NVSL para ambiente local.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "loginCode",
+      "value": ""
+    },
+    {
+      "key": "solicitacaoId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Sistema",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Verifica status da aplicação, banco e cache."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Esferas",
+      "item": [
+        {
+          "name": "Listar Esferas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/esferas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "esferas"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Localidades",
+      "item": [
+        {
+          "name": "Listar UFs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/localidades/ufs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "localidades",
+                "ufs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Municípios por UF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/localidades/municipios?uf=SP",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "localidades",
+                "municipios"
+              ],
+              "query": [
+                {
+                  "key": "uf",
+                  "value": "SP"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Localidades Completo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/localidades/completo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "localidades",
+                "completo"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Autenticação",
+      "item": [
+        {
+          "name": "GOV.BR Redirect URL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/redirect",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "redirect"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GOV.BR Callback (manual)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/callback?code=SEU_CODE&state=SEU_STATE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "callback"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "SEU_CODE"
+                },
+                {
+                  "key": "state",
+                  "value": "SEU_STATE"
+                }
+              ]
+            },
+            "description": "Uso manual para debug; normalmente é chamado pelo GOV.BR."
+          },
+          "response": []
+        },
+        {
+          "name": "GOV.BR Exchange login_code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json && json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "}",
+                  "if (json && json.user && json.user.id) {",
+                  "  pm.collectionVariables.set('userId', String(json.user.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{loginCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/exchange",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "exchange"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Token de Teste - Federal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json && json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"perfil\": \"federal\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/token-de-teste",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "token-de-teste"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Token de Teste - Estadual",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"perfil\": \"estadual\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/token-de-teste",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "token-de-teste"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Token de Teste - Municipal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"perfil\": \"municipal\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/token-de-teste",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "token-de-teste"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Usuário",
+      "item": [
+        {
+          "name": "Me (/user)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Perfis",
+      "item": [
+        {
+          "name": "Listar Perfis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/perfis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "perfis"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Solicitações de Cadastro",
+      "item": [
+        {
+          "name": "Criar Solicitação (público)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Fulano da Silva\",\n  \"CPF\": \"12345678909\",\n  \"emailInstitucional\": \"fulano@email.com\",\n  \"telefoneInstitucional\": \"6133334444\",\n  \"telefonePessoal\": \"61999998888\",\n  \"esferaAtuacao\": \"federal\",\n  \"uf\": \"DF\",\n  \"municipio\": \"Brasília\",\n  \"orgao\": \"Ministerio dos Direitos Humanos\",\n  \"cargo\": \"Analista\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/solicitacoes-cadastro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "solicitacoes-cadastro"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Solicitações (autenticado)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/solicitacoes-cadastro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "solicitacoes-cadastro"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Solicitações com Filtros",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/solicitacoes-cadastro?status=em_analise&uf=SP&nome=Carlos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "solicitacoes-cadastro"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "em_analise"
+                },
+                {
+                  "key": "uf",
+                  "value": "SP"
+                },
+                {
+                  "key": "nome",
+                  "value": "Carlos"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detalhar Solicitação por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/solicitacoes-cadastro/{{solicitacaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "solicitacoes-cadastro",
+                "{{solicitacaoId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reprovar Solicitação",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"reprovado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/solicitacoes-cadastro/{{solicitacaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "solicitacoes-cadastro",
+                "{{solicitacaoId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Aprovar Solicitação",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"aprovado\",\n  \"perfil_id\": 1,\n  \"vigencia_inicio\": \"2026-01-01\",\n  \"vigencia_fim\": \"2026-12-31\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/solicitacoes-cadastro/{{solicitacaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "solicitacoes-cadastro",
+                "{{solicitacaoId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ativar Cadastro/Perfil Vinculado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/solicitacoes-cadastro/{{solicitacaoId}}/perfis/1/ativar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "solicitacoes-cadastro",
+                "{{solicitacaoId}}",
+                "perfis",
+                "1",
+                "ativar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Desativar Cadastro/Perfil Vinculado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/solicitacoes-cadastro/{{solicitacaoId}}/perfis/1/desativar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "solicitacoes-cadastro",
+                "{{solicitacaoId}}",
+                "perfis",
+                "1",
+                "desativar"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

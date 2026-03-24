@@ -1,0 +1,23 @@
+# ============================================================
+# NVSL — Root .gitignore
+# ============================================================
+
+# IDEs e Editores
+.idea/
+.vscode/
+*.sw?
+*.swp
+.cursor/
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Arquivos temporários
+*.tmp
+*.bak

@@ -1,0 +1,631 @@
+openapi: 3.0.3
+info:
+  title: NVSL API
+  version: 1.0.0
+  description: |
+    Documentação consolidada das APIs do NVSL.
+    Base URL padrão: `http://localhost:8081/api`.
+
+servers:
+  - url: http://localhost:8081/api
+    description: Ambiente local (Docker)
+
+tags:
+  - name: Sistema
+  - name: Localidades
+  - name: Esferas
+  - name: Autenticação
+  - name: Usuário
+  - name: Perfis
+  - name: Solicitações de Cadastro
+
+paths:
+  /health:
+    get:
+      tags: [Sistema]
+      summary: Health check
+      responses:
+        "200":
+          description: Aplicação saudável
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Aplicação degradada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /esferas:
+    get:
+      tags: [Esferas]
+      summary: Lista esferas de atuação
+      responses:
+        "200":
+          description: Lista de esferas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Option"
+
+  /localidades/ufs:
+    get:
+      tags: [Localidades]
+      summary: Lista UFs
+      responses:
+        "200":
+          description: Lista de UFs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Option"
+
+  /localidades/municipios:
+    get:
+      tags: [Localidades]
+      summary: Lista municípios por UF
+      parameters:
+        - name: uf
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 2
+          example: SP
+      responses:
+        "200":
+          description: Lista de municípios da UF
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Option"
+        "422":
+          description: UF inválida
+
+  /localidades/completo:
+    get:
+      tags: [Localidades]
+      summary: Lista UFs e municípios por UF em uma requisição
+      responses:
+        "200":
+          description: Localidades completas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocalidadesCompletoResponse"
+
+  /auth/redirect:
+    get:
+      tags: [Autenticação]
+      summary: Gera URL de redirecionamento GOV.BR
+      responses:
+        "200":
+          description: URL para iniciar login GOV.BR
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+        "422":
+          description: Configuração GOV.BR inválida
+
+  /auth/callback:
+    get:
+      tags: [Autenticação]
+      summary: Callback do GOV.BR (redireciona para frontend)
+      description: Endpoint usado pelo GOV.BR no retorno OAuth2.
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: error
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: error_description
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redireciona para frontend (/login#...)
+
+  /auth/exchange:
+    post:
+      tags: [Autenticação]
+      summary: Troca login code por token Sanctum
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthExchangeRequest"
+      responses:
+        "200":
+          description: Token e usuário retornados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthExchangeResponse"
+        "422":
+          description: Código inválido/expirado
+
+  /auth/token-de-teste:
+    post:
+      tags: [Autenticação]
+      summary: Gera token de teste por perfil (somente local/testing)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenTesteRequest"
+      responses:
+        "200":
+          description: Token de teste
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenTesteResponse"
+        "403":
+          description: Endpoint indisponível no ambiente atual
+        "404":
+          description: Usuário de teste não encontrado
+
+  /auth/logout:
+    post:
+      tags: [Autenticação]
+      summary: Logout do usuário autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logout efetuado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Não autenticado
+
+  /user:
+    get:
+      tags: [Usuário]
+      summary: Retorna usuário autenticado (safe)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dados do usuário
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSafe"
+        "401":
+          description: Não autenticado
+
+  /perfis:
+    get:
+      tags: [Perfis]
+      summary: Lista perfis disponíveis
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lista de perfis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PerfilOption"
+        "401":
+          description: Não autenticado
+
+  /solicitacoes-cadastro:
+    get:
+      tags: [Solicitações de Cadastro]
+      summary: Lista solicitações de cadastro (com filtros)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cpf
+          in: query
+          schema: { type: string }
+        - name: nome
+          in: query
+          schema: { type: string }
+        - name: uf
+          in: query
+          schema: { type: string }
+        - name: municipio
+          in: query
+          schema: { type: string }
+        - name: orgao
+          in: query
+          schema: { type: string }
+        - name: esfera
+          in: query
+          schema:
+            type: string
+            enum: [federal, estadual, municipal]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [em_analise, aprovado, reprovado]
+      responses:
+        "200":
+          description: Lista de solicitações
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SolicitacaoItem"
+        "401":
+          description: Não autenticado
+
+    post:
+      tags: [Solicitações de Cadastro]
+      summary: Cria solicitação de cadastro (público)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SolicitacaoCadastroCreateRequest"
+      responses:
+        "201":
+          description: Solicitação criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SolicitacaoCadastroCreateResponse"
+        "422":
+          description: Erro de validação
+
+  /solicitacoes-cadastro/{id}:
+    get:
+      tags: [Solicitações de Cadastro]
+      summary: Detalha uma solicitação de cadastro
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Detalhes da solicitação
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SolicitacaoDetalhe"
+        "401":
+          description: Não autenticado
+        "403":
+          description: Acesso negado
+        "404":
+          description: Solicitação não encontrada
+
+    patch:
+      tags: [Solicitações de Cadastro]
+      summary: Aprova/Reprova solicitação
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SolicitacaoUpdateRequest"
+      responses:
+        "200":
+          description: Solicitação atualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SolicitacaoUpdateResponse"
+        "401":
+          description: Não autenticado
+        "403":
+          description: Acesso negado
+        "404":
+          description: Solicitação não encontrada
+        "422":
+          description: Erro de validação/regra de negócio
+
+  /solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/ativar:
+    patch:
+      tags: [Solicitações de Cadastro]
+      summary: Ativa cadastro/perfil vinculado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: perfilUsuarioId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Perfil ativado
+        "401":
+          description: Não autenticado
+        "403":
+          description: Acesso negado
+        "404":
+          description: Recurso não encontrado
+
+  /solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/desativar:
+    patch:
+      tags: [Solicitações de Cadastro]
+      summary: Desativa cadastro/perfil vinculado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: perfilUsuarioId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Perfil desativado
+        "401":
+          description: Não autenticado
+        "403":
+          description: Acesso negado
+        "404":
+          description: Recurso não encontrado
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+
+  schemas:
+    Option:
+      type: object
+      properties:
+        value: { type: string }
+        label: { type: string }
+
+    HealthResponse:
+      type: object
+      properties:
+        status: { type: string, example: ok }
+        database: { type: string, example: ok }
+        cache: { type: string, example: ok }
+        version: { type: string, example: "1.0.0" }
+
+    LocalidadesCompletoResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            ufs:
+              type: array
+              items:
+                type: object
+                properties:
+                  value: { type: string, example: SP }
+                  label: { type: string, example: "SP - São Paulo" }
+                  id: { type: integer, example: 35 }
+            municipios_por_uf:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Option"
+
+    UserSafe:
+      type: object
+      properties:
+        id: { type: integer }
+        govbr_sub: { type: string }
+        name: { type: string }
+        email: { type: string, nullable: true }
+        picture: { type: string, nullable: true }
+        role: { type: string }
+        esfera_atuacao: { type: string }
+        uf_lotacao: { type: string, nullable: true }
+        municipio_lotacao: { type: string, nullable: true }
+
+    TokenTesteRequest:
+      type: object
+      properties:
+        perfil:
+          type: string
+          enum: [federal, estadual, municipal]
+          default: federal
+
+    TokenTesteResponse:
+      type: object
+      properties:
+        token: { type: string }
+        user:
+          $ref: "#/components/schemas/UserSafe"
+
+    AuthExchangeRequest:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string }
+
+    AuthExchangeResponse:
+      type: object
+      properties:
+        token: { type: string }
+        user:
+          $ref: "#/components/schemas/UserSafe"
+
+    PerfilOption:
+      type: object
+      properties:
+        value: { type: integer }
+        label: { type: string }
+        id: { type: integer }
+        nome: { type: string }
+        descricao: { type: string, nullable: true }
+
+    SolicitacaoCadastroCreateRequest:
+      type: object
+      required:
+        - nome
+        - CPF
+        - emailInstitucional
+        - telefoneInstitucional
+        - esferaAtuacao
+        - uf
+        - municipio
+        - orgao
+      properties:
+        nome: { type: string, example: "Fulano da Silva" }
+        CPF: { type: string, example: "12345678909" }
+        emailInstitucional: { type: string, example: "fulano@email.com" }
+        telefoneInstitucional: { type: string, example: "6133334444" }
+        telefonePessoal: { type: string, nullable: true, example: "61999998888" }
+        esferaAtuacao:
+          type: string
+          enum: [federal, estadual, municipal]
+        uf: { type: string, example: "DF" }
+        municipio: { type: string, example: "Brasília" }
+        orgao: { type: string, example: "Ministério dos Direitos Humanos" }
+        cargo: { type: string, nullable: true, example: "Analista" }
+
+    SolicitacaoCadastroCreateResponse:
+      type: object
+      properties:
+        message: { type: string }
+        solicitacao_id: { type: integer }
+
+    SolicitacaoItem:
+      type: object
+      properties:
+        id: { type: integer }
+        nome: { type: string }
+        status: { type: string }
+        created_at: { type: string, format: date-time, nullable: true }
+        cpf: { type: string }
+        esfera_atuacao: { type: string }
+        uf: { type: string }
+        municipio: { type: string }
+        orgao: { type: string }
+
+    SolicitacaoDetalhe:
+      type: object
+      properties:
+        id: { type: integer }
+        nome: { type: string }
+        cpf: { type: string }
+        status: { type: string }
+        created_at: { type: string, format: date-time, nullable: true }
+        updated_at: { type: string, format: date-time, nullable: true }
+        email_institucional: { type: string }
+        telefone_institucional: { type: string }
+        telefone_pessoal: { type: string, nullable: true }
+        esfera_atuacao: { type: string }
+        uf: { type: string }
+        municipio: { type: string }
+        orgao: { type: string }
+        cargo: { type: string, nullable: true }
+        perfis_vinculados:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              perfil: { type: string }
+              vigencia_inicio: { type: string }
+              vigencia_fim: { type: string }
+              vigente: { type: boolean }
+              esfera: { type: string }
+              uf: { type: string }
+              municipio: { type: string }
+              orgao: { type: string }
+              cargo: { type: string }
+
+    SolicitacaoUpdateRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [aprovado, reprovado]
+        perfil_id:
+          type: integer
+          description: Obrigatório quando status=aprovado
+        vigencia_inicio:
+          type: string
+          format: date
+          nullable: true
+        vigencia_fim:
+          type: string
+          format: date
+          nullable: true
+
+    SolicitacaoUpdateResponse:
+      type: object
+      properties:
+        message: { type: string }
+        data:
+          type: object
+          properties:
+            id: { type: integer }
+            status: { type: string }
