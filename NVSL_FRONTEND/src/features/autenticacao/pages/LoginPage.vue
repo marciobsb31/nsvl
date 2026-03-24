@@ -10,9 +10,58 @@
             </p>
           </div>
 
-          <div v-if="erro" class="br-message danger mb-3" role="alert">
+          <div v-if="erro && !pendenteCadastro.visivel" class="br-message danger mb-3" role="alert">
             <div class="content">{{ erro }}</div>
           </div>
+
+          <!-- Overlay de redirecionamento amigável -->
+          <Transition name="pendente-fade">
+            <div v-if="pendenteCadastro.visivel" class="pendente-overlay" @click="irParaSolicitacao">
+              <div class="pendente-card" @click.stop>
+                <div class="pendente-icon">
+                  <svg viewBox="0 0 52 52" class="pendente-icon__svg">
+                    <circle class="pendente-icon__circle" cx="26" cy="26" r="24" fill="none" stroke="#f5a623" stroke-width="3"/>
+                    <text class="pendente-icon__text" x="26" y="35" text-anchor="middle" font-size="28" font-weight="700" fill="#f5a623">!</text>
+                  </svg>
+                </div>
+
+                <h2 class="pendente-title">Cadastro necessário</h2>
+
+                <p class="pendente-msg">
+                  Olá, <strong>{{ pendenteCadastro.nome }}</strong>!
+                </p>
+                <p class="pendente-msg">
+                  Para acessar o NVSL, é preciso solicitar seu cadastro. O processo é simples:
+                </p>
+
+                <div class="pendente-info">
+                  <div class="pendente-info__item">
+                    <span class="pendente-info__num">1</span>
+                    <span>Preencha o formulário de solicitação</span>
+                  </div>
+                  <div class="pendente-info__item">
+                    <span class="pendente-info__num">2</span>
+                    <span>Aguarde a análise (até 5 dias úteis)</span>
+                  </div>
+                  <div class="pendente-info__item">
+                    <span class="pendente-info__num">3</span>
+                    <span>Receba a confirmação por e-mail</span>
+                  </div>
+                </div>
+
+                <button type="button" class="br-button primary block mt-3" @click="irParaSolicitacao">
+                  Solicitar acesso agora
+                </button>
+
+                <div class="pendente-redirect">
+                  <small>Redirecionando em <strong>{{ pendenteCountdown }}s</strong>...</small>
+                  <div class="pendente-progress-bar">
+                    <div class="pendente-progress-bar__fill" :style="{ width: pendenteProgress + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Transition>
 
           <div class="login-govbr">
             <button
@@ -83,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import api from '@/services/ApiService'
@@ -100,6 +149,51 @@ const carregandoGovBr = ref(false)
 const carregando = ref(false)
 const perfil = ref<'federal' | 'estadual' | 'municipal'>('federal')
 const erro = ref('')
+
+const pendenteCadastro = reactive({
+  visivel: false,
+  nome: '',
+  cpf: '',
+})
+const pendenteCountdown = ref(10)
+const pendenteProgress = ref(100)
+let pendenteTimer: ReturnType<typeof setInterval> | null = null
+
+function iniciarRedirectSolicitacao(nome: string, cpf: string) {
+  pendenteCadastro.nome = nome
+  pendenteCadastro.cpf = cpf
+  pendenteCadastro.visivel = true
+  pendenteCountdown.value = 10
+  pendenteProgress.value = 100
+  erro.value = ''
+
+  const duration = 10000
+  const interval = 50
+  const start = Date.now()
+
+  pendenteTimer = setInterval(() => {
+    const elapsed = Date.now() - start
+    const remaining = Math.max(0, duration - elapsed)
+    pendenteCountdown.value = Math.ceil(remaining / 1000)
+    pendenteProgress.value = (remaining / duration) * 100
+
+    if (remaining <= 0) {
+      irParaSolicitacao()
+    }
+  }, interval)
+}
+
+function irParaSolicitacao() {
+  if (pendenteTimer) {
+    clearInterval(pendenteTimer)
+    pendenteTimer = null
+  }
+  pendenteCadastro.visivel = false
+  router.push({
+    name: 'solicitacao-cadastro',
+    query: { nome: pendenteCadastro.nome, cpf: pendenteCadastro.cpf },
+  })
+}
 
 async function entrar() {
   carregando.value = true
@@ -154,7 +248,6 @@ async function processarRetornoGovBr() {
   window.history.replaceState({}, document.title, window.location.pathname)
 
   if (govbrError) {
-    erro.value = govbrError
     const govbrNome = params.get('govbr_nome')
     const govbrCpf = params.get('govbr_cpf')
     if (
@@ -162,12 +255,9 @@ async function processarRetornoGovBr() {
       govbrNome &&
       govbrCpf
     ) {
-      setTimeout(() => {
-        router.push({
-          name: 'solicitacao-cadastro',
-          query: { nome: govbrNome, cpf: govbrCpf },
-        })
-      }, 2500)
+      iniciarRedirectSolicitacao(govbrNome, govbrCpf)
+    } else {
+      erro.value = govbrError
     }
     return
   }
@@ -331,6 +421,145 @@ async function processarRetornoGovBr() {
   max-width: 200px;
   height: auto;
 }
+
+/* ========== Overlay de redirecionamento ========== */
+.pendente-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.pendente-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem 2.25rem;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  animation: pendente-slide-up 0.4s ease-out;
+}
+
+@keyframes pendente-slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pendente-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+}
+
+.pendente-icon__svg {
+  width: 100%;
+  height: 100%;
+}
+
+.pendente-icon__circle {
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: pendente-circle-draw 0.6s ease-out 0.2s forwards;
+}
+
+@keyframes pendente-circle-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+.pendente-icon__text {
+  opacity: 0;
+  animation: pendente-text-pop 0.3s ease-out 0.7s forwards;
+}
+
+@keyframes pendente-text-pop {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.pendente-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0c326f;
+  margin: 0 0 0.75rem;
+}
+
+.pendente-msg {
+  font-size: 0.925rem;
+  color: #555;
+  margin: 0 0 0.5rem;
+  line-height: 1.5;
+}
+
+.pendente-msg strong {
+  color: #1351b4;
+}
+
+.pendente-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+  text-align: left;
+}
+
+.pendente-info__item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.875rem;
+  color: #444;
+}
+
+.pendente-info__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1351b4;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pendente-redirect {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.pendente-redirect small {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.pendente-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  margin-top: 0.4rem;
+  overflow: hidden;
+}
+
+.pendente-progress-bar__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1351b4, #00bcd4);
+  border-radius: 4px;
+  transition: width 0.1s linear;
+}
+
+/* Transition */
+.pendente-fade-enter-active { transition: opacity 0.35s ease; }
+.pendente-fade-leave-active { transition: opacity 0.2s ease; }
+.pendente-fade-enter-from,
+.pendente-fade-leave-to { opacity: 0; }
 
 @media (max-width: 767px) {
   .login-card {

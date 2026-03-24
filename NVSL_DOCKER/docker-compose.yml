@@ -82,10 +82,10 @@ services:
       - REDIS_PORT=6379
       - REDIS_CLIENT=predis
       # -- Sanctum --
-      - SANCTUM_STATEFUL_DOMAINS=localhost,localhost:80,localhost:5174,localhost:5176,127.0.0.1
-      # URL do frontend Vue (Vite dev = 5176). Após GOV.BR, o callback redireciona para esta origem + /login#...
-      - FRONTEND_URL=http://localhost:5176
-      - GOVBR_FRONTEND_URL=http://localhost:5176
+      - SANCTUM_STATEFUL_DOMAINS=localhost,localhost:80,localhost:5174,127.0.0.1
+      # URL do frontend Vue (Docker = 5174). Após GOV.BR, o callback redireciona para esta origem + /login#...
+      - FRONTEND_URL=http://localhost:5174
+      - GOVBR_FRONTEND_URL=http://localhost:5174
       # -- GOV.BR SSO (homologação: sso.staging.acesso.gov.br) —
       # redirect_uri DEVE ser idêntico ao cadastrado no MGI para este client_id (inclui http/https e porta).
       # Local: http://localhost:8081/redirect-gov | Via hosts+HTTPS: https://h-nvsl.dev.mdh.gov.br/redirect-gov

@@ -51,9 +51,13 @@
                 :disabled="somenteLeitura || salvando"
               >
                 <option value="" disabled>Selecione o tipo</option>
-                <option value="municipal">Municipal</option>
-                <option value="estadual">Estadual</option>
-                <option value="federal">Nacional</option>
+                <option
+                  v-for="esf in esferasDisponiveis"
+                  :key="esf.value"
+                  :value="esf.value"
+                >
+                  {{ esf.label }}
+                </option>
               </select>
             </div>
           </div>
@@ -147,6 +151,7 @@ import {
   cadastrarPerfil,
   atualizarPerfil,
   listarPermissoes,
+  obterHierarquia,
   type PerfilGerenciar,
   type PermissaoItem,
 } from '@/services/GerenciarPerfilService'
@@ -186,6 +191,17 @@ const salvando = ref(false)
 const carregandoPermissoes = ref(false)
 const permissoes = ref<PermissaoItem[]>([])
 const erros = reactive<Record<string, string>>({})
+const esferasPermitidas = ref<string[]>(['federal', 'estadual', 'municipal'])
+
+const todasEsferas = [
+  { value: 'federal', label: 'Nacional' },
+  { value: 'estadual', label: 'Estadual' },
+  { value: 'municipal', label: 'Municipal' },
+]
+
+const esferasDisponiveis = computed(() =>
+  todasEsferas.filter(e => esferasPermitidas.value.includes(e.value))
+)
 
 const form = reactive({
   nome: '',
@@ -238,7 +254,12 @@ watch(() => props.modo, (m) => {
 onMounted(async () => {
   carregandoPermissoes.value = true
   try {
-    permissoes.value = await listarPermissoes()
+    const [perms, hierarquia] = await Promise.all([
+      listarPermissoes(),
+      obterHierarquia(),
+    ])
+    permissoes.value = perms
+    esferasPermitidas.value = hierarquia.esferas_permitidas
   } catch {
     error('Não foi possível carregar as permissões.')
   } finally {

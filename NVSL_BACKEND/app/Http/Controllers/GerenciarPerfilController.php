@@ -6,6 +6,7 @@ use App\Exceptions\ApiException;
 use App\Http\Requests\CadastrarPerfilRequest;
 use App\Models\AuditLog;
 use App\Models\Perfil;
+use App\Models\PerfilUsuario;
 use App\Models\Permissao;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\JsonResponse;
@@ -238,6 +239,21 @@ class GerenciarPerfilController extends Controller
         ]);
     }
 
+    public function hierarquia(): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user) {
+            throw ApiException::unauthenticated();
+        }
+
+        $esferaUsuario = $user->esfera_atuacao ?? 'federal';
+
+        return response()->json([
+            'esfera_usuario'    => $esferaUsuario,
+            'esferas_permitidas' => $this->esferasPermitidas($esferaUsuario),
+        ]);
+    }
+
     private function formatarPerfil(Perfil $p): array
     {
         return [
@@ -296,10 +312,18 @@ class GerenciarPerfilController extends Controller
         return $map[$log->action] ?? $log->action;
     }
 
+    /**
+     * Verifica se o perfil ativo do usuário possui a permissão "Gerenciar Perfis".
+     * Federal tem acesso irrestrito; Estadual e Municipal precisam da permissão.
+     */
     private function verificarPermissaoGerenciar($user): void
     {
         $esfera = $user->esfera_atuacao ?? 'federal';
-        if (!in_array($esfera, ['federal', 'estadual', 'municipal'], true)) {
+        if ($esfera === 'federal') {
+            return;
+        }
+
+        if (!$this->perfilAtivoPossuiPermissao($user, 'Gerenciar Perfis')) {
             throw ApiException::forbidden('Acesso não permitido.');
         }
     }
@@ -307,39 +331,68 @@ class GerenciarPerfilController extends Controller
     private function verificarPermissaoCadastrar($user): void
     {
         $esfera = $user->esfera_atuacao ?? 'federal';
-        if (!in_array($esfera, ['federal', 'estadual', 'municipal'], true)) {
+        if ($esfera === 'federal') {
+            return;
+        }
+
+        if (!$this->perfilAtivoPossuiPermissao($user, 'Gerenciar Perfis', 'Criar')) {
             throw ApiException::forbidden('Acesso não permitido.');
         }
+    }
+
+    /**
+     * Verifica se o perfil ativo do usuário tem determinada permissão (módulo + ação opcional).
+     */
+    private function perfilAtivoPossuiPermissao($user, string $modulo, ?string $acao = null): bool
+    {
+        $perfilUsuarioAtivoId = $user->perfil_usuario_ativo_id;
+        if (!$perfilUsuarioAtivoId) {
+            return false;
+        }
+
+        $perfilUsuario = PerfilUsuario::with('perfil.permissoes')->find($perfilUsuarioAtivoId);
+        if (!$perfilUsuario || !$perfilUsuario->perfil) {
+            return false;
+        }
+
+        return $perfilUsuario->perfil->permissoes->contains(function (Permissao $p) use ($modulo, $acao) {
+            if ($p->modulo !== $modulo) return false;
+            if ($acao !== null && $p->acao !== $acao) return false;
+            return true;
+        });
+    }
+
+    private function esferasPermitidas(string $esferaUsuario): array
+    {
+        return match ($esferaUsuario) {
+            'federal'   => ['federal', 'estadual', 'municipal'],
+            'estadual'  => ['estadual'],
+            'municipal' => ['municipal'],
+            default     => [],
+        };
     }
 
     private function validarHierarquiaEsfera($user, string $esferaPerfil): void
     {
         $esferaUsuario = $user->esfera_atuacao ?? 'federal';
-        if ($esferaUsuario === 'federal') {
-            return;
-        }
-        if ($esferaUsuario === 'estadual' && $esferaPerfil !== 'estadual') {
-            throw ApiException::forbidden('Usuários estaduais podem cadastrar apenas perfis do tipo estadual.');
-        }
-        if ($esferaUsuario === 'municipal' && $esferaPerfil !== 'municipal') {
-            throw ApiException::forbidden('Usuários municipais podem cadastrar apenas perfis do tipo municipal.');
+        $permitidas = $this->esferasPermitidas($esferaUsuario);
+
+        if (!in_array($esferaPerfil, $permitidas, true)) {
+            throw ApiException::forbidden('Acesso não permitido.');
         }
     }
 
     private function validarPermissaoEditarPerfil($user, Perfil $perfil): void
     {
-        $esferaUsuario = $user->esfera_atuacao ?? 'federal';
-
-        if ($esferaUsuario === 'federal') {
+        $esfera = $user->esfera_atuacao ?? 'federal';
+        if ($esfera === 'federal') {
             return;
         }
 
-        if ($esferaUsuario === 'estadual' && $perfil->esfera !== 'estadual') {
+        if (!$this->perfilAtivoPossuiPermissao($user, 'Gerenciar Perfis', 'Editar')) {
             throw ApiException::forbidden('Acesso não permitido.');
         }
 
-        if ($esferaUsuario === 'municipal' && $perfil->esfera !== 'municipal') {
-            throw ApiException::forbidden('Acesso não permitido.');
-        }
+        $this->validarHierarquiaEsfera($user, $perfil->esfera);
     }
 }

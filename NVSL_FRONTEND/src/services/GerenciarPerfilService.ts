@@ -79,3 +79,13 @@ export async function obterHistorico(id: number): Promise<HistoricoItem[]> {
   const { data } = await api.get<{ data: HistoricoItem[] }>(`/gerenciar-perfis/${id}/historico`)
   return data?.data ?? []
 }
+
+export interface HierarquiaInfo {
+  esfera_usuario: string
+  esferas_permitidas: string[]
+}
+
+export async function obterHierarquia(): Promise<HierarquiaInfo> {
+  const { data } = await api.get<HierarquiaInfo>('/gerenciar-perfis/hierarquia')
+  return data
+}

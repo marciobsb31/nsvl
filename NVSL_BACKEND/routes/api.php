@@ -89,6 +89,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('gerenciar-perfis.index');
     Route::get('/gerenciar-perfis/permissoes', [GerenciarPerfilController::class, 'permissoes'])
         ->name('gerenciar-perfis.permissoes');
+    Route::get('/gerenciar-perfis/hierarquia', [GerenciarPerfilController::class, 'hierarquia'])
+        ->name('gerenciar-perfis.hierarquia');
     Route::post('/gerenciar-perfis', [GerenciarPerfilController::class, 'store'])
         ->name('gerenciar-perfis.store');
     Route::get('/gerenciar-perfis/{id}', [GerenciarPerfilController::class, 'show'])

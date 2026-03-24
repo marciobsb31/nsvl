@@ -21,3 +21,6 @@ Desktop.ini
 # Arquivos temporários
 *.tmp
 *.bak
+
+# Evidências locais (não versionar)
+Evidencia_Cadastro_Perfil_NVSL.pdf

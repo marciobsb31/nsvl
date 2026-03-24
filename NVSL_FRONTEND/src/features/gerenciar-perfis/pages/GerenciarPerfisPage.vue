@@ -53,7 +53,12 @@
                 :class="{ 'tr-ativo': perfilSelecionado?.id === p.id }"
               >
                 <td class="td-nome">{{ p.nome }}</td>
-                <td>{{ labelTipoPerfil(p.esfera) }}</td>
+                <td>
+                  <span class="tag-hierarquia" :class="'tag-hierarquia--' + p.esfera">
+                    <i :class="iconeHierarquia(p.esfera)" aria-hidden="true"></i>
+                    {{ labelTipoPerfil(p.esfera) }}
+                  </span>
+                </td>
                 <td>
                   <span class="tag-situacao" :class="classeSituacao(p.status)">
                     {{ labelSituacao(p.status) }}
@@ -138,7 +143,7 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Card from '@/core/components/Card/Card.vue'
 import PainelFormularioPerfil from '../components/PainelFormularioPerfil.vue'
 import PainelHistoricoPerfil from '../components/PainelHistoricoPerfil.vue'
-import { listarPerfisGerenciar, type PerfilGerenciar } from '@/services/GerenciarPerfilService'
+import { listarPerfisGerenciar, obterHierarquia, type PerfilGerenciar } from '@/services/GerenciarPerfilService'
 import { useNotification } from '@/core/composables/useNotification'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -161,6 +166,9 @@ const formularioDirty = ref(false)
 const confirmarSairVisivel = ref(false)
 
 const esferaUsuario = computed(() => authStore.user?.esfera_atuacao ?? 'federal')
+const esferasPermitidas = ref<string[]>(['federal', 'estadual', 'municipal'])
+
+const HIERARQUIA_ORDEM: Record<string, number> = { federal: 0, estadual: 1, municipal: 2 }
 
 const ariaPainel = computed(() => {
   const map: Record<ModoPainel, string> = {
@@ -174,36 +182,38 @@ const ariaPainel = computed(() => {
 
 const perfisOrdenados = computed(() => {
   const lista = [...perfis.value]
-  if (!sortColuna.value) return lista
+  if (!sortColuna.value) {
+    lista.sort((a, b) => {
+      const ha = HIERARQUIA_ORDEM[a.esfera] ?? 99
+      const hb = HIERARQUIA_ORDEM[b.esfera] ?? 99
+      if (ha !== hb) return ha - hb
+      return (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR')
+    })
+    return lista
+  }
   const col = sortColuna.value
   const asc = sortAsc.value
   lista.sort((a, b) => {
-    let va: string
-    let vb: string
+    let cmp: number
     if (col === 'nome') {
-      va = (a.nome ?? '').toLowerCase()
-      vb = (b.nome ?? '').toLowerCase()
+      cmp = (a.nome ?? '').toLowerCase().localeCompare((b.nome ?? '').toLowerCase(), 'pt-BR')
     } else if (col === 'esfera') {
-      va = labelTipoPerfil(a.esfera).toLowerCase()
-      vb = labelTipoPerfil(b.esfera).toLowerCase()
+      const ha = HIERARQUIA_ORDEM[a.esfera] ?? 99
+      const hb = HIERARQUIA_ORDEM[b.esfera] ?? 99
+      cmp = ha - hb
+      if (cmp === 0) cmp = (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR')
     } else if (col === 'status') {
-      va = labelSituacao(a.status).toLowerCase()
-      vb = labelSituacao(b.status).toLowerCase()
+      cmp = labelSituacao(a.status).localeCompare(labelSituacao(b.status), 'pt-BR')
     } else {
       return 0
     }
-    const cmp = va.localeCompare(vb, 'pt-BR')
     return asc ? cmp : -cmp
   })
   return lista
 })
 
 function podeEditar(perfil: PerfilGerenciar): boolean {
-  const esfera = esferaUsuario.value
-  if (esfera === 'federal') return true
-  if (esfera === 'estadual') return perfil.esfera === 'estadual'
-  if (esfera === 'municipal') return perfil.esfera === 'municipal'
-  return false
+  return esferasPermitidas.value.includes(perfil.esfera)
 }
 
 function ordenarPor(coluna: string) {
@@ -228,7 +238,12 @@ function obterIconeSort(coluna: string): string {
 async function carregarPerfis() {
   carregando.value = true
   try {
-    perfis.value = await listarPerfisGerenciar()
+    const [listaPerfis, hierarquia] = await Promise.all([
+      listarPerfisGerenciar(),
+      obterHierarquia(),
+    ])
+    perfis.value = listaPerfis
+    esferasPermitidas.value = hierarquia.esferas_permitidas
   } catch {
     perfis.value = []
     error('Não foi possível carregar os perfis.')
@@ -301,6 +316,15 @@ function onDirtyChange(dirty: boolean) {
 function labelTipoPerfil(esfera: string): string {
   const map: Record<string, string> = { federal: 'Nacional', estadual: 'Estadual', municipal: 'Municipal' }
   return map[esfera] ?? esfera
+}
+
+function iconeHierarquia(esfera: string): string {
+  const map: Record<string, string> = {
+    federal: 'fas fa-globe-americas',
+    estadual: 'fas fa-map-marked-alt',
+    municipal: 'fas fa-map-pin',
+  }
+  return map[esfera] ?? 'fas fa-circle'
 }
 
 function labelSituacao(status: string): string {
@@ -424,6 +448,35 @@ onMounted(() => carregarPerfis())
 .btn-acao--editar:hover { background: #c26100; color: #fff; }
 .btn-acao--historico { color: #2e7d32; border-color: #2e7d32; background: #edf7ed; }
 .btn-acao--historico:hover { background: #2e7d32; color: #fff; }
+
+/* ── Tag de hierarquia ── */
+.tag-hierarquia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 100em;
+  letter-spacing: 0.02em;
+}
+
+.tag-hierarquia i { font-size: 0.625rem; }
+
+.tag-hierarquia--federal {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+
+.tag-hierarquia--estadual {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.tag-hierarquia--municipal {
+  background: #f3e5f5;
+  color: #6a1b9a;
+}
 
 /* ── Tag de situação ── */
 .tag-situacao {

@@ -87,6 +87,15 @@ router.beforeEach(async (to) => {
     }
   }
 
+  if (to.meta.requiredModule && authStore.user) {
+    const modulo = to.meta.requiredModule as string
+    const temPermissao = authStore.temPermissao(modulo)
+    const esfera = authStore.user.esfera_atuacao ?? 'federal'
+    if (esfera !== 'federal' && !temPermissao) {
+      return { name: 'gerenciar-cadastros' }
+    }
+  }
+
   return true
 })
 
