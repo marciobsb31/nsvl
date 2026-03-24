@@ -63,9 +63,9 @@
 
         </div>
 
-        <div class="login-divider-vertical" aria-hidden="true"></div>
+        <!-- <div class="login-divider-vertical" aria-hidden="true"></div> -->
 
-        <div class="login-panel login-panel--brand">
+        <!-- <div class="login-panel login-panel--brand">
           <img
             class="login-brand-main"
             :src="logoPrincipal"
@@ -76,7 +76,7 @@
             :src="logoGoverno"
             alt="Ministerio dos Direitos Humanos e da Cidadania e Governo do Brasil"
           />
-        </div>
+        </div> -->
       </div>
     </div>
   </PublicLayout>
@@ -201,14 +201,15 @@ async function processarRetornoGovBr() {
 
 .login-card {
   width: 100%;
-  max-width: 680px;
+  max-width: 400px;
   padding: 1.5rem;
   display: grid;
-  grid-template-columns: minmax(260px, 300px) 4px minmax(200px, 1fr);
+  /* grid-template-columns: minmax(260px, 300px) 4px minmax(200px, 1fr); */
   align-items: stretch;
   gap: 1.25rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   border-radius: 12px;
+  border: 2px solid var(--border-card-color);
 }
 
 .login-panel {
@@ -232,6 +233,7 @@ async function processarRetornoGovBr() {
 
 .login-header {
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .login-divider-vertical {
@@ -254,7 +256,7 @@ async function processarRetornoGovBr() {
   align-items: center;
   gap: 0.75rem;
   margin: 0.75rem 0 1rem;
-  color: var(--color-secondary-06, #666);
+  color: var(--secondary-text-color);
   font-size: 0.875rem;
 }
 
@@ -269,12 +271,12 @@ async function processarRetornoGovBr() {
 .login-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--color-primary-default, #1351b4);
+  color: var(--primary-text-color);
   margin: 0 0 0.5rem;
 }
 
 .login-subtitle {
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color);
   margin: 0;
   font-size: 0.9375rem;
 }
@@ -292,7 +294,7 @@ async function processarRetornoGovBr() {
 .login-perfil-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
 }
 
 .login-perfil-select {
@@ -300,7 +302,7 @@ async function processarRetornoGovBr() {
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-family: inherit;
-  color: var(--color-secondary-09, #333);
+  color: var(--dark-text-color);
   background-color: var(--bg-color, #fff);
   border: 1px solid var(--color-secondary-04, #ccc);
   border-radius: 6px;

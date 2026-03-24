@@ -1,4 +1,12 @@
 [data-theme="dark"] {
+/* Text colors Project */
+  --primary-text-color: var(--color-secondary-01);
+
+  /* Border colors */
+  --border-login-color: var(--pure-0);
+  --border-card-color: var(--pure-0);
+
+/* Background colors */
   --background: var(--pure-100);
   --background-rgb: var(--background-dark-rgb);
 
@@ -36,8 +44,8 @@
   --active: var(--blue-warm-vivid-40);
   --active-rgb: var(--blue-warm-vivid-40-rgb);
 
-  --color-text-h1: var(--color-secondary-01);
-  --border-login-color: var(--pure-0);
+
+ 
   --background-gray: var(--gray-warm-90);
 }
 
