@@ -3,6 +3,7 @@ import { solicitacaoRoutes } from '@/features/solicitacao-cadastro/solicitacaoCa
 import { gerenciarSolicitacaoCadastroRoutes } from '@/features/gerenciar-solicitacao-cadastro/gerenciarSolicitacaoCadastroRoutes'
 import { gerenciarPerfisRoutes } from '@/features/gerenciar-perfis/gerenciarPerfisRoutes'
 import { useAuthStore } from '@/stores/authStore'
+import { useNotification } from '@/core/composables/useNotification'
 
 /**
  * Roteador principal da aplicação
@@ -92,7 +93,9 @@ router.beforeEach(async (to) => {
     const temPermissao = authStore.temPermissao(modulo)
     const esfera = authStore.user.esfera_atuacao ?? 'federal'
     if (esfera !== 'federal' && !temPermissao) {
-      return { name: 'gerenciar-cadastros' }
+      const { error } = useNotification()
+      error('Acesso não permitido.')
+      return { name: 'home' }
     }
   }
 

@@ -4,8 +4,13 @@
     <header class="painel-hero">
       <div class="painel-hero__topo">
         <h1 class="painel-hero__title">Histórico do perfil</h1>
-        <button class="painel-hero__fechar" type="button" @click="$emit('voltar')" aria-label="Fechar" title="Fechar">
-          <i class="fas fa-times" aria-hidden="true"></i>
+        <button
+          class="br-button secondary small"
+          type="button"
+          @click="$emit('voltar')"
+          aria-label="Voltar"
+        >
+          Voltar
         </button>
       </div>
       <p class="painel-hero__lead">
@@ -150,28 +155,6 @@ onMounted(() => {
   font-size: 0.9375rem;
   line-height: 1.55;
   color: var(--color-secondary-08, #333);
-}
-
-.painel-hero__fechar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--color-secondary-04, #ccc);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--color-secondary-07, #555);
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.painel-hero__fechar:hover {
-  background: var(--color-danger, #e52207);
-  border-color: var(--color-danger, #e52207);
-  color: #fff;
 }
 
 /* ── Form container ── */

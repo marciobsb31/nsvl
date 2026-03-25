@@ -6,7 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 // https://vite.dev/config/
 export default defineConfig({
   server: {
-    port: 5176,
+    port: 5174,
     strictPort: true,
     proxy: {
       '/api': {

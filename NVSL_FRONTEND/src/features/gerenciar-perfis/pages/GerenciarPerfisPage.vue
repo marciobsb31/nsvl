@@ -165,7 +165,6 @@ const painelAberto = ref(false)
 const formularioDirty = ref(false)
 const confirmarSairVisivel = ref(false)
 
-const esferaUsuario = computed(() => authStore.user?.esfera_atuacao ?? 'federal')
 const esferasPermitidas = ref<string[]>(['federal', 'estadual', 'municipal'])
 
 const HIERARQUIA_ORDEM: Record<string, number> = { federal: 0, estadual: 1, municipal: 2 }
@@ -213,6 +212,10 @@ const perfisOrdenados = computed(() => {
 })
 
 function podeEditar(perfil: PerfilGerenciar): boolean {
+  const esferaUsuario = authStore.user?.esfera_atuacao ?? 'federal'
+  if (esferaUsuario === 'municipal') {
+    return false
+  }
   return esferasPermitidas.value.includes(perfil.esfera)
 }
 
@@ -500,8 +503,8 @@ onMounted(() => carregarPerfis())
   z-index: 1000; overflow-y: auto;
 }
 
-@media (min-width: 576px) { .painel-lateral { width: 62%; } }
-@media (min-width: 1200px) { .painel-lateral { width: 55%; } }
+@media (min-width: 576px) { .painel-lateral { width: 75%; } }
+@media (min-width: 1200px) { .painel-lateral { width: 65%; } }
 
 /* ── Modal de confirmação ── */
 .modal-overlay {

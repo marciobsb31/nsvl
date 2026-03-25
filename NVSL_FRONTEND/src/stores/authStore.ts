@@ -96,8 +96,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     function temPermissao(modulo: string, acao?: string): boolean {
+        const esfera = user.value?.esfera_atuacao ?? 'federal'
+        if (esfera === 'federal') return true
         const perms = permissoes.value
-        if (!perms.length) return true
+        if (!perms.length) return false
         if (acao) return perms.some(p => p.modulo === modulo && p.acao === acao)
         return perms.some(p => p.modulo === modulo)
     }
