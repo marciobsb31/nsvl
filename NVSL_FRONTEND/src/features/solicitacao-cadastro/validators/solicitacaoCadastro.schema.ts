@@ -114,6 +114,9 @@ export const SolicitacaoCadastroSchema = yup.object({
     .string()
     .required('Cargo é obrigatório')
     .trim(),
+  aceiteTermo: yup
+    .boolean()
+    .oneOf([true], 'É necessário declarar ciência do Termo de uso e privacidade.'),
 })
 
 /**
@@ -169,6 +172,9 @@ export const SolicitacaoCadastroSchemaGovBr = yup.object({
     .string()
     .required('Cargo é obrigatório')
     .trim(),
+  aceiteTermo: yup
+    .boolean()
+    .oneOf([true], 'É necessário declarar ciência do Termo de uso e privacidade.'),
 })
 
 export const DadosSolicitanteSchema = yup.object({

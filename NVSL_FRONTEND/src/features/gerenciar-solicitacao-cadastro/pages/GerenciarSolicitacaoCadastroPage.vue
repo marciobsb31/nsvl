@@ -91,7 +91,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in solicitacoesOrdenadas" :key="s.id">
+              <tr v-for="s in solicitacoesPaginadas" :key="s.id">
                 <td>{{ s.cpf ?? '—' }}</td>
                 <td>{{ s.nome }}</td>
                 <td>{{ labelEsfera(s.esfera_atuacao) }}</td>
@@ -118,6 +118,12 @@
             </tbody>
           </table>
         </div>
+        <PaginationControls
+          v-if="solicitacoesOrdenadas.length > 0"
+          v-model:currentPage="paginaAtual"
+          v-model:pageSize="itensPorPagina"
+          :total-items="solicitacoesOrdenadas.length"
+        />
       </Card>
 
       <Transition name="painel-fade">
@@ -169,6 +175,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Card from '@/core/components/Card/Card.vue'
+import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
 import FiltrosGerenciarSolicitacao from '../components/FiltrosGerenciarSolicitacao.vue'
 import FormularioCadastrarUsuario from '../components/FormularioCadastrarUsuario.vue'
 import PainelDetalharSolicitacao from '../components/PainelDetalharSolicitacao.vue'
@@ -196,6 +203,8 @@ const carregando = ref(false)
 const jaListou = ref(false)
 const ordenarColuna = ref<string | null>(null)
 const ordenarAsc = ref(true)
+const paginaAtual = ref(1)
+const itensPorPagina = ref(10)
 
 const solicitacoesOrdenadas = computed(() => {
   const lista = [...solicitacoes.value]
@@ -235,6 +244,12 @@ const solicitacoesOrdenadas = computed(() => {
   return lista
 })
 
+const solicitacoesPaginadas = computed(() => {
+  const inicio = (paginaAtual.value - 1) * itensPorPagina.value
+  const fim = inicio + itensPorPagina.value
+  return solicitacoesOrdenadas.value.slice(inicio, fim)
+})
+
 function ordenarPor(coluna: string) {
   if (ordenarColuna.value === coluna) {
     ordenarAsc.value = !ordenarAsc.value
@@ -259,6 +274,7 @@ async function carregarSolicitacoes() {
   jaListou.value = true
   try {
     solicitacoes.value = await listarSolicitacoesGerenciar(filtrosAtivos.value)
+    paginaAtual.value = 1
   } catch {
     solicitacoes.value = []
     error('Não foi possível carregar as solicitações. Verifique se o backend está em execução.')

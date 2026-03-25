@@ -223,6 +223,46 @@
         </div>
       </div>
 
+      <Card
+        title="Termo de uso e privacidade"
+        subtitle="O aceite é registrado no momento da confirmação e envio da solicitação."
+        custom-class="solicitacao-card solicitacao-card--termo formulario-termo-card"
+      >
+        <div class="solicitacao-termo-box" role="region" aria-labelledby="cad-termo-titulo-visivel">
+          <h3 id="cad-termo-titulo-visivel" class="solicitacao-termo-box__titulo">
+            Declaração de ciência
+          </h3>
+          <p class="solicitacao-termo-box__texto">
+            Ao confirmar, você declara ter lido e aceitado o tratamento dos dados conforme a finalidade do NVSL:
+            os dados informados serão utilizados exclusivamente para <strong>análise</strong>,
+            <strong>habilitação</strong> e <strong>gestão de acesso</strong> ao sistema.
+          </p>
+          <p class="solicitacao-termo-box__texto solicitacao-termo-box__texto--muted">
+            O envio implica ciência quanto ao tratamento de dados pessoais e uso institucional, em conformidade com a
+            legislação aplicável.
+          </p>
+          <div class="solicitacao-termo-aceite">
+            <div class="solicitacao-termo-aceite__linha">
+              <input
+                id="cad-aceite-termo"
+                v-model="aceiteTermo"
+                type="checkbox"
+                class="solicitacao-termo-aceite__input"
+                :aria-invalid="errorsAceiteTermo ? 'true' : 'false'"
+                :aria-describedby="errorsAceiteTermo ? 'cad-aceite-termo-err' : undefined"
+              />
+              <label for="cad-aceite-termo" class="solicitacao-termo-aceite__label">
+                Declaro ter lido e aceito o Termo de uso e privacidade. O aceite será registrado ao confirmar e enviar
+                esta solicitação.
+              </label>
+            </div>
+            <p v-if="errorsAceiteTermo" id="cad-aceite-termo-err" class="solicitacao-termo-aceite__erro" role="alert">
+              {{ errorsAceiteTermo }}
+            </p>
+          </div>
+        </div>
+      </Card>
+
       <div class="formulario-acoes">
         <button class="br-button secondary" type="button" @click="$emit('voltar')">
           Cancelar
@@ -250,6 +290,7 @@ import { useRouter } from 'vue-router'
 import { useForm, useField } from 'vee-validate'
 import * as yup from 'yup'
 import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
+import Card from '@/core/components/Card/Card.vue'
 import Modal from '@/core/components/Modal/Modal.vue'
 import Feedback from '@/core/components/Feedback/Feedback.vue'
 import { useEsferas } from '@/core/composables/useEsferas'
@@ -371,6 +412,9 @@ const schema = yup.object({
       if (!inicio) return true
       return value >= inicio
     }),
+  aceiteTermo: yup
+    .boolean()
+    .oneOf([true], 'É necessário declarar ciência do Termo de uso e privacidade.'),
 })
 
 const initialValues = {
@@ -387,6 +431,7 @@ const initialValues = {
   perfil: null,
   vigenciaInicio: '',
   vigenciaFim: '',
+  aceiteTermo: false,
 }
 
 const { validateField, setFieldValue, validate } = useForm({
@@ -496,6 +541,7 @@ const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
 const { value: perfil, errorMessage: errorsPerfil } = useField<string | number | null>('perfil')
 const { value: vigenciaInicio, errorMessage: errorsVigenciaInicio } = useField<string>('vigenciaInicio')
 const { value: vigenciaFim, errorMessage: errorsVigenciaFim } = useField<string>('vigenciaFim')
+const { value: aceiteTermo, errorMessage: errorsAceiteTermo } = useField<boolean>('aceiteTermo')
 const camposObrigatoriosPreenchidos = computed(() => {
   const obrigatoriosTexto = [
     nome.value,
@@ -511,7 +557,7 @@ const camposObrigatoriosPreenchidos = computed(() => {
   ]
   const textosOk = obrigatoriosTexto.every((valor) => String(valor ?? '').trim() !== '')
   const perfilOk = perfil.value !== null && String(perfil.value).trim() !== ''
-  return textosOk && perfilOk
+  return textosOk && perfilOk && aceiteTermo.value === true
 })
 
 const MAPA_CAMPO_PARA_FOCO: Record<string, string> = {
@@ -528,6 +574,7 @@ const MAPA_CAMPO_PARA_FOCO: Record<string, string> = {
   perfil: 'focusPerfil',
   vigenciaInicio: 'cad-vigencia-inicio',
   vigenciaFim: 'cad-vigencia-fim',
+  aceiteTermo: 'cad-aceite-termo',
 }
 
 function focusarCampo(campo: string) {
@@ -584,6 +631,7 @@ function lerValoresDosRefs(): Record<string, unknown> {
     perfil: perfil.value,
     vigenciaInicio: vigenciaInicio.value,
     vigenciaFim: vigenciaFim.value,
+    aceiteTermo: aceiteTermo.value,
   }
 }
 
@@ -642,6 +690,7 @@ function montarPayload(): SolicitacaoCadastroPayload {
     perfilId: !Number.isNaN(perfilNum) && perfilNum > 0 ? perfilNum : undefined,
     vigenciaInicio: String(vigenciaInicio.value ?? '').trim() || undefined,
     vigenciaFim: String(vigenciaFim.value ?? '').trim() || undefined,
+    aceiteTermo: true,
   }
 }
 
@@ -871,6 +920,79 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
   transform: translateY(-50%);
   color: var(--color-secondary-06, #888);
   pointer-events: none;
+}
+
+.formulario-termo-card {
+  margin-bottom: 1.5rem;
+}
+
+.formulario-termo-card :deep(.solicitacao-card) {
+  margin-top: 0 !important;
+}
+
+/* Alinhado à página pública de solicitação de cadastro */
+.solicitacao-termo-box {
+  padding: 1rem 1.125rem;
+  border-radius: 6px;
+  border-left: 4px solid var(--color-primary-default, #1351b4);
+  background: var(--color-primary-pastel-01, #e8f0ff);
+}
+
+.solicitacao-termo-box__titulo {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-primary-darken-02, #0c326f);
+}
+
+.solicitacao-termo-box__texto {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--color-secondary-09, #333);
+}
+
+.solicitacao-termo-box__texto:last-child {
+  margin-bottom: 0;
+}
+
+.solicitacao-termo-box__texto--muted {
+  color: var(--color-secondary-07, #555);
+  font-size: 0.8125rem;
+}
+
+.solicitacao-termo-aceite {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(19, 81, 180, 0.2);
+}
+
+.solicitacao-termo-aceite__linha {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.solicitacao-termo-aceite__input {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+  accent-color: var(--color-primary-default, #1351b4);
+  cursor: pointer;
+}
+
+.solicitacao-termo-aceite__label {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-secondary-09, #333);
+  cursor: pointer;
+}
+
+.solicitacao-termo-aceite__erro {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-danger, #e52207);
 }
 
 .formulario-acoes {

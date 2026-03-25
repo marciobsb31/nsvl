@@ -14,55 +14,6 @@
             <div class="content">{{ erro }}</div>
           </div>
 
-          <!-- Overlay de redirecionamento amigável -->
-          <Transition name="pendente-fade">
-            <div v-if="pendenteCadastro.visivel" class="pendente-overlay" @click="irParaSolicitacao">
-              <div class="pendente-card" @click.stop>
-                <div class="pendente-icon">
-                  <svg viewBox="0 0 52 52" class="pendente-icon__svg">
-                    <circle class="pendente-icon__circle" cx="26" cy="26" r="24" fill="none" stroke="#f5a623" stroke-width="3"/>
-                    <text class="pendente-icon__text" x="26" y="35" text-anchor="middle" font-size="28" font-weight="700" fill="#f5a623">!</text>
-                  </svg>
-                </div>
-
-                <h2 class="pendente-title">Cadastro necessário</h2>
-
-                <p class="pendente-msg">
-                  Olá, <strong>{{ pendenteCadastro.nome }}</strong>!
-                </p>
-                <p class="pendente-msg">
-                  Para acessar o NVSL, é preciso solicitar seu cadastro. O processo é simples:
-                </p>
-
-                <div class="pendente-info">
-                  <div class="pendente-info__item">
-                    <span class="pendente-info__num">1</span>
-                    <span>Preencha o formulário de solicitação</span>
-                  </div>
-                  <div class="pendente-info__item">
-                    <span class="pendente-info__num">2</span>
-                    <span>Aguarde a análise (até 5 dias úteis)</span>
-                  </div>
-                  <div class="pendente-info__item">
-                    <span class="pendente-info__num">3</span>
-                    <span>Receba a confirmação por e-mail</span>
-                  </div>
-                </div>
-
-                <button type="button" class="br-button primary block mt-3" @click="irParaSolicitacao">
-                  Solicitar acesso agora
-                </button>
-
-                <div class="pendente-redirect">
-                  <small>Redirecionando em <strong>{{ pendenteCountdown }}s</strong>...</small>
-                  <div class="pendente-progress-bar">
-                    <div class="pendente-progress-bar__fill" :style="{ width: pendenteProgress + '%' }"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Transition>
-
           <div class="login-govbr">
             <button
               type="button"
@@ -128,11 +79,119 @@
         </div>
       </div>
     </div>
+
+    <Teleport to="body">
+      <Transition name="pendente-fade">
+        <div
+          v-if="pendenteCadastro.visivel"
+          class="pendente-overlay"
+          role="presentation"
+          @click="irParaSolicitacao"
+          @keydown.esc="irParaSolicitacao"
+        >
+          <div
+            class="pendente-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="login-cadastro-necessario-titulo"
+            tabindex="-1"
+            @click.stop
+            @keydown.esc.stop="irParaSolicitacao"
+          >
+            <div class="pendente-dialog__accent" aria-hidden="true" />
+
+            <div class="pendente-dialog__header">
+              <div class="pendente-dialog__icon-wrap" aria-hidden="true">
+                <svg viewBox="0 0 52 52" class="pendente-dialog__svg">
+                  <circle
+                    class="pendente-dialog__circle"
+                    cx="26"
+                    cy="26"
+                    r="24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                  />
+                  <text
+                    class="pendente-dialog__mark"
+                    x="26"
+                    y="35"
+                    text-anchor="middle"
+                    font-size="28"
+                    font-weight="700"
+                    fill="currentColor"
+                  >
+                    !
+                  </text>
+                </svg>
+              </div>
+              <p class="pendente-dialog__badge">Próximo passo</p>
+              <h2 id="login-cadastro-necessario-titulo" class="pendente-dialog__titulo">
+                Cadastro necessário
+              </h2>
+            </div>
+
+            <p class="pendente-dialog__saudacao">
+              Olá, <strong>{{ pendenteCadastro.nome }}</strong>
+            </p>
+            <p class="pendente-dialog__lead">
+              Para acessar o <strong>NVSL</strong>, solicite seu cadastro. O fluxo é rápido e acompanha estes passos:
+            </p>
+
+            <ul class="pendente-dialog__passos" aria-label="Etapas do cadastro">
+              <li class="pendente-dialog__passo">
+                <span class="pendente-dialog__passo-num">1</span>
+                <span class="pendente-dialog__passo-texto">Preencha o formulário de solicitação</span>
+              </li>
+              <li class="pendente-dialog__passo">
+                <span class="pendente-dialog__passo-num">2</span>
+                <span class="pendente-dialog__passo-texto">Aguarde a análise (até 5 dias úteis)</span>
+              </li>
+              <li class="pendente-dialog__passo">
+                <span class="pendente-dialog__passo-num">3</span>
+                <span class="pendente-dialog__passo-texto">Receba a confirmação por e-mail</span>
+              </li>
+            </ul>
+
+            <p class="pendente-dialog__hint">
+              Você pode ir agora ou aguardar o redirecionamento automático. Toque fora desta caixa ou pressione
+              <kbd class="pendente-dialog__kbd">Esc</kbd> para ir à solicitação.
+            </p>
+
+            <div class="pendente-dialog__footer">
+              <div class="pendente-dialog__countdown" aria-live="polite">
+                <p class="pendente-dialog__countdown-text">
+                  Redirecionamento automático em <strong>{{ pendenteCountdown }}s</strong>
+                </p>
+                <div
+                  class="pendente-dialog__progress"
+                  role="progressbar"
+                  :aria-valuenow="Math.round(pendenteProgress)"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-label="Tempo até o redirecionamento"
+                >
+                  <div class="pendente-dialog__progress-fill" :style="{ width: pendenteProgress + '%' }" />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="br-button primary pendente-dialog__cta"
+                @click="irParaSolicitacao"
+              >
+                Solicitar acesso agora
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </PublicLayout>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, reactive } from 'vue'
+import { onMounted, onUnmounted, ref, reactive, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import api from '@/services/ApiService'
@@ -150,44 +209,50 @@ const carregando = ref(false)
 const perfil = ref<'federal' | 'estadual' | 'municipal'>('federal')
 const erro = ref('')
 
+const REDIRECIONAR_APOS_MS = 9000
+
 const pendenteCadastro = reactive({
   visivel: false,
   nome: '',
   cpf: '',
 })
-const pendenteCountdown = ref(10)
-const pendenteProgress = ref(100)
-let pendenteTimer: ReturnType<typeof setInterval> | null = null
 
-function iniciarRedirectSolicitacao(nome: string, cpf: string) {
+const pendenteCountdown = ref(9)
+const pendenteProgress = ref(100)
+let pendenteRedirectTimer: ReturnType<typeof setInterval> | null = null
+
+function limparTimerPendente() {
+  if (pendenteRedirectTimer) {
+    clearInterval(pendenteRedirectTimer)
+    pendenteRedirectTimer = null
+  }
+}
+
+function mostrarCadastroNecessario(nome: string, cpf: string) {
+  limparTimerPendente()
   pendenteCadastro.nome = nome
   pendenteCadastro.cpf = cpf
   pendenteCadastro.visivel = true
-  pendenteCountdown.value = 10
-  pendenteProgress.value = 100
   erro.value = ''
+  pendenteCountdown.value = Math.ceil(REDIRECIONAR_APOS_MS / 1000)
+  pendenteProgress.value = 100
 
-  const duration = 10000
-  const interval = 50
   const start = Date.now()
-
-  pendenteTimer = setInterval(() => {
+  const tickMs = 50
+  pendenteRedirectTimer = setInterval(() => {
     const elapsed = Date.now() - start
-    const remaining = Math.max(0, duration - elapsed)
-    pendenteCountdown.value = Math.ceil(remaining / 1000)
-    pendenteProgress.value = (remaining / duration) * 100
-
+    const remaining = Math.max(0, REDIRECIONAR_APOS_MS - elapsed)
+    pendenteCountdown.value = Math.max(0, Math.ceil(remaining / 1000))
+    pendenteProgress.value = (remaining / REDIRECIONAR_APOS_MS) * 100
     if (remaining <= 0) {
+      limparTimerPendente()
       irParaSolicitacao()
     }
-  }, interval)
+  }, tickMs)
 }
 
 function irParaSolicitacao() {
-  if (pendenteTimer) {
-    clearInterval(pendenteTimer)
-    pendenteTimer = null
-  }
+  limparTimerPendente()
   pendenteCadastro.visivel = false
   router.push({
     name: 'solicitacao-cadastro',
@@ -217,6 +282,23 @@ async function entrar() {
 onMounted(() => {
   processarRetornoGovBr()
 })
+
+onUnmounted(() => {
+  limparTimerPendente()
+})
+
+watch(
+  () => pendenteCadastro.visivel,
+  (visivel) => {
+    if (!visivel) {
+      limparTimerPendente()
+      return
+    }
+    nextTick(() => {
+      document.querySelector<HTMLElement>('.pendente-dialog')?.focus()
+    })
+  }
+)
 
 async function entrarComGovBr() {
   carregandoGovBr.value = true
@@ -255,7 +337,7 @@ async function processarRetornoGovBr() {
       govbrNome &&
       govbrCpf
     ) {
-      iniciarRedirectSolicitacao(govbrNome, govbrCpf)
+      mostrarCadastroNecessario(govbrNome, govbrCpf)
     } else {
       erro.value = govbrError
     }
@@ -422,144 +504,296 @@ async function processarRetornoGovBr() {
   height: auto;
 }
 
-/* ========== Overlay de redirecionamento ========== */
+/* Overlay + diálogo “Cadastro necessário” */
 .pendente-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
+  padding: 1rem;
+  background: rgba(12, 50, 111, 0.45);
+  backdrop-filter: blur(6px);
 }
 
-.pendente-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 2rem 2.25rem;
-  max-width: 420px;
-  width: 90%;
-  text-align: center;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-  animation: pendente-slide-up 0.4s ease-out;
-}
-
-@keyframes pendente-slide-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.pendente-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 1rem;
-}
-
-.pendente-icon__svg {
+.pendente-dialog {
+  position: relative;
   width: 100%;
-  height: 100%;
+  max-width: 28rem;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow:
+    0 4px 6px rgba(12, 50, 111, 0.06),
+    0 24px 48px rgba(12, 50, 111, 0.18);
+  overflow: hidden;
+  outline: none;
+  text-align: left;
+  animation: pendente-dialog-in 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  box-sizing: border-box;
 }
 
-.pendente-icon__circle {
+.pendente-dialog:focus-visible {
+  box-shadow:
+    0 0 0 3px var(--color-support-05, #ffcd07),
+    0 24px 48px rgba(12, 50, 111, 0.18);
+}
+
+.pendente-dialog__accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #1351b4 0%, #00a0c6 100%);
+}
+
+.pendente-dialog__header {
+  padding: 1.75rem 1.75rem 0.5rem;
+  padding-left: 1.75rem;
+  text-align: center;
+}
+
+.pendente-dialog__icon-wrap {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fff8e6 0%, #ffefd0 100%);
+  color: #c78500;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.pendente-dialog__svg {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: block;
+}
+
+.pendente-dialog__circle {
   stroke-dasharray: 151;
   stroke-dashoffset: 151;
-  animation: pendente-circle-draw 0.6s ease-out 0.2s forwards;
+  animation: pendente-circle-draw 0.55s ease-out 0.12s forwards;
 }
 
 @keyframes pendente-circle-draw {
-  to { stroke-dashoffset: 0; }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
-.pendente-icon__text {
+.pendente-dialog__mark {
   opacity: 0;
-  animation: pendente-text-pop 0.3s ease-out 0.7s forwards;
+  animation: pendente-mark-pop 0.28s ease-out 0.55s forwards;
 }
 
-@keyframes pendente-text-pop {
-  from { opacity: 0; transform: scale(0.5); }
-  to { opacity: 1; transform: scale(1); }
+@keyframes pendente-mark-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.pendente-title {
-  font-size: 1.35rem;
+.pendente-dialog__badge {
+  margin: 0 0 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-primary-default, #1351b4);
+}
+
+.pendente-dialog__titulo {
+  margin: 0;
+  font-size: 1.375rem;
   font-weight: 700;
   color: #0c326f;
-  margin: 0 0 0.75rem;
+  line-height: 1.25;
 }
 
-.pendente-msg {
-  font-size: 0.925rem;
-  color: #555;
-  margin: 0 0 0.5rem;
+.pendente-dialog__saudacao {
+  margin: 0;
+  padding: 0 1.75rem;
+  font-size: 1rem;
+  color: var(--color-secondary-08, #333);
   line-height: 1.5;
 }
 
-.pendente-msg strong {
-  color: #1351b4;
+.pendente-dialog__saudacao strong {
+  color: var(--color-primary-default, #1351b4);
 }
 
-.pendente-info {
+.pendente-dialog__lead {
+  margin: 0.65rem 0 0;
+  padding: 0 1.75rem;
+  font-size: 0.9375rem;
+  color: var(--color-secondary-07, #555);
+  line-height: 1.55;
+}
+
+.pendente-dialog__lead strong {
+  color: #0c326f;
+  font-weight: 700;
+}
+
+.pendente-dialog__passos {
+  list-style: none;
+  margin: 1.15rem 1.75rem 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin: 1rem 0 0.5rem;
-  text-align: left;
-}
-
-.pendente-info__item {
-  display: flex;
-  align-items: center;
   gap: 0.65rem;
-  font-size: 0.875rem;
-  color: #444;
 }
 
-.pendente-info__num {
+.pendente-dialog__passo {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  background: var(--color-secondary-01, #f8f8f8);
+  border: 1px solid var(--color-secondary-03, #e8e8e8);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.pendente-dialog__passo:hover {
+  border-color: rgba(19, 81, 180, 0.25);
+  background: #f3f6fb;
+}
+
+.pendente-dialog__passo-num {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #1351b4;
-  color: #fff;
-  font-size: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
   font-weight: 700;
-  flex-shrink: 0;
+  color: #fff;
+  background: linear-gradient(135deg, #1351b4 0%, #0c326f 100%);
+  box-shadow: 0 2px 4px rgba(12, 50, 111, 0.2);
 }
 
-.pendente-redirect {
+.pendente-dialog__passo-texto {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-secondary-08, #333);
+  padding-top: 0.1rem;
+}
+
+.pendente-dialog__hint {
+  margin: 1rem 1.75rem 0;
+  font-size: 0.75rem;
+  color: var(--color-secondary-06, #666);
+  line-height: 1.45;
+}
+
+.pendente-dialog__kbd {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.6875rem;
+  font-family: inherit;
+  border: 1px solid var(--color-secondary-04, #ccc);
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+
+.pendente-dialog__footer {
   margin-top: 1rem;
+  padding: 0 1.25rem 1.5rem;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (min-width: 400px) {
+  .pendente-dialog__footer {
+    padding: 0 1.75rem 1.75rem;
+  }
+}
+
+.pendente-dialog__countdown {
+  margin-bottom: 1rem;
+}
+
+.pendente-dialog__countdown-text {
+  margin: 0 0 0.45rem;
+  font-size: 0.8125rem;
+  color: var(--color-secondary-07, #555);
+  line-height: 1.4;
   text-align: center;
 }
 
-.pendente-redirect small {
-  font-size: 0.8rem;
-  color: #888;
+.pendente-dialog__countdown-text strong {
+  color: var(--color-primary-default, #1351b4);
+  font-weight: 700;
 }
 
-.pendente-progress-bar {
-  width: 100%;
-  height: 4px;
-  background: #e0e0e0;
-  border-radius: 4px;
-  margin-top: 0.4rem;
+.pendente-dialog__progress {
+  height: 5px;
+  border-radius: 5px;
+  background: var(--color-secondary-03, #e8e8e8);
   overflow: hidden;
 }
 
-.pendente-progress-bar__fill {
+.pendente-dialog__progress-fill {
   height: 100%;
+  border-radius: 5px;
   background: linear-gradient(90deg, #1351b4, #00bcd4);
-  border-radius: 4px;
-  transition: width 0.1s linear;
+  transition: width 0.08s linear;
 }
 
-/* Transition */
-.pendente-fade-enter-active { transition: opacity 0.35s ease; }
-.pendente-fade-leave-active { transition: opacity 0.2s ease; }
+.pendente-dialog__cta {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  min-height: 2.75rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  padding: 0.65rem 1rem;
+  box-sizing: border-box;
+  white-space: normal;
+  word-wrap: break-word;
+  text-align: center;
+}
+
+@keyframes pendente-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pendente-fade-enter-active {
+  transition: opacity 0.32s ease;
+}
+
+.pendente-fade-leave-active {
+  transition: opacity 0.22s ease;
+}
+
 .pendente-fade-enter-from,
-.pendente-fade-leave-to { opacity: 0; }
+.pendente-fade-leave-to {
+  opacity: 0;
+}
 
 @media (max-width: 767px) {
   .login-card {
