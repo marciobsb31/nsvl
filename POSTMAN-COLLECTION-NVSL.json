@@ -21,6 +21,14 @@
     {
       "key": "solicitacaoId",
       "value": "1"
+    },
+    {
+      "key": "perfilId",
+      "value": "1"
+    },
+    {
+      "key": "perfilUsuarioId",
+      "value": "1"
     }
   ],
   "item": [
@@ -409,6 +417,246 @@
       ]
     },
     {
+      "name": "Contexto",
+      "item": [
+        {
+          "name": "Listar Perfis Ativos do Usuário",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/perfis-ativos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "perfis-ativos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Trocar Contexto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"perfil_usuario_id\": {{perfilUsuarioId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/trocar-contexto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "trocar-contexto"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gerenciar Perfis",
+      "item": [
+        {
+          "name": "Listar Perfis (Gerenciar)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gerenciar-perfis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gerenciar-perfis"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Permissões (Gerenciar Perfis)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gerenciar-perfis/permissoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gerenciar-perfis",
+                "permissoes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hierarquia (Gerenciar Perfis)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gerenciar-perfis/hierarquia",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gerenciar-perfis",
+                "hierarquia"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cadastrar Perfil",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Perfil API Teste\",\n  \"descricao\": \"Perfil criado via Postman\",\n  \"esfera\": \"estadual\",\n  \"status\": \"ativo\",\n  \"permissoes\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/gerenciar-perfis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gerenciar-perfis"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detalhar Perfil",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gerenciar-perfis/{{perfilId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gerenciar-perfis",
+                "{{perfilId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar Perfil",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Perfil API Teste Atualizado\",\n  \"descricao\": \"Atualizado via Postman\",\n  \"esfera\": \"estadual\",\n  \"status\": \"ativo\",\n  \"permissoes\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/gerenciar-perfis/{{perfilId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gerenciar-perfis",
+                "{{perfilId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Histórico do Perfil",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gerenciar-perfis/{{perfilId}}/historico",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gerenciar-perfis",
+                "{{perfilId}}",
+                "historico"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Solicitações de Cadastro",
       "item": [
         {
@@ -423,7 +671,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"Fulano da Silva\",\n  \"CPF\": \"12345678909\",\n  \"emailInstitucional\": \"fulano@email.com\",\n  \"telefoneInstitucional\": \"6133334444\",\n  \"telefonePessoal\": \"61999998888\",\n  \"esferaAtuacao\": \"federal\",\n  \"uf\": \"DF\",\n  \"municipio\": \"Brasília\",\n  \"orgao\": \"Ministerio dos Direitos Humanos\",\n  \"cargo\": \"Analista\"\n}"
+              "raw": "{\n  \"nome\": \"Fulano da Silva\",\n  \"CPF\": \"12345678909\",\n  \"emailInstitucional\": \"fulano@email.com\",\n  \"telefoneInstitucional\": \"6133334444\",\n  \"telefonePessoal\": \"61999998888\",\n  \"esferaAtuacao\": \"federal\",\n  \"uf\": \"DF\",\n  \"municipio\": \"Brasília\",\n  \"orgao\": \"Ministerio dos Direitos Humanos\",\n  \"cargo\": \"Analista\",\n  \"aceiteTermo\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/solicitacoes-cadastro",
@@ -432,6 +680,30 @@
               ],
               "path": [
                 "solicitacoes-cadastro"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verificar CPF (público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/solicitacoes-cadastro/verificar-cpf?cpf=12345678909",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "solicitacoes-cadastro",
+                "verificar-cpf"
+              ],
+              "query": [
+                {
+                  "key": "cpf",
+                  "value": "12345678909"
+                }
               ]
             }
           },
@@ -581,6 +853,38 @@
           "response": []
         },
         {
+          "name": "Adicionar Perfil Vinculado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"perfil_id\": {{perfilId}},\n  \"vigencia_inicio\": \"2026-01-01\",\n  \"vigencia_fim\": \"2026-12-31\",\n  \"orgao\": \"Ministerio dos Direitos Humanos\",\n  \"cargo\": \"Analista\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/solicitacoes-cadastro/{{solicitacaoId}}/perfis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "solicitacoes-cadastro",
+                "{{solicitacaoId}}",
+                "perfis"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Ativar Cadastro/Perfil Vinculado",
           "request": {
             "method": "PATCH",
@@ -591,7 +895,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/solicitacoes-cadastro/{{solicitacaoId}}/perfis/1/ativar",
+              "raw": "{{baseUrl}}/solicitacoes-cadastro/{{solicitacaoId}}/perfis/{{perfilUsuarioId}}/ativar",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -599,7 +903,7 @@
                 "solicitacoes-cadastro",
                 "{{solicitacaoId}}",
                 "perfis",
-                "1",
+                "{{perfilUsuarioId}}",
                 "ativar"
               ]
             }
@@ -617,7 +921,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/solicitacoes-cadastro/{{solicitacaoId}}/perfis/1/desativar",
+              "raw": "{{baseUrl}}/solicitacoes-cadastro/{{solicitacaoId}}/perfis/{{perfilUsuarioId}}/desativar",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -625,7 +929,7 @@
                 "solicitacoes-cadastro",
                 "{{solicitacaoId}}",
                 "perfis",
-                "1",
+                "{{perfilUsuarioId}}",
                 "desativar"
               ]
             }

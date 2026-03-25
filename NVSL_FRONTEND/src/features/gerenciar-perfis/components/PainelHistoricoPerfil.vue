@@ -5,12 +5,13 @@
       <div class="painel-hero__topo">
         <h1 class="painel-hero__title">Histórico do perfil</h1>
         <button
-          class="br-button secondary small"
+          class="br-button secondary small painel-hero__btn-voltar"
           type="button"
           @click="$emit('voltar')"
           aria-label="Voltar"
         >
-          Voltar
+          <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          <span>Voltar</span>
         </button>
       </div>
       <p class="painel-hero__lead">
@@ -46,7 +47,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in historico" :key="item.id">
+              <tr v-for="item in historicoPaginado" :key="item.id">
                 <td class="td-data">{{ item.data_hora }}</td>
                 <td>{{ item.usuario }}</td>
                 <td>{{ item.perfil }}</td>
@@ -55,16 +56,23 @@
             </tbody>
           </table>
         </div>
+        <PaginationControls
+          v-if="historico.length > 0"
+          v-model:currentPage="paginaAtual"
+          v-model:pageSize="itensPorPagina"
+          :total-items="historico.length"
+        />
       </Card>
 
       <!-- Ações (padrão solicitacao-acoes) -->
       <div class="painel-acoes">
         <button
-          class="br-button secondary painel-acoes__btn"
+          class="br-button secondary painel-acoes__btn painel-acoes__btn--com-icone"
           type="button"
           @click="$emit('voltar')"
         >
-          Voltar
+          <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          <span>Voltar</span>
         </button>
       </div>
     </div>
@@ -72,8 +80,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import Card from '@/core/components/Card/Card.vue'
+import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
 import { obterHistorico, type HistoricoItem, type PerfilGerenciar } from '@/services/GerenciarPerfilService'
 import { useNotification } from '@/core/composables/useNotification'
 
@@ -90,11 +99,20 @@ defineEmits<{
 const { error } = useNotification()
 const carregando = ref(false)
 const historico = ref<HistoricoItem[]>([])
+const paginaAtual = ref(1)
+const itensPorPagina = ref(10)
+
+const historicoPaginado = computed(() => {
+  const inicio = (paginaAtual.value - 1) * itensPorPagina.value
+  const fim = inicio + itensPorPagina.value
+  return historico.value.slice(inicio, fim)
+})
 
 async function carregar(id: number) {
   carregando.value = true
   try {
     historico.value = await obterHistorico(id)
+    paginaAtual.value = 1
   } catch {
     error('Não foi possível carregar o histórico.')
   } finally {
@@ -134,6 +152,12 @@ onMounted(() => {
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
+}
+
+.painel-hero__btn-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .painel-hero__title {
@@ -236,6 +260,17 @@ onMounted(() => {
     width: auto;
     min-width: 10rem;
   }
+}
+
+.painel-acoes__btn--com-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.painel-acoes__btn--com-icone i {
+  font-size: 0.875rem;
 }
 
 /* ── Loading ── */

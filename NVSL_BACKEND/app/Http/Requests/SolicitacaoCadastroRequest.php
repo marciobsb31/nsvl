@@ -33,6 +33,7 @@ class SolicitacaoCadastroRequest extends FormRequest
             'telefoneInstitucional' => 'telefone institucional',
             'telefonePessoal' => 'telefone pessoal',
             'esferaAtuacao'  => 'esfera de atuação',
+            'aceiteTermo'    => 'aceite do termo de uso e privacidade',
         ];
     }
 
@@ -64,6 +65,7 @@ class SolicitacaoCadastroRequest extends FormRequest
             'municipio'           => ['required', 'string', 'max:100'],
             'orgao'               => ['required', 'string', 'max:255'],
             'cargo'               => ['required', 'string', 'max:255'],
+            'aceiteTermo'         => ['required', 'accepted'],
             'perfilId'            => $perfilRules,
             'vigenciaInicio'      => $vigenciaInicioRules,
             'vigenciaFim'         => ['nullable', 'date', 'after_or_equal:vigenciaInicio'],

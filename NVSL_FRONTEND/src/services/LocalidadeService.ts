@@ -1,5 +1,4 @@
 import api from './ApiService'
-import { OPCOES_UF, OPCOES_MUNICIPIOS } from '@/features/gerenciar-solicitacao-cadastro/constants/opcoesFiltro'
 
 export interface LocalidadeOption {
   value: string
@@ -11,36 +10,27 @@ export interface LocalidadesCompleto {
   municipios_por_uf: Record<string, LocalidadeOption[]>
 }
 
-/** Municípios por UF para fallback (amostra quando API falha) */
-const FALLBACK_MUNICIPIOS: Record<string, LocalidadeOption[]> = {
-  GO: OPCOES_MUNICIPIOS.filter((m) => ['Alexânia', 'Anápolis', 'Aparecida de Goiânia', 'Goiânia', 'Luziânia', 'Rio Verde'].includes(m.value)),
-  DF: [{ value: 'Brasília', label: 'Brasília' }],
-  SP: OPCOES_MUNICIPIOS.filter((m) => ['São Paulo', 'Campinas', 'Guarulhos'].includes(m.value)),
-  MG: [{ value: 'Belo Horizonte', label: 'Belo Horizonte' }],
-  PR: [{ value: 'Curitiba', label: 'Curitiba' }],
-  RS: [{ value: 'Porto Alegre', label: 'Porto Alegre' }],
-  BA: [{ value: 'Salvador', label: 'Salvador' }],
-  CE: [{ value: 'Fortaleza', label: 'Fortaleza' }],
-  PE: [{ value: 'Recife', label: 'Recife' }],
-  AM: [{ value: 'Manaus', label: 'Manaus' }],
-  PA: [{ value: 'Belém', label: 'Belém' }],
-  SC: [{ value: 'Florianópolis', label: 'Florianópolis' }],
-}
-
 /**
  * Lista UFs e municípios de todas as UFs em uma única requisição.
  * Recomendado para carregar dados completos e cachear no frontend.
+ * Fonte única: API backend.
  */
 export async function listarLocalidadesCompleto(): Promise<LocalidadesCompleto> {
   try {
     const { data } = await api.get<{ data: LocalidadesCompleto }>('/localidades/completo')
     const result = data.data
-    if (result?.ufs && result?.municipios_por_uf) {
+    if (
+      result &&
+      Array.isArray(result.ufs) &&
+      result.ufs.length > 0 &&
+      result.municipios_por_uf &&
+      Object.keys(result.municipios_por_uf).length > 0
+    ) {
       return result
     }
     throw new Error('Resposta inválida')
   } catch (err) {
-    console.warn('[LocalidadeService] API completo indisponível, usando endpoints separados.', err)
+    console.warn('[LocalidadeService] API completo indisponível, usando endpoints separados do backend.', err)
     const ufs = await listarUfs()
     const municipiosPorUf: Record<string, LocalidadeOption[]> = {}
     for (const uf of ufs) {
@@ -51,30 +41,37 @@ export async function listarLocalidadesCompleto(): Promise<LocalidadesCompleto> 
 }
 
 /**
- * Lista todas as UFs (API com fallback estático).
+ * Lista todas as UFs (somente API backend).
  */
 export async function listarUfs(): Promise<LocalidadeOption[]> {
   try {
     const { data } = await api.get<{ data: LocalidadeOption[] }>('/localidades/ufs')
-    return data.data ?? OPCOES_UF
+    if (Array.isArray(data.data) && data.data.length > 0) {
+      return data.data
+    }
+    return []
   } catch (err) {
-    console.warn('[LocalidadeService] API UFs indisponível, usando dados estáticos.', err)
-    return OPCOES_UF
+    console.warn('[LocalidadeService] Erro ao buscar UFs no backend.', err)
+    return []
   }
 }
 
 /**
- * Lista municípios da UF informada (API com fallback estático).
+ * Lista municípios da UF informada (somente API backend).
  */
 export async function listarMunicipios(uf: string): Promise<LocalidadeOption[]> {
   if (!uf || uf.length !== 2) return []
+  const ufNormalizada = uf.toUpperCase()
   try {
     const { data } = await api.get<{ data: LocalidadeOption[] }>(
-      `/localidades/municipios?uf=${encodeURIComponent(uf)}`
+      `/localidades/municipios?uf=${encodeURIComponent(ufNormalizada)}`
     )
-    return data.data ?? (FALLBACK_MUNICIPIOS[uf] ?? [])
+    if (Array.isArray(data.data) && data.data.length > 0) {
+      return data.data
+    }
+    return []
   } catch (err) {
-    console.warn('[LocalidadeService] API municípios indisponível, usando dados estáticos.', err)
-    return FALLBACK_MUNICIPIOS[uf] ?? []
+    console.warn(`[LocalidadeService] Erro ao buscar municípios da UF ${ufNormalizada} no backend.`, err)
+    return []
   }
 }

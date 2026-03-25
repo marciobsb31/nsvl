@@ -4,9 +4,11 @@
         <div class="container-lg">
             <div class="header-top">
                 <div class="header-info">
-                    <img v-if="logo" :src="logoAtual" alt="Logo GOV" class="logo" @click="goToHome" />
+                    <button v-if="logo" class="logo-btn" type="button" aria-label="Ir para a página inicial" @click="goToHome">
+                        <img :src="logoAtual" alt="Logo GOV" class="logo" />
+                    </button>
                     <template v-else>
-                        <div class="header-title text-blue-warm-vivid-70" @click="goToHome">{{ title }}</div>
+                        <button class="header-title text-blue-warm-vivid-70 header-title-btn" type="button" aria-label="Ir para a página inicial" @click="goToHome">{{ title }}</button>
                         <div class="header-subtitle text-gray-80">{{ subtitle }}</div>
                     </template>
                 </div>
@@ -15,8 +17,8 @@
                 </div>
                 <div class="header-right">
                     <img v-if="logoGov && isDesktop" :src="logoGov" alt="Logo GOV" class="logo-gov" />
-                    <button class="br-button circle small ml-3" type="button" :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'" title="Alternar tema">
-                        <i class="fas fa-adjust" aria-hidden="true" @click="toggleTheme"></i>
+                    <button class="br-button circle small ml-3" type="button" :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'" title="Alternar tema" @click="toggleTheme">
+                        <i class="fas fa-adjust" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
@@ -75,6 +77,18 @@ const logoAtual = computed(() => {
     min-width: 0;
 }
 .header-title {
+    cursor: pointer;
+}
+.header-title-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+}
+.logo-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
     cursor: pointer;
 }
 .header-actions {

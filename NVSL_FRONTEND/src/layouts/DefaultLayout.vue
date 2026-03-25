@@ -1,5 +1,6 @@
 <template>
   <div class="layout-default">
+    <a href="#main-content" class="skip-link">Ir para o conteúdo principal</a>
     <!-- Cabeçalho GOV.BR -->
     <Header
       title="NVSL"
@@ -39,6 +40,7 @@
       type="button"
       aria-label="Abrir menu"
       :aria-expanded="sidebarAberto"
+      aria-controls="app-sidebar"
       @click="sidebarAberto = !sidebarAberto"
     >
       <i class="fas" :class="sidebarAberto ? 'fa-times' : 'fa-bars'" aria-hidden="true"></i>
@@ -55,6 +57,7 @@
     <!-- Conteúdo com sidebar e área principal -->
     <div class="layout-default__body">
       <Sidebar
+        id="app-sidebar"
         :class="{ 'sidebar--aberto': sidebarAberto }"
         :recolhido="sidebarRecolhido"
         :aberto="sidebarAberto"

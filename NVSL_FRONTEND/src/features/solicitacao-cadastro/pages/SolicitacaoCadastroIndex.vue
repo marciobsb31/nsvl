@@ -69,6 +69,38 @@
                 O envio implica ciência quanto ao tratamento de dados pessoais e uso institucional, em conformidade com a
                 legislação aplicável.
               </p>
+              <div class="solicitacao-termo-aceite">
+                <Field
+                  name="aceiteTermo"
+                  type="checkbox"
+                  :value="true"
+                  :unchecked-value="false"
+                  v-slot="{ field, errorMessage }"
+                >
+                  <div class="solicitacao-termo-aceite__linha">
+                    <input
+                      id="solicitacao-aceite-termo"
+                      type="checkbox"
+                      class="solicitacao-termo-aceite__input"
+                      v-bind="field"
+                      :aria-invalid="errorMessage ? 'true' : 'false'"
+                      :aria-describedby="errorMessage ? 'solicitacao-aceite-termo-err' : undefined"
+                    />
+                    <label for="solicitacao-aceite-termo" class="solicitacao-termo-aceite__label">
+                      Declaro ter lido e aceito o Termo de uso e privacidade. O aceite será registrado ao confirmar e
+                      enviar esta solicitação.
+                    </label>
+                  </div>
+                  <p
+                    v-if="errorMessage"
+                    id="solicitacao-aceite-termo-err"
+                    class="solicitacao-termo-aceite__erro"
+                    role="alert"
+                  >
+                    {{ errorMessage }}
+                  </p>
+                </Field>
+              </div>
             </div>
           </Card>
 
@@ -155,7 +187,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { Form } from 'vee-validate';
+import { Form, Field } from 'vee-validate';
 import Card from '@/core/components/Card/Card.vue';
 import FormularioDadosSolicitante from '../components/FormularioDadosSolicitante.vue';
 import FormularioInformacaoSolicitante from '../components/FormularioInformacaoSolicitante.vue';
@@ -209,6 +241,7 @@ const initialValues = computed(() => ({
   municipio: '',
   orgao: '',
   cargo: '',
+  aceiteTermo: false,
 }));
 
 const isSubmitting = ref(false);
@@ -368,6 +401,7 @@ async function onSubmit(values: Record<string, unknown>) {
       municipio: values.municipio as string,
       orgao: values.orgao as string,
       cargo: values.cargo as string,
+      aceiteTermo: true,
     };
     const cpfVal = values.CPF as string;
     if (cpfVal && !cpfVal.includes('*')) {
@@ -400,7 +434,8 @@ function camposObrigatoriosPreenchidos(values: Record<string, unknown>) {
     'orgao',
     'cargo',
   ]
-  return obrigatorios.every((campo) => String(values[campo] ?? '').trim() !== '')
+  const textosOk = obrigatorios.every((campo) => String(values[campo] ?? '').trim() !== '')
+  return textosOk && values.aceiteTermo === true
 }
 
 function onCancel() {
@@ -566,6 +601,40 @@ onMounted(() => {
 .solicitacao-termo-box__texto--muted {
   color: var(--color-secondary-07, #555);
   font-size: 0.8125rem;
+}
+
+.solicitacao-termo-aceite {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(19, 81, 180, 0.2);
+}
+
+.solicitacao-termo-aceite__linha {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.solicitacao-termo-aceite__input {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+  accent-color: var(--color-primary-default, #1351b4);
+  cursor: pointer;
+}
+
+.solicitacao-termo-aceite__label {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-secondary-09, #333);
+  cursor: pointer;
+}
+
+.solicitacao-termo-aceite__erro {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-danger, #e52207);
 }
 
 /* Ações */

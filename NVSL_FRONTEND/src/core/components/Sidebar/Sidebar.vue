@@ -1,5 +1,6 @@
 <template>
   <aside
+    :id="id"
     class="sidebar"
     :class="{ 'sidebar--recolhido': recolhido, 'sidebar--aberto': aberto }"
     aria-label="Menu lateral"
@@ -56,6 +57,7 @@ import { useBreakpoint } from '@/core/composables/useBreakpoint'
 defineOptions({ name: 'Sidebar' })
 
 defineProps<{
+  id?: string
   recolhido?: boolean
   aberto?: boolean
 }>()

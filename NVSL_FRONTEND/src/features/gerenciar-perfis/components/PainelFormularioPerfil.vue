@@ -5,12 +5,13 @@
       <div class="painel-hero__topo">
         <h1 class="painel-hero__title">{{ titulosPainel[modo] }}</h1>
         <button
-          class="br-button secondary small"
+          class="br-button secondary small painel-hero__btn-voltar"
           type="button"
           @click="handleVoltar"
           aria-label="Voltar"
         >
-          Voltar
+          <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          <span>Voltar</span>
         </button>
       </div>
       <p class="painel-hero__lead">
@@ -68,19 +69,18 @@
           </div>
           <div class="col-12 col-md-3">
             <div class="br-input">
-              <label>Situação<span class="text-red-50 text-up-01"> *</span></label>
-              <div class="radio-inline" role="radiogroup" aria-label="Situação do perfil">
-                <label class="radio-option" :class="{ 'radio-option--checked': form.status === 'ativo' }">
-                  <input type="radio" name="pf-status" value="ativo" v-model="form.status" :disabled="somenteLeitura || salvando" />
-                  <span class="radio-dot radio-dot--ativo"></span>
-                  Ativo
-                </label>
-                <label class="radio-option" :class="{ 'radio-option--checked': form.status === 'inativo' }">
-                  <input type="radio" name="pf-status" value="inativo" v-model="form.status" :disabled="somenteLeitura || salvando" />
-                  <span class="radio-dot radio-dot--inativo"></span>
-                  Inativo
-                </label>
-              </div>
+              <label for="pf-status">Vigência<span class="text-red-50 text-up-01"> *</span></label>
+              <select
+                id="pf-status"
+                v-model="form.status"
+                class="br-select-native"
+                :disabled="somenteLeitura || salvando"
+                aria-describedby="pf-status-hint"
+              >
+                <option value="ativo">Vigente</option>
+                <option value="inativo">Não vigente</option>
+              </select>
+              <span id="pf-status-hint" class="field-hint">Define se o perfil está em uso no sistema.</span>
             </div>
           </div>
         </section>
@@ -113,7 +113,11 @@
       <!-- Card 3: Permissões -->
       <Card
         title="Permissões"
-        :subtitle="`Funcionalidades e ações permitidas para este perfil.${!carregandoPermissoes && permissoes.length > 0 ? ` (${form.permissoes.length}/${permissoes.length} selecionadas)` : ''}`"
+        :subtitle="
+          somenteLeitura
+            ? 'Permissões atribuídas a este perfil (somente consulta).'
+            : 'Inclua ou remova permissões na tabela; o total selecionado aparece no topo da lista.'
+        "
       >
         <SeletorPermissoes
           :permissoes="permissoes"
@@ -127,21 +131,24 @@
       <!-- Ações (padrão solicitacao-acoes) -->
       <div class="painel-acoes">
         <button
-          class="br-button secondary painel-acoes__btn"
+          class="br-button secondary painel-acoes__btn painel-acoes__btn--com-icone"
           type="button"
           :disabled="salvando"
           @click="handleVoltar"
         >
-          Cancelar
+          <i class="fas fa-times" aria-hidden="true"></i>
+          <span>Cancelar</span>
         </button>
         <button
           v-if="!somenteLeitura"
-          class="br-button primary painel-acoes__btn painel-acoes__btn--principal"
+          class="br-button primary painel-acoes__btn painel-acoes__btn--principal painel-acoes__btn--com-icone"
           type="submit"
           :disabled="salvando"
           :aria-busy="salvando"
         >
-          {{ salvando ? 'Salvando...' : (modo === 'editar' ? 'Atualizar perfil' : 'Confirmar e salvar perfil') }}
+          <i v-if="!salvando" class="fas fa-save" aria-hidden="true"></i>
+          <i v-else class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+          <span>{{ salvando ? 'Salvando...' : (modo === 'editar' ? 'Atualizar perfil' : 'Confirmar e salvar perfil') }}</span>
         </button>
       </div>
     </form>
@@ -343,9 +350,11 @@ async function handleSalvar() {
   .painel-perfil { padding: 2rem; }
 }
 
-/* ── Hero (padrão solicitacao-hero) ── */
+/* ── Hero (hierarquia sóbria, alinhado à lista de perfis) ── */
 .painel-hero {
   margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-secondary-03, #e8e8e8);
 }
 
 .painel-hero__topo {
@@ -355,13 +364,19 @@ async function handleSalvar() {
   gap: 1rem;
 }
 
+.painel-hero__btn-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .painel-hero__title {
   margin: 0 0 0.75rem;
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.25;
   color: var(--color-primary-darken-02, #0c326f);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
 }
 
 @media (min-width: 768px) {
@@ -373,7 +388,7 @@ async function handleSalvar() {
   max-width: 62rem;
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: var(--color-secondary-08, #333);
+  color: var(--color-secondary-07, #555);
 }
 
 .painel-hero__req {
@@ -465,57 +480,6 @@ async function handleSalvar() {
   color: var(--color-secondary-06, #666);
 }
 
-/* ── Radio inline (Situação) ── */
-.radio-inline {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 0.375rem;
-}
-
-.radio-option {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-secondary-08, #333);
-  cursor: pointer;
-  padding: 0.375rem 0;
-}
-
-.radio-option input[type='radio'] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--color-primary-default, #1351b4);
-  cursor: pointer;
-  margin: 0;
-}
-
-.radio-option input[type='radio']:disabled {
-  cursor: not-allowed;
-}
-
-.radio-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.radio-dot--ativo {
-  background: #168821;
-}
-
-.radio-dot--inativo {
-  background: #b71c1c;
-}
-
-.radio-option--checked {
-  color: var(--color-primary-darken-02, #0c326f);
-  font-weight: 600;
-}
-
 /* ── Feedback de erro (padrão DS) ── */
 .feedback.danger {
   display: flex;
@@ -563,5 +527,16 @@ async function handleSalvar() {
   .painel-acoes__btn--principal {
     min-width: 14rem;
   }
+}
+
+.painel-acoes__btn--com-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.painel-acoes__btn--com-icone i {
+  font-size: 0.875rem;
 }
 </style>

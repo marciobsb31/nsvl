@@ -214,7 +214,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(p, idx) in perfisVinculadosOrdenados" :key="`perfil-${idx}-${p.id ?? idx}`">
+            <tr v-for="(p, idx) in perfisVinculadosPaginados" :key="`perfil-${idx}-${p.id ?? idx}`">
               <td>{{ p.perfil }}</td>
               <td>{{ formatarDataExibicao(p.vigencia_inicio) }}</td>
               <td>{{ formatarDataExibicao(p.vigencia_fim) }}</td>
@@ -241,6 +241,12 @@
           </tbody>
         </table>
       </div>
+      <PaginationControls
+        v-if="perfisVinculadosOrdenados.length > 0"
+        v-model:currentPage="paginaAtualPerfis"
+        v-model:pageSize="itensPorPaginaPerfis"
+        :total-items="perfisVinculadosOrdenados.length"
+      />
       <div class="perfis-vinculados-acoes">
         <button
           class="br-button primary small"
@@ -362,6 +368,7 @@
 import { ref, computed, watch, onMounted, reactive } from 'vue'
 import { usePerfis } from '@/core/composables/usePerfis'
 import Modal from '@/core/components/Modal/Modal.vue'
+import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
 import type { SolicitacaoCadastroDetalhe, PerfilVinculado } from '@/services/SolicitacaoCadastroService'
 
 defineOptions({ name: 'PainelDetalharSolicitacao' })
@@ -421,6 +428,8 @@ const perfisVinculadosCount = computed(() => perfisVinculadosLista.value.length)
 const temPerfisVinculados = computed(() => perfisVinculadosCount.value > 0)
 const colunaOrdenacao = ref<ColunaOrdenacao | null>(null)
 const direcaoOrdenacao = ref<DirecaoOrdenacao>('asc')
+const paginaAtualPerfis = ref(1)
+const itensPorPaginaPerfis = ref(10)
 const perfisVinculadosOrdenados = computed<PerfilVinculadoExibicao[]>(() => {
   const lista = [...perfisVinculadosLista.value]
   if (!colunaOrdenacao.value) return lista
@@ -429,6 +438,11 @@ const perfisVinculadosOrdenados = computed<PerfilVinculadoExibicao[]>(() => {
   const direcao = direcaoOrdenacao.value === 'asc' ? 1 : -1
 
   return lista.sort((a, b) => compararValores(a, b, coluna) * direcao)
+})
+const perfisVinculadosPaginados = computed<PerfilVinculadoExibicao[]>(() => {
+  const inicio = (paginaAtualPerfis.value - 1) * itensPorPaginaPerfis.value
+  const fim = inicio + itensPorPaginaPerfis.value
+  return perfisVinculadosOrdenados.value.slice(inicio, fim)
 })
 
 const modalAdicionarPerfilVisivel = ref(false)
@@ -513,6 +527,7 @@ watch(
       vigenciaInicio.value = hoje.toISOString().slice(0, 10)
       vigenciaFim.value = ''
       perfilSelecionado.value = null
+      paginaAtualPerfis.value = 1
     }
   },
   { immediate: true }

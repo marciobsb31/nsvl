@@ -5,7 +5,8 @@
         <div class="pagina-hero__topo">
           <h1 class="pagina-hero__title">Gerenciar Perfis</h1>
           <button class="br-button primary pagina-hero__btn" type="button" @click="abrirCadastrar" aria-label="Novo perfil">
-            <i class="fas fa-plus" aria-hidden="true"></i> Novo Perfil
+            <i class="fas fa-plus-circle pagina-hero__btn-icone" aria-hidden="true"></i>
+            <span>Novo Perfil</span>
           </button>
         </div>
         <p class="pagina-hero__lead">
@@ -13,7 +14,7 @@
         </p>
       </header>
 
-      <Card custom-class="mb-4">
+      <Card custom-class="gerenciar-perfis__card mb-4">
         <div v-if="carregando" class="estado-vazio" role="status" aria-live="polite">
           <div class="loading-spinner" aria-hidden="true"></div>
           <p>Carregando perfis...</p>
@@ -40,7 +41,8 @@
                 </th>
                 <th scope="col" :aria-sort="obterAriaSort('status')">
                   <button class="th-sort-btn" type="button" @click="ordenarPor('status')">
-                    Situação <span class="th-sort-icon">{{ obterIconeSort('status') }}</span>
+                    <i class="fas fa-certificate th-sort-btn__icone" aria-hidden="true"></i>
+                    Vigência <span class="th-sort-icon">{{ obterIconeSort('status') }}</span>
                   </button>
                 </th>
                 <th scope="col" class="th-acoes">Ações</th>
@@ -48,7 +50,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="p in perfisOrdenados"
+                v-for="p in perfisPaginados"
                 :key="p.id"
                 :class="{ 'tr-ativo': perfilSelecionado?.id === p.id }"
               >
@@ -61,12 +63,14 @@
                 </td>
                 <td>
                   <span class="tag-situacao" :class="classeSituacao(p.status)">
+                    <i :class="iconeSituacao(p.status)" aria-hidden="true"></i>
                     {{ labelSituacao(p.status) }}
                   </span>
                 </td>
                 <td class="td-acoes">
                   <button class="btn-acao btn-acao--visualizar" type="button" @click="abrirVisualizar(p)" title="Visualizar perfil">
-                    <i class="fas fa-eye" aria-hidden="true"></i> Visualizar
+                    <i class="fas fa-eye btn-acao__icone" aria-hidden="true"></i>
+                    <span>Visualizar</span>
                   </button>
                   <button
                     v-if="podeEditar(p)"
@@ -75,16 +79,24 @@
                     @click="abrirEditar(p)"
                     title="Editar perfil"
                   >
-                    <i class="fas fa-edit" aria-hidden="true"></i> Editar
+                    <i class="fas fa-pen btn-acao__icone" aria-hidden="true"></i>
+                    <span>Editar</span>
                   </button>
                   <button class="btn-acao btn-acao--historico" type="button" @click="abrirHistorico(p)" title="Histórico do perfil">
-                    <i class="fas fa-history" aria-hidden="true"></i> Histórico
+                    <i class="fas fa-history btn-acao__icone" aria-hidden="true"></i>
+                    <span>Histórico</span>
                   </button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+        <PaginationControls
+          v-if="perfisOrdenados.length > 0"
+          v-model:currentPage="paginaAtual"
+          v-model:pageSize="itensPorPagina"
+          :total-items="perfisOrdenados.length"
+        />
       </Card>
 
       <Transition name="painel-fade">
@@ -141,6 +153,7 @@
 import { ref, computed, onMounted } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Card from '@/core/components/Card/Card.vue'
+import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
 import PainelFormularioPerfil from '../components/PainelFormularioPerfil.vue'
 import PainelHistoricoPerfil from '../components/PainelHistoricoPerfil.vue'
 import { listarPerfisGerenciar, obterHierarquia, type PerfilGerenciar } from '@/services/GerenciarPerfilService'
@@ -157,6 +170,8 @@ const carregando = ref(false)
 
 const sortColuna = ref<string | null>(null)
 const sortAsc = ref(true)
+const paginaAtual = ref(1)
+const itensPorPagina = ref(10)
 
 type ModoPainel = 'cadastrar' | 'editar' | 'visualizar' | 'historico'
 const modoPainel = ref<ModoPainel>('cadastrar')
@@ -211,6 +226,12 @@ const perfisOrdenados = computed(() => {
   return lista
 })
 
+const perfisPaginados = computed(() => {
+  const inicio = (paginaAtual.value - 1) * itensPorPagina.value
+  const fim = inicio + itensPorPagina.value
+  return perfisOrdenados.value.slice(inicio, fim)
+})
+
 function podeEditar(perfil: PerfilGerenciar): boolean {
   const esferaUsuario = authStore.user?.esfera_atuacao ?? 'federal'
   if (esferaUsuario === 'municipal') {
@@ -246,6 +267,7 @@ async function carregarPerfis() {
       obterHierarquia(),
     ])
     perfis.value = listaPerfis
+    paginaAtual.value = 1
     esferasPermitidas.value = hierarquia.esferas_permitidas
   } catch {
     perfis.value = []
@@ -331,7 +353,11 @@ function iconeHierarquia(esfera: string): string {
 }
 
 function labelSituacao(status: string): string {
-  return status === 'ativo' ? 'Vigente' : 'Não Vigente'
+  return status === 'ativo' ? 'Vigente' : 'Não vigente'
+}
+
+function iconeSituacao(status: string): string {
+  return status === 'ativo' ? 'fas fa-check-circle' : 'fas fa-ban'
 }
 
 function classeSituacao(status: string): string {
@@ -343,46 +369,85 @@ onMounted(() => carregarPerfis())
 
 <style scoped>
 .gerenciar-perfis {
-  padding: 1.5rem 0;
+  width: 100%;
+  max-width: min(100%, 80rem);
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
   position: relative;
   display: flex;
   flex-direction: column;
 }
 
-/* ── Hero (padrão solicitacao-hero) ── */
-.pagina-hero { margin-bottom: 1.5rem; }
+@media (min-width: 576px) {
+  .gerenciar-perfis {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .gerenciar-perfis {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Card: menos “caixa” pesada (DS gov.br — superfície neutra) */
+.gerenciar-perfis :deep(.gerenciar-perfis__card) {
+  border: 1px solid var(--color-secondary-03, #e8e8e8) !important;
+  box-shadow: none !important;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--background, #fff);
+}
+
+/* ── Hero (padrão conteúdo gov.br) ── */
+.pagina-hero {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-secondary-03, #e8e8e8);
+}
 
 .pagina-hero__topo {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   flex-wrap: wrap;
 }
 
 .pagina-hero__title {
-  margin: 0 0 0.75rem;
-  font-size: 1.5rem;
+  margin: 0 0 0.5rem;
+  font-size: 1.375rem;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.3;
   color: var(--color-primary-darken-02, #0c326f);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
 }
 
 @media (min-width: 768px) {
-  .pagina-hero__title { font-size: 1.75rem; }
+  .pagina-hero__title {
+    font-size: 1.5rem;
+  }
 }
 
 .pagina-hero__lead {
   margin: 0;
-  max-width: 62rem;
+  max-width: 48rem;
   font-size: 0.9375rem;
-  line-height: 1.55;
-  color: var(--color-secondary-08, #333);
+  line-height: 1.6;
+  color: var(--color-secondary-07, #555);
 }
 
 .pagina-hero__btn {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.pagina-hero__btn-icone {
+  font-size: 1rem;
 }
 
 /* ── Estado vazio / carregando ── */
@@ -390,117 +455,251 @@ onMounted(() => carregarPerfis())
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  padding: 2.5rem 1rem;
+  gap: 1rem;
+  padding: 3rem 1.5rem;
   color: var(--color-secondary-06, #888);
 }
 
-.estado-vazio p { margin: 0; font-size: 0.875rem; }
-
-/* ── Tabela ── */
-.tabela-perfis { width: 100%; border-collapse: collapse; }
-
-.tabela-perfis thead th {
-  background: var(--color-secondary-02, #f0f0f0);
-  font-weight: 700;
-  font-size: 0.8125rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 2px solid var(--color-secondary-04, #ccc);
-  text-align: left;
-  color: var(--color-secondary-08, #333);
+.estado-vazio p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
-.tabela-perfis tbody tr { transition: background 0.12s; }
-.tabela-perfis tbody tr:hover { background: var(--color-secondary-01, #f8f8f8); }
+/* ── Tabela (padrão limpo — DS) ── */
+.table-responsive {
+  margin: 0 -0.25rem;
+}
+
+@media (min-width: 768px) {
+  .table-responsive {
+    margin: 0;
+  }
+}
+
+.tabela-perfis {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela-perfis thead th {
+  background: var(--color-secondary-01, #f8f8f8);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--color-secondary-04, #ccc);
+  text-align: left;
+  color: var(--color-secondary-09, #333);
+  vertical-align: bottom;
+}
+
+.tabela-perfis tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.tabela-perfis tbody tr:hover {
+  background: var(--color-secondary-01, #f8f8f8);
+}
 
 .tabela-perfis tbody td {
-  padding: 0.625rem 1rem;
+  padding: 0.875rem 1rem;
   border-bottom: 1px solid var(--color-secondary-03, #e8e8e8);
   font-size: 0.875rem;
   vertical-align: middle;
-  color: var(--color-secondary-08, #333);
+  color: var(--color-secondary-09, #333);
 }
 
-.td-nome { font-weight: 600; }
-.th-acoes { text-align: center; width: 1%; white-space: nowrap; }
-.td-acoes { white-space: nowrap; text-align: center; vertical-align: middle; }
-.tr-ativo { background: var(--color-primary-pastel, #dbeeff) !important; }
+.td-nome {
+  font-weight: 600;
+  color: var(--color-secondary-09, #333);
+}
 
-/* ── Sort buttons ── */
+.th-acoes {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}
+
+.td-acoes {
+  white-space: nowrap;
+  text-align: right;
+  vertical-align: middle;
+}
+
+/* Linha ativa: destaque lateral (menos “tinta” que fundo inteiro) */
+.tr-ativo {
+  background: var(--color-primary-pastel-01, #e8f0ff) !important;
+  box-shadow: inset 3px 0 0 var(--color-primary-default, #1351b4);
+}
+
+/* ── Ordenação (botões no cabeçalho) ── */
 .th-sort-btn {
-  display: inline-flex; align-items: center; gap: 0.35rem;
-  border: none; background: transparent; padding: 0;
-  color: inherit; font: inherit; font-weight: 700; cursor: pointer;
-}
-.th-sort-btn:focus-visible { outline: 2px solid var(--color-primary-default, #1351b4); outline-offset: 2px; border-radius: 2px; }
-.th-sort-icon { font-size: 0.75rem; color: var(--color-secondary-06, #666); }
-
-/* ── Botões de ação na tabela ── */
-.btn-acao {
-  display: inline-flex; align-items: center; gap: 0.3rem;
-  padding: 0.3rem 0.6rem; font-size: 0.75rem; font-weight: 600;
-  border: 1px solid; border-radius: 4px; cursor: pointer;
-  transition: all 0.15s; margin: 0 0.15rem;
-}
-.btn-acao i { font-size: 0.65rem; }
-.btn-acao:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-
-.btn-acao--visualizar { color: #1351b4; border-color: #1351b4; background: #eef3fb; }
-.btn-acao--visualizar:hover { background: #1351b4; color: #fff; }
-.btn-acao--editar { color: #c26100; border-color: #c26100; background: #fff5eb; }
-.btn-acao--editar:hover { background: #c26100; color: #fff; }
-.btn-acao--historico { color: #2e7d32; border-color: #2e7d32; background: #edf7ed; }
-.btn-acao--historico:hover { background: #2e7d32; color: #fff; }
-
-/* ── Tag de hierarquia ── */
-.tag-hierarquia {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.2rem 0.625rem;
-  font-size: 0.75rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
   font-weight: 600;
-  border-radius: 100em;
-  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-align: left;
 }
 
-.tag-hierarquia i { font-size: 0.625rem; }
+.th-sort-btn__icone {
+  font-size: 0.6875rem;
+  color: var(--color-primary-default, #1351b4);
+  opacity: 0.85;
+}
+
+.th-sort-btn:focus-visible {
+  outline: 2px solid var(--color-support-05, #ffcd07);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.th-sort-icon {
+  font-size: 0.6875rem;
+  color: var(--color-secondary-06, #666);
+  font-weight: 400;
+}
+
+/* ── Ações: estilo contorno (ghost) — hierarquia visual clara ── */
+.btn-acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  margin: 0.125rem 0 0.125rem 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1.2;
+  border: 1px solid var(--color-secondary-04, #ccc);
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--background, #fff);
+  color: var(--color-secondary-09, #333);
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.btn-acao__icone {
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.btn-acao:hover:not(:disabled) {
+  border-color: var(--color-primary-default, #1351b4);
+  color: var(--color-primary-default, #1351b4);
+  background: var(--color-primary-pastel-01, #e8f0ff);
+}
+
+.btn-acao:focus-visible {
+  outline: 2px solid var(--color-support-05, #ffcd07);
+  outline-offset: 2px;
+}
+
+.btn-acao--visualizar .btn-acao__icone {
+  color: var(--color-primary-default, #1351b4);
+}
+
+.btn-acao--editar .btn-acao__icone {
+  color: var(--color-warning-darken-01, #c26100);
+}
+
+.btn-acao--historico .btn-acao__icone {
+  color: var(--color-success-darken-01, #168821);
+}
+
+/* ── Tags tipo / vigência: neutras + borda suave (menos saturadas) ── */
+.tag-hierarquia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: var(--background, #fff);
+}
+
+.tag-hierarquia i {
+  font-size: 0.6875rem;
+  opacity: 0.9;
+}
 
 .tag-hierarquia--federal {
-  background: #e3f2fd;
-  color: #0d47a1;
+  border-color: #90caf9;
+  color: var(--color-primary-darken-02, #0c326f);
+  background: var(--color-primary-pastel-01, #e8f0ff);
 }
 
 .tag-hierarquia--estadual {
-  background: #fff3e0;
-  color: #e65100;
+  border-color: #ffcc80;
+  color: #b34c00;
+  background: #fff8f0;
 }
 
 .tag-hierarquia--municipal {
-  background: #f3e5f5;
-  color: #6a1b9a;
+  border-color: #ce93d8;
+  color: #4a148c;
+  background: #faf5fc;
 }
 
-/* ── Tag de situação ── */
 .tag-situacao {
-  display: inline-block; padding: 0.2rem 0.625rem;
-  font-size: 0.75rem; font-weight: 600; border-radius: 100em; letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid transparent;
 }
-.tag--vigente { background: #e0f5e4; color: #0a6621; }
-.tag--nao-vigente { background: #fde0db; color: #b71c1c; }
+
+.tag-situacao i {
+  font-size: 0.75rem;
+}
+
+.tag--vigente {
+  border-color: #a5d6a7;
+  color: #1b5e20;
+  background: #f1f8f2;
+}
+
+.tag--nao-vigente {
+  border-color: #ffcdd2;
+  color: #b71c1c;
+  background: #fff8f7;
+}
 
 /* ── Overlay + Painel ── */
 .painel-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.35); z-index: 999;
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 50, 111, 0.25);
+  z-index: 999;
 }
 
 .painel-lateral {
-  position: fixed; top: 0; right: 0;
-  width: 100%; max-width: 100%; height: 100vh;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100vh;
   background: var(--background, #fff);
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
-  z-index: 1000; overflow-y: auto;
+  border-left: 1px solid var(--color-secondary-03, #e8e8e8);
+  box-shadow: -8px 0 32px rgba(12, 50, 111, 0.08);
+  z-index: 1000;
+  overflow-y: auto;
 }
 
 @media (min-width: 576px) { .painel-lateral { width: 75%; } }
@@ -508,34 +707,59 @@ onMounted(() => carregarPerfis())
 
 /* ── Modal de confirmação ── */
 .modal-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.5); z-index: 2000;
-  display: flex; align-items: center; justify-content: center;
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 50, 111, 0.35);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
 }
 
 .modal-confirmacao {
-  background: #fff; border-radius: 12px; padding: 2rem;
-  max-width: 420px; width: 90%; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background: var(--background, #fff);
+  border: 1px solid var(--color-secondary-03, #e8e8e8);
+  border-radius: 8px;
+  padding: 1.5rem 1.5rem 1.25rem;
+  max-width: 26rem;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(12, 50, 111, 0.12);
 }
 
 .modal-confirmacao__header {
-  display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.875rem;
 }
 
-.modal-confirmacao__icone { font-size: 1.5rem; color: #c26100; }
+.modal-confirmacao__icone {
+  font-size: 1.25rem;
+  color: var(--color-warning-darken-01, #c26100);
+  margin-top: 0.1rem;
+}
 
 .modal-confirmacao__titulo {
-  font-size: 1.125rem; font-weight: 700; margin: 0;
-  color: var(--color-secondary-09, #1a1a1a);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0;
+  color: var(--color-primary-darken-02, #0c326f);
 }
 
 .modal-confirmacao__texto {
-  font-size: 0.875rem; color: var(--color-secondary-07, #555);
-  margin: 0 0 1.5rem; line-height: 1.5;
+  font-size: 0.875rem;
+  color: var(--color-secondary-07, #555);
+  margin: 0 0 1.25rem;
+  line-height: 1.55;
 }
 
 .modal-confirmacao__acoes {
-  display: flex; gap: 0.75rem; justify-content: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 /* ── Transitions ── */

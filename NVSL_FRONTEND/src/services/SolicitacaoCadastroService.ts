@@ -46,13 +46,16 @@ export interface SolicitacaoCadastroPayload {
   municipio: string
   orgao: string
   cargo: string
+  /** Aceite do termo no envio da solicitação (obrigatório na API) */
+  aceiteTermo: boolean
   perfilId?: number
   vigenciaInicio?: string
   vigenciaFim?: string
 }
 
 /** Payload para edição: CPF opcional (não retornado pela API por segurança) */
-export interface SolicitacaoCadastroUpdatePayload extends Omit<SolicitacaoCadastroPayload, 'CPF'> {
+export interface SolicitacaoCadastroUpdatePayload
+  extends Omit<SolicitacaoCadastroPayload, 'CPF' | 'aceiteTermo'> {
   CPF?: string
 }
 

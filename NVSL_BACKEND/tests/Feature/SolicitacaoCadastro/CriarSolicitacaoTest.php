@@ -34,6 +34,7 @@ class CriarSolicitacaoTest extends TestCase
             'municipio'             => 'Brasília',
             'orgao'                 => 'Ministério da Saúde',
             'cargo'                 => 'Analista',
+            'aceiteTermo'           => true,
         ], $override);
     }
 
@@ -68,6 +69,13 @@ class CriarSolicitacaoTest extends TestCase
     public function email_institucional_obrigatorio(): void
     {
         $this->postJson('/api/solicitacoes-cadastro', $this->dadosSolicitacao(['emailInstitucional' => '']))
+            ->assertStatus(422);
+    }
+
+    #[Test]
+    public function aceite_termo_obrigatorio(): void
+    {
+        $this->postJson('/api/solicitacoes-cadastro', $this->dadosSolicitacao(['aceiteTermo' => false]))
             ->assertStatus(422);
     }
 
