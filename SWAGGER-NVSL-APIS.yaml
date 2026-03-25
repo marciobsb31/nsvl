@@ -16,7 +16,9 @@ tags:
   - name: Esferas
   - name: Autenticação
   - name: Usuário
+  - name: Contexto
   - name: Perfis
+  - name: Gerenciar Perfis
   - name: Solicitações de Cadastro
 
 paths:
@@ -258,6 +260,254 @@ paths:
         "401":
           description: Não autenticado
 
+  /user/perfis-ativos:
+    get:
+      tags: [Contexto]
+      summary: Lista perfis ativos e vigentes do usuário
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lista de perfis ativos no contexto do usuário
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerfisAtivosResponse"
+        "401":
+          description: Não autenticado
+
+  /user/trocar-contexto:
+    post:
+      tags: [Contexto]
+      summary: Troca o perfil de contexto ativo do usuário
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrocarContextoRequest"
+      responses:
+        "200":
+          description: Contexto alterado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrocarContextoResponse"
+        "401":
+          description: Não autenticado
+        "403":
+          description: Perfil não permitido para o usuário
+        "422":
+          description: Erro de validação
+
+  /gerenciar-perfis:
+    get:
+      tags: [Gerenciar Perfis]
+      summary: Lista perfis para gestão
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: nome
+          in: query
+          schema: { type: string }
+        - name: esfera
+          in: query
+          schema:
+            type: string
+            enum: [federal, estadual, municipal]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ativo, inativo]
+      responses:
+        "200":
+          description: Lista de perfis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PerfilGerenciar"
+        "401":
+          description: Não autenticado
+        "403":
+          description: Acesso não permitido
+
+    post:
+      tags: [Gerenciar Perfis]
+      summary: Cadastra novo perfil
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GerenciarPerfilStoreRequest"
+      responses:
+        "201":
+          description: Perfil cadastrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/PerfilGerenciar"
+        "401":
+          description: Não autenticado
+        "403":
+          description: Acesso não permitido
+        "422":
+          description: Erro de validação
+
+  /gerenciar-perfis/permissoes:
+    get:
+      tags: [Gerenciar Perfis]
+      summary: Lista permissões disponíveis para o usuário
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lista de permissões
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PermissaoGerenciar"
+        "401":
+          description: Não autenticado
+
+  /gerenciar-perfis/hierarquia:
+    get:
+      tags: [Gerenciar Perfis]
+      summary: Retorna hierarquia de atuação do usuário
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Esferas permitidas para gestão de perfis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  esfera_usuario:
+                    type: string
+                    enum: [federal, estadual, municipal]
+                  esferas_permitidas:
+                    type: array
+                    items:
+                      type: string
+                      enum: [federal, estadual, municipal]
+        "401":
+          description: Não autenticado
+
+  /gerenciar-perfis/{id}:
+    get:
+      tags: [Gerenciar Perfis]
+      summary: Detalha perfil por ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Perfil detalhado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PerfilGerenciar"
+        "401":
+          description: Não autenticado
+        "403":
+          description: Acesso não permitido
+        "404":
+          description: Perfil não encontrado
+
+    put:
+      tags: [Gerenciar Perfis]
+      summary: Atualiza perfil existente
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GerenciarPerfilStoreRequest"
+      responses:
+        "200":
+          description: Perfil atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/PerfilGerenciar"
+        "401":
+          description: Não autenticado
+        "403":
+          description: Acesso não permitido
+        "404":
+          description: Perfil não encontrado
+        "422":
+          description: Erro de validação
+
+  /gerenciar-perfis/{id}/historico:
+    get:
+      tags: [Gerenciar Perfis]
+      summary: Lista histórico de alterações do perfil
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Histórico do perfil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HistoricoPerfilItem"
+        "401":
+          description: Não autenticado
+        "403":
+          description: Acesso não permitido
+        "404":
+          description: Perfil não encontrado
+
   /solicitacoes-cadastro:
     get:
       tags: [Solicitações de Cadastro]
@@ -323,6 +573,27 @@ paths:
                 $ref: "#/components/schemas/SolicitacaoCadastroCreateResponse"
         "422":
           description: Erro de validação
+
+  /solicitacoes-cadastro/verificar-cpf:
+    get:
+      tags: [Solicitações de Cadastro]
+      summary: Verifica disponibilidade de CPF
+      parameters:
+        - name: cpf
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "12345678909"
+      responses:
+        "200":
+          description: Resultado da validação do CPF
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificarCpfResponse"
+        "422":
+          description: CPF inválido
 
   /solicitacoes-cadastro/{id}:
     get:
@@ -405,6 +676,43 @@ paths:
           description: Acesso negado
         "404":
           description: Recurso não encontrado
+
+  /solicitacoes-cadastro/{id}/perfis:
+    post:
+      tags: [Solicitações de Cadastro]
+      summary: Adiciona novo perfil vinculado à solicitação
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdicionarPerfilVinculadoRequest"
+      responses:
+        "201":
+          description: Perfil vinculado adicionado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data:
+                    type: object
+        "401":
+          description: Não autenticado
+        "403":
+          description: Acesso negado
+        "404":
+          description: Solicitação não encontrada
+        "422":
+          description: Erro de validação
 
   /solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/desativar:
     patch:
@@ -524,6 +832,113 @@ components:
         nome: { type: string }
         descricao: { type: string, nullable: true }
 
+    TrocarContextoRequest:
+      type: object
+      required: [perfil_usuario_id]
+      properties:
+        perfil_usuario_id:
+          type: integer
+          example: 12
+
+    TrocarContextoResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Contexto alterado com sucesso.
+        user:
+          $ref: "#/components/schemas/UserSafe"
+
+    PerfilAtivoItem:
+      type: object
+      properties:
+        perfil_usuario_id: { type: integer }
+        perfil_id: { type: integer }
+        nome: { type: string }
+        esfera:
+          type: string
+          enum: [federal, estadual, municipal]
+        uf: { type: string, nullable: true }
+        municipio: { type: string, nullable: true }
+        orgao: { type: string, nullable: true }
+        data_inicio_vigencia: { type: string, format: date, nullable: true }
+        data_fim_vigencia: { type: string, format: date, nullable: true }
+        ativo: { type: boolean }
+
+    PerfisAtivosResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PerfilAtivoItem"
+        perfil_usuario_ativo_id:
+          type: integer
+          nullable: true
+
+    PermissaoGerenciar:
+      type: object
+      properties:
+        id: { type: integer }
+        funcionalidade: { type: string }
+        nome_acao: { type: string }
+        descricao: { type: string, nullable: true }
+
+    PerfilGerenciar:
+      type: object
+      properties:
+        id: { type: integer }
+        nome: { type: string }
+        descricao: { type: string, nullable: true }
+        esfera:
+          type: string
+          enum: [federal, estadual, municipal]
+        status:
+          type: string
+          enum: [ativo, inativo]
+        permissoes:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              funcionalidade: { type: string }
+              nome_acao: { type: string }
+        created_at: { type: string, format: date-time, nullable: true }
+
+    GerenciarPerfilStoreRequest:
+      type: object
+      required: [nome, esfera, status]
+      properties:
+        nome: { type: string, maxLength: 100 }
+        descricao: { type: string, nullable: true, maxLength: 255 }
+        esfera:
+          type: string
+          enum: [federal, estadual, municipal]
+        status:
+          type: string
+          enum: [ativo, inativo]
+        permissoes:
+          type: array
+          items:
+            type: integer
+
+    HistoricoPerfilItem:
+      type: object
+      properties:
+        id: { type: integer }
+        data_hora: { type: string, example: "25/03/2026 11:14:32" }
+        usuario: { type: string }
+        perfil: { type: string }
+        atualizacao: { type: string }
+        action: { type: string }
+
+    VerificarCpfResponse:
+      type: object
+      properties:
+        disponivel: { type: boolean }
+        mensagem: { type: string }
+
     SolicitacaoCadastroCreateRequest:
       type: object
       required:
@@ -629,3 +1044,26 @@ components:
           properties:
             id: { type: integer }
             status: { type: string }
+
+    AdicionarPerfilVinculadoRequest:
+      type: object
+      required: [perfil_id, vigencia_inicio]
+      properties:
+        perfil_id:
+          type: integer
+          example: 1
+        vigencia_inicio:
+          type: string
+          format: date
+          example: "2026-03-25"
+        vigencia_fim:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-12-31"
+        orgao:
+          type: string
+          nullable: true
+        cargo:
+          type: string
+          nullable: true
