@@ -1,7 +1,9 @@
-trigger:
-  branches:
-    include:
-      - refs/heads/dev
+# trigger:
+#   branches:
+#     include:
+#       - refs/heads/dev
+
+trigger: none
 
 name: $(date:yyyyMMdd)$(rev:.r)
 

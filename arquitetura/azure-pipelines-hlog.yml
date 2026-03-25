@@ -1,7 +1,9 @@
-trigger:
-  branches:
-    include:
-      - refs/heads/hlog
+# trigger:
+#   branches:
+#     include:
+#       - refs/heads/hlog
+
+trigger: none
 
 name: $(date:yyyyMMdd)$(rev:.r)
 
