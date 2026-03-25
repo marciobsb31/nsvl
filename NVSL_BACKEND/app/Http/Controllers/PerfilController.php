@@ -32,6 +32,7 @@ class PerfilController extends Controller
 
         $perfis = Perfil::query()
             ->whereIn('nome', self::PERFIS_CADASTRO)
+            ->where('status', 'ativo')
             ->get(['id', 'nome', 'descricao'])
             ->sortBy(function (Perfil $perfil): int {
                 $idx = array_search($perfil->nome, self::PERFIS_CADASTRO, true);

@@ -65,7 +65,7 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host "  NVSL esta rodando!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "  Frontend:  http://localhost:5176" -ForegroundColor White
+Write-Host "  Frontend:  http://localhost:5174" -ForegroundColor White
 Write-Host "  Backend:   http://localhost:8081/api" -ForegroundColor White
 Write-Host "  Health:    http://localhost:8081/api/health" -ForegroundColor White
 Write-Host ""

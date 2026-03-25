@@ -35,7 +35,11 @@
         "post-update-cmd": [
             "@php artisan package:discover --ansi"
         ],
-        "test": "phpunit --testdox"
+        "test": "phpunit --testdox",
+        "test:unit": "phpunit --testsuite=Unit --testdox",
+        "test:feature": "phpunit --testsuite=Feature --testdox",
+        "test:coverage": "phpunit --coverage-html reports/coverage-html --testdox-html reports/testdox.html",
+        "test:ci": "phpunit --log-junit reports/junit.xml --testdox-text reports/testdox.txt"
     },
     "extra": {
         "laravel": {

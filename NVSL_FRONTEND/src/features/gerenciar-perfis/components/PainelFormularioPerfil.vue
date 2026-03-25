@@ -4,8 +4,13 @@
     <header class="painel-hero">
       <div class="painel-hero__topo">
         <h1 class="painel-hero__title">{{ titulosPainel[modo] }}</h1>
-        <button class="painel-hero__fechar" type="button" @click="handleVoltar" aria-label="Fechar" title="Fechar">
-          <i class="fas fa-times" aria-hidden="true"></i>
+        <button
+          class="br-button secondary small"
+          type="button"
+          @click="handleVoltar"
+          aria-label="Voltar"
+        >
+          Voltar
         </button>
       </div>
       <p class="painel-hero__lead">
@@ -23,7 +28,7 @@
         subtitle="Identificação básica — nome e tipo do perfil de acesso."
       >
         <section class="row g-3">
-          <div class="col-12">
+          <div class="col-12 col-md-5">
             <div class="br-input" :class="{ danger: erros.nome }">
               <label for="pf-nome">Nome do Perfil<span class="text-red-50 text-up-01"> *</span></label>
               <input
@@ -32,7 +37,7 @@
                 type="text"
                 maxlength="100"
                 :disabled="somenteLeitura || salvando"
-                placeholder="Ex: Gestor Nacional, Analista Municipal..."
+                placeholder="Ex: Gestor Nacional..."
                 :aria-invalid="!!erros.nome"
                 aria-describedby="pf-nome-err"
               />
@@ -41,7 +46,7 @@
               </span>
             </div>
           </div>
-          <div class="col-12 col-md-6">
+          <div class="col-12 col-md-4">
             <div class="br-input">
               <label for="pf-esfera">Tipo de Perfil<span class="text-red-50 text-up-01"> *</span></label>
               <select
@@ -61,10 +66,10 @@
               </select>
             </div>
           </div>
-          <div class="col-12 col-md-6">
+          <div class="col-12 col-md-3">
             <div class="br-input">
               <label>Situação<span class="text-red-50 text-up-01"> *</span></label>
-              <div class="radio-inline">
+              <div class="radio-inline" role="radiogroup" aria-label="Situação do perfil">
                 <label class="radio-option" :class="{ 'radio-option--checked': form.status === 'ativo' }">
                   <input type="radio" name="pf-status" value="ativo" v-model="form.status" :disabled="somenteLeitura || salvando" />
                   <span class="radio-dot radio-dot--ativo"></span>
@@ -376,28 +381,6 @@ async function handleSalvar() {
   font-weight: 700;
 }
 
-.painel-hero__fechar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--color-secondary-04, #ccc);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--color-secondary-07, #555);
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.painel-hero__fechar:hover {
-  background: var(--color-danger, #e52207);
-  border-color: var(--color-danger, #e52207);
-  color: #fff;
-}
-
 /* ── Form (padrão solicitacao-form) ── */
 .painel-form {
   display: flex;
@@ -482,10 +465,11 @@ async function handleSalvar() {
   color: var(--color-secondary-06, #666);
 }
 
-/* ── Radio inline (Status) ── */
+/* ── Radio inline (Situação) ── */
 .radio-inline {
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
   margin-top: 0.375rem;
 }
 
@@ -508,7 +492,9 @@ async function handleSalvar() {
   margin: 0;
 }
 
-.radio-option input[type='radio']:disabled { cursor: not-allowed; }
+.radio-option input[type='radio']:disabled {
+  cursor: not-allowed;
+}
 
 .radio-dot {
   display: inline-block;
@@ -517,10 +503,18 @@ async function handleSalvar() {
   border-radius: 50%;
 }
 
-.radio-dot--ativo { background: #168821; }
-.radio-dot--inativo { background: #b71c1c; }
+.radio-dot--ativo {
+  background: #168821;
+}
 
-.radio-option--checked { color: var(--color-primary-darken-02, #0c326f); font-weight: 600; }
+.radio-dot--inativo {
+  background: #b71c1c;
+}
+
+.radio-option--checked {
+  color: var(--color-primary-darken-02, #0c326f);
+  font-weight: 600;
+}
 
 /* ── Feedback de erro (padrão DS) ── */
 .feedback.danger {
