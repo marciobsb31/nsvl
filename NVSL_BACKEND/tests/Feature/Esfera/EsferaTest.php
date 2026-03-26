@@ -11,15 +11,16 @@ class EsferaTest extends TestCase
     #[Test]
     public function lista_esferas_ordenadas(): void
     {
-        Esfera::create(['codigo' => 'federal', 'nome' => 'Federal', 'ordem' => 1]);
-        Esfera::create(['codigo' => 'estadual', 'nome' => 'Estadual', 'ordem' => 2]);
-        Esfera::create(['codigo' => 'municipal', 'nome' => 'Municipal', 'ordem' => 3]);
+        $this->assertGreaterThanOrEqual(3, Esfera::count());
 
         $response = $this->getJson('/api/esferas')
             ->assertOk()
             ->assertJsonStructure(['data' => [['value', 'label']]]);
 
-        $this->assertCount(3, $response->json('data'));
+        $values = collect($response->json('data'))->pluck('value')->all();
+        $this->assertContains('federal', $values);
+        $this->assertContains('estadual', $values);
+        $this->assertContains('municipal', $values);
         $this->assertEquals('federal', $response->json('data.0.value'));
     }
 

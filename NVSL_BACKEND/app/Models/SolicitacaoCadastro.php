@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Model SolicitacaoCadastro — solicitações de acesso ao sistema
@@ -58,6 +59,21 @@ class SolicitacaoCadastro extends Model
     public const STATUS_EM_ANALISE = 'em_analise';
     public const STATUS_APROVADO = 'aprovado';
     public const STATUS_REPROVADO = 'reprovado';
+
+    public function dominioEsfera(): BelongsTo
+    {
+        return $this->belongsTo(Esfera::class, 'esfera_atuacao', 'codigo');
+    }
+
+    public function ufCadastro(): BelongsTo
+    {
+        return $this->belongsTo(Uf::class, 'uf', 'sigla');
+    }
+
+    public function perfilSolicitado(): BelongsTo
+    {
+        return $this->belongsTo(Perfil::class, 'perfil_id_solicitado');
+    }
 
     /**
      * Retorna CPF para exibição.

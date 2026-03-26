@@ -39,12 +39,21 @@ npm run e2e:debug
 npm run e2e:report
 ```
 
+## Evidências em vídeo — Gerenciar cadastros
+
+Roteiro e requisitos: `docs/REQUISITOS-E2E-GERENCIAR-CADASTROS.md` (na raiz do repositório).
+
+```bash
+npx playwright test tests/e2e/gerenciar-cadastros-evidencias.spec.ts --headed
+```
+
 ## Base URL do teste
 
-Por padrão, o Playwright usa `http://127.0.0.1:5173`.
+Por padrão, o Playwright usa `http://127.0.0.1:5174` (mesma porta do `vite.config.ts`).
 
 Se necessário, sobrescreva com:
 
-```bash
-set E2E_BASE_URL=http://127.0.0.1:5174 && npm run e2e:ui
+```powershell
+$env:E2E_BASE_URL = "http://127.0.0.1:5173"
+npx playwright test tests/e2e/gerenciar-cadastros-evidencias.spec.ts --headed
 ```

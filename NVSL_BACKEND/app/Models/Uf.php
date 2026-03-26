@@ -36,4 +36,19 @@ class Uf extends Model
     {
         return $this->hasMany(Municipio::class, 'uf_id');
     }
+
+    public function usersLotacao(): HasMany
+    {
+        return $this->hasMany(User::class, 'uf_lotacao', 'sigla');
+    }
+
+    public function perfisUsuarioVinculo(): HasMany
+    {
+        return $this->hasMany(PerfilUsuario::class, 'uf', 'sigla');
+    }
+
+    public function solicitacoesCadastro(): HasMany
+    {
+        return $this->hasMany(SolicitacaoCadastro::class, 'uf', 'sigla');
+    }
 }
