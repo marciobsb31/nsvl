@@ -80,7 +80,6 @@ class AuthValidationService
             'cpf_hash' => $cpfHash,
             'name' => $govBrUser->name ?: $user->name,
             'email' => $govBrUser->email ?: $user->email,
-            'picture' => $govBrUser->picture ?: $user->picture,
         ]);
 
         if ($user->isDirty()) {

@@ -789,7 +789,6 @@ components:
         govbr_sub: { type: string }
         name: { type: string }
         email: { type: string, nullable: true }
-        picture: { type: string, nullable: true }
         role: { type: string }
         esfera_atuacao: { type: string }
         uf_lotacao: { type: string, nullable: true }

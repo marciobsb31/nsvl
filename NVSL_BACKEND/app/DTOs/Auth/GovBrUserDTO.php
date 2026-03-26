@@ -17,8 +17,6 @@ readonly class GovBrUserDTO
         public readonly string $name,
         /** E-mail (pode não estar disponível) */
         public readonly ?string $email = null,
-        /** URL da foto de perfil */
-        public readonly ?string $picture = null,
         /** Nível de autenticação */
         public readonly ?array $amr = null,
         /** CPF em texto claro — usado APENAS para gerar o hash, nunca persistido */
@@ -31,7 +29,6 @@ readonly class GovBrUserDTO
             sub:     $data['sub']     ?? '',
             name:    $data['name']    ?? '',
             email:   $data['email']   ?? null,
-            picture: $data['picture'] ?? null,
             amr:     $data['amr']     ?? null,
             cpf:     $data['sub']     ?? null, // GOV.BR retorna o CPF como 'sub'
         );

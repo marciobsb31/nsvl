@@ -19,7 +19,6 @@ return new class extends Migration
 
             $table->string('name');
             $table->string('email')->nullable();
-            $table->string('picture')->nullable();
 
             // Papel do usuário no sistema
             $table->string('role')->default('user');

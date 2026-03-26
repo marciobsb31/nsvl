@@ -25,7 +25,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $cpf_hash        SHA-256 anonimizado do CPF
  * @property string $name            Nome completo
  * @property string|null $email      E-mail (pode não estar disponível)
- * @property string|null $picture    URL foto de perfil
  * @property string $role            Papel no sistema (user, admin)
  * @property string $esfera_atuacao  federal|estadual|municipal (perfil institucional)
  * @property string|null $uf_lotacao       UF de lotação (estadual/municipal)
@@ -41,7 +40,6 @@ class User extends Authenticatable
         'cpf_hash',
         'name',
         'email',
-        'picture',
         'role',
         'esfera_atuacao',
         'uf_lotacao',
@@ -72,13 +70,25 @@ class User extends Authenticatable
     public function perfis(): BelongsToMany
     {
         return $this->belongsToMany(Perfil::class, 'perfil_usuario', 'usuario_id', 'perfil_id')
-            ->withPivot(['id', 'data_inicio_vigencia', 'data_fim_vigencia', 'uf', 'municipio', 'orgao'])
+            ->withPivot(['id', 'esfera', 'data_inicio_vigencia', 'data_fim_vigencia', 'uf', 'municipio', 'orgao'])
             ->withTimestamps();
     }
 
     public function perfilUsuarioAtivo(): BelongsTo
     {
         return $this->belongsTo(PerfilUsuario::class, 'perfil_usuario_ativo_id');
+    }
+
+    /** Esfera institucional (federal | estadual | municipal) — tabela esferas. */
+    public function dominioEsfera(): BelongsTo
+    {
+        return $this->belongsTo(Esfera::class, 'esfera_atuacao', 'codigo');
+    }
+
+    /** UF de lotação, quando aplicável — tabela ufs (FK opcional conforme migração). */
+    public function ufLotacao(): BelongsTo
+    {
+        return $this->belongsTo(Uf::class, 'uf_lotacao', 'sigla');
     }
 
     /**
@@ -168,7 +178,6 @@ class User extends Authenticatable
             'id'                        => $this->id,
             'name'                      => $this->name,
             'email'                     => $this->email,
-            'picture'                   => $this->picture,
             'role'                      => $this->role,
             'sub'                       => $this->govbr_sub,
             'esfera_atuacao'            => $this->esfera_atuacao ?? 'federal',

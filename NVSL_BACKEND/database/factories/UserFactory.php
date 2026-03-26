@@ -16,7 +16,6 @@ class UserFactory extends Factory
             'cpf_hash'  => hash_hmac('sha256', $this->faker->numerify('###########'), 'testing'),
             'name'      => $this->faker->name(),
             'email'     => $this->faker->unique()->safeEmail(),
-            'picture'   => null,
             'role'      => 'user',
             'esfera_atuacao' => 'federal',
         ];

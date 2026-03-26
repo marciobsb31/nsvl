@@ -14,7 +14,6 @@ use OpenApi\Attributes as OA;
  *     @OA\Property(property="id", type="integer"),
  *     @OA\Property(property="name", type="string"),
  *     @OA\Property(property="email", type="string", nullable=true),
- *     @OA\Property(property="picture", type="string", nullable=true),
  *     @OA\Property(property="role", type="string", example="user"),
  *     @OA\Property(property="sub", type="string", description="Identificador GOV.BR")
  * )
