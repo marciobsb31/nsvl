@@ -58,7 +58,8 @@
         @toggle-recolher="sidebarRecolhido = !sidebarRecolhido"
       />
       <main ref="mainRef" id="main-content" class="layout-default__main" tabindex="-1">
-        <div class="container">
+        <div class="container main-content">
+          <Breadcrumb customClass="mb-3"></Breadcrumb>
           <slot />
         </div>
       </main>
@@ -90,6 +91,7 @@ import { useBreakpoint } from '@/core/composables/useBreakpoint'
 import logoGovColor from '@/assets/images/logo/mdh_com_gov.png'
 import logoGovBranca from '@/assets/images/logo/mdh_com_gov_branca.png'
 import { useTheme } from '@/core/composables/useTheme'
+import Breadcrumb from '@/core/components/Breadcrumb/Breadcrumb.vue'
 
 const { isMobile } = useBreakpoint()
 const mainRef = ref<HTMLElement | null>(null)
@@ -154,6 +156,10 @@ watch(sidebarRecolhido, (v) => {
   padding: 1rem 0;
   background-color: var(--background);
   overflow: auto;
+}
+
+.main-content{
+  padding: 0 3rem;
 }
 
 @media (min-width: 576px) {

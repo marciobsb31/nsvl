@@ -19,8 +19,7 @@ export default defineConfig({
     vue({
       template: {
         compilerOptions: {
-          // Todos elementos que começam com 'br-' são Web Components do GOV.BR DS
-          isCustomElement: (tag) => tag.startsWith('br-'),
+          isCustomElement: (tag) => tag.includes('br-'),
         },
       },
     }),
