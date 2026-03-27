@@ -87,6 +87,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import api from '@/services/ApiService'
+import AuthService from '@/services/AuthService'
 import PublicLayout from '@/layouts/PublicLayout.vue'
 import logoPrincipal from '@/assets/images/logo/logo_novo_viver.png'
 import logoGoverno from '@/assets/images/logo/mdh_com_gov.png'
@@ -101,13 +102,14 @@ const carregando = ref(false)
 const perfil = ref<'federal' | 'estadual' | 'municipal'>('federal')
 const erro = ref('')
 
+// ── Token de teste (apenas dev) ────────────────────────────────────────────────
 async function entrar() {
   carregando.value = true
   erro.value = ''
   try {
     const { data } = await api.post<{ token: string; user: Record<string, unknown> }>(
       '/auth/token-de-teste',
-      { perfil: perfil.value }
+      { perfil: perfil.value },
     )
     sessionStorage.setItem('nvsl_token', data.token)
     authStore.setUser(data.user)
@@ -120,27 +122,34 @@ async function entrar() {
   }
 }
 
+// ── GOV.BR ─────────────────────────────────────────────────────────────────────
+
 onMounted(() => {
   processarRetornoGovBr()
 })
 
+/**
+ * Inicia o fluxo OAuth: pede ao backend a URL de autorização do GOV.BR
+ * e redireciona o browser para lá.
+ */
 async function entrarComGovBr() {
   carregandoGovBr.value = true
   erro.value = ''
   try {
-    const { data } = await api.get<{ url?: string } | string>('/auth/redirect')
-    const url = typeof data === 'string' ? data : data?.url
-    if (!url) {
-      throw new Error('URL de autenticação GOV.BR não disponível.')
-    }
+    const url = await AuthService.getRedirectUrl()
     window.location.href = url
   } catch {
     erro.value = 'Login GOV.BR indisponível neste ambiente no momento.'
-  } finally {
     carregandoGovBr.value = false
   }
 }
 
+/**
+ * Processa o retorno do GOV.BR após o callback do backend.
+ *
+ * O backend redireciona para /login#govbr_login_code=ABC ou #govbr_error=...
+ * Este método lê o hash, limpa a URL e troca o código temporário pelo token Sanctum.
+ */
 async function processarRetornoGovBr() {
   const hash = window.location.hash.replace(/^#/, '')
   if (!hash) return
@@ -151,17 +160,16 @@ async function processarRetornoGovBr() {
 
   if (!loginCode && !govbrError) return
 
+  // Remove o hash da URL para não vazar o código no histórico do browser
   window.history.replaceState({}, document.title, window.location.pathname)
 
   if (govbrError) {
     erro.value = govbrError
+
+    // Usuário sem cadastro → redireciona para solicitação pré-preenchida
     const govbrNome = params.get('govbr_nome')
     const govbrCpf = params.get('govbr_cpf')
-    if (
-      govbrError === 'Solicitar acesso e aguardar avaliação' &&
-      govbrNome &&
-      govbrCpf
-    ) {
+    if (govbrError === 'Solicitar acesso e aguardar avaliação' && govbrNome && govbrCpf) {
       setTimeout(() => {
         router.push({
           name: 'solicitacao-cadastro',
@@ -172,15 +180,13 @@ async function processarRetornoGovBr() {
     return
   }
 
+  // Troca o código temporário pelo token Sanctum
   carregandoGovBr.value = true
   erro.value = ''
   try {
-    const { data } = await api.post<{ token: string; user: Record<string, unknown> }>(
-      '/auth/exchange',
-      { code: loginCode }
-    )
-    sessionStorage.setItem('nvsl_token', data.token)
-    authStore.setUser(data.user)
+    const { token, user } = await AuthService.exchangeCode(loginCode!)
+    sessionStorage.setItem('nvsl_token', token)
+    authStore.setUser(user)
     await router.replace({ name: 'gerenciar-cadastros' })
   } catch (e: unknown) {
     const res = (e as { response?: { data?: { message?: string } } })?.response

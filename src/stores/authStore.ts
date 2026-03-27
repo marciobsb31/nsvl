@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import api from '@/services/ApiService'
+import AuthService from '@/services/AuthService'
 
 export interface PerfilVigente {
     id: number
@@ -60,7 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
     async function logout(): Promise<void> {
         try {
             if (sessionStorage.getItem('nvsl_token')) {
-                await api.post('/auth/logout')
+                await AuthService.logout()
             }
         } catch {
             // Ignora falhas no logout remoto e limpa o estado local mesmo assim.
