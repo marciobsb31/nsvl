@@ -1,7 +1,17 @@
 [data-theme="light"] {
-  --color-text-h1: var(--blue-warm-vivid-70);
-  --background: var(--gray-warm-2);
+  /* Text colors Project */
+  --primary-text-color: var(--blue-warm-vivid-70);
+  --primary-text-dark-color: var(--color-primary-darken-02);
+  --secondary-text-color: var(--color-secondary-07);
+  --secondary-text-color-02: var(--color-secondary-06);
+  --dark-text-color: var(--color-secondary-08);
+
+  /* Border colors */
   --border-login-color: var(--cyan-vivid-40);
+  --border-card-color: none;
+  
+  /* Background colors */
+  --background: var(--gray-warm-2);
   --background-gray: var(--gray-warm-10);
 }
 

@@ -76,23 +76,24 @@
       </div>
     </div>
     <div class="filtros-acoes">
-      <button
-        class="br-button secondary"
+      <br-button
+        emphasis="secondary"
         type="button"
         @click="limparFiltros"
         aria-label="Limpar filtros"
       >
         Limpar Filtro
-      </button>
-      <button
-        class="br-button primary"
+      </br-button>
+      <br-button
+        :color-mode="$appTheme"
+        emphasis="primary"
         type="button"
         @click="listar"
         :disabled="carregando"
         aria-label="Pesquisar solicitações"
       >
         Pesquisar
-      </button>
+      </br-button>
     </div>
   </div>
 </template>

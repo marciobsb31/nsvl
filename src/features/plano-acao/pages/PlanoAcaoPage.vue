@@ -14,7 +14,4 @@ defineOptions({ name: 'PlanoAcaoPage' })
 </script>
 
 <style scoped>
-.pagina-placeholder {
-  padding: 2rem;
-}
 </style>

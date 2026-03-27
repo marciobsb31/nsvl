@@ -1,31 +1,17 @@
 <template>
   <DefaultLayout>
-    <section class="gerenciar-cadastros" :class="{ 'painel-aberto': painelCadastroAberto || painelDetalharAberto }">
-      <div class="titulo-pagina">
-        <div class="titulo-pagina__topo">
-          <div>
-            <h1 id="titulo-gerenciar" class="titulo-pagina__h1">
-              Gerenciar solicitação de cadastros no sistema
-            </h1>
-            <p class="titulo-pagina__subtitulo">Aplique filtros e clique em <strong>Pesquisar</strong>.</p>
-          </div>
-          <button
-            class="br-button primary small"
-            type="button"
-            @click="abrirPainelCadastro"
-            aria-label="Cadastrar usuário"
-          >
+      <HeaderPage title="Gerenciar solicitação de cadastros no sistema"
+        :subtitle="'Aplique filtros e clique em <strong>Pesquisar</strong>.'"
+        customClass="mb-3">
+        <template v-slot:actions>
+          <br-button :color-mode="$appTheme" emphasis="primary" @click="abrirPainelCadastro" aria-label="Cadastrar usuário">
             Cadastrar usuário
-          </button>
-        </div>
-      </div>
+          </br-button>
+        </template>
+      </HeaderPage>
 
       <Card custom-class="mb-4">
-        <FiltrosGerenciarSolicitacao
-          :carregando="carregando"
-          @pesquisar="aplicarFiltros"
-          @limpar="limparEpesquisar"
-        />
+        <FiltrosGerenciarSolicitacao :carregando="carregando" @pesquisar="aplicarFiltros" @limpar="limparEpesquisar" />
       </Card>
 
       <Card custom-class="mb-4">
@@ -95,22 +81,29 @@
                   <span class="br-tag" :class="classeStatus(s.status)">
                     {{ labelStatus(s.status) }}
                   </span>
+
                 </td>
                 <td>
+                  <br-tooltip position="left">
                   <button
-                    class="br-button secondary small"
+                    class="br-button secondary small circle"
                     type="button"
                     @click="detalhar(s)"
                     :disabled="carregandoDetalhe"
                     :aria-label="rotuloBotaoDetalhar(s.status)"
+                    :title="rotuloBotaoDetalhar(s.status)"
+                    slot="trigger"
                   >
-                    {{ rotuloBotaoDetalhar(s.status) }}
+                    <i class="fas fa-search" aria-hidden="true"></i>
                   </button>
+                  <div slot="content">{{rotuloBotaoDetalhar(s.status)}}</div>
+                  </br-tooltip>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+        
       </Card>
 
       <Transition name="painel-fade">
@@ -154,7 +147,6 @@
           />
         </aside>
       </Transition>
-    </section>
   </DefaultLayout>
 </template>
 
@@ -178,7 +170,7 @@ import {
 import { obterSolicitacaoCadastro, type SolicitacaoCadastroDetalhe } from '@/services/SolicitacaoCadastroService'
 import { useNotification } from '@/core/composables/useNotification'
 import { useAuth } from '@/core/composables/useAuth'
-
+import HeaderPage from '@/core/components/HeaderPage/HeaderPage.vue'
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
 const { error, success } = useNotification()
@@ -484,51 +476,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.gerenciar-cadastros {
-  padding: 1.5rem 0;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
 
-.titulo-pagina {
-  margin-bottom: 1.5rem;
-}
-
-.titulo-pagina__topo {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 575px) {
-  .titulo-pagina__h1 {
-    font-size: 1.25rem;
-  }
-
-  .titulo-pagina__subtitulo {
-    font-size: 0.875rem;
-  }
-
-  .titulo-pagina__topo {
-    flex-direction: column;
-  }
-}
-
-.titulo-pagina__h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--color-primary-default, #1351b4);
-  margin: 0;
-}
-
-.titulo-pagina__subtitulo {
-  font-size: 1rem;
-  color: var(--color-secondary-07, #555);
-  margin: 0.5rem 0 0;
-}
 
 .painel-overlay {
   position: fixed;

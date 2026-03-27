@@ -1,17 +1,7 @@
 <template>
   <PublicLayout full-width>
     <section class="solicitacao-page" aria-labelledby="solicitacao-titulo">
-      <div class="solicitacao-page__inner">
-        <nav class="solicitacao-breadcrumb" aria-label="Navegação estrutural">
-          <ol class="solicitacao-breadcrumb__list">
-            <li>
-              <router-link :to="{ name: 'home' }" class="solicitacao-breadcrumb__link">Início</router-link>
-            </li>
-            <li aria-hidden="true" class="solicitacao-breadcrumb__sep">/</li>
-            <li class="solicitacao-breadcrumb__current">Solicitação de cadastro</li>
-          </ol>
-        </nav>
-
+      <div class="solicitacao-page__inner">   
         <header class="solicitacao-hero">
           <h1 id="solicitacao-titulo" class="solicitacao-hero__title">
             Solicitação de cadastro
@@ -20,10 +10,11 @@
             Preencha os dados abaixo para solicitar acesso ao <strong>NVSL</strong>. Campos marcados com
             <span class="solicitacao-hero__req">*</span> são obrigatórios.
           </p>
-          <div v-if="modoGovBr" class="br-message info solicitacao-govbr-msg" role="status">
-            <div class="content">
+          <div class="solicitacao-govbr-msg">
+          <Message v-if="modoGovBr" >
               <strong>Dados do GOV.BR:</strong> nome e CPF foram obtidos na autenticação e não podem ser alterados.
-            </div>
+          </Message>
+
           </div>
         </header>
 
@@ -175,6 +166,8 @@ import {
 import { useNotification } from '@/core/composables/useNotification';
 import { useRouter } from 'vue-router';
 import Modal from '@/core/components/Modal/Modal.vue';
+import Message from '@/core/components/Message/Message.vue';
+
 
 defineOptions({
   name: 'SolicitacaoCadastroIndex'
@@ -223,6 +216,13 @@ const editando = ref(false);
 const modalExcluir = ref<boolean>(false);
 const solicitacaoExcluir = ref<SolicitacaoCadastroItem | null>(null);
 const excluindo = ref(false);
+
+const links = ref([
+  {
+    label: 'Solicitação de cadastro',
+    active: true
+  }
+]);
 
 function formatarData(data: string | undefined) {
   if (!data) return '-';
@@ -417,7 +417,7 @@ onMounted(() => {
 .solicitacao-page {
   width: 100%;
   padding: 1rem 0 2.5rem;
-  background: linear-gradient(180deg, var(--color-secondary-01, #f8f8f8) 0%, var(--background, #fff) 12rem);
+  background: var(--background);
 }
 
 .solicitacao-page__inner {
@@ -486,7 +486,7 @@ onMounted(() => {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.25;
-  color: var(--color-primary-darken-02, #0c326f);
+  color: var(--primary-text-dark-color);
   letter-spacing: -0.02em;
 }
 
@@ -501,7 +501,7 @@ onMounted(() => {
   max-width: 62rem;
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
 }
 
 .solicitacao-hero__req {
@@ -511,9 +511,6 @@ onMounted(() => {
 
 .solicitacao-govbr-msg {
   margin-top: 1rem;
-}
-.solicitacao-govbr-msg .content {
-  font-size: 0.875rem;
 }
 
 /* Cards empilhados */
@@ -556,7 +553,7 @@ onMounted(() => {
   margin: 0 0 0.75rem;
   font-size: 0.875rem;
   line-height: 1.55;
-  color: var(--color-secondary-09, #333);
+  color: var(--color-secondary-08);
 }
 
 .solicitacao-termo-box__texto:last-child {
@@ -564,7 +561,7 @@ onMounted(() => {
 }
 
 .solicitacao-termo-box__texto--muted {
-  color: var(--color-secondary-07, #555);
+  color: var(--color-secondary-08);
   font-size: 0.8125rem;
 }
 
@@ -600,5 +597,10 @@ onMounted(() => {
   .solicitacao-acoes__btn--principal {
     min-width: 14rem;
   }
+
+  br-breadcrumb .crumb-list {
+    display: none;
+  }
+  
 }
 </style>
