@@ -14,7 +14,5 @@ defineOptions({ name: 'GerenciarPerfisPage' })
 </script>
 
 <style scoped>
-.pagina-placeholder {
-  padding: 2rem;
-}
+
 </style>

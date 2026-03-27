@@ -10,10 +10,11 @@
             Preencha os dados abaixo para solicitar acesso ao <strong>NVSL</strong>. Campos marcados com
             <span class="solicitacao-hero__req">*</span> são obrigatórios.
           </p>
-          <div v-if="modoGovBr" class="br-message info solicitacao-govbr-msg" role="status">
-            <div class="content">
+          <div class="solicitacao-govbr-msg">
+          <Message v-if="modoGovBr" >
               <strong>Dados do GOV.BR:</strong> nome e CPF foram obtidos na autenticação e não podem ser alterados.
-            </div>
+          </Message>
+
           </div>
         </header>
 
@@ -165,6 +166,8 @@ import {
 import { useNotification } from '@/core/composables/useNotification';
 import { useRouter } from 'vue-router';
 import Modal from '@/core/components/Modal/Modal.vue';
+import Message from '@/core/components/Message/Message.vue';
+
 
 defineOptions({
   name: 'SolicitacaoCadastroIndex'
@@ -483,7 +486,7 @@ onMounted(() => {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.25;
-  color: var(--color-primary-darken-02, #0c326f);
+  color: var(--primary-text-dark-color);
   letter-spacing: -0.02em;
 }
 
@@ -498,7 +501,7 @@ onMounted(() => {
   max-width: 62rem;
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
 }
 
 .solicitacao-hero__req {
@@ -508,9 +511,6 @@ onMounted(() => {
 
 .solicitacao-govbr-msg {
   margin-top: 1rem;
-}
-.solicitacao-govbr-msg .content {
-  font-size: 0.875rem;
 }
 
 /* Cards empilhados */
@@ -553,7 +553,7 @@ onMounted(() => {
   margin: 0 0 0.75rem;
   font-size: 0.875rem;
   line-height: 1.55;
-  color: var(--color-secondary-09, #333);
+  color: var(--color-secondary-08);
 }
 
 .solicitacao-termo-box__texto:last-child {
@@ -561,7 +561,7 @@ onMounted(() => {
 }
 
 .solicitacao-termo-box__texto--muted {
-  color: var(--color-secondary-07, #555);
+  color: var(--color-secondary-08);
   font-size: 0.8125rem;
 }
 
@@ -601,5 +601,6 @@ onMounted(() => {
   br-breadcrumb .crumb-list {
     display: none;
   }
+  
 }
 </style>

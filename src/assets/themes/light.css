@@ -1,7 +1,9 @@
 [data-theme="light"] {
   /* Text colors Project */
   --primary-text-color: var(--blue-warm-vivid-70);
+  --primary-text-dark-color: var(--color-primary-darken-02);
   --secondary-text-color: var(--color-secondary-07);
+  --secondary-text-color-02: var(--color-secondary-06);
   --dark-text-color: var(--color-secondary-08);
 
   /* Border colors */

@@ -184,7 +184,7 @@ const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
 .solicitacao-form-grid :deep(.br-input label) {
   font-weight: 600;
   font-size: 0.875rem;
-  color: var(--color-secondary-09, #333);
+  color: var( --dark-text-color);
   margin-bottom: 0.25rem;
 }
 
@@ -192,6 +192,6 @@ const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
 .solicitacao-form-grid :deep(label) {
   font-weight: 600;
   font-size: 0.875rem;
-  color: var(--color-secondary-09, #333);
+  color: var(--dark-text-color);
 }
 </style>

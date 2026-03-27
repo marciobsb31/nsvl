@@ -1,6 +1,10 @@
 [data-theme="dark"] {
 /* Text colors Project */
   --primary-text-color: var(--color-secondary-01);
+  --primary-text-dark-color: var(--pure-0);
+  --secondary-text-color: var(--pure-0);
+  --secondary-text-color-02: var(--pure-0);
+  --dark-text-color: var(--pure-0);
 
   /* Border colors */
   --border-login-color: var(--pure-0);
@@ -54,13 +58,17 @@
 }
 
 [data-theme="dark"] .br-button.is-primary, [data-theme="dark"] .br-button.primary, [data-theme="dark"] .br-button[primary] {
-    --interactive-rgb: var(--color-dark-rgb);
-    background-color: var(--interactive-dark);
-    color: var(--pure-100);
+    --interactive-rgb: var(--color-dark-rgb) !important;
+    background-color: var(--interactive-dark) !important;
+    color: var(--pure-100) !important;
 }
 
 [data-theme="dark"] .br-select button {
     color: var(--pure-0);
+}
+
+[data-theme="dark"] .br-message .content{
+    color: var(--color-secondary-08) 
 }
 
 

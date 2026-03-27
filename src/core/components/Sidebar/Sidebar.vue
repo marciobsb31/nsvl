@@ -77,6 +77,7 @@
       </nav>
     </div>
   </aside>
+  
 </template>
 
 <script setup lang="ts">
@@ -95,6 +96,7 @@ defineProps<{
 defineEmits<{
   (e: 'toggle-recolher'): void
 }>()
+
 
 const { isMobile } = useBreakpoint()
 const mostrarToggle = computed(() => !isMobile.value)
@@ -118,7 +120,7 @@ async function handleSair() {
 .sidebar {
   width: 260px;
   min-width: 260px;
-  background-color: var(--color-secondary-02, #f0f0f0);
+  background-color: var(--background);
   border-right: 1px solid var(--color-secondary-04, #ddd);
   padding: 1.5rem 0;
   flex-shrink: 0;
@@ -199,7 +201,7 @@ async function handleSair() {
 .sidebar__titulo {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--color-secondary-08, #333);
+  color: var(--primary-text-color);
   margin: 0;
   padding: 0;
 }
@@ -208,8 +210,8 @@ async function handleSair() {
   width: 36px;
   height: 36px;
   border: none;
-  background: var(--color-secondary-03, #e8e8e8);
-  color: var(--color-secondary-08, #333);
+  background: none;
+  color: var(--primary-text-color);
   border-radius: 6px;
   cursor: pointer;
   display: flex;
@@ -232,7 +234,7 @@ async function handleSair() {
   display: flex;
   align-items: center;
   padding: 0.75rem 1rem;
-  color: var(--color-secondary-08, #333);
+  color: var(--primary-text-color);
   text-decoration: none;
   font-weight: 500;
   transition: background-color 0.2s, color 0.2s;
