@@ -90,7 +90,6 @@ import api from '@/services/ApiService'
 import PublicLayout from '@/layouts/PublicLayout.vue'
 import logoPrincipal from '@/assets/images/logo/logo_novo_viver.png'
 import logoGoverno from '@/assets/images/logo/mdh_com_gov.png'
-import { BrSelect } from '@govbr-ds/webcomponents-vue'
 
 defineOptions({ name: 'LoginPage' })
 
