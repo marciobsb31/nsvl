@@ -88,7 +88,7 @@
                   <button
                     class="br-button secondary small circle"
                     type="button"
-                    @click="detalhar(s)"
+                    @click="detalhar(s.id)"
                     :disabled="carregandoDetalhe"
                     :aria-label="rotuloBotaoDetalhar(s.status)"
                     :title="rotuloBotaoDetalhar(s.status)"
@@ -171,6 +171,7 @@ import { obterSolicitacaoCadastro, type SolicitacaoCadastroDetalhe } from '@/ser
 import { useNotification } from '@/core/composables/useNotification'
 import { useAuth } from '@/core/composables/useAuth'
 import HeaderPage from '@/core/components/HeaderPage/HeaderPage.vue'
+import router from '@/router'
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
 const { error, success } = useNotification()
@@ -335,47 +336,51 @@ function rotuloBotaoDetalhar(status: string) {
 
 const carregandoDetalhe = ref(false)
 
-async function detalhar(s: SolicitacaoGerenciarItem) {
-  const id = s?.id
-  if (id == null || id === undefined) {
-    console.error('[Detalhar] ID inválido — item:', s)
-    error('Não foi possível identificar a solicitação. Tente clicar em Listar novamente.')
-    return
-  }
-  console.log('[Detalhar] Iniciando — id:', id, 'nome:', s?.nome)
-  carregandoDetalhe.value = true
-  painelCadastroAberto.value = false
-  painelDetalharAberto.value = false
-  detalheSelecionado.value = null
-  try {
-    const detalhe = await obterSolicitacaoCadastro(id)
-    console.log('[Detalhar] Resposta da API:', detalhe ? { id: detalhe.id, nome: detalhe.nome, perfis: detalhe.perfis_vinculados?.length } : null)
-    if (!detalhe?.id) {
-      throw new Error('Resposta da API inválida: dados incompletos.')
-    }
-    detalheSelecionado.value = detalhe
-    painelDetalharAberto.value = true
-    console.log('[Detalhar] Painel aberto com sucesso.')
-  } catch (e: unknown) {
-    const err = e as { response?: { status?: number; data?: { message?: string } }; message?: string }
-    const status = err?.response?.status
-    let msg =
-      err?.response?.data?.message ??
-      err?.message ??
-      'Erro ao carregar detalhes da solicitação.'
-    if (status === 401) {
-      msg = 'Sessão expirada. Faça login novamente.'
-    } else if (status === 403) {
-      msg = 'Acesso negado a esta solicitação.'
-    } else if (status === 404) {
-      msg = 'Solicitação não encontrada.'
-    }
-    console.error('[Detalhar] Erro ao abrir painel — status:', status, 'msg:', msg, 'objeto:', e)
-    error(msg)
-  } finally {
-    carregandoDetalhe.value = false
-  }
+const detalhar = (id: number) => {
+  router.push({name:'detalhar-solicitacao', params:{id}})
 }
+
+// async function detalhar(s: SolicitacaoGerenciarItem) {
+//   const id = s?.id
+//   if (id == null || id === undefined) {
+//     console.error('[Detalhar] ID inválido — item:', s)
+//     error('Não foi possível identificar a solicitação. Tente clicar em Listar novamente.')
+//     return
+//   }
+//   console.log('[Detalhar] Iniciando — id:', id, 'nome:', s?.nome)
+//   carregandoDetalhe.value = true
+//   painelCadastroAberto.value = false
+//   painelDetalharAberto.value = false
+//   detalheSelecionado.value = null
+//   try {
+//     const detalhe = await obterSolicitacaoCadastro(id)
+//     console.log('[Detalhar] Resposta da API:', detalhe ? { id: detalhe.id, nome: detalhe.nome, perfis: detalhe.perfis_vinculados?.length } : null)
+//     if (!detalhe?.id) {
+//       throw new Error('Resposta da API inválida: dados incompletos.')
+//     }
+//     detalheSelecionado.value = detalhe
+//     painelDetalharAberto.value = true
+//     console.log('[Detalhar] Painel aberto com sucesso.')
+//   } catch (e: unknown) {
+//     const err = e as { response?: { status?: number; data?: { message?: string } }; message?: string }
+//     const status = err?.response?.status
+//     let msg =
+//       err?.response?.data?.message ??
+//       err?.message ??
+//       'Erro ao carregar detalhes da solicitação.'
+//     if (status === 401) {
+//       msg = 'Sessão expirada. Faça login novamente.'
+//     } else if (status === 403) {
+//       msg = 'Acesso negado a esta solicitação.'
+//     } else if (status === 404) {
+//       msg = 'Solicitação não encontrada.'
+//     }
+//     console.error('[Detalhar] Erro ao abrir painel — status:', status, 'msg:', msg, 'objeto:', e)
+//     error(msg)
+//   } finally {
+//     carregandoDetalhe.value = false
+//   }
+// }
 
 async function aprovarSolicitacao(payload?: { perfilId?: string | number | null; vigenciaInicio?: string; vigenciaFim?: string }) {
   if (!detalheSelecionado.value) return
