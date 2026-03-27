@@ -11,12 +11,12 @@ class LocalidadeTest extends TestCase
 {
     private function seedLocalidades(): void
     {
-        $go = Uf::create(['id_ibge' => 52, 'sigla' => 'GO', 'nome' => 'Goiás', 'regiao_sigla' => 'CO', 'regiao_nome' => 'Centro-Oeste']);
-        $sp = Uf::create(['id_ibge' => 35, 'sigla' => 'SP', 'nome' => 'São Paulo', 'regiao_sigla' => 'SE', 'regiao_nome' => 'Sudeste']);
+        $go = Uf::create(['sigla' => 'GO', 'nome' => 'Goiás']);
+        $sp = Uf::create(['sigla' => 'SP', 'nome' => 'São Paulo']);
 
-        Municipio::create(['id_ibge' => 5200050, 'nome' => 'Alexânia', 'uf_id' => $go->id]);
-        Municipio::create(['id_ibge' => 5208707, 'nome' => 'Goiânia', 'uf_id' => $go->id]);
-        Municipio::create(['id_ibge' => 3550308, 'nome' => 'São Paulo', 'uf_id' => $sp->id]);
+        Municipio::create(['nome' => 'Alexânia', 'uf_id' => $go->id]);
+        Municipio::create(['nome' => 'Goiânia', 'uf_id' => $go->id]);
+        Municipio::create(['nome' => 'São Paulo', 'uf_id' => $sp->id]);
     }
 
     #[Test]

@@ -45,7 +45,7 @@ class LocalidadeController extends Controller
             ->map(fn (Uf $e) => [
                 'value' => $e->sigla,
                 'label' => $e->sigla . ' - ' . $e->nome,
-                'id' => $e->id_ibge,
+                'id' => $e->id,
             ])
             ->values()
             ->all();

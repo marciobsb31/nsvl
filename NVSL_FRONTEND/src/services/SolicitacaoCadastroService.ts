@@ -24,12 +24,14 @@ export interface SolicitacaoCadastroDetalhe extends SolicitacaoCadastroItem {
   cpf?: string
   email_institucional: string
   telefone_institucional: string
-  telefone_pessoal?: string
   esfera_atuacao: string
   uf: string
   municipio: string
   orgao: string
   cargo: string
+  perfil_id_solicitado?: number | null
+  vigencia_inicio_solicitada?: string | null
+  vigencia_fim_solicitada?: string | null
   updated_at?: string
   perfis_vinculados?: PerfilVinculado[]
   pode_avaliar?: boolean
@@ -40,20 +42,17 @@ export interface SolicitacaoCadastroPayload {
   CPF?: string
   emailInstitucional: string
   telefoneInstitucional: string
-  telefonePessoal?: string
   esferaAtuacao: string
   uf: string
   municipio: string
   orgao: string
   cargo: string
-  /** Aceite do termo no envio da solicitação (obrigatório na API) */
   aceiteTermo: boolean
   perfilId?: number
   vigenciaInicio?: string
   vigenciaFim?: string
 }
 
-/** Payload para edição: CPF opcional (não retornado pela API por segurança) */
 export interface SolicitacaoCadastroUpdatePayload
   extends Omit<SolicitacaoCadastroPayload, 'CPF' | 'aceiteTermo'> {
   CPF?: string

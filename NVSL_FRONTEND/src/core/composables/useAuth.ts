@@ -11,7 +11,6 @@ export function useAuth() {
         error: computed(() => authStore.error),
         userName: computed(() => authStore.userName),
         userEmail: computed(() => authStore.userEmail),
-        permissoes: computed(() => authStore.permissoes),
         perfisAtivos: computed(() => authStore.perfisAtivos),
         possuiMultiplosPerfis: computed(() => authStore.possuiMultiplosPerfis),
         perfilAtivo: computed(() => authStore.perfilAtivo),

@@ -7,15 +7,15 @@
   - Tenta iniciar o Docker Desktop se o engine nao estiver acessivel.
   - docker compose up (backend, postgres, redis, frontend no Docker, ssl-proxy).
   - Aguarda o /api/health do backend (em vez de sleep fixo).
-  - php artisan migrate --force e seed de exemplo.
-  - Por padrao NAO abre o Vite local (a porta 5174 ja e o frontend no container).
+  - php artisan migrate --force, importacao IBGE (UFs/municipios) e seed de exemplo.
+  - Por padrao NAO abre o Vite local (a porta 5176 ja e o frontend no container).
 
 .PARAMETER ViteLocal
   Para o servico frontend do Docker e abre uma NOVA janela do PowerShell com npm run dev
   (hot-reload no codigo Vue). Use quando for desenvolver so o frontend.
 
-.PARAMETER ImportarIbge
-  Executa php artisan localidades:importar-ibge no container (rede necessaria; demora).
+.PARAMETER SemImportacaoIbge
+  Nao executa php artisan localidades:importar-ibge (rede indisponivel ou dados ja carregados).
 
 .PARAMETER SemBuild
   Usa docker compose up -d sem --build (inicio mais rapido).
@@ -29,7 +29,7 @@
 [CmdletBinding()]
 param(
     [switch] $ViteLocal,
-    [switch] $ImportarIbge,
+    [switch] $SemImportacaoIbge,
     [switch] $SemBuild
 )
 
@@ -111,7 +111,7 @@ if (-not $SemBuild) {
     $composeArgs = @("compose", "up", "--build", "-d")
 }
 
-Write-Host "[1/5] Subindo containers: docker $($composeArgs -join ' ')" -ForegroundColor Yellow
+Write-Host "[1/6] Subindo containers: docker $($composeArgs -join ' ')" -ForegroundColor Yellow
 & docker @composeArgs
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERRO] docker compose falhou." -ForegroundColor Red
@@ -119,36 +119,42 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host ""
-Write-Host "[2/5] Aguardando API /api/health..." -ForegroundColor Yellow
+Write-Host "[2/6] Aguardando API /api/health..." -ForegroundColor Yellow
 if (-not (Wait-BackendHealth)) {
     Write-Host "[AVISO] Health nao respondeu a tempo. Verifique: docker compose ps / logs nvsl-backend" -ForegroundColor Yellow
 }
 
 Write-Host ""
-Write-Host "[3/5] Migrations (php artisan migrate --force)..." -ForegroundColor Yellow
+Write-Host "[3/6] Migrations (php artisan migrate --force)..." -ForegroundColor Yellow
 docker exec nvsl-backend php artisan migrate --force
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERRO] migrate falhou." -ForegroundColor Red
     exit 1
 }
 
+if (-not $SemImportacaoIbge) {
+    Write-Host ""
+    Write-Host "[4/6] Importando UFs e municipios (IBGE, rede necessaria)..." -ForegroundColor Yellow
+    docker exec nvsl-backend php artisan localidades:importar-ibge
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[AVISO] Importacao IBGE falhou. Execute depois: docker exec nvsl-backend php artisan localidades:importar-ibge" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host ""
+    Write-Host "[4/6] Importacao IBGE ignorada (-SemImportacaoIbge)." -ForegroundColor Gray
+}
+
 Write-Host ""
-Write-Host "[4/5] Seed de exemplo (UsuarioExemploSeeder)..." -ForegroundColor Yellow
+Write-Host "[5/6] Seed de exemplo (UsuarioExemploSeeder)..." -ForegroundColor Yellow
 docker exec nvsl-backend php artisan db:seed --class=UsuarioExemploSeeder --force
 if ($LASTEXITCODE -eq 0) {
     Write-Host "  Dados de exemplo aplicados (perfis, usuarios de teste, solicitacoes)." -ForegroundColor Gray
 }
 
-if ($ImportarIbge) {
-    Write-Host ""
-    Write-Host "[4b] Importando UFs/municipios (IBGE)..." -ForegroundColor Yellow
-    docker exec nvsl-backend php artisan localidades:importar-ibge
-}
-
 Write-Host ""
-Write-Host "[5/5] Frontend..." -ForegroundColor Yellow
+Write-Host "[6/6] Frontend..." -ForegroundColor Yellow
 if ($ViteLocal) {
-    Write-Host "  Parando container nvsl-frontend para liberar a porta 5174 ao Vite local..." -ForegroundColor Gray
+    Write-Host "  Parando container nvsl-frontend para liberar a porta 5176 ao Vite local..." -ForegroundColor Gray
     docker compose stop frontend 2>$null
     $frontDir = "$baseDir\NVSL_FRONTEND"
     if (-not (Test-Path "$frontDir\node_modules")) {
@@ -161,7 +167,7 @@ if ($ViteLocal) {
     Start-Process powershell.exe -ArgumentList @("-NoExit", "-NoLogo", "-Command", $viteCmd)
     Write-Host "  Nova janela aberta com npm run dev." -ForegroundColor Green
 } else {
-    Write-Host "  Usando frontend servido pelo Docker em http://localhost:5174" -ForegroundColor Gray
+    Write-Host "  Usando frontend servido pelo Docker em http://localhost:5176" -ForegroundColor Gray
     Write-Host "  Para Vite local com hot-reload: .\iniciar-nvsl.ps1 -ViteLocal" -ForegroundColor Gray
 }
 
@@ -170,10 +176,10 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host "  NVSL pronto" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "  Frontend:  http://localhost:5174" -ForegroundColor White
+Write-Host "  Frontend:  http://localhost:5176" -ForegroundColor White
 Write-Host "  Backend:   http://localhost:8081/api" -ForegroundColor White
 Write-Host "  Health:    http://localhost:8081/api/health" -ForegroundColor White
 Write-Host ""
 Write-Host "  Parar tudo:  cd NVSL_DOCKER; docker compose down" -ForegroundColor Gray
-Write-Host "  Opcoes: -ViteLocal  |  -ImportarIbge  |  -SemBuild" -ForegroundColor Gray
+Write-Host "  Opcoes: -ViteLocal  |  -SemImportacaoIbge  |  -SemBuild" -ForegroundColor Gray
 Write-Host ""

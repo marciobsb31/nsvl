@@ -5,16 +5,12 @@
 export interface GovBrUser {
     /** ID do usuário no sistema */
     id?: number
-    /** Identificador único do usuário (CPF hash) */
+    /** Identificador único do usuário (sub do GOV.BR / CPF) */
     sub: string
     /** Nome completo */
     name: string
     /** E-mail */
     email?: string
-    /** URL da foto de perfil */
-    picture?: string
-    /** Papel no sistema */
-    role?: string
     /** Nível de confiabilidade da conta GOV.BR */
     amr?: string[]
     /** Esfera de atuação (federal, estadual, municipal) */

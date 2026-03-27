@@ -18,9 +18,6 @@ class TrocaContextoController extends Controller
 
     /**
      * GET /api/user/perfis-ativos
-     *
-     * Lista todos os perfis ativos e vigentes do usuário autenticado,
-     * indicando qual é o perfil atualmente em uso.
      */
     public function listarPerfisAtivos(): JsonResponse
     {
@@ -36,24 +33,18 @@ class TrocaContextoController extends Controller
                 'perfil_usuario_id'     => $p->pivot->id,
                 'perfil_id'             => $p->id,
                 'nome'                  => $p->nome,
-                'esfera'                => $p->esfera,
-                'uf'                    => $p->pivot->uf,
-                'municipio'             => $p->pivot->municipio,
-                'orgao'                 => $p->pivot->orgao,
                 'data_inicio_vigencia'  => $p->pivot->data_inicio_vigencia,
                 'data_fim_vigencia'     => $p->pivot->data_fim_vigencia,
-                'ativo'                 => $p->pivot->id == $user->perfil_usuario_ativo_id,
+                'ativo'                 => (bool) $p->pivot->ativo,
             ])->values(),
-            'perfil_usuario_ativo_id' => $user->perfil_usuario_ativo_id,
         ]);
     }
 
     /**
      * POST /api/user/trocar-contexto
      *
-     * Altera o perfil ativo do usuário autenticado. Atualiza esfera_atuacao,
-     * uf_lotacao e municipio_lotacao do usuário para refletir o novo contexto.
-     * Registra log de auditoria com perfil anterior e novo.
+     * Altera o perfil ativo do usuário. Marca o perfil_usuario.ativo = true
+     * e desmarca os demais.
      */
     public function trocarContexto(Request $request): JsonResponse
     {
@@ -79,35 +70,20 @@ class TrocaContextoController extends Controller
             throw ApiException::forbidden('O perfil selecionado não está ativo ou não pertence ao seu cadastro.');
         }
 
-        $perfilAnteriorId = $user->perfil_usuario_ativo_id;
-        $perfilAnteriorNome = null;
+        $perfilAnterior = $perfisVigentes->first(fn ($p) => $p->pivot->ativo);
 
-        if ($perfilAnteriorId) {
-            $anterior = $perfisVigentes->first(
-                fn ($p) => $p->pivot->id == $perfilAnteriorId
-            );
-            $perfilAnteriorNome = $anterior?->nome;
-        }
-
-        $user->update([
-            'perfil_usuario_ativo_id' => $perfilUsuarioId,
-            'esfera_atuacao'          => $novoPerfilPivot->esfera,
-            'uf_lotacao'              => $novoPerfilPivot->pivot->uf,
-            'municipio_lotacao'       => $novoPerfilPivot->pivot->municipio,
-        ]);
+        // Desmarcar todos os perfis do usuário e ativar o selecionado
+        PerfilUsuario::where('usuario_id', $user->id)->update(['ativo' => false]);
+        PerfilUsuario::where('id', $perfilUsuarioId)->update(['ativo' => true]);
 
         $this->audit->log(
             'contexto.troca',
             $user->id,
             [
-                'perfil_anterior_id'   => $perfilAnteriorId,
-                'perfil_anterior_nome' => $perfilAnteriorNome,
+                'perfil_anterior_id'   => $perfilAnterior?->pivot->id,
+                'perfil_anterior_nome' => $perfilAnterior?->nome,
                 'novo_perfil_id'       => $perfilUsuarioId,
                 'novo_perfil_nome'     => $novoPerfilPivot->nome,
-                'nova_esfera'          => $novoPerfilPivot->esfera,
-                'nova_uf'              => $novoPerfilPivot->pivot->uf,
-                'novo_municipio'       => $novoPerfilPivot->pivot->municipio,
-                'novo_orgao'           => $novoPerfilPivot->pivot->orgao,
             ],
             AuditLog::TIPO_UPDATE,
             'perfil_usuario',

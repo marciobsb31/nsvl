@@ -14,20 +14,15 @@ use OpenApi\Attributes as OA;
  *     @OA\Property(property="id", type="integer"),
  *     @OA\Property(property="name", type="string"),
  *     @OA\Property(property="email", type="string", nullable=true),
- *     @OA\Property(property="role", type="string", example="user"),
  *     @OA\Property(property="sub", type="string", description="Identificador GOV.BR")
  * )
  */
 class UserController extends Controller
 {
-    // -------------------------------------------------------
-    // GET /api/user
-    // -------------------------------------------------------
-
     #[OA\Get(
         path: '/api/user',
         summary: 'Retorna os dados do usuário autenticado',
-        description: 'Campos sensíveis (CPF hash) são omitidos da resposta.',
+        description: 'Campos sensíveis são omitidos da resposta.',
         tags: ['Usuário'],
         security: [['BearerAuth' => []]],
         responses: [

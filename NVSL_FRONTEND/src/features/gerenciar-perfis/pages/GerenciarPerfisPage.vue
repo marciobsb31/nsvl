@@ -1,51 +1,54 @@
 <template>
   <DefaultLayout>
     <section class="gerenciar-perfis" :class="{ 'painel-aberto': painelAberto }">
-      <header class="pagina-hero">
-        <div class="pagina-hero__topo">
-          <h1 class="pagina-hero__title">Gerenciar Perfis</h1>
-          <button class="br-button primary pagina-hero__btn" type="button" @click="abrirCadastrar" aria-label="Novo perfil">
-            <i class="fas fa-plus-circle pagina-hero__btn-icone" aria-hidden="true"></i>
-            <span>Novo Perfil</span>
+      <header class="titulo-pagina">
+        <div class="titulo-pagina__topo">
+          <div>
+            <h1 id="titulo-gerenciar-perfis" class="titulo-pagina__h1">Gerenciar Perfis</h1>
+            <p class="titulo-pagina__subtitulo">
+              Consulte, cadastre e edite os perfis de acesso do sistema NVSL.
+            </p>
+          </div>
+          <button
+            class="br-button primary small"
+            type="button"
+            @click="abrirCadastrar"
+            aria-label="Novo perfil"
+          >
+            <span class="titulo-pagina__btn-conteudo">
+              <i class="fas fa-plus-circle" aria-hidden="true"></i>
+              <span>Novo Perfil</span>
+            </span>
           </button>
         </div>
-        <p class="pagina-hero__lead">
-          Consulte, cadastre e edite os perfis de acesso do sistema NVSL.
-        </p>
       </header>
 
       <Card custom-class="gerenciar-perfis__card mb-4">
-        <div v-if="carregando" class="estado-vazio" role="status" aria-live="polite">
+        <div v-if="carregando" class="br-loading p-4" role="status" aria-live="polite">
           <div class="loading-spinner" aria-hidden="true"></div>
-          <p>Carregando perfis...</p>
+          <p class="mt-2">Carregando perfis...</p>
         </div>
 
-        <div v-else-if="perfisOrdenados.length === 0" class="estado-vazio">
-          <i class="fas fa-users-cog fa-2x" aria-hidden="true"></i>
-          <p>Nenhum perfil encontrado.</p>
+        <div v-else-if="perfisOrdenados.length === 0" class="p-4 text-center text-muted">
+          <i class="fas fa-users-cog fa-3x mb-3" aria-hidden="true"></i>
+          <p class="mb-0">Nenhum perfil encontrado.</p>
         </div>
 
         <div v-else class="table-responsive">
           <table class="br-table tabela-perfis" role="table">
             <thead>
               <tr>
-                <th scope="col" :aria-sort="obterAriaSort('nome')">
+                <th scope="col" class="th-bold" :aria-sort="obterAriaSort('nome')">
                   <button class="th-sort-btn" type="button" @click="ordenarPor('nome')">
                     Nome do Perfil <span class="th-sort-icon">{{ obterIconeSort('nome') }}</span>
                   </button>
                 </th>
-                <th scope="col" :aria-sort="obterAriaSort('esfera')">
-                  <button class="th-sort-btn" type="button" @click="ordenarPor('esfera')">
-                    Tipo de Perfil <span class="th-sort-icon">{{ obterIconeSort('esfera') }}</span>
-                  </button>
-                </th>
-                <th scope="col" :aria-sort="obterAriaSort('status')">
+                <th scope="col" class="th-bold" :aria-sort="obterAriaSort('status')">
                   <button class="th-sort-btn" type="button" @click="ordenarPor('status')">
-                    <i class="fas fa-certificate th-sort-btn__icone" aria-hidden="true"></i>
                     Vigência <span class="th-sort-icon">{{ obterIconeSort('status') }}</span>
                   </button>
                 </th>
-                <th scope="col" class="th-acoes">Ações</th>
+                <th scope="col" class="th-bold th-acoes">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -56,36 +59,38 @@
               >
                 <td class="td-nome">{{ p.nome }}</td>
                 <td>
-                  <span class="tag-hierarquia" :class="'tag-hierarquia--' + p.esfera">
-                    <i :class="iconeHierarquia(p.esfera)" aria-hidden="true"></i>
-                    {{ labelTipoPerfil(p.esfera) }}
-                  </span>
-                </td>
-                <td>
-                  <span class="tag-situacao" :class="classeSituacao(p.status)">
-                    <i :class="iconeSituacao(p.status)" aria-hidden="true"></i>
+                  <span class="br-tag" :class="classeSituacao(p.status)">
                     {{ labelSituacao(p.status) }}
                   </span>
                 </td>
                 <td class="td-acoes">
-                  <button class="btn-acao btn-acao--visualizar" type="button" @click="abrirVisualizar(p)" title="Visualizar perfil">
-                    <i class="fas fa-eye btn-acao__icone" aria-hidden="true"></i>
-                    <span>Visualizar</span>
-                  </button>
-                  <button
-                    v-if="podeEditar(p)"
-                    class="btn-acao btn-acao--editar"
-                    type="button"
-                    @click="abrirEditar(p)"
-                    title="Editar perfil"
-                  >
-                    <i class="fas fa-pen btn-acao__icone" aria-hidden="true"></i>
-                    <span>Editar</span>
-                  </button>
-                  <button class="btn-acao btn-acao--historico" type="button" @click="abrirHistorico(p)" title="Histórico do perfil">
-                    <i class="fas fa-history btn-acao__icone" aria-hidden="true"></i>
-                    <span>Histórico</span>
-                  </button>
+                  <div class="tabela-perfis__acoes">
+                    <button
+                      class="br-button secondary small btn-acao btn-acao--visualizar"
+                      type="button"
+                      @click="abrirVisualizar(p)"
+                      title="Visualizar perfil"
+                    >
+                      Visualizar
+                    </button>
+                    <button
+                      v-if="podeEditar(p)"
+                      class="br-button secondary small btn-acao btn-acao--editar"
+                      type="button"
+                      @click="abrirEditar(p)"
+                      title="Editar perfil"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      class="br-button secondary small btn-acao btn-acao--historico"
+                      type="button"
+                      @click="abrirHistorico(p)"
+                      title="Histórico do perfil"
+                    >
+                      Histórico
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -182,7 +187,6 @@ const confirmarSairVisivel = ref(false)
 
 const esferasPermitidas = ref<string[]>(['federal', 'estadual', 'municipal'])
 
-const HIERARQUIA_ORDEM: Record<string, number> = { federal: 0, estadual: 1, municipal: 2 }
 
 const ariaPainel = computed(() => {
   const map: Record<ModoPainel, string> = {
@@ -197,12 +201,7 @@ const ariaPainel = computed(() => {
 const perfisOrdenados = computed(() => {
   const lista = [...perfis.value]
   if (!sortColuna.value) {
-    lista.sort((a, b) => {
-      const ha = HIERARQUIA_ORDEM[a.esfera] ?? 99
-      const hb = HIERARQUIA_ORDEM[b.esfera] ?? 99
-      if (ha !== hb) return ha - hb
-      return (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR')
-    })
+    lista.sort((a, b) => (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR'))
     return lista
   }
   const col = sortColuna.value
@@ -211,11 +210,6 @@ const perfisOrdenados = computed(() => {
     let cmp: number
     if (col === 'nome') {
       cmp = (a.nome ?? '').toLowerCase().localeCompare((b.nome ?? '').toLowerCase(), 'pt-BR')
-    } else if (col === 'esfera') {
-      const ha = HIERARQUIA_ORDEM[a.esfera] ?? 99
-      const hb = HIERARQUIA_ORDEM[b.esfera] ?? 99
-      cmp = ha - hb
-      if (cmp === 0) cmp = (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR')
     } else if (col === 'status') {
       cmp = labelSituacao(a.status).localeCompare(labelSituacao(b.status), 'pt-BR')
     } else {
@@ -232,12 +226,12 @@ const perfisPaginados = computed(() => {
   return perfisOrdenados.value.slice(inicio, fim)
 })
 
-function podeEditar(perfil: PerfilGerenciar): boolean {
-  const esferaUsuario = authStore.user?.esfera_atuacao ?? 'federal'
+function podeEditar(_perfil: PerfilGerenciar): boolean {
+  const esferaUsuario = (authStore.user?.esfera_atuacao ?? 'federal').toLowerCase()
   if (esferaUsuario === 'municipal') {
     return false
   }
-  return esferasPermitidas.value.includes(perfil.esfera)
+  return esferaUsuario === 'federal' || esferasPermitidas.value.length > 0
 }
 
 function ordenarPor(coluna: string) {
@@ -338,30 +332,13 @@ function onDirtyChange(dirty: boolean) {
   formularioDirty.value = dirty
 }
 
-function labelTipoPerfil(esfera: string): string {
-  const map: Record<string, string> = { federal: 'Nacional', estadual: 'Estadual', municipal: 'Municipal' }
-  return map[esfera] ?? esfera
-}
-
-function iconeHierarquia(esfera: string): string {
-  const map: Record<string, string> = {
-    federal: 'fas fa-globe-americas',
-    estadual: 'fas fa-map-marked-alt',
-    municipal: 'fas fa-map-pin',
-  }
-  return map[esfera] ?? 'fas fa-circle'
-}
-
 function labelSituacao(status: string): string {
   return status === 'ativo' ? 'Vigente' : 'Não vigente'
 }
 
-function iconeSituacao(status: string): string {
-  return status === 'ativo' ? 'fas fa-check-circle' : 'fas fa-ban'
-}
-
+/** Modificadores do componente br-tag (GOVBR DS) */
 function classeSituacao(status: string): string {
-  return status === 'ativo' ? 'tag--vigente' : 'tag--nao-vigente'
+  return status === 'ativo' ? 'success' : 'warning'
 }
 
 onMounted(() => carregarPerfis())
@@ -392,7 +369,7 @@ onMounted(() => carregarPerfis())
   }
 }
 
-/* Card: menos “caixa” pesada (DS gov.br — superfície neutra) */
+/* Card — superfície neutra (GOVBR DS) */
 .gerenciar-perfis :deep(.gerenciar-perfis__card) {
   border: 1px solid var(--color-secondary-03, #e8e8e8) !important;
   box-shadow: none !important;
@@ -401,14 +378,12 @@ onMounted(() => carregarPerfis())
   background: var(--background, #fff);
 }
 
-/* ── Hero (padrão conteúdo gov.br) ── */
-.pagina-hero {
-  margin-bottom: 1.75rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--color-secondary-03, #e8e8e8);
+/* ── Título da página (alinhado a Gerenciar solicitações) ── */
+.titulo-pagina {
+  margin-bottom: 1.5rem;
 }
 
-.pagina-hero__topo {
+.titulo-pagina__topo {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -416,57 +391,47 @@ onMounted(() => carregarPerfis())
   flex-wrap: wrap;
 }
 
-.pagina-hero__title {
-  margin: 0 0 0.5rem;
-  font-size: 1.375rem;
+.titulo-pagina__h1 {
+  font-size: 1.75rem;
   font-weight: 700;
-  line-height: 1.3;
-  color: var(--color-primary-darken-02, #0c326f);
-  letter-spacing: -0.015em;
-}
-
-@media (min-width: 768px) {
-  .pagina-hero__title {
-    font-size: 1.5rem;
-  }
-}
-
-.pagina-hero__lead {
+  color: var(--color-primary-default, #1351b4);
   margin: 0;
-  max-width: 48rem;
-  font-size: 0.9375rem;
-  line-height: 1.6;
-  color: var(--color-secondary-07, #555);
 }
 
-.pagina-hero__btn {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.pagina-hero__btn-icone {
+.titulo-pagina__subtitulo {
   font-size: 1rem;
-}
-
-/* ── Estado vazio / carregando ── */
-.estado-vazio {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 3rem 1.5rem;
-  color: var(--color-secondary-06, #888);
-}
-
-.estado-vazio p {
-  margin: 0;
-  font-size: 0.875rem;
+  color: var(--color-secondary-07, #555);
+  margin: 0.5rem 0 0;
+  max-width: 48rem;
   line-height: 1.5;
 }
 
-/* ── Tabela (padrão limpo — DS) ── */
+.titulo-pagina__btn-conteudo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.text-muted {
+  color: var(--color-secondary-07, #555);
+}
+
+@media (max-width: 575px) {
+  .titulo-pagina__h1 {
+    font-size: 1.25rem;
+  }
+
+  .titulo-pagina__subtitulo {
+    font-size: 0.875rem;
+  }
+
+  .titulo-pagina__topo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ── Tabela br-table (Design System eGov) ── */
 .table-responsive {
   margin: 0 -0.25rem;
 }
@@ -477,41 +442,18 @@ onMounted(() => carregarPerfis())
   }
 }
 
-.tabela-perfis {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.tabela-perfis thead th {
-  background: var(--color-secondary-01, #f8f8f8);
-  font-weight: 600;
-  font-size: 0.8125rem;
-  padding: 0.875rem 1rem;
-  border-bottom: 1px solid var(--color-secondary-04, #ccc);
-  text-align: left;
-  color: var(--color-secondary-09, #333);
-  vertical-align: bottom;
-}
-
-.tabela-perfis tbody tr {
-  transition: background-color 0.15s ease;
-}
-
-.tabela-perfis tbody tr:hover {
-  background: var(--color-secondary-01, #f8f8f8);
-}
-
-.tabela-perfis tbody td {
-  padding: 0.875rem 1rem;
-  border-bottom: 1px solid var(--color-secondary-03, #e8e8e8);
-  font-size: 0.875rem;
-  vertical-align: middle;
-  color: var(--color-secondary-09, #333);
+.tabela-perfis th.th-bold {
+  font-weight: 700;
 }
 
 .td-nome {
   font-weight: 600;
-  color: var(--color-secondary-09, #333);
+}
+
+.tabela-perfis td:nth-child(2) .br-tag {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .th-acoes {
@@ -521,163 +463,57 @@ onMounted(() => carregarPerfis())
 }
 
 .td-acoes {
-  white-space: nowrap;
   text-align: right;
   vertical-align: middle;
 }
 
-/* Linha ativa: destaque lateral (menos “tinta” que fundo inteiro) */
+.tabela-perfis__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .tr-ativo {
   background: var(--color-primary-pastel-01, #e8f0ff) !important;
   box-shadow: inset 3px 0 0 var(--color-primary-default, #1351b4);
 }
 
-/* ── Ordenação (botões no cabeçalho) ── */
-.th-sort-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border: none;
-  background: transparent;
-  padding: 0;
-  margin: 0;
-  color: inherit;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+  border: 3px solid var(--color-secondary-03, #eee);
+  border-top-color: var(--color-primary-default, #1351b4);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-.th-sort-btn__icone {
-  font-size: 0.6875rem;
-  color: var(--color-primary-default, #1351b4);
-  opacity: 0.85;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.th-sort-btn:focus-visible {
-  outline: 2px solid var(--color-support-05, #ffcd07);
-  outline-offset: 2px;
-  border-radius: 2px;
+.mt-2 {
+  margin-top: 0.5rem;
 }
 
-.th-sort-icon {
-  font-size: 0.6875rem;
-  color: var(--color-secondary-06, #666);
-  font-weight: 400;
+.mb-3 {
+  margin-bottom: 1rem;
 }
 
-/* ── Ações: estilo contorno (ghost) — hierarquia visual clara ── */
-.btn-acao {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.75rem;
-  margin: 0.125rem 0 0.125rem 0.35rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  font-family: inherit;
-  line-height: 1.2;
-  border: 1px solid var(--color-secondary-04, #ccc);
-  border-radius: 6px;
-  cursor: pointer;
-  background: var(--background, #fff);
-  color: var(--color-secondary-09, #333);
-  transition:
-    border-color 0.15s ease,
-    color 0.15s ease,
-    background-color 0.15s ease;
+.mb-0 {
+  margin-bottom: 0;
 }
 
-.btn-acao__icone {
-  font-size: 0.75rem;
-  flex-shrink: 0;
-  opacity: 0.9;
+.p-4 {
+  padding: 1rem;
 }
 
-.btn-acao:hover:not(:disabled) {
-  border-color: var(--color-primary-default, #1351b4);
-  color: var(--color-primary-default, #1351b4);
-  background: var(--color-primary-pastel-01, #e8f0ff);
-}
-
-.btn-acao:focus-visible {
-  outline: 2px solid var(--color-support-05, #ffcd07);
-  outline-offset: 2px;
-}
-
-.btn-acao--visualizar .btn-acao__icone {
-  color: var(--color-primary-default, #1351b4);
-}
-
-.btn-acao--editar .btn-acao__icone {
-  color: var(--color-warning-darken-01, #c26100);
-}
-
-.btn-acao--historico .btn-acao__icone {
-  color: var(--color-success-darken-01, #168821);
-}
-
-/* ── Tags tipo / vigência: neutras + borda suave (menos saturadas) ── */
-.tag-hierarquia {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  background: var(--background, #fff);
-}
-
-.tag-hierarquia i {
-  font-size: 0.6875rem;
-  opacity: 0.9;
-}
-
-.tag-hierarquia--federal {
-  border-color: #90caf9;
-  color: var(--color-primary-darken-02, #0c326f);
-  background: var(--color-primary-pastel-01, #e8f0ff);
-}
-
-.tag-hierarquia--estadual {
-  border-color: #ffcc80;
-  color: #b34c00;
-  background: #fff8f0;
-}
-
-.tag-hierarquia--municipal {
-  border-color: #ce93d8;
-  color: #4a148c;
-  background: #faf5fc;
-}
-
-.tag-situacao {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid transparent;
-}
-
-.tag-situacao i {
-  font-size: 0.75rem;
-}
-
-.tag--vigente {
-  border-color: #a5d6a7;
-  color: #1b5e20;
-  background: #f1f8f2;
-}
-
-.tag--nao-vigente {
-  border-color: #ffcdd2;
-  color: #b71c1c;
-  background: #fff8f7;
+.text-center {
+  text-align: center;
 }
 
 /* ── Overlay + Painel ── */
@@ -769,18 +605,4 @@ onMounted(() => carregarPerfis())
 .painel-slide-enter-from, .painel-slide-leave-to { transform: translateX(100%); }
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
-
-/* ── Shared ── */
-.loading-spinner {
-  width: 32px; height: 32px;
-  border: 3px solid var(--color-secondary-03, #eee);
-  border-top-color: var(--color-primary-default, #1351b4);
-  border-radius: 50%; animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-@media (max-width: 575px) {
-  .pagina-hero__title { font-size: 1.25rem; }
-  .pagina-hero__topo { flex-direction: column; align-items: flex-start; }
-}
 </style>

@@ -29,17 +29,17 @@ class HistoricoPerfilTest extends TestCase
 
         AuditLog::create([
             'user_id'        => $user->id,
-            'action'         => 'gerenciar_perfis.cadastrar',
+            'acao'           => 'gerenciar_perfis.cadastrar',
             'tipo_operacao'  => AuditLog::TIPO_INSERT,
             'tabela_afetada' => 'perfis',
             'registro_id'    => $perfil->id,
-            'context'        => ['perfil_nome' => $perfil->nome],
+            'contexto'       => ['perfil_nome' => $perfil->nome],
         ]);
 
         $this->autenticar($user)
             ->getJson("/api/gerenciar-perfis/{$perfil->id}/historico")
             ->assertOk()
-            ->assertJsonStructure(['data' => [['id', 'data_hora', 'usuario', 'atualizacao', 'action']]]);
+            ->assertJsonStructure(['data' => [['id', 'data_hora', 'usuario', 'atualizacao', 'acao']]]);
     }
 
     #[Test]
@@ -60,11 +60,11 @@ class HistoricoPerfilTest extends TestCase
         $perfil2 = Perfil::factory()->create();
 
         AuditLog::create([
-            'user_id' => $user->id, 'action' => 'gerenciar_perfis.cadastrar',
+            'user_id' => $user->id, 'acao' => 'gerenciar_perfis.cadastrar',
             'tipo_operacao' => 'insert', 'tabela_afetada' => 'perfis', 'registro_id' => $perfil1->id,
         ]);
         AuditLog::create([
-            'user_id' => $user->id, 'action' => 'gerenciar_perfis.cadastrar',
+            'user_id' => $user->id, 'acao' => 'gerenciar_perfis.cadastrar',
             'tipo_operacao' => 'insert', 'tabela_afetada' => 'perfis', 'registro_id' => $perfil2->id,
         ]);
 

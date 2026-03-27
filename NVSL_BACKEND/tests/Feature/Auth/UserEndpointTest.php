@@ -25,8 +25,7 @@ class UserEndpointTest extends TestCase
         $this->autenticar($user)
             ->getJson('/api/user')
             ->assertOk()
-            ->assertJsonStructure(['id', 'name', 'email', 'role', 'esfera_atuacao', 'perfis_vigentes', 'permissoes'])
-            ->assertJsonMissing(['cpf_hash']);
+            ->assertJsonStructure(['id', 'name', 'email', 'esfera_atuacao', 'perfis_vigentes']);
     }
 
     #[Test]
@@ -36,7 +35,8 @@ class UserEndpointTest extends TestCase
 
         $this->autenticar($user)
             ->getJson('/api/user')
-            ->assertJsonPath('esfera_atuacao', 'federal');
+            ->assertOk()
+            ->assertJsonFragment(['esfera_atuacao' => $user->esfera_atuacao]);
     }
 
     #[Test]

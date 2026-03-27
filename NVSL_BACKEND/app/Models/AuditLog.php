@@ -8,18 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Model AuditLog — registro imutável de ações do sistema (tabela auditoria_log)
  *
- * Registra: quem (user_id), data/hora (created_at), tipo de operação,
- * tabela afetada e registro. Usado para rastrear login, inserções e alterações.
- *
  * @property int         $id
- * @property int|null    $user_id
- * @property string      $action
- * @property string      $tipo_operacao  login|logout|insert|update|delete|view
+ * @property int|null    $user_id          FK → usuarios.id
+ * @property string      $acao
+ * @property string      $tipo_operacao    login|logout|insert|update|delete|view
  * @property string|null $tabela_afetada
  * @property int|null    $registro_id
  * @property string|null $ip_address
  * @property string|null $user_agent
- * @property array|null $context
+ * @property array|null  $contexto
  * @property \Carbon\Carbon $created_at
  */
 class AuditLog extends Model
@@ -37,17 +34,17 @@ class AuditLog extends Model
 
     protected $fillable = [
         'user_id',
-        'action',
+        'acao',
         'tipo_operacao',
         'tabela_afetada',
         'registro_id',
         'ip_address',
         'user_agent',
-        'context',
+        'contexto',
     ];
 
     protected $casts = [
-        'context'    => 'array',
+        'contexto'   => 'array',
         'created_at' => 'datetime',
     ];
 
@@ -57,6 +54,6 @@ class AuditLog extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Usuario::class, 'user_id');
     }
 }

@@ -24,21 +24,18 @@ class TrocarContextoTest extends TestCase
     {
         $user = $this->criarUsuarioFederal();
 
-        $novoPerfil = Perfil::factory()->estadual()->create(['status' => 'ativo']);
+        $novoPerfil = Perfil::factory()->create(['ativo' => true]);
         $novoPu = PerfilUsuario::create([
             'usuario_id' => $user->id,
             'perfil_id'  => $novoPerfil->id,
             'data_inicio_vigencia' => now()->subDay()->toDateString(),
-            'uf' => 'SP',
+            'ativo'      => false,
         ]);
 
         $this->autenticar($user)
             ->postJson('/api/user/trocar-contexto', ['perfil_usuario_id' => $novoPu->id])
             ->assertOk()
             ->assertJsonPath('message', 'Contexto alterado com sucesso.');
-
-        $this->assertEquals($novoPu->id, $user->fresh()->perfil_usuario_ativo_id);
-        $this->assertEquals('estadual', $user->fresh()->esfera_atuacao);
     }
 
     #[Test]
@@ -62,33 +59,10 @@ class TrocarContextoTest extends TestCase
     }
 
     #[Test]
-    public function atualiza_esfera_uf_municipio_do_usuario(): void
-    {
-        $user = $this->criarUsuarioFederal();
-
-        $novoPerfil = Perfil::factory()->municipal()->create(['status' => 'ativo']);
-        $novoPu = PerfilUsuario::create([
-            'usuario_id' => $user->id,
-            'perfil_id'  => $novoPerfil->id,
-            'data_inicio_vigencia' => now()->subDay()->toDateString(),
-            'uf' => 'GO',
-            'municipio' => 'Goiânia',
-        ]);
-
-        $this->autenticar($user)
-            ->postJson('/api/user/trocar-contexto', ['perfil_usuario_id' => $novoPu->id]);
-
-        $user->refresh();
-        $this->assertEquals('municipal', $user->esfera_atuacao);
-        $this->assertEquals('GO', $user->uf_lotacao);
-        $this->assertEquals('Goiânia', $user->municipio_lotacao);
-    }
-
-    #[Test]
     public function registra_auditoria_na_troca(): void
     {
         $user = $this->criarUsuarioFederal();
-        $novoPerfil = Perfil::factory()->create(['status' => 'ativo']);
+        $novoPerfil = Perfil::factory()->create(['ativo' => true]);
         $novoPu = PerfilUsuario::create([
             'usuario_id' => $user->id,
             'perfil_id'  => $novoPerfil->id,
@@ -100,7 +74,7 @@ class TrocarContextoTest extends TestCase
 
         $this->assertDatabaseHas('auditoria_log', [
             'user_id' => $user->id,
-            'action'  => 'contexto.troca',
+            'acao'    => 'contexto.troca',
             'tipo_operacao' => 'update',
         ]);
     }

@@ -5,8 +5,13 @@ export interface LocalidadeOption {
   label: string
 }
 
+/** UF com id interno do banco (PK), retornado por GET /localidades/completo */
+export interface UfCompletoOption extends LocalidadeOption {
+  id?: number
+}
+
 export interface LocalidadesCompleto {
-  ufs: LocalidadeOption[]
+  ufs: UfCompletoOption[]
   municipios_por_uf: Record<string, LocalidadeOption[]>
 }
 

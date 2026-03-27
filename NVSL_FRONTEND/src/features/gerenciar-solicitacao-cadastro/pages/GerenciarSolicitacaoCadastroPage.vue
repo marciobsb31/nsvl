@@ -508,16 +508,17 @@ const esferaMap: Record<string, string> = {
 
 const contextoAtualLabel = computed(() => {
   const perfil = perfilAtivo.value
+  const esfera = user.value?.esfera_atuacao
+  const uf = user.value?.uf_lotacao
+  const municipio = user.value?.municipio_lotacao
   if (!perfil) {
-    const esfera = user.value?.esfera_atuacao
     return esfera ? esferaMap[esfera] ?? esfera : ''
   }
   const partes: string[] = []
   if (perfil.nome) partes.push(perfil.nome)
-  if (perfil.esfera) partes.push(esferaMap[perfil.esfera] ?? perfil.esfera)
-  if (perfil.uf) partes.push(perfil.uf)
-  if (perfil.municipio) partes.push(perfil.municipio)
-  if (perfil.orgao) partes.push(perfil.orgao)
+  if (esfera) partes.push(esferaMap[esfera] ?? esfera)
+  if (uf) partes.push(uf)
+  if (municipio) partes.push(municipio)
   return partes.join(' — ')
 })
 

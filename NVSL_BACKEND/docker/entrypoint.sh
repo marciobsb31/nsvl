@@ -61,10 +61,13 @@ php artisan route:cache
 echo "[entrypoint] Executando migrations..."
 php artisan migrate --force
 
-# Seeders essenciais (perfis, esferas)
+# UFs e municípios (API IBGE — requer rede na primeira subida)
+echo "[entrypoint] Importando UFs e municípios (IBGE)..."
+php artisan localidades:importar-ibge || echo "[entrypoint] Aviso: importação IBGE falhou (rede?). Execute: php artisan localidades:importar-ibge"
+
+# UsuarioExemploSeeder: perfis, esferas, status_solicitacao e usuários teste-* (POST /api/auth/token-de-teste)
 echo "[entrypoint] Executando seeders..."
-php artisan db:seed --class=PerfilSeeder --force || true
-php artisan db:seed --class=EsferaSeeder --force || true
+php artisan db:seed --class=UsuarioExemploSeeder --force || true
 
 # Gera documentaÃ§Ã£o Swagger
 echo "[entrypoint] Gerando documentaÃ§Ã£o Swagger..."

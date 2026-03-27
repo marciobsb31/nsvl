@@ -9,20 +9,6 @@ use Illuminate\Support\Facades\Auth;
 
 class PerfilController extends Controller
 {
-    private const PERFIS_CADASTRO = [
-        'Administrador Nacional',
-        'Administrador Estadual',
-        'Administrador Municipal',
-        'Gestor Nacional',
-        'Gestor Estadual',
-        'Gestor Municipal',
-    ];
-
-    /**
-     * GET /api/perfis
-     *
-     * Lista perfis disponíveis para vinculação.
-     */
     public function index(): JsonResponse
     {
         $user = Auth::user();
@@ -31,13 +17,10 @@ class PerfilController extends Controller
         }
 
         $perfis = Perfil::query()
-            ->whereIn('nome', self::PERFIS_CADASTRO)
-            ->where('status', 'ativo')
+            ->whereIn('nome', Perfil::CATALOGO_OFICIAL)
+            ->where('ativo', true)
             ->get(['id', 'nome', 'descricao'])
-            ->sortBy(function (Perfil $perfil): int {
-                $idx = array_search($perfil->nome, self::PERFIS_CADASTRO, true);
-                return $idx === false ? PHP_INT_MAX : $idx;
-            })
+            ->sortBy(fn (Perfil $perfil): int => Perfil::indiceNoCatalogo($perfil->nome))
             ->values();
 
         return response()->json([

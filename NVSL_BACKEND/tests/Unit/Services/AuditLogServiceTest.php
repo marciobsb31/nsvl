@@ -20,7 +20,7 @@ class AuditLogServiceTest extends TestCase
         $service->log('test.action', null, ['key' => 'value']);
 
         $this->assertDatabaseHas('auditoria_log', [
-            'action'        => 'test.action',
+            'acao'          => 'test.action',
             'tipo_operacao' => 'view',
         ]);
     }
@@ -42,7 +42,7 @@ class AuditLogServiceTest extends TestCase
 
         $this->assertDatabaseHas('auditoria_log', [
             'user_id'        => $user->id,
-            'action'         => 'gerenciar_perfis.cadastrar',
+            'acao'           => 'gerenciar_perfis.cadastrar',
             'tipo_operacao'  => 'insert',
             'tabela_afetada' => 'perfis',
             'registro_id'    => 42,
@@ -58,9 +58,9 @@ class AuditLogServiceTest extends TestCase
         $service->log('test', null, ['cpf' => '12345678901', 'nome' => 'João', 'senha' => 'abc']);
 
         $log = AuditLog::latest('id')->first();
-        $this->assertEquals('***', $log->context['cpf']);
-        $this->assertEquals('***', $log->context['senha']);
-        $this->assertEquals('João', $log->context['nome']);
+        $this->assertEquals('***', $log->contexto['cpf']);
+        $this->assertEquals('***', $log->contexto['senha']);
+        $this->assertEquals('João', $log->contexto['nome']);
     }
 
     #[Test]

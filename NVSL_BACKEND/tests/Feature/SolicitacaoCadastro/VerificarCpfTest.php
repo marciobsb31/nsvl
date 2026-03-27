@@ -3,7 +3,8 @@
 namespace Tests\Feature\SolicitacaoCadastro;
 
 use App\Models\SolicitacaoCadastro;
-use App\Models\User;
+use App\Models\StatusSolicitacao;
+use App\Models\Usuario;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -27,7 +28,7 @@ class VerificarCpfTest extends TestCase
     public function cpf_com_usuario_existente_retorna_indisponivel(): void
     {
         $cpf = '52998224725';
-        User::factory()->create(['cpf_hash' => User::hashCpf($cpf)]);
+        Usuario::factory()->create(['cpf' => $cpf]);
 
         $this->getJson("/api/solicitacoes-cadastro/verificar-cpf?cpf={$cpf}")
             ->assertOk()
@@ -38,9 +39,12 @@ class VerificarCpfTest extends TestCase
     public function cpf_com_solicitacao_em_analise_retorna_indisponivel(): void
     {
         $cpf = '52998224725';
+        $usuario = Usuario::factory()->create(['cpf' => $cpf]);
+        $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
+
         SolicitacaoCadastro::factory()->create([
-            'cpf_hash' => User::hashCpf($cpf),
-            'status'   => 'em_analise',
+            'user_id'   => $usuario->id,
+            'status_id' => $statusEmAnalise,
         ]);
 
         $this->getJson("/api/solicitacoes-cadastro/verificar-cpf?cpf={$cpf}")

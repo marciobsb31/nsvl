@@ -30,7 +30,7 @@ class VisualizarPerfilTest extends TestCase
             ->getJson("/api/gerenciar-perfis/{$perfil->id}")
             ->assertOk()
             ->assertJsonPath('data.nome', 'Perfil Detalhe')
-            ->assertJsonStructure(['data' => ['id', 'nome', 'esfera', 'status', 'permissoes']]);
+            ->assertJsonStructure(['data' => ['id', 'nome', 'ativo']]);
     }
 
     #[Test]
@@ -44,11 +44,9 @@ class VisualizarPerfilTest extends TestCase
     }
 
     #[Test]
-    public function usuario_estadual_com_permissao_visualiza(): void
+    public function usuario_estadual_visualiza(): void
     {
-        $user = $this->criarUsuarioEstadual([
-            ['modulo' => 'Gerenciar Perfis', 'acao' => 'Visualizar'],
-        ]);
+        $user = $this->criarUsuarioEstadual();
         $perfil = Perfil::factory()->create();
 
         $this->autenticar($user)

@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\SolicitacaoCadastro;
+use App\Models\StatusSolicitacao;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AvaliarSolicitacaoRequest extends FormRequest
@@ -18,13 +18,13 @@ class AvaliarSolicitacaoRequest extends FormRequest
             'status' => ['required', 'in:aprovado,reprovado'],
         ];
 
-        if ($this->input('status') === SolicitacaoCadastro::STATUS_APROVADO) {
+        if ($this->input('status') === StatusSolicitacao::APROVADO) {
             $rules['perfil_id']       = ['required', 'integer', 'exists:perfis,id'];
             $rules['vigencia_inicio'] = ['nullable', 'date'];
             $rules['vigencia_fim']    = ['nullable', 'date', 'after_or_equal:vigencia_inicio'];
         }
 
-        if ($this->input('status') === SolicitacaoCadastro::STATUS_REPROVADO) {
+        if ($this->input('status') === StatusSolicitacao::REPROVADO) {
             $rules['justificativa'] = ['required', 'string', 'min:10', 'max:1000'];
         }
 

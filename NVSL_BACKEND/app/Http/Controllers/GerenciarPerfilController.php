@@ -6,8 +6,7 @@ use App\Exceptions\ApiException;
 use App\Http\Requests\CadastrarPerfilRequest;
 use App\Models\AuditLog;
 use App\Models\Perfil;
-use App\Models\PerfilUsuario;
-use App\Models\Permissao;
+use App\Models\Usuario;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,21 +26,20 @@ class GerenciarPerfilController extends Controller
         if (!$user) {
             throw ApiException::unauthenticated();
         }
-        $this->verificarPermissaoGerenciar($user);
 
-        $query = Perfil::with('permissoes');
+        $query = Perfil::query()->whereIn('nome', Perfil::CATALOGO_OFICIAL);
 
         if ($request->filled('nome')) {
             $query->where('nome', 'ilike', '%' . $request->input('nome') . '%');
         }
-        if ($request->filled('esfera')) {
-            $query->where('esfera', $request->input('esfera'));
-        }
         if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+            $ativo = $request->input('status') === 'ativo';
+            $query->where('ativo', $ativo);
         }
 
-        $perfis = $query->orderBy('nome')->get();
+        $perfis = $query->get()
+            ->sortBy(fn (Perfil $p) => Perfil::indiceNoCatalogo($p->nome))
+            ->values();
 
         $this->audit->log(
             'gerenciar_perfis.listagem',
@@ -62,9 +60,8 @@ class GerenciarPerfilController extends Controller
         if (!$user) {
             throw ApiException::unauthenticated();
         }
-        $this->verificarPermissaoGerenciar($user);
 
-        $perfil = Perfil::with('permissoes')->find($id);
+        $perfil = Perfil::find($id);
         if (!$perfil) {
             throw ApiException::notFound('Perfil não encontrado.');
         }
@@ -78,31 +75,20 @@ class GerenciarPerfilController extends Controller
         if (!$user) {
             throw ApiException::unauthenticated();
         }
-        $this->verificarPermissaoCadastrar($user);
-        $this->validarHierarquiaEsfera($user, $request->input('esfera'));
-        $this->validarPermissoesHierarquia($user, $request->input('permissoes', []));
 
         $perfil = DB::transaction(function () use ($request, $user) {
             $perfil = Perfil::create([
                 'nome'      => $request->input('nome'),
                 'descricao' => $request->input('descricao'),
-                'esfera'    => $request->input('esfera'),
-                'status'    => $request->input('status', 'ativo'),
+                'ativo'     => $request->input('ativo', true),
             ]);
-
-            $permissoes = $request->input('permissoes', []);
-            if (!empty($permissoes)) {
-                $perfil->permissoes()->sync($permissoes);
-            }
 
             $this->audit->log(
                 'gerenciar_perfis.cadastrar',
                 $user->id,
                 [
                     'perfil_nome' => $perfil->nome,
-                    'esfera'      => $perfil->esfera,
-                    'status'      => $perfil->status,
-                    'permissoes'  => count($permissoes),
+                    'ativo'       => $perfil->ativo,
                 ],
                 AuditLog::TIPO_INSERT,
                 'perfis',
@@ -111,8 +97,6 @@ class GerenciarPerfilController extends Controller
 
             return $perfil;
         });
-
-        $perfil->load('permissoes');
 
         return response()->json([
             'message' => 'Perfil cadastrado com sucesso.',
@@ -126,47 +110,34 @@ class GerenciarPerfilController extends Controller
         if (!$user) {
             throw ApiException::unauthenticated();
         }
-        $perfil = Perfil::with('permissoes')->find($id);
+        $perfil = Perfil::find($id);
         if (!$perfil) {
             throw ApiException::notFound('Perfil não encontrado.');
         }
 
-        $this->validarPermissaoEditarPerfil($user, $perfil);
-
         $validated = $request->validate([
-            'nome'          => ['required', 'string', 'max:100', Rule::unique('perfis', 'nome')->ignore($perfil->id)],
-            'descricao'     => ['nullable', 'string', 'max:255'],
-            'esfera'        => ['required', Rule::in(['federal', 'estadual', 'municipal'])],
-            'status'        => ['required', Rule::in(['ativo', 'inativo'])],
-            'permissoes'    => ['nullable', 'array'],
-            'permissoes.*'  => ['integer', 'exists:permissoes,id'],
+            'nome'      => ['required', 'string', 'max:100', Rule::in(Perfil::CATALOGO_OFICIAL), Rule::unique('perfis', 'nome')->ignore($perfil->id)],
+            'descricao' => ['nullable', 'string', 'max:255'],
+            'ativo'     => ['required', 'boolean'],
         ], [
             'nome.required' => 'Preencha os campos obrigatórios.',
+            'nome.in'       => 'O nome deve ser um dos perfis oficiais do sistema.',
             'nome.unique'   => 'Já existe um perfil com este nome.',
         ]);
 
-        $this->validarHierarquiaEsfera($user, $validated['esfera']);
-        $this->validarPermissoesHierarquia($user, $validated['permissoes'] ?? []);
-
         $anterior = [
-            'nome'       => $perfil->nome,
-            'esfera'     => $perfil->esfera,
-            'status'     => $perfil->status,
-            'permissoes' => $perfil->permissoes->pluck('acao', 'modulo')->toArray(),
+            'nome'  => $perfil->nome,
+            'ativo' => $perfil->ativo,
         ];
 
         DB::transaction(function () use ($perfil, $validated, $user, $anterior) {
             $perfil->update([
                 'nome'      => $validated['nome'],
                 'descricao' => $validated['descricao'] ?? null,
-                'esfera'    => $validated['esfera'],
-                'status'    => $validated['status'],
+                'ativo'     => $validated['ativo'],
             ]);
 
-            $permissoes = $validated['permissoes'] ?? [];
-            $perfil->permissoes()->sync($permissoes);
-
-            $alteracoes = $this->descreverAlteracoes($anterior, $perfil, $permissoes);
+            $alteracoes = $this->descreverAlteracoes($anterior, $perfil);
 
             $this->audit->log(
                 'gerenciar_perfis.editar',
@@ -181,8 +152,6 @@ class GerenciarPerfilController extends Controller
             );
         });
 
-        $perfil->load('permissoes');
-
         return response()->json([
             'message' => 'Perfil atualizado com sucesso.',
             'data'    => $this->formatarPerfil($perfil),
@@ -195,7 +164,6 @@ class GerenciarPerfilController extends Controller
         if (!$user) {
             throw ApiException::unauthenticated();
         }
-        $this->verificarPermissaoGerenciar($user);
 
         $perfil = Perfil::find($id);
         if (!$perfil) {
@@ -212,36 +180,10 @@ class GerenciarPerfilController extends Controller
             'data' => $logs->map(fn (AuditLog $log) => [
                 'id'          => $log->id,
                 'data_hora'   => $log->created_at?->format('d/m/Y H:i:s'),
-                'usuario'     => $log->user?->name ?? 'Sistema',
+                'usuario'     => $log->user?->nome ?? 'Sistema',
                 'perfil'      => $perfil->nome,
                 'atualizacao' => $this->descreverAcaoLog($log),
-                'action'      => $log->action,
-            ]),
-        ]);
-    }
-
-    public function permissoes(): JsonResponse
-    {
-        $user = Auth::user();
-        if (!$user) {
-            throw ApiException::unauthenticated();
-        }
-
-        $esfera = $user->esfera_atuacao ?? 'federal';
-
-        if ($esfera === 'federal') {
-            $permissoes = Permissao::orderBy('modulo')->orderBy('acao')->get();
-        } else {
-            $permissoesDoUsuario = $this->obterPermissoesDoPerfilAtivo($user);
-            $permissoes = $permissoesDoUsuario->sortBy(['modulo', 'acao'])->values();
-        }
-
-        return response()->json([
-            'data' => $permissoes->map(fn (Permissao $p) => [
-                'id'             => $p->id,
-                'funcionalidade' => $p->modulo,
-                'nome_acao'      => $p->acao,
-                'descricao'      => $p->descricao,
+                'action'      => $log->acao,
             ]),
         ]);
     }
@@ -256,7 +198,7 @@ class GerenciarPerfilController extends Controller
         $esferaUsuario = $user->esfera_atuacao ?? 'federal';
 
         return response()->json([
-            'esfera_usuario'    => $esferaUsuario,
+            'esfera_usuario'     => $esferaUsuario,
             'esferas_permitidas' => $this->esferasPermitidas($esferaUsuario),
         ]);
     }
@@ -267,37 +209,21 @@ class GerenciarPerfilController extends Controller
             'id'         => $p->id,
             'nome'       => $p->nome,
             'descricao'  => $p->descricao,
-            'esfera'     => $p->esfera,
-            'status'     => $p->status,
-            'permissoes' => $p->permissoes->map(fn (Permissao $perm) => [
-                'id'             => $perm->id,
-                'funcionalidade' => $perm->modulo,
-                'nome_acao'      => $perm->acao,
-            ]),
+            'ativo'      => $p->ativo,
+            'status'     => $p->ativo ? 'ativo' : 'inativo',
             'created_at' => $p->created_at?->toIso8601String(),
         ];
     }
 
-    private function descreverAlteracoes(array $anterior, Perfil $perfil, array $permissoesIds): string
+    private function descreverAlteracoes(array $anterior, Perfil $perfil): string
     {
         $partes = [];
 
         if ($anterior['nome'] !== $perfil->nome) {
             $partes[] = "Alterando o Nome de Perfil para {$perfil->nome}";
         }
-        if ($anterior['esfera'] !== $perfil->esfera) {
-            $partes[] = "Alterando o Tipo de Perfil para " . ucfirst($perfil->esfera);
-        }
-        if ($anterior['status'] !== $perfil->status) {
-            $partes[] = "Alterando Situação para " . ($perfil->status === 'ativo' ? 'Vigente' : 'Não Vigente');
-        }
-
-        if (!empty($permissoesIds)) {
-            $nomes = Permissao::whereIn('id', $permissoesIds)
-                ->get()
-                ->map(fn ($p) => "{$p->modulo}: {$p->acao}")
-                ->implode(', ');
-            $partes[] = "Atualização de permissões ({$nomes})";
+        if ($anterior['ativo'] !== $perfil->ativo) {
+            $partes[] = "Alterando Situação para " . ($perfil->ativo ? 'Vigente' : 'Não Vigente');
         }
 
         return implode('; ', $partes) ?: 'Atualização de dados do perfil';
@@ -305,10 +231,10 @@ class GerenciarPerfilController extends Controller
 
     private function descreverAcaoLog(AuditLog $log): string
     {
-        $context = $log->context ?? [];
+        $contexto = $log->contexto ?? [];
 
-        if (!empty($context['alteracoes'])) {
-            return $context['alteracoes'];
+        if (!empty($contexto['alteracoes'])) {
+            return $contexto['alteracoes'];
         }
 
         $map = [
@@ -316,131 +242,16 @@ class GerenciarPerfilController extends Controller
             'gerenciar_perfis.editar'    => 'Perfil atualizado',
         ];
 
-        return $map[$log->action] ?? $log->action;
-    }
-
-    /**
-     * Verifica se o perfil ativo do usuário possui a permissão "Gerenciar Perfis".
-     * Federal tem acesso irrestrito; Estadual e Municipal precisam da permissão.
-     */
-    private function verificarPermissaoGerenciar($user): void
-    {
-        $esfera = $user->esfera_atuacao ?? 'federal';
-        if ($esfera === 'federal') {
-            return;
-        }
-
-        if (!$this->perfilAtivoPossuiPermissao($user, 'Gerenciar Perfis')) {
-            throw ApiException::forbidden('Acesso não permitido.');
-        }
-    }
-
-    private function verificarPermissaoCadastrar($user): void
-    {
-        $esfera = $user->esfera_atuacao ?? 'federal';
-        if ($esfera === 'federal') {
-            return;
-        }
-
-        if (!$this->perfilAtivoPossuiPermissao($user, 'Gerenciar Perfis', 'Criar')) {
-            throw ApiException::forbidden('Acesso não permitido.');
-        }
-    }
-
-    /**
-     * Verifica se o perfil ativo do usuário tem determinada permissão (módulo + ação opcional).
-     */
-    private function perfilAtivoPossuiPermissao($user, string $modulo, ?string $acao = null): bool
-    {
-        $perfilUsuarioAtivoId = $user->perfil_usuario_ativo_id;
-        if (!$perfilUsuarioAtivoId) {
-            return false;
-        }
-
-        $perfilUsuario = PerfilUsuario::with('perfil.permissoes')->find($perfilUsuarioAtivoId);
-        if (!$perfilUsuario || !$perfilUsuario->perfil) {
-            return false;
-        }
-
-        return $perfilUsuario->perfil->permissoes->contains(function (Permissao $p) use ($modulo, $acao) {
-            if ($p->modulo !== $modulo) return false;
-            if ($acao !== null && $p->acao !== $acao) return false;
-            return true;
-        });
+        return $map[$log->acao] ?? $log->acao;
     }
 
     private function esferasPermitidas(string $esferaUsuario): array
     {
-        return match ($esferaUsuario) {
+        return match (strtolower($esferaUsuario)) {
             'federal'   => ['federal', 'estadual', 'municipal'],
             'estadual'  => ['estadual'],
             'municipal' => ['municipal'],
             default     => [],
         };
-    }
-
-    private function validarHierarquiaEsfera($user, string $esferaPerfil): void
-    {
-        $esferaUsuario = $user->esfera_atuacao ?? 'federal';
-        $permitidas = $this->esferasPermitidas($esferaUsuario);
-
-        if (!in_array($esferaPerfil, $permitidas, true)) {
-            throw ApiException::forbidden('Acesso não permitido.');
-        }
-    }
-
-    /**
-     * Retorna as permissões do perfil atualmente ativo do usuário.
-     */
-    private function obterPermissoesDoPerfilAtivo($user): \Illuminate\Support\Collection
-    {
-        $perfilUsuarioAtivoId = $user->perfil_usuario_ativo_id;
-        if (!$perfilUsuarioAtivoId) {
-            return collect();
-        }
-
-        $perfilUsuario = PerfilUsuario::with('perfil.permissoes')->find($perfilUsuarioAtivoId);
-        if (!$perfilUsuario || !$perfilUsuario->perfil) {
-            return collect();
-        }
-
-        return $perfilUsuario->perfil->permissoes;
-    }
-
-    /**
-     * Garante que permissões atribuídas ao novo perfil estejam dentro
-     * das permissões do perfil ativo do criador (para esferas não federais).
-     */
-    private function validarPermissoesHierarquia($user, array $permissoesIds): void
-    {
-        $esfera = $user->esfera_atuacao ?? 'federal';
-        if ($esfera === 'federal' || empty($permissoesIds)) {
-            return;
-        }
-
-        $permissoesDoUsuario = $this->obterPermissoesDoPerfilAtivo($user)->pluck('id')->toArray();
-        $naoPermitidas = array_diff($permissoesIds, $permissoesDoUsuario);
-
-        if (!empty($naoPermitidas)) {
-            throw ApiException::forbidden('Acesso não permitido.');
-        }
-    }
-
-    private function validarPermissaoEditarPerfil($user, Perfil $perfil): void
-    {
-        $esfera = $user->esfera_atuacao ?? 'federal';
-        if ($esfera === 'federal') {
-            return;
-        }
-
-        if ($esfera === 'municipal') {
-            throw ApiException::forbidden('Acesso não permitido.');
-        }
-
-        if (!$this->perfilAtivoPossuiPermissao($user, 'Gerenciar Perfis', 'Editar')) {
-            throw ApiException::forbidden('Acesso não permitido.');
-        }
-
-        $this->validarHierarquiaEsfera($user, $perfil->esfera);
     }
 }

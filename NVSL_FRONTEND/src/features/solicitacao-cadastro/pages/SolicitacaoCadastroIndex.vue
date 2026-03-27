@@ -133,7 +133,6 @@
           <p><strong>Nome:</strong> {{ detalheVisualizar.nome }}</p>
           <p><strong>E-mail:</strong> {{ detalheVisualizar.email_institucional }}</p>
           <p><strong>Telefone institucional:</strong> {{ detalheVisualizar.telefone_institucional }}</p>
-          <p><strong>Telefone pessoal:</strong> {{ detalheVisualizar.telefone_pessoal || '-' }}</p>
           <p><strong>Esfera:</strong> {{ detalheVisualizar.esfera_atuacao }}</p>
           <p><strong>UF:</strong> {{ detalheVisualizar.uf }}</p>
           <p><strong>Município:</strong> {{ detalheVisualizar.municipio }}</p>
@@ -235,7 +234,6 @@ const initialValues = computed(() => ({
   CPF: modoGovBr ? formatarCpf(govbrCpf) : '',
   emailInstitucional: '',
   telefoneInstitucional: '',
-  telefonePessoal: '',
   esferaAtuacao: '',
   uf: '',
   municipio: '',
@@ -307,7 +305,6 @@ async function editar(id: number) {
       CPF: '',
       emailInstitucional: det.email_institucional,
       telefoneInstitucional: det.telefone_institucional,
-      telefonePessoal: det.telefone_pessoal || '',
       esferaAtuacao: det.esfera_atuacao,
       uf: det.uf,
       municipio: det.municipio,
@@ -365,7 +362,6 @@ async function onSubmitEditar(values: Record<string, unknown>) {
       nome: values.nome as string,
       emailInstitucional: values.emailInstitucional as string,
       telefoneInstitucional: values.telefoneInstitucional as string,
-      telefonePessoal: (values.telefonePessoal as string) || undefined,
       esferaAtuacao: values.esferaAtuacao as string,
       uf: values.uf as string,
       municipio: values.municipio as string,
@@ -395,7 +391,6 @@ async function onSubmit(values: Record<string, unknown>) {
       nome: values.nome as string,
       emailInstitucional: values.emailInstitucional as string,
       telefoneInstitucional: values.telefoneInstitucional as string,
-      telefonePessoal: (values.telefonePessoal as string) || undefined,
       esferaAtuacao: values.esferaAtuacao as string,
       uf: values.uf as string,
       municipio: values.municipio as string,

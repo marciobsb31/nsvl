@@ -25,23 +25,32 @@ docker compose up -d --build
 O container inicializa automaticamente:
 - aguarda o PostgreSQL
 - executa as migrations
+- importa **todas as UFs e municípios** via API do IBGE (`php artisan localidades:importar-ibge`; requer rede)
+- executa seed de exemplo (usuários de teste)
 - gera a documentação Swagger
 - inicia PHP-FPM + Nginx via Supervisord
+
+Se a importação IBGE falhar (sem internet), rode manualmente no container:  
+`docker exec nvsl-backend php artisan localidades:importar-ibge`
 
 ## URLs
 
 | Serviço | URL |
 |---|---|
+| API (raiz) | `http://localhost:8081` |
 | API REST | `http://localhost:8081/api` |
 | Health Check | `http://localhost:8081/api/health` |
 | Swagger UI | `http://localhost:8081/api/docs` |
+| OAuth GOV.BR (callback) | `http://localhost:8081/redirect-gov` |
+| Logout web (redireciona ao frontend) | `http://localhost:8081/logout` |
 
 ## Endpoints
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
 | `GET` | `/api/auth/redirect` | Público | Retorna URL de login GOV.BR |
-| `GET` | `/api/auth/callback` | Público | Processa callback e emite token |
+| `GET` | `/redirect-gov` | Público | Callback OAuth (web); redireciona ao frontend com fragmento |
+| `GET` | `/logout` | Público | Redireciona ao login do frontend (`?from=logout`) |
 | `POST` | `/api/auth/logout` | 🔒 Bearer | Revoga o token Sanctum |
 | `GET` | `/api/user` | 🔒 Bearer | Dados do usuário autenticado |
 | `GET` | `/api/health` | Público | Status do banco e cache |

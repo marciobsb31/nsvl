@@ -26,8 +26,7 @@ class ListarPerfisAtivosTest extends TestCase
             ->getJson('/api/user/perfis-ativos')
             ->assertOk()
             ->assertJsonStructure([
-                'data' => [['perfil_usuario_id', 'perfil_id', 'nome', 'esfera', 'ativo']],
-                'perfil_usuario_ativo_id',
+                'data' => [['perfil_usuario_id', 'perfil_id', 'nome', 'ativo']],
             ]);
     }
 

@@ -37,7 +37,7 @@ class LogoutTest extends TestCase
 
         $this->assertDatabaseHas('auditoria_log', [
             'user_id' => $user->id,
-            'action'  => 'auth.logout',
+            'acao'    => 'auth.logout',
             'tipo_operacao' => 'logout',
         ]);
     }

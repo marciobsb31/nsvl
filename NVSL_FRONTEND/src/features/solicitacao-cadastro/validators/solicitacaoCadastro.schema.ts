@@ -86,14 +86,6 @@ export const SolicitacaoCadastroSchema = yup.object({
       const digitos = value.replace(/\D/g, '')
       return digitos.length === 10 || digitos.length === 11
     }),
-  telefonePessoal: yup
-    .string()
-    .trim()
-    .test('telefone', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
-      if (!value) return true
-      const digitos = value.replace(/\D/g, '')
-      return digitos.length === 10 || digitos.length === 11
-    }),
   esferaAtuacao: yup
     .string()
     .required('Esfera de atuação é obrigatória')
@@ -119,17 +111,13 @@ export const SolicitacaoCadastroSchema = yup.object({
     .oneOf([true], 'É necessário declarar ciência do Termo de uso e privacidade.'),
 })
 
-/**
- * Schema para solicitação via GOV.BR: Nome e CPF vêm do usuário autenticado (somente leitura).
- * CPF não é enviado — o backend usa o CPF do token.
- */
 export const SolicitacaoCadastroSchemaGovBr = yup.object({
   nome: yup
     .string()
     .required('Nome é obrigatório')
     .trim()
     .matches(regexSomenteLetras, 'Nome deve conter apenas letras'),
-  CPF: yup.string().trim(), // Opcional — preenchido pelo GOV.BR, não enviado
+  CPF: yup.string().trim(),
   emailInstitucional: yup
     .string()
     .required('E-mail institucional é obrigatório')
@@ -141,14 +129,6 @@ export const SolicitacaoCadastroSchemaGovBr = yup.object({
     .trim()
     .test('telefone', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
       if (!value) return false
-      const digitos = value.replace(/\D/g, '')
-      return digitos.length === 10 || digitos.length === 11
-    }),
-  telefonePessoal: yup
-    .string()
-    .trim()
-    .test('telefone', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
-      if (!value) return true
       const digitos = value.replace(/\D/g, '')
       return digitos.length === 10 || digitos.length === 11
     }),
@@ -235,14 +215,6 @@ export const SolicitacaoCadastroSchemaEdicao = yup.object({
     .trim()
     .test('telefone', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
       if (!value) return false
-      const digitos = value.replace(/\D/g, '')
-      return digitos.length === 10 || digitos.length === 11
-    }),
-  telefonePessoal: yup
-    .string()
-    .trim()
-    .test('telefone', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
-      if (!value) return true
       const digitos = value.replace(/\D/g, '')
       return digitos.length === 10 || digitos.length === 11
     }),

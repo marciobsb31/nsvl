@@ -5,7 +5,7 @@ namespace Tests\Feature\SolicitacaoCadastro;
 use App\Models\Perfil;
 use App\Models\PerfilUsuario;
 use App\Models\SolicitacaoCadastro;
-use App\Models\User;
+use App\Models\Usuario;
 use Tests\TestCase;
 use Tests\Traits\ActingAsUserTrait;
 use PHPUnit\Framework\Attributes\Test;
@@ -16,9 +16,10 @@ class GerenciarPerfisVinculadosTest extends TestCase
 
     private function criarCenarioAprovado(): array
     {
-        $cpfHash = User::hashCpf('52998224725');
-        $solicitacao = SolicitacaoCadastro::factory()->aprovada()->create(['cpf_hash' => $cpfHash]);
-        $usuarioSolicitante = User::factory()->create(['cpf_hash' => $cpfHash]);
+        $usuarioSolicitante = Usuario::factory()->create(['cpf' => '52998224725']);
+        $solicitacao = SolicitacaoCadastro::factory()->aprovado()->create([
+            'user_id' => $usuarioSolicitante->id,
+        ]);
         $perfil = Perfil::factory()->create();
         $pu = PerfilUsuario::create([
             'usuario_id' => $usuarioSolicitante->id,

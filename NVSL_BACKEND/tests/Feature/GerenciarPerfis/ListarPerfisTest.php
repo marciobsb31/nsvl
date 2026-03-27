@@ -21,22 +21,25 @@ class ListarPerfisTest extends TestCase
     #[Test]
     public function usuario_federal_lista_todos_os_perfis(): void
     {
-        Perfil::factory()->count(3)->create();
+        Perfil::factory()->create(['nome' => 'Gestor Nacional']);
+        Perfil::factory()->create(['nome' => 'Gestor Estadual']);
+        Perfil::factory()->create(['nome' => 'Perfil Legado Fora Do Catalogo']);
         $user = $this->criarUsuarioFederal();
 
-        $this->autenticar($user)
+        $response = $this->autenticar($user)
             ->getJson('/api/gerenciar-perfis')
             ->assertOk()
-            ->assertJsonStructure(['data' => [['id', 'nome', 'esfera', 'status', 'permissoes']]]);
+            ->assertJsonStructure(['data' => [['id', 'nome', 'ativo']]]);
+
+        $this->assertCount(2, $response->json('data'));
     }
 
     #[Test]
-    public function usuario_estadual_com_permissao_lista_perfis(): void
+    public function usuario_estadual_lista_perfis(): void
     {
-        Perfil::factory()->count(2)->create();
-        $user = $this->criarUsuarioEstadual([
-            ['modulo' => 'Gerenciar Perfis', 'acao' => 'Visualizar'],
-        ]);
+        Perfil::factory()->create(['nome' => 'Gestor Municipal']);
+        Perfil::factory()->create(['nome' => 'Legado Ignorado']);
+        $user = $this->criarUsuarioEstadual();
 
         $this->autenticar($user)
             ->getJson('/api/gerenciar-perfis')
@@ -54,52 +57,20 @@ class ListarPerfisTest extends TestCase
     }
 
     #[Test]
-    public function filtra_perfis_por_esfera(): void
+    public function filtra_perfis_por_ativo(): void
     {
-        Perfil::factory()->federal()->create();
-        Perfil::factory()->estadual()->create();
-        $user = $this->criarUsuarioFederal();
-
-        $response = $this->autenticar($user)
-            ->getJson('/api/gerenciar-perfis?esfera=federal')
-            ->assertOk();
-
-        foreach ($response->json('data') as $perfil) {
-            $this->assertEquals('federal', $perfil['esfera']);
-        }
-    }
-
-    #[Test]
-    public function filtra_perfis_por_status(): void
-    {
-        Perfil::factory()->create(['status' => 'ativo']);
-        Perfil::factory()->create(['status' => 'inativo']);
+        Perfil::factory()->create(['nome' => 'Gestor Nacional', 'ativo' => true]);
+        Perfil::factory()->create(['nome' => 'Gestor Estadual', 'ativo' => false]);
         $user = $this->criarUsuarioFederal();
 
         $response = $this->autenticar($user)
             ->getJson('/api/gerenciar-perfis?status=ativo')
             ->assertOk();
 
+        $this->assertCount(1, $response->json('data'));
         foreach ($response->json('data') as $perfil) {
-            $this->assertEquals('ativo', $perfil['status']);
+            $this->assertTrue($perfil['ativo']);
         }
-    }
-
-    #[Test]
-    public function resposta_contem_permissoes_do_perfil(): void
-    {
-        $user = $this->criarUsuarioFederal();
-        $perfil = Perfil::factory()->create();
-        $perm = $this->criarPermissao('Gerenciar Perfis', 'Criar');
-        $perfil->permissoes()->sync([$perm->id]);
-
-        $response = $this->autenticar($user)
-            ->getJson('/api/gerenciar-perfis')
-            ->assertOk();
-
-        $data = collect($response->json('data'));
-        $found = $data->firstWhere('id', $perfil->id);
-        $this->assertNotEmpty($found['permissoes']);
     }
 
     #[Test]
@@ -111,7 +82,7 @@ class ListarPerfisTest extends TestCase
 
         $this->assertDatabaseHas('auditoria_log', [
             'user_id' => $user->id,
-            'action'  => 'gerenciar_perfis.listagem',
+            'acao'    => 'gerenciar_perfis.listagem',
         ]);
     }
 }

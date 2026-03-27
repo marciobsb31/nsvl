@@ -60,6 +60,24 @@
             <input type="text" :value="detalhe.cargo" readonly />
           </div>
         </div>
+        <div v-if="detalhe.vigencia_inicio_solicitada || detalhe.vigencia_fim_solicitada" class="secao-linha-3cols">
+          <div class="br-input">
+            <label>Vigência informada na solicitação (início)</label>
+            <input
+              type="text"
+              :value="detalhe.vigencia_inicio_solicitada ? formatarDataExibicao(detalhe.vigencia_inicio_solicitada) : '—'"
+              readonly
+            />
+          </div>
+          <div class="br-input">
+            <label>Vigência informada na solicitação (fim)</label>
+            <input
+              type="text"
+              :value="detalhe.vigencia_fim_solicitada ? formatarDataExibicao(detalhe.vigencia_fim_solicitada) : '—'"
+              readonly
+            />
+          </div>
+        </div>
         <div class="secao-linha-3cols secao-avaliacao-campos">
           <div class="br-select mb-2 perfil-select">
             <label for="perfil-selecao">Perfil</label>
@@ -138,10 +156,6 @@
           <div class="br-input">
             <label>Telefone Institucional</label>
             <input type="text" :value="formatarTelefone(detalhe?.telefone_institucional)" readonly />
-          </div>
-          <div class="br-input">
-            <label>Telefone Pessoal (Opcional)</label>
-            <input type="text" :value="formatarTelefone(detalhe?.telefone_pessoal) || '—'" readonly />
           </div>
         </div>
       </div>
@@ -518,15 +532,22 @@ onMounted(async () => {
   await carregarPerfis()
 })
 
+function toInputDate(s?: string | null): string {
+  if (!s) return ''
+  const t = String(s).trim()
+  return t.length >= 10 ? t.slice(0, 10) : t
+}
+
 watch(
   () => props.detalhe,
   async (novo) => {
     if (novo) {
       await carregarPerfis()
-      const hoje = new Date()
-      vigenciaInicio.value = hoje.toISOString().slice(0, 10)
-      vigenciaFim.value = ''
-      perfilSelecionado.value = null
+      const hoje = new Date().toISOString().slice(0, 10)
+      vigenciaInicio.value = toInputDate(novo.vigencia_inicio_solicitada) || hoje
+      vigenciaFim.value = toInputDate(novo.vigencia_fim_solicitada) || ''
+      perfilSelecionado.value =
+        novo.perfil_id_solicitado != null && novo.perfil_id_solicitado > 0 ? novo.perfil_id_solicitado : null
       paginaAtualPerfis.value = 1
     }
   },

@@ -6,24 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Model Municipio — Município brasileiro.
- * Estrutura baseada no IBGE; dados replicados no banco.
+ * Model Municipio — Município brasileiro (dados replicados do IBGE).
  *
- * @property int $id
- * @property int $id_ibge
+ * @property int    $id
  * @property string $nome
- * @property int $uf_id
+ * @property int    $uf_id   FK → ufs.id
  */
 class Municipio extends Model
 {
+    protected $table = 'municipios';
+    public $timestamps = false;
+
     protected $fillable = [
-        'id_ibge',
         'nome',
         'uf_id',
     ];
 
     protected $casts = [
-        'id_ibge' => 'integer',
         'uf_id' => 'integer',
     ];
 

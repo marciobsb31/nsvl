@@ -31,21 +31,17 @@
               <div class="tc-card__conteudo">
                 <span class="tc-card__nome">{{ perfil.nome }}</span>
                 <div class="tc-card__detalhes">
-                  <span class="tc-card__detalhe" v-if="perfil.esfera">
+                  <span class="tc-card__detalhe" v-if="user?.esfera_atuacao">
                     <i class="fas fa-layer-group" aria-hidden="true"></i>
-                    {{ labelEsfera(perfil.esfera) }}
+                    {{ labelEsfera(user.esfera_atuacao) }}
                   </span>
-                  <span class="tc-card__detalhe" v-if="perfil.uf">
+                  <span class="tc-card__detalhe" v-if="user?.uf_lotacao">
                     <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                    {{ perfil.uf }}
+                    {{ user.uf_lotacao }}
                   </span>
-                  <span class="tc-card__detalhe" v-if="perfil.municipio">
+                  <span class="tc-card__detalhe" v-if="user?.municipio_lotacao">
                     <i class="fas fa-city" aria-hidden="true"></i>
-                    {{ perfil.municipio }}
-                  </span>
-                  <span class="tc-card__detalhe" v-if="perfil.orgao">
-                    <i class="fas fa-building" aria-hidden="true"></i>
-                    {{ perfil.orgao }}
+                    {{ user.municipio_lotacao }}
                   </span>
                 </div>
               </div>
@@ -84,7 +80,7 @@ const emit = defineEmits<{
   (e: 'contexto-alterado'): void
 }>()
 
-const { perfisAtivos, perfilAtivo, trocandoContexto, trocarContexto } = useAuth()
+const { perfisAtivos, perfilAtivo, trocandoContexto, trocarContexto, user } = useAuth()
 
 const modalRef = ref<HTMLElement | null>(null)
 const erroTroca = ref<string | null>(null)

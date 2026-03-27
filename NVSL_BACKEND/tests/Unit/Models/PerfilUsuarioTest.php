@@ -4,7 +4,7 @@ namespace Tests\Unit\Models;
 
 use App\Models\Perfil;
 use App\Models\PerfilUsuario;
-use App\Models\User;
+use App\Models\Usuario;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -13,7 +13,7 @@ class PerfilUsuarioTest extends TestCase
     #[Test]
     public function pertence_a_um_usuario(): void
     {
-        $user = User::factory()->create();
+        $user = Usuario::factory()->create();
         $perfil = Perfil::factory()->create();
         $pu = PerfilUsuario::create([
             'usuario_id' => $user->id,
@@ -26,7 +26,7 @@ class PerfilUsuarioTest extends TestCase
     #[Test]
     public function pertence_a_um_perfil(): void
     {
-        $user = User::factory()->create();
+        $user = Usuario::factory()->create();
         $perfil = Perfil::factory()->create();
         $pu = PerfilUsuario::create([
             'usuario_id' => $user->id,
@@ -39,7 +39,7 @@ class PerfilUsuarioTest extends TestCase
     #[Test]
     public function datas_sao_castadas_como_date(): void
     {
-        $user = User::factory()->create();
+        $user = Usuario::factory()->create();
         $perfil = Perfil::factory()->create();
         $pu = PerfilUsuario::create([
             'usuario_id' => $user->id,
@@ -53,20 +53,16 @@ class PerfilUsuarioTest extends TestCase
     }
 
     #[Test]
-    public function aceita_uf_municipio_orgao(): void
+    public function aceita_campo_ativo(): void
     {
-        $user = User::factory()->create();
+        $user = Usuario::factory()->create();
         $perfil = Perfil::factory()->create();
         $pu = PerfilUsuario::create([
             'usuario_id' => $user->id,
             'perfil_id'  => $perfil->id,
-            'uf' => 'GO',
-            'municipio' => 'Goiânia',
-            'orgao' => 'Secretaria de Saúde',
+            'ativo'      => true,
         ]);
 
-        $this->assertEquals('GO', $pu->uf);
-        $this->assertEquals('Goiânia', $pu->municipio);
-        $this->assertEquals('Secretaria de Saúde', $pu->orgao);
+        $this->assertTrue($pu->ativo);
     }
 }

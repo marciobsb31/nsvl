@@ -88,24 +88,6 @@
               <span id="cad-tel-inst-hint" class="cadastro-field-hint">Fixo ou celular (10 ou 11 dígitos).</span>
             </div>
           </div>
-          <div class="col-12 col-md-6">
-            <div class="br-input">
-              <label for="cad-tel-pessoal">Telefone pessoal <span class="cadastro-label-opcional">(opcional)</span></label>
-              <input
-                id="cad-tel-pessoal"
-                type="tel"
-                inputmode="tel"
-                placeholder="(00) 00000-0000"
-                v-model="telefonePessoal"
-                v-maska="telefoneMask"
-                :aria-invalid="!!errorsTelPessoal"
-                aria-describedby="cad-tel-pessoal-err cad-tel-pessoal-hint"
-                @blur="() => validateField('telefonePessoal')"
-              />
-              <Feedback v-if="errorsTelPessoal" id="cad-tel-pessoal-err" :message="errorsTelPessoal" type="danger" />
-              <span id="cad-tel-pessoal-hint" class="cadastro-field-hint">Para contato alternativo.</span>
-            </div>
-          </div>
         </section>
       </div>
 
@@ -267,7 +249,7 @@
         <button class="br-button secondary" type="button" @click="$emit('voltar')">
           Cancelar
         </button>
-        <button class="br-button primary" type="submit" :disabled="enviando || !camposObrigatoriosPreenchidos">
+        <button class="br-button primary" type="submit" :disabled="enviando">
           {{ enviando ? 'Confirmando...' : 'Confirmar' }}
         </button>
       </div>
@@ -381,14 +363,6 @@ const schema = yup.object({
       const digitos = value.replace(/\D/g, '')
       return digitos.length >= 10 && digitos.length <= 11
     }),
-  telefonePessoal: yup
-    .string()
-    .trim()
-    .test('telefone', 'Informe um telefone válido com 11 dígitos (ex: (11) 99999-8888).', (value) => {
-      if (!value) return true
-      const digitos = value.replace(/\D/g, '')
-      return digitos.length === 11
-    }),
   esferaAtuacao: yup.string().required('Selecione a esfera de atuação.').trim(),
   uf: yup.string().required('Selecione o estado (UF).').trim(),
   municipio: yup
@@ -422,7 +396,6 @@ const initialValues = {
   CPF: '',
   emailInstitucional: '',
   telefoneInstitucional: '',
-  telefonePessoal: '',
   esferaAtuacao: '',
   uf: '',
   municipio: '',
@@ -443,7 +416,6 @@ const { value: nome, errorMessage: errorsNome } = useField<string>('nome')
 const { value: cpf, errorMessage: errorsCpf } = useField<string>('CPF')
 const { value: emailInstitucional, errorMessage: errorsEmail } = useField<string>('emailInstitucional')
 const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<string>('telefoneInstitucional')
-const { value: telefonePessoal, errorMessage: errorsTelPessoal } = useField<string>('telefonePessoal')
 const { value: esferaAtuacao, errorMessage: errorsEsfera } = useField<string>('esferaAtuacao')
 const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
 const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
@@ -542,30 +514,12 @@ const { value: perfil, errorMessage: errorsPerfil } = useField<string | number |
 const { value: vigenciaInicio, errorMessage: errorsVigenciaInicio } = useField<string>('vigenciaInicio')
 const { value: vigenciaFim, errorMessage: errorsVigenciaFim } = useField<string>('vigenciaFim')
 const { value: aceiteTermo, errorMessage: errorsAceiteTermo } = useField<boolean>('aceiteTermo')
-const camposObrigatoriosPreenchidos = computed(() => {
-  const obrigatoriosTexto = [
-    nome.value,
-    cpf.value,
-    emailInstitucional.value,
-    telefoneInstitucional.value,
-    esferaAtuacao.value,
-    uf.value,
-    municipio.value,
-    orgao.value,
-    cargo.value,
-    vigenciaInicio.value,
-  ]
-  const textosOk = obrigatoriosTexto.every((valor) => String(valor ?? '').trim() !== '')
-  const perfilOk = perfil.value !== null && String(perfil.value).trim() !== ''
-  return textosOk && perfilOk && aceiteTermo.value === true
-})
 
 const MAPA_CAMPO_PARA_FOCO: Record<string, string> = {
   nome: 'cad-nome',
   CPF: 'cad-cpf',
   emailInstitucional: 'cad-email',
   telefoneInstitucional: 'cad-tel-inst',
-  telefonePessoal: 'cad-tel-pessoal',
   esferaAtuacao: 'focusEsfera',
   uf: 'focusUf',
   municipio: 'focusMunicipio',
@@ -622,7 +576,6 @@ function lerValoresDosRefs(): Record<string, unknown> {
     CPF: cpf.value,
     emailInstitucional: emailInstitucional.value,
     telefoneInstitucional: telefoneInstitucional.value,
-    telefonePessoal: telefonePessoal.value,
     esferaAtuacao: esferaAtuacao.value,
     uf: uf.value,
     municipio: municipio.value,
@@ -681,7 +634,6 @@ function montarPayload(): SolicitacaoCadastroPayload {
     CPF: cpfVal || undefined,
     emailInstitucional: String(emailInstitucional.value ?? '').trim(),
     telefoneInstitucional: String(telefoneInstitucional.value ?? '').replace(/\D/g, ''),
-    telefonePessoal: telefonePessoal.value ? String(telefonePessoal.value).replace(/\D/g, '') : undefined,
     esferaAtuacao: String(esferaAtuacao.value ?? '').toLowerCase(),
     uf: String(uf.value ?? '').toUpperCase(),
     municipio: String(municipio.value ?? '').trim(),

@@ -2,86 +2,117 @@
 
 namespace Tests\Traits;
 
+use App\Models\Esfera;
+use App\Models\Municipio;
 use App\Models\Perfil;
 use App\Models\PerfilUsuario;
-use App\Models\Permissao;
-use App\Models\User;
+use App\Models\SolicitacaoCadastro;
+use App\Models\StatusSolicitacao;
+use App\Models\Uf;
+use App\Models\Usuario;
 
 trait ActingAsUserTrait
 {
-    protected function criarUsuarioFederal(array $attrs = []): User
+    protected function criarUsuarioFederal(array $attrs = []): Usuario
     {
-        $user = User::factory()->federal()->create($attrs);
-        $perfil = Perfil::factory()->federal()->create(['nome' => 'Federal Test ' . $user->id]);
-        $pu = PerfilUsuario::create([
-            'usuario_id' => $user->id,
-            'perfil_id'  => $perfil->id,
-            'data_inicio_vigencia' => now()->subDay()->toDateString(),
+        $user = Usuario::factory()->create($attrs);
+        $perfil = Perfil::factory()->create(['nome' => 'Federal Test ' . $user->id]);
+
+        $esfera = Esfera::firstOrCreate(['nome' => 'Federal']);
+        $uf = Uf::firstOrCreate(['sigla' => 'DF', 'nome' => 'Distrito Federal']);
+        $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
+
+        SolicitacaoCadastro::create([
+            'user_id'              => $user->id,
+            'email_institucional'  => $user->email,
+            'telefone_institucional' => '6132151000',
+            'esfera_id'            => $esfera->id,
+            'uf_id'                => $uf->id,
+            'orgao'                => 'Órgão Federal Teste',
+            'cargo'                => 'Analista',
+            'perfil_id_solicitado' => $perfil->id,
+            'status_id'            => $statusAprovado,
+            'aceite_termo_at'      => now(),
         ]);
-        $user->update(['perfil_usuario_ativo_id' => $pu->id]);
+
+        PerfilUsuario::create([
+            'usuario_id'           => $user->id,
+            'perfil_id'            => $perfil->id,
+            'data_inicio_vigencia' => now()->subDay()->toDateString(),
+            'ativo'                => true,
+        ]);
 
         return $user->fresh();
     }
 
-    protected function criarUsuarioEstadual(array $permissoes = [], array $attrs = []): User
+    protected function criarUsuarioEstadual(array $attrs = []): Usuario
     {
-        $user = User::factory()->estadual()->create($attrs);
-        $perfil = Perfil::factory()->estadual()->create(['nome' => 'Estadual Test ' . $user->id]);
-        $this->vincularPermissoes($perfil, $permissoes);
+        $user = Usuario::factory()->create($attrs);
+        $perfil = Perfil::factory()->create(['nome' => 'Estadual Test ' . $user->id]);
 
-        $pu = PerfilUsuario::create([
-            'usuario_id' => $user->id,
-            'perfil_id'  => $perfil->id,
-            'data_inicio_vigencia' => now()->subDay()->toDateString(),
-            'uf' => $user->uf_lotacao,
+        $esfera = Esfera::firstOrCreate(['nome' => 'Estadual']);
+        $uf = Uf::firstOrCreate(['sigla' => 'GO', 'nome' => 'Goiás']);
+        $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
+
+        SolicitacaoCadastro::create([
+            'user_id'              => $user->id,
+            'email_institucional'  => $user->email,
+            'telefone_institucional' => '6232151000',
+            'esfera_id'            => $esfera->id,
+            'uf_id'                => $uf->id,
+            'orgao'                => 'Órgão Estadual Teste',
+            'cargo'                => 'Analista',
+            'perfil_id_solicitado' => $perfil->id,
+            'status_id'            => $statusAprovado,
+            'aceite_termo_at'      => now(),
         ]);
-        $user->update(['perfil_usuario_ativo_id' => $pu->id]);
+
+        PerfilUsuario::create([
+            'usuario_id'           => $user->id,
+            'perfil_id'            => $perfil->id,
+            'data_inicio_vigencia' => now()->subDay()->toDateString(),
+            'ativo'                => true,
+        ]);
 
         return $user->fresh();
     }
 
-    protected function criarUsuarioMunicipal(array $permissoes = [], array $attrs = []): User
+    protected function criarUsuarioMunicipal(array $attrs = []): Usuario
     {
-        $user = User::factory()->municipal()->create($attrs);
-        $perfil = Perfil::factory()->municipal()->create(['nome' => 'Municipal Test ' . $user->id]);
-        $this->vincularPermissoes($perfil, $permissoes);
+        $user = Usuario::factory()->create($attrs);
+        $perfil = Perfil::factory()->create(['nome' => 'Municipal Test ' . $user->id]);
 
-        $pu = PerfilUsuario::create([
-            'usuario_id' => $user->id,
-            'perfil_id'  => $perfil->id,
-            'data_inicio_vigencia' => now()->subDay()->toDateString(),
-            'uf' => $user->uf_lotacao,
-            'municipio' => $user->municipio_lotacao,
+        $esfera = Esfera::firstOrCreate(['nome' => 'Municipal']);
+        $uf = Uf::firstOrCreate(['sigla' => 'GO', 'nome' => 'Goiás']);
+        $municipio = Municipio::firstOrCreate(['nome' => 'Alexânia', 'uf_id' => $uf->id]);
+        $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
+
+        SolicitacaoCadastro::create([
+            'user_id'              => $user->id,
+            'email_institucional'  => $user->email,
+            'telefone_institucional' => '6236001000',
+            'esfera_id'            => $esfera->id,
+            'uf_id'                => $uf->id,
+            'municipio_id'         => $municipio->id,
+            'orgao'                => 'Órgão Municipal Teste',
+            'cargo'                => 'Analista',
+            'perfil_id_solicitado' => $perfil->id,
+            'status_id'            => $statusAprovado,
+            'aceite_termo_at'      => now(),
         ]);
-        $user->update(['perfil_usuario_ativo_id' => $pu->id]);
+
+        PerfilUsuario::create([
+            'usuario_id'           => $user->id,
+            'perfil_id'            => $perfil->id,
+            'data_inicio_vigencia' => now()->subDay()->toDateString(),
+            'ativo'                => true,
+        ]);
 
         return $user->fresh();
     }
 
-    protected function autenticar(User $user): self
+    protected function autenticar(Usuario $user): self
     {
         return $this->actingAs($user, 'sanctum');
-    }
-
-    protected function criarPermissao(string $modulo, string $acao): Permissao
-    {
-        return Permissao::firstOrCreate(
-            ['modulo' => $modulo, 'acao' => $acao],
-            ['descricao' => "{$modulo} - {$acao}"]
-        );
-    }
-
-    private function vincularPermissoes(Perfil $perfil, array $permissoes): void
-    {
-        if (empty($permissoes)) {
-            return;
-        }
-
-        $ids = [];
-        foreach ($permissoes as $p) {
-            $perm = $this->criarPermissao($p['modulo'], $p['acao']);
-            $ids[] = $perm->id;
-        }
-        $perfil->permissoes()->sync($ids);
     }
 }

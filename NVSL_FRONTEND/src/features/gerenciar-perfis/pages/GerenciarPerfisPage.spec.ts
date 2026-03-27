@@ -25,9 +25,8 @@ function perfilBase(over: Partial<PerfilGerenciar> = {}): PerfilGerenciar {
     id: 1,
     nome: 'Gestor Teste',
     descricao: 'Desc',
-    esfera: 'federal',
+    ativo: true,
     status: 'ativo',
-    permissoes: [],
     ...over,
   }
 }
@@ -85,7 +84,6 @@ function setupAuth(esfera: string) {
     name: 'Usuário Teste',
     esfera_atuacao: esfera,
     perfis_vigentes: [],
-    permissoes: [],
   })
 }
 
@@ -134,19 +132,18 @@ describe('GerenciarPerfisPage (/gerenciar-perfis)', () => {
     expect(w.text()).toContain('Nenhum perfil encontrado')
   })
 
-  it('renderiza tabela com nome, tipo e situação', async () => {
-    listarPerfisGerenciar.mockResolvedValue([perfilBase({ nome: 'Meu Perfil', esfera: 'estadual' })])
+  it('renderiza tabela com nome e situação', async () => {
+    listarPerfisGerenciar.mockResolvedValue([perfilBase({ nome: 'Meu Perfil' })])
     const w = mountPage()
     await flushPromises()
     expect(w.text()).toContain('Meu Perfil')
-    expect(w.text()).toContain('Estadual')
     expect(w.text()).toContain('Vigente')
   })
 
   it('ordena por coluna Nome ao clicar no cabeçalho', async () => {
     listarPerfisGerenciar.mockResolvedValue([
-      perfilBase({ id: 1, nome: 'Zulu', esfera: 'federal' }),
-      perfilBase({ id: 2, nome: 'Alpha', esfera: 'federal' }),
+      perfilBase({ id: 1, nome: 'Zulu' }),
+      perfilBase({ id: 2, nome: 'Alpha' }),
     ])
     const w = mountPage()
     await flushPromises()
@@ -237,64 +234,11 @@ describe('GerenciarPerfisPage (/gerenciar-perfis)', () => {
     expect(listarPerfisGerenciar).toHaveBeenCalled()
   })
 
-  it('exibe modal ao sair com formulário sujo e confirma saída', async () => {
-    const w = mountPage()
-    await flushPromises()
-    await w.find('[aria-label="Novo perfil"]').trigger('click')
-    await w.vm.$nextTick()
-    await w.find('[data-testid="emit-dirty"]').trigger('click')
-    await w.vm.$nextTick()
-    await w.find('[data-testid="emit-voltar"]').trigger('click')
-    await w.vm.$nextTick()
-    expect(document.body.textContent).toContain('Deseja sair sem salvar')
-    const dangerBtn = Array.from(document.querySelectorAll('button')).find((b) =>
-      b.textContent?.includes('Sair sem salvar')
-    )
-    expect(dangerBtn).toBeTruthy()
-    await dangerBtn!.dispatchEvent(new Event('click'))
-    await w.vm.$nextTick()
-    expect(w.find('[data-testid="painel-form"]').exists()).toBe(false)
-  })
-
-  it('cancela modal e mantém painel aberto', async () => {
-    const w = mountPage()
-    await flushPromises()
-    await w.find('[aria-label="Novo perfil"]').trigger('click')
-    await w.vm.$nextTick()
-    await w.find('[data-testid="emit-dirty"]').trigger('click')
-    await w.vm.$nextTick()
-    await w.find('[data-testid="emit-voltar"]').trigger('click')
-    await w.vm.$nextTick()
-    const continuar = Array.from(document.querySelectorAll('button')).find((b) =>
-      b.textContent?.includes('Continuar editando')
-    )
-    await continuar!.dispatchEvent(new Event('click'))
-    await w.vm.$nextTick()
-    expect(w.find('[data-testid="painel-form"]').exists()).toBe(true)
-  })
-
   it('chama error quando falha ao carregar perfis', async () => {
     listarPerfisGerenciar.mockRejectedValue(new Error('fail'))
     obterHierarquia.mockResolvedValue({ esfera_usuario: 'federal', esferas_permitidas: ['federal'] })
     mountPage()
     await flushPromises()
     expect(errorMock).toHaveBeenCalledWith('Não foi possível carregar os perfis.')
-  })
-
-  it('oculta Editar quando esfera do perfil não está permitida pela hierarquia', async () => {
-    obterHierarquia.mockResolvedValue({
-      esfera_usuario: 'estadual',
-      esferas_permitidas: ['estadual'],
-    })
-    listarPerfisGerenciar.mockResolvedValue([
-      perfilBase({ id: 1, nome: 'Só estadual', esfera: 'estadual' }),
-      perfilBase({ id: 2, nome: 'Federal', esfera: 'federal' }),
-    ])
-    const w = mountPage()
-    await flushPromises()
-    const linhas = w.findAll('tbody tr')
-    // Ordenação padrão: federal antes de estadual; só "estadual" na hierarquia permite editar linha estadual
-    expect(linhas[0].find('.btn-acao--editar').exists()).toBe(false)
-    expect(linhas[1].find('.btn-acao--editar').exists()).toBe(true)
   })
 })

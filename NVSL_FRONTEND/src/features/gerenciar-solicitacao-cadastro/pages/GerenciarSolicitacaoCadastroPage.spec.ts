@@ -8,11 +8,10 @@ import type { SolicitacaoCadastroDetalhe } from '@/services/SolicitacaoCadastroS
 const mockUser = ref<Record<string, unknown> | null>(null)
 const mockContextKey = ref(0)
 const mockPerfilAtivo = ref<{
+  perfil_usuario_id: number
+  perfil_id: number
   nome: string
-  esfera?: string
-  uf?: string | null
-  municipio?: string | null
-  orgao?: string | null
+  ativo?: boolean
 } | null>(null)
 
 vi.mock('@/core/composables/useAuth', () => ({
@@ -268,8 +267,9 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
     const w = mountPage()
     await flushPromises()
     const botoes = w.findAll('tbody .br-button')
-    expect(botoes[0].text()).toContain('Detalhar/Analisar')
-    expect(botoes[1].text()).toContain('Detalhar')
+    expect(botoes.length).toBeGreaterThanOrEqual(2)
+    expect(botoes[0]!.text()).toContain('Detalhar/Analisar')
+    expect(botoes[1]!.text()).toContain('Detalhar')
   })
 
   it('carrega detalhe e abre painel ao detalhar solicitação', async () => {
@@ -347,11 +347,17 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
 
   it('exibe banner de contexto quando há perfil ativo', async () => {
     mockPerfilAtivo.value = {
+      perfil_usuario_id: 1,
+      perfil_id: 1,
       nome: 'Gestor',
-      esfera: 'federal',
-      uf: 'DF',
-      municipio: null,
-      orgao: 'MDHC',
+      ativo: true,
+    }
+    mockUser.value = {
+      id: 1,
+      name: 'Admin',
+      esfera_atuacao: 'federal',
+      uf_lotacao: 'DF',
+      perfis_vigentes: [],
     }
     const w = mountPage()
     await flushPromises()

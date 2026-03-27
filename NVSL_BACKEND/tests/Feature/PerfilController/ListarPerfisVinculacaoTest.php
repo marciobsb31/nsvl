@@ -21,10 +21,10 @@ class ListarPerfisVinculacaoTest extends TestCase
     #[Test]
     public function lista_apenas_perfis_de_cadastro_ativos(): void
     {
-        Perfil::factory()->create(['nome' => 'Administrador Nacional', 'status' => 'ativo']);
-        Perfil::factory()->create(['nome' => 'Administrador Estadual', 'status' => 'ativo']);
-        Perfil::factory()->create(['nome' => 'Administrador Municipal', 'status' => 'inativo']);
-        Perfil::factory()->create(['nome' => 'Perfil Qualquer', 'status' => 'ativo']);
+        Perfil::factory()->create(['nome' => 'Administrador Nacional', 'ativo' => true]);
+        Perfil::factory()->create(['nome' => 'Administrador Estadual', 'ativo' => true]);
+        Perfil::factory()->create(['nome' => 'Administrador Municipal', 'ativo' => false]);
+        Perfil::factory()->create(['nome' => 'Perfil Qualquer', 'ativo' => true]);
 
         $user = $this->criarUsuarioFederal();
 
@@ -43,7 +43,7 @@ class ListarPerfisVinculacaoTest extends TestCase
     #[Test]
     public function resposta_contem_campos_esperados(): void
     {
-        Perfil::factory()->create(['nome' => 'Gestor Nacional', 'status' => 'ativo']);
+        Perfil::factory()->create(['nome' => 'Gestor Nacional', 'ativo' => true]);
         $user = $this->criarUsuarioFederal();
 
         $this->autenticar($user)

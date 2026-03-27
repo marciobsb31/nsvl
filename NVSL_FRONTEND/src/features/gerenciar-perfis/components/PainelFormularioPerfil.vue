@@ -49,38 +49,18 @@
           </div>
           <div class="col-12 col-md-4">
             <div class="br-input">
-              <label for="pf-esfera">Tipo de Perfil<span class="text-red-50 text-up-01"> *</span></label>
+              <label for="pf-ativo">Situação<span class="text-red-50 text-up-01"> *</span></label>
               <select
-                id="pf-esfera"
-                v-model="form.esfera"
+                id="pf-ativo"
+                v-model="form.ativo"
                 class="br-select-native"
                 :disabled="somenteLeitura || salvando"
+                aria-describedby="pf-ativo-hint"
               >
-                <option value="" disabled>Selecione o tipo</option>
-                <option
-                  v-for="esf in esferasDisponiveis"
-                  :key="esf.value"
-                  :value="esf.value"
-                >
-                  {{ esf.label }}
-                </option>
+                <option :value="true">Ativo</option>
+                <option :value="false">Inativo</option>
               </select>
-            </div>
-          </div>
-          <div class="col-12 col-md-3">
-            <div class="br-input">
-              <label for="pf-status">Vigência<span class="text-red-50 text-up-01"> *</span></label>
-              <select
-                id="pf-status"
-                v-model="form.status"
-                class="br-select-native"
-                :disabled="somenteLeitura || salvando"
-                aria-describedby="pf-status-hint"
-              >
-                <option value="ativo">Vigente</option>
-                <option value="inativo">Não vigente</option>
-              </select>
-              <span id="pf-status-hint" class="field-hint">Define se o perfil está em uso no sistema.</span>
+              <span id="pf-ativo-hint" class="field-hint">Define se o perfil está em uso no sistema.</span>
             </div>
           </div>
         </section>
@@ -108,24 +88,6 @@
             </div>
           </div>
         </section>
-      </Card>
-
-      <!-- Card 3: Permissões -->
-      <Card
-        title="Permissões"
-        :subtitle="
-          somenteLeitura
-            ? 'Permissões atribuídas a este perfil (somente consulta).'
-            : 'Inclua ou remova permissões na tabela; o total selecionado aparece no topo da lista.'
-        "
-      >
-        <SeletorPermissoes
-          :permissoes="permissoes"
-          :selecionadas="form.permissoes"
-          :carregando="carregandoPermissoes"
-          :somente-leitura="somenteLeitura"
-          @update:selecionadas="form.permissoes = $event"
-        />
       </Card>
 
       <!-- Ações (padrão solicitacao-acoes) -->
@@ -158,14 +120,11 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import Card from '@/core/components/Card/Card.vue'
-import SeletorPermissoes from './SeletorPermissoes.vue'
 import {
   cadastrarPerfil,
   atualizarPerfil,
-  listarPermissoes,
   obterHierarquia,
   type PerfilGerenciar,
-  type PermissaoItem,
 } from '@/services/GerenciarPerfilService'
 import { useNotification } from '@/core/composables/useNotification'
 
@@ -200,27 +159,12 @@ const { success, error } = useNotification()
 
 const somenteLeitura = ref(props.modo === 'visualizar')
 const salvando = ref(false)
-const carregandoPermissoes = ref(false)
-const permissoes = ref<PermissaoItem[]>([])
 const erros = reactive<Record<string, string>>({})
-const esferasPermitidas = ref<string[]>(['federal', 'estadual', 'municipal'])
-
-const todasEsferas = [
-  { value: 'federal', label: 'Nacional' },
-  { value: 'estadual', label: 'Estadual' },
-  { value: 'municipal', label: 'Municipal' },
-]
-
-const esferasDisponiveis = computed(() =>
-  todasEsferas.filter(e => esferasPermitidas.value.includes(e.value))
-)
 
 const form = reactive({
   nome: '',
   descricao: '',
-  esfera: '',
-  status: 'ativo',
-  permissoes: [] as number[],
+  ativo: true,
 })
 
 const initialSnapshot = ref('')
@@ -229,9 +173,7 @@ function capturarSnapshot(): string {
   return JSON.stringify({
     nome: form.nome,
     descricao: form.descricao,
-    esfera: form.esfera,
-    status: form.status,
-    permissoes: [...form.permissoes].sort(),
+    ativo: form.ativo,
   })
 }
 
@@ -246,15 +188,11 @@ watch(() => props.perfil, (p) => {
   if (p) {
     form.nome = p.nome
     form.descricao = p.descricao ?? ''
-    form.esfera = p.esfera
-    form.status = p.status
-    form.permissoes = p.permissoes.map((pm) => pm.id)
+    form.ativo = p.ativo
   } else {
     form.nome = ''
     form.descricao = ''
-    form.esfera = ''
-    form.status = 'ativo'
-    form.permissoes = []
+    form.ativo = true
   }
   initialSnapshot.value = capturarSnapshot()
 }, { immediate: true })
@@ -264,18 +202,11 @@ watch(() => props.modo, (m) => {
 })
 
 onMounted(async () => {
-  carregandoPermissoes.value = true
   try {
-    const [perms, hierarquia] = await Promise.all([
-      listarPermissoes(),
-      obterHierarquia(),
-    ])
-    permissoes.value = perms
-    esferasPermitidas.value = hierarquia.esferas_permitidas
+    await obterHierarquia()
   } catch {
-    error('Não foi possível carregar as permissões.')
+    // Hierarquia indisponível — continua com permissões padrão
   } finally {
-    carregandoPermissoes.value = false
     initialSnapshot.value = capturarSnapshot()
   }
 })
@@ -291,19 +222,13 @@ async function handleSalvar() {
     erros.nome = 'Preencha os campos obrigatórios.'
     return
   }
-  if (!form.esfera) {
-    error('Selecione o Tipo de Perfil.')
-    return
-  }
 
   salvando.value = true
   try {
     const payload = {
       nome: form.nome.trim(),
       descricao: form.descricao.trim() || undefined,
-      esfera: form.esfera,
-      status: form.status,
-      permissoes: form.permissoes,
+      ativo: form.ativo,
     }
 
     let resultado: { message: string }

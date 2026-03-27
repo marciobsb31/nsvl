@@ -2,54 +2,64 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Usuario>
+ */
 class UserFactory extends Factory
 {
-    protected $model = User::class;
+    protected $model = Usuario::class;
 
     public function definition(): array
     {
-        return [
-            'govbr_sub' => $this->faker->unique()->numerify('###########'),
-            'cpf_hash'  => hash_hmac('sha256', $this->faker->numerify('###########'), 'testing'),
-            'name'      => $this->faker->name(),
-            'email'     => $this->faker->unique()->safeEmail(),
-            'role'      => 'user',
-            'esfera_atuacao' => 'federal',
-        ];
-    }
+        $cpf = $this->gerarCpfValido();
 
-    public function admin(): static
-    {
-        return $this->state(fn () => ['role' => 'admin']);
+        return [
+            'cpf'       => $cpf,
+            'nome'      => fake()->name(),
+            'email'     => fake()->unique()->safeEmail(),
+            'govbr_sub' => 'teste-' . fake()->unique()->uuid(),
+            'telefone'  => fake()->optional()->numerify('###########'),
+        ];
     }
 
     public function federal(): static
     {
-        return $this->state(fn () => [
-            'esfera_atuacao' => 'federal',
-            'uf_lotacao' => null,
-            'municipio_lotacao' => null,
-        ]);
+        return $this->state(fn () => []);
     }
 
-    public function estadual(string $uf = 'GO'): static
+    public function estadual(): static
     {
-        return $this->state(fn () => [
-            'esfera_atuacao' => 'estadual',
-            'uf_lotacao' => $uf,
-            'municipio_lotacao' => null,
-        ]);
+        return $this->state(fn () => []);
     }
 
-    public function municipal(string $uf = 'GO', string $municipio = 'Alexânia'): static
+    public function municipal(): static
     {
-        return $this->state(fn () => [
-            'esfera_atuacao' => 'municipal',
-            'uf_lotacao' => $uf,
-            'municipio_lotacao' => $municipio,
-        ]);
+        return $this->state(fn () => []);
+    }
+
+    private function gerarCpfValido(): string
+    {
+        $n = [];
+        for ($i = 0; $i < 9; $i++) {
+            $n[] = random_int(0, 9);
+        }
+        $d1 = 0;
+        for ($i = 0; $i < 9; $i++) {
+            $d1 += $n[$i] * (10 - $i);
+        }
+        $d1 = ((10 * $d1) % 11) % 10;
+        $n[] = $d1;
+
+        $d2 = 0;
+        for ($i = 0; $i < 10; $i++) {
+            $d2 += $n[$i] * (11 - $i);
+        }
+        $d2 = ((10 * $d2) % 11) % 10;
+        $n[] = $d2;
+
+        return implode('', $n);
     }
 }

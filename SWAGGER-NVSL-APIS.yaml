@@ -6,6 +6,11 @@ info:
     Documentação consolidada das APIs do NVSL.
     Base URL padrão: `http://localhost:8081/api`.
 
+    Rotas **web** na raiz da aplicação (`http://localhost:8081`, cadastro MGI):
+    - `GET /` — status da API
+    - `GET /redirect-gov` — callback OAuth2/OIDC (redirect_uri)
+    - `GET /logout` — redireciona ao login do frontend (`?from=logout`); revogação do token: `POST /api/auth/logout`
+
 servers:
   - url: http://localhost:8081/api
     description: Ambiente local (Docker)
@@ -136,7 +141,9 @@ paths:
     get:
       tags: [Autenticação]
       summary: Callback do GOV.BR (redireciona para frontend)
-      description: Endpoint usado pelo GOV.BR no retorno OAuth2.
+      description: |
+        **Implementação real:** `GET http://localhost:8081/redirect-gov` (rota web, fora de `/api`).
+        Mantido aqui apenas como referência do fluxo; o `redirect_uri` cadastrado no MGI deve apontar para `/redirect-gov`.
       parameters:
         - name: code
           in: query

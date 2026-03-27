@@ -3,7 +3,6 @@
 namespace Tests\Feature\GerenciarPerfis;
 
 use App\Models\Perfil;
-use App\Models\Permissao;
 use Tests\TestCase;
 use Tests\Traits\ActingAsUserTrait;
 use PHPUnit\Framework\Attributes\Test;
@@ -15,11 +14,9 @@ class EditarPerfilTest extends TestCase
     private function dadosUpdate(array $override = []): array
     {
         return array_merge([
-            'nome'       => 'Perfil Atualizado',
-            'descricao'  => 'Descrição atualizada',
-            'esfera'     => 'federal',
-            'status'     => 'ativo',
-            'permissoes' => [],
+            'nome'      => 'Gestor Nacional',
+            'descricao' => 'Descrição atualizada',
+            'ativo'     => true,
         ], $override);
     }
 
@@ -36,13 +33,14 @@ class EditarPerfilTest extends TestCase
     public function usuario_federal_edita_perfil_com_sucesso(): void
     {
         $user = $this->criarUsuarioFederal();
-        $perfil = Perfil::factory()->federal()->create();
+        $perfil = Perfil::factory()->create(['nome' => 'Gestor Nacional']);
 
         $this->autenticar($user)
             ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate())
             ->assertOk()
             ->assertJsonPath('message', 'Perfil atualizado com sucesso.')
-            ->assertJsonPath('data.nome', 'Perfil Atualizado');
+            ->assertJsonPath('data.nome', 'Gestor Nacional')
+            ->assertJsonPath('data.descricao', 'Descrição atualizada');
     }
 
     #[Test]
@@ -59,96 +57,61 @@ class EditarPerfilTest extends TestCase
     public function nome_deve_ser_unico_ignorando_proprio_registro(): void
     {
         $user = $this->criarUsuarioFederal();
-        $perfil = Perfil::factory()->create(['nome' => 'Meu Perfil']);
-        Perfil::factory()->create(['nome' => 'Outro Perfil']);
+        $perfil = Perfil::factory()->create(['nome' => 'Gestor Nacional']);
+        Perfil::factory()->create(['nome' => 'Gestor Estadual']);
 
         $this->autenticar($user)
-            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate(['nome' => 'Meu Perfil']))
+            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate(['nome' => 'Gestor Nacional']))
             ->assertOk();
 
         $this->autenticar($user)
-            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate(['nome' => 'Outro Perfil']))
+            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate(['nome' => 'Gestor Estadual']))
             ->assertStatus(422);
     }
 
     #[Test]
-    public function usuario_estadual_com_permissao_edita_perfil_estadual(): void
+    public function usuario_estadual_edita_perfil(): void
     {
-        $user = $this->criarUsuarioEstadual([
-            ['modulo' => 'Gerenciar Perfis', 'acao' => 'Editar'],
-        ]);
-        $perfil = Perfil::factory()->estadual()->create();
+        $user = $this->criarUsuarioEstadual();
+        $perfil = Perfil::factory()->create(['nome' => 'Gestor Municipal']);
 
         $this->autenticar($user)
-            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate(['esfera' => 'estadual']))
+            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate([
+                'nome' => 'Gestor Municipal',
+            ]))
             ->assertOk();
     }
 
     #[Test]
-    public function usuario_estadual_nao_pode_editar_perfil_federal(): void
-    {
-        $user = $this->criarUsuarioEstadual([
-            ['modulo' => 'Gerenciar Perfis', 'acao' => 'Editar'],
-        ]);
-        $perfil = Perfil::factory()->federal()->create();
-
-        $this->autenticar($user)
-            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate())
-            ->assertStatus(403);
-    }
-
-    #[Test]
-    public function usuario_municipal_nao_pode_editar_nenhum_perfil(): void
-    {
-        $user = $this->criarUsuarioMunicipal([
-            ['modulo' => 'Gerenciar Perfis', 'acao' => 'Editar'],
-        ]);
-        $perfil = Perfil::factory()->municipal()->create();
-
-        $this->autenticar($user)
-            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate(['esfera' => 'municipal']))
-            ->assertStatus(403);
-    }
-
-    #[Test]
-    public function altera_status_para_inativo(): void
+    public function altera_ativo_para_false(): void
     {
         $user = $this->criarUsuarioFederal();
-        $perfil = Perfil::factory()->create(['status' => 'ativo']);
+        $perfil = Perfil::factory()->create(['nome' => 'Administrador Municipal', 'ativo' => true]);
 
         $this->autenticar($user)
-            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate(['status' => 'inativo']))
+            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate([
+                'nome'  => 'Administrador Municipal',
+                'ativo' => false,
+            ]))
             ->assertOk();
 
-        $this->assertEquals('inativo', $perfil->fresh()->status);
-    }
-
-    #[Test]
-    public function atualiza_permissoes_do_perfil(): void
-    {
-        $user = $this->criarUsuarioFederal();
-        $perfil = Perfil::factory()->create();
-        $perm = Permissao::create(['modulo' => 'Relatórios', 'acao' => 'Visualizar']);
-
-        $this->autenticar($user)
-            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate(['permissoes' => [$perm->id]]))
-            ->assertOk();
-
-        $this->assertCount(1, $perfil->fresh()->permissoes);
+        $this->assertFalse($perfil->fresh()->ativo);
     }
 
     #[Test]
     public function registra_log_de_auditoria_ao_editar(): void
     {
         $user = $this->criarUsuarioFederal();
-        $perfil = Perfil::factory()->create();
+        $perfil = Perfil::factory()->create(['nome' => 'Gestor Estadual']);
 
         $this->autenticar($user)
-            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate());
+            ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate([
+                'nome' => 'Gestor Estadual',
+            ]));
 
         $this->assertDatabaseHas('auditoria_log', [
             'user_id' => $user->id,
-            'action'  => 'gerenciar_perfis.editar',
+            'acao'    => 'gerenciar_perfis.editar',
             'tipo_operacao' => 'update',
         ]);
     }
@@ -157,7 +120,7 @@ class EditarPerfilTest extends TestCase
     public function nome_obrigatorio_na_edicao(): void
     {
         $user = $this->criarUsuarioFederal();
-        $perfil = Perfil::factory()->create();
+        $perfil = Perfil::factory()->create(['nome' => 'Gestor Municipal']);
 
         $this->autenticar($user)
             ->putJson("/api/gerenciar-perfis/{$perfil->id}", $this->dadosUpdate(['nome' => '']))

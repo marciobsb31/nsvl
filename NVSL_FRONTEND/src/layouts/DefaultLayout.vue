@@ -121,13 +121,12 @@ const esferaMap: Record<string, string> = {
 
 const perfilAtivoLabel = computed(() => {
   const perfil = perfilAtivo.value
+  const esfera = user.value?.esfera_atuacao
   if (perfil) {
     const partes = [perfil.nome]
-    if (perfil.esfera) partes.push(esferaMap[perfil.esfera] ?? perfil.esfera)
-    if (perfil.orgao) partes.push(perfil.orgao)
+    if (esfera) partes.push(esferaMap[esfera] ?? esfera)
     return partes.join(' — ')
   }
-  const esfera = user.value?.esfera_atuacao
   return esfera ? (esferaMap[esfera] ?? esfera) : ''
 })
 

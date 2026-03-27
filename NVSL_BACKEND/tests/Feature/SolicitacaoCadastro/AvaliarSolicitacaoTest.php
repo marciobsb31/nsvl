@@ -87,7 +87,7 @@ class AvaliarSolicitacaoTest extends TestCase
     {
         $user = $this->criarUsuarioFederal();
         $perfil = Perfil::factory()->create();
-        $s = SolicitacaoCadastro::factory()->aprovada()->create();
+        $s = SolicitacaoCadastro::factory()->aprovado()->create();
 
         $this->autenticar($user)
             ->patchJson("/api/solicitacoes-cadastro/{$s->id}", [
@@ -123,12 +123,12 @@ class AvaliarSolicitacaoTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('auditoria_log', [
-            'action' => 'gerenciar_cadastros.avaliacao',
+            'acao' => 'gerenciar_cadastros.avaliacao',
         ]);
     }
 
     #[Test]
-    public function aprovacao_cria_usuario_e_vincula_perfil(): void
+    public function aprovacao_vincula_perfil_ao_usuario(): void
     {
         $user = $this->criarUsuarioFederal();
         $perfil = Perfil::factory()->create();
@@ -138,10 +138,6 @@ class AvaliarSolicitacaoTest extends TestCase
             ->patchJson("/api/solicitacoes-cadastro/{$s->id}", [
                 'status' => 'aprovado', 'perfil_id' => $perfil->id,
             ]);
-
-        $this->assertDatabaseHas('users', [
-            'cpf_hash' => $s->cpf_hash,
-        ]);
 
         $this->assertDatabaseHas('perfil_usuario', [
             'perfil_id' => $perfil->id,

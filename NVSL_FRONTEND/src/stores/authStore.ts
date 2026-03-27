@@ -6,32 +6,21 @@ export interface PerfilVigente {
     perfil_usuario_id: number
     perfil_id: number
     nome: string
-    esfera?: string
-    uf?: string | null
-    municipio?: string | null
-    orgao?: string | null
     data_inicio_vigencia?: string | null
     data_fim_vigencia?: string | null
-}
-
-export interface Permissao {
-    id: number
-    modulo: string
-    acao: string
+    ativo?: boolean
 }
 
 export interface AuthUser {
     id: number
     name: string
     email?: string
-    picture?: string
-    role?: string
+    sub?: string
     esfera_atuacao?: string
     uf_lotacao?: string
     municipio_lotacao?: string
-    perfil_usuario_ativo_id?: number | null
+    perfil_ativo_id?: number | null
     perfis_vigentes: PerfilVigente[]
-    permissoes: Permissao[]
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -45,15 +34,15 @@ export const useAuthStore = defineStore('auth', () => {
     const userName = computed(() => user.value?.name ?? '')
     const userEmail = computed(() => user.value?.email ?? '')
 
-    const permissoes = computed(() => user.value?.permissoes ?? [])
-
     const perfisAtivos = computed(() => user.value?.perfis_vigentes ?? [])
 
     const possuiMultiplosPerfis = computed(() => perfisAtivos.value.length > 1)
 
     const perfilAtivo = computed(() => {
         if (!user.value) return null
-        const ativoId = user.value.perfil_usuario_ativo_id
+        const ativoFromApi = perfisAtivos.value.find(p => p.ativo === true)
+        if (ativoFromApi) return ativoFromApi
+        const ativoId = user.value.perfil_ativo_id
         if (ativoId) {
             return perfisAtivos.value.find(p => p.perfil_usuario_id === ativoId) ?? perfisAtivos.value[0] ?? null
         }
@@ -70,38 +59,26 @@ export const useAuthStore = defineStore('auth', () => {
             id: Number(data.id),
             name: String(data.name ?? ''),
             email: data.email ? String(data.email) : undefined,
-            picture: data.picture ? String(data.picture) : undefined,
-            role: data.role ? String(data.role) : undefined,
+            sub: data.sub ? String(data.sub) : undefined,
             esfera_atuacao: data.esfera_atuacao ? String(data.esfera_atuacao) : undefined,
             uf_lotacao: data.uf_lotacao ? String(data.uf_lotacao) : undefined,
             municipio_lotacao: data.municipio_lotacao ? String(data.municipio_lotacao) : undefined,
-            perfil_usuario_ativo_id: data.perfil_usuario_ativo_id ? Number(data.perfil_usuario_ativo_id) : null,
+            perfil_ativo_id: data.perfil_ativo_id ? Number(data.perfil_ativo_id) : null,
             perfis_vigentes: rawPerfis.map((p: Record<string, unknown>) => ({
                 perfil_usuario_id: Number(p.perfil_usuario_id),
                 perfil_id: Number(p.perfil_id),
                 nome: String(p.nome ?? ''),
-                esfera: p.esfera ? String(p.esfera) : undefined,
-                uf: p.uf ? String(p.uf) : null,
-                municipio: p.municipio ? String(p.municipio) : null,
-                orgao: p.orgao ? String(p.orgao) : null,
                 data_inicio_vigencia: p.data_inicio_vigencia ? String(p.data_inicio_vigencia) : null,
                 data_fim_vigencia: p.data_fim_vigencia ? String(p.data_fim_vigencia) : null,
-            })),
-            permissoes: (Array.isArray(data.permissoes) ? data.permissoes : []).map((perm: Record<string, unknown>) => ({
-                id: Number(perm.id),
-                modulo: String(perm.modulo ?? ''),
-                acao: String(perm.acao ?? ''),
+                ativo: p.ativo === true || p.ativo === 'true',
             })),
         }
     }
 
-    function temPermissao(modulo: string, acao?: string): boolean {
+    function temPermissao(_modulo: string, _acao?: string): boolean {
         const esfera = user.value?.esfera_atuacao ?? 'federal'
-        if (esfera === 'federal') return true
-        const perms = permissoes.value
-        if (!perms.length) return false
-        if (acao) return perms.some(p => p.modulo === modulo && p.acao === acao)
-        return perms.some(p => p.modulo === modulo)
+        if (esfera.toLowerCase() === 'federal') return true
+        return perfisAtivos.value.length > 0
     }
 
     async function trocarContexto(perfilUsuarioId: number): Promise<void> {
@@ -149,7 +126,6 @@ export const useAuthStore = defineStore('auth', () => {
         isAuthenticated,
         userName,
         userEmail,
-        permissoes,
         perfisAtivos,
         possuiMultiplosPerfis,
         perfilAtivo,

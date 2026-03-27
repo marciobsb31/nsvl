@@ -17,8 +17,8 @@ class SolicitacaoCadastroRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'perfilId.required'   => 'Selecione o perfil.',
-            'perfilId.exists'     => 'Perfil informado é inválido.',
+            'perfilId.required'       => 'Selecione o perfil.',
+            'perfilId.exists'         => 'Perfil informado é inválido.',
             'vigenciaInicio.required' => 'Informe a vigência inicial.',
         ];
     }
@@ -26,14 +26,13 @@ class SolicitacaoCadastroRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'perfilId'        => 'perfil',
-            'vigenciaInicio'  => 'vigência inicial',
-            'vigenciaFim'     => 'vigência fim',
-            'emailInstitucional' => 'e-mail institucional',
-            'telefoneInstitucional' => 'telefone institucional',
-            'telefonePessoal' => 'telefone pessoal',
-            'esferaAtuacao'  => 'esfera de atuação',
-            'aceiteTermo'    => 'aceite do termo de uso e privacidade',
+            'perfilId'               => 'perfil',
+            'vigenciaInicio'         => 'vigência inicial',
+            'vigenciaFim'            => 'vigência fim',
+            'emailInstitucional'     => 'e-mail institucional',
+            'telefoneInstitucional'  => 'telefone institucional',
+            'esferaAtuacao'          => 'esfera de atuação',
+            'aceiteTermo'            => 'aceite do termo de uso e privacidade',
         ];
     }
 
@@ -55,20 +54,19 @@ class SolicitacaoCadastroRequest extends FormRequest
             : ['nullable', 'date'];
 
         return [
-            'nome'                => ['required', 'string', 'max:255'],
-            'CPF'                 => $cpfRules,
-            'emailInstitucional'  => ['required', 'email', 'max:255'],
+            'nome'                  => ['required', 'string', 'max:255'],
+            'CPF'                   => $cpfRules,
+            'emailInstitucional'    => ['required', 'email', 'max:255'],
             'telefoneInstitucional' => ['required', 'string', 'regex:/^\d{10,11}$/', 'max:20'],
-            'telefonePessoal'     => ['nullable', 'string', 'regex:/^\d{10,11}$/', 'max:20'],
-            'esferaAtuacao'       => ['required', Rule::in(['federal', 'estadual', 'municipal'])],
-            'uf'                  => ['required', 'string', 'size:2'],
-            'municipio'           => ['required', 'string', 'max:100'],
-            'orgao'               => ['required', 'string', 'max:255'],
-            'cargo'               => ['required', 'string', 'max:255'],
-            'aceiteTermo'         => ['required', 'accepted'],
-            'perfilId'            => $perfilRules,
-            'vigenciaInicio'      => $vigenciaInicioRules,
-            'vigenciaFim'         => ['nullable', 'date', 'after_or_equal:vigenciaInicio'],
+            'esferaAtuacao'         => ['required', Rule::in(['federal', 'estadual', 'municipal'])],
+            'uf'                    => ['required', 'string', 'size:2'],
+            'municipio'             => ['required', 'string', 'max:100'],
+            'orgao'                 => ['required', 'string', 'max:255'],
+            'cargo'                 => ['required', 'string', 'max:255'],
+            'aceiteTermo'           => ['required', 'accepted'],
+            'perfilId'              => $perfilRules,
+            'vigenciaInicio'        => $vigenciaInicioRules,
+            'vigenciaFim'           => ['nullable', 'date', 'after_or_equal:vigenciaInicio'],
         ];
     }
 
@@ -82,10 +80,6 @@ class SolicitacaoCadastroRequest extends FormRequest
         if (is_string($tel)) {
             $this->merge(['telefoneInstitucional' => preg_replace('/\D/', '', $tel)]);
         }
-        $telP = $this->input('telefonePessoal');
-        if (is_string($telP)) {
-            $this->merge(['telefonePessoal' => preg_replace('/\D/', '', $telP) ?: null]);
-        }
 
         $uf = $this->input('uf');
         if (is_string($uf)) {
@@ -97,5 +91,4 @@ class SolicitacaoCadastroRequest extends FormRequest
             $this->merge(['municipio' => trim($municipio)]);
         }
     }
-
 }

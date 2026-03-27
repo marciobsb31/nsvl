@@ -10,20 +10,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Model SolicitacaoCadastro — solicitações de acesso ao sistema
  *
- * CPF armazenado apenas como hash (HMAC-SHA256) por segurança e LGPD.
- *
- * @property int    $id
- * @property string $cpf_hash
- * @property string $nome
- * @property string $email_institucional
+ * @property int         $id
+ * @property int|null    $user_id               FK → usuarios.id
+ * @property string      $email_institucional
  * @property string|null $telefone_institucional
- * @property string|null $telefone_pessoal
- * @property string $esfera_atuacao  federal|estadual|municipal
- * @property string $uf
- * @property string $municipio
- * @property string $orgao
+ * @property int|null    $esfera_id             FK → esferas.id
+ * @property int|null    $uf_id                 FK → ufs.id
+ * @property int|null    $municipio_id          FK → municipios.id
+ * @property string      $orgao
  * @property string|null $cargo
- * @property string $status  em_analise|aprovado|reprovado
+ * @property int|null    $perfil_id_solicitado  FK → perfis.id
+ * @property \Carbon\Carbon|null $vigencia_inicio_solicitada
+ * @property \Carbon\Carbon|null $vigencia_fim_solicitada
+ * @property int|null    $status_id             FK → status_solicitacao.id
+ * @property \Carbon\Carbon|null $aceite_termo_at
+ * @property string|null $justificativa_reprovacao
  */
 class SolicitacaoCadastro extends Model
 {
@@ -31,43 +32,55 @@ class SolicitacaoCadastro extends Model
     protected $table = 'solicitacoes_cadastro';
 
     protected $fillable = [
-        'cpf_hash',
-        'cpf_exibicao',
-        'nome',
+        'user_id',
         'email_institucional',
         'telefone_institucional',
-        'telefone_pessoal',
-        'esfera_atuacao',
-        'uf',
-        'municipio',
+        'esfera_id',
+        'uf_id',
+        'municipio_id',
         'orgao',
         'cargo',
         'perfil_id_solicitado',
         'vigencia_inicio_solicitada',
         'vigencia_fim_solicitada',
-        'status',
+        'status_id',
         'aceite_termo_at',
         'justificativa_reprovacao',
     ];
 
     protected $casts = [
+        'aceite_termo_at'            => 'datetime',
         'vigencia_inicio_solicitada' => 'date',
-        'vigencia_fim_solicitada' => 'date',
-        'aceite_termo_at' => 'datetime',
+        'vigencia_fim_solicitada'    => 'date',
+        'esfera_id'                  => 'integer',
+        'uf_id'           => 'integer',
+        'municipio_id'    => 'integer',
+        'status_id'       => 'integer',
+        'user_id'         => 'integer',
     ];
 
-    public const STATUS_EM_ANALISE = 'em_analise';
-    public const STATUS_APROVADO = 'aprovado';
-    public const STATUS_REPROVADO = 'reprovado';
+    // -------------------------------------------------------
+    // Relações
+    // -------------------------------------------------------
 
-    public function dominioEsfera(): BelongsTo
+    public function usuario(): BelongsTo
     {
-        return $this->belongsTo(Esfera::class, 'esfera_atuacao', 'codigo');
+        return $this->belongsTo(Usuario::class, 'user_id');
     }
 
-    public function ufCadastro(): BelongsTo
+    public function esfera(): BelongsTo
     {
-        return $this->belongsTo(Uf::class, 'uf', 'sigla');
+        return $this->belongsTo(Esfera::class, 'esfera_id');
+    }
+
+    public function ufRelacao(): BelongsTo
+    {
+        return $this->belongsTo(Uf::class, 'uf_id');
+    }
+
+    public function municipioRelacao(): BelongsTo
+    {
+        return $this->belongsTo(Municipio::class, 'municipio_id');
     }
 
     public function perfilSolicitado(): BelongsTo
@@ -75,43 +88,84 @@ class SolicitacaoCadastro extends Model
         return $this->belongsTo(Perfil::class, 'perfil_id_solicitado');
     }
 
-    /**
-     * Retorna CPF para exibição.
-     * Usa cpf_exibicao quando preenchido (ambiente dev/teste), senão mascarado.
-     */
-    public function getCpfMascaradoAttribute(): string
+    public function statusSolicitacao(): BelongsTo
     {
-        $exibicao = $this->getAttribute('cpf_exibicao');
+        return $this->belongsTo(StatusSolicitacao::class, 'status_id');
+    }
 
-        return $exibicao ?: '***.***.***-**';
+    // -------------------------------------------------------
+    // Acessores de conveniência (compatibilidade)
+    // -------------------------------------------------------
+
+    public function getStatusAttribute(): string
+    {
+        return $this->statusSolicitacao?->nome ?? StatusSolicitacao::EM_ANALISE;
+    }
+
+    public function getNomeAttribute(): string
+    {
+        return $this->usuario?->nome ?? '';
+    }
+
+    public function getEsferaAtuacaoAttribute(): string
+    {
+        return $this->esfera?->nome ?? '';
+    }
+
+    public function getUfAttribute(): string
+    {
+        return $this->ufRelacao?->sigla ?? '';
+    }
+
+    public function getUfSiglaAttribute(): string
+    {
+        return $this->getUfAttribute();
+    }
+
+    public function getMunicipioAttribute(): string
+    {
+        return $this->municipioRelacao?->nome ?? '';
+    }
+
+    public function getMunicipioNomeAttribute(): string
+    {
+        return $this->getMunicipioAttribute();
     }
 
     /**
      * Scope: filtra solicitações conforme esfera de atuação do usuário.
      *  - Federal: acesso irrestrito
-     *  - Estadual: apenas esfera_atuacao=estadual e mesma UF
-     *  - Municipal: apenas esfera_atuacao=municipal, mesma UF e mesmo município
+     *  - Estadual: apenas mesma esfera + mesma UF
+     *  - Municipal: apenas mesma esfera + mesma UF + mesmo município
      *
      * @param Builder<self> $query
      */
-    public function scopeVisivelPara(Builder $query, User $user): void
+    public function scopeVisivelPara(Builder $query, Usuario $user): void
     {
-        $esfera = $user->esfera_atuacao ?? 'federal';
+        $esfera = $user->esfera_atuacao;
 
-        if ($esfera === 'federal') {
+        if ($esfera === 'federal' || $esfera === 'Federal') {
             return;
         }
 
-        if ($esfera === 'estadual') {
-            $query->where('esfera_atuacao', 'estadual')
-                ->where('uf', $user->uf_lotacao ?? '');
+        $ufSigla = $user->uf_lotacao;
+        $municipioNome = $user->municipio_lotacao;
+
+        if (strtolower($esfera) === 'estadual') {
+            $esferaId = Esfera::where('nome', 'Estadual')->value('id');
+            $ufId = Uf::where('sigla', $ufSigla)->value('id');
+            $query->where('esfera_id', $esferaId)
+                ->where('uf_id', $ufId);
             return;
         }
 
-        if ($esfera === 'municipal') {
-            $query->where('esfera_atuacao', 'municipal')
-                ->where('uf', $user->uf_lotacao ?? '')
-                ->where('municipio', $user->municipio_lotacao ?? '');
+        if (strtolower($esfera) === 'municipal') {
+            $esferaId = Esfera::where('nome', 'Municipal')->value('id');
+            $ufId = Uf::where('sigla', $ufSigla)->value('id');
+            $municipioId = Municipio::where('nome', $municipioNome)->where('uf_id', $ufId)->value('id');
+            $query->where('esfera_id', $esferaId)
+                ->where('uf_id', $ufId)
+                ->where('municipio_id', $municipioId);
         }
     }
 }

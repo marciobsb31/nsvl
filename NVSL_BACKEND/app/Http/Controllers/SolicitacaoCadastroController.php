@@ -8,7 +8,7 @@ use App\Http\Requests\AvaliarSolicitacaoRequest;
 use App\Http\Requests\ListarSolicitacoesRequest;
 use App\Http\Requests\SolicitacaoCadastroRequest;
 use App\Models\SolicitacaoCadastro;
-use App\Models\User;
+use App\Models\Usuario;
 use App\Services\SolicitacaoCadastro\SolicitacaoCadastroService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,9 +21,6 @@ class SolicitacaoCadastroController extends Controller
         private readonly SolicitacaoCadastroService $service
     ) {}
 
-    /**
-     * GET /api/solicitacoes-cadastro
-     */
     public function index(ListarSolicitacoesRequest $request): JsonResponse
     {
         $user = $this->usuarioAutenticado();
@@ -32,9 +29,6 @@ class SolicitacaoCadastroController extends Controller
         return response()->json(['data' => $this->service->listar($user, $filtros)]);
     }
 
-    /**
-     * GET /api/solicitacoes-cadastro/{id}
-     */
     public function show(int $id): JsonResponse
     {
         $user = $this->usuarioAutenticado();
@@ -48,9 +42,6 @@ class SolicitacaoCadastroController extends Controller
         return response()->json($this->service->detalhar($user, $id));
     }
 
-    /**
-     * POST /api/solicitacoes-cadastro
-     */
     public function store(SolicitacaoCadastroRequest $request): JsonResponse
     {
         $user = Auth::guard('sanctum')->user();
@@ -59,9 +50,6 @@ class SolicitacaoCadastroController extends Controller
         return response()->json($result, 201);
     }
 
-    /**
-     * PATCH /api/solicitacoes-cadastro/{id}
-     */
     public function update(AvaliarSolicitacaoRequest $request, int $id): JsonResponse
     {
         $user = $this->usuarioAutenticado();
@@ -75,9 +63,6 @@ class SolicitacaoCadastroController extends Controller
         return response()->json($this->service->avaliar($user, $id, $request->validated()));
     }
 
-    /**
-     * GET /api/solicitacoes-cadastro/verificar-cpf?cpf=XXX
-     */
     public function verificarCpf(Request $request): JsonResponse
     {
         return response()->json(
@@ -85,9 +70,6 @@ class SolicitacaoCadastroController extends Controller
         );
     }
 
-    /**
-     * PATCH /api/solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/ativar
-     */
     public function ativarPerfilVinculado(int $id, int $perfilUsuarioId): JsonResponse
     {
         $user = $this->usuarioAutenticado();
@@ -101,9 +83,6 @@ class SolicitacaoCadastroController extends Controller
         return response()->json($this->service->ativarPerfil($user, $id, $perfilUsuarioId));
     }
 
-    /**
-     * PATCH /api/solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/desativar
-     */
     public function desativarPerfilVinculado(int $id, int $perfilUsuarioId): JsonResponse
     {
         $user = $this->usuarioAutenticado();
@@ -117,9 +96,6 @@ class SolicitacaoCadastroController extends Controller
         return response()->json($this->service->desativarPerfil($user, $id, $perfilUsuarioId));
     }
 
-    /**
-     * POST /api/solicitacoes-cadastro/{id}/perfis
-     */
     public function adicionarPerfilVinculado(AdicionarPerfilVinculadoRequest $request, int $id): JsonResponse
     {
         $user = $this->usuarioAutenticado();
@@ -136,10 +112,10 @@ class SolicitacaoCadastroController extends Controller
         );
     }
 
-    private function usuarioAutenticado(): User
+    private function usuarioAutenticado(): Usuario
     {
         $user = Auth::user();
-        if (!$user instanceof User) {
+        if (!$user instanceof Usuario) {
             throw ApiException::unauthenticated();
         }
         return $user;

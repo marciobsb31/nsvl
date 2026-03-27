@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Console\Command;
 
 class GerarTokenTesteCommand extends Command
@@ -16,9 +16,9 @@ class GerarTokenTesteCommand extends Command
         $perfil = $this->argument('perfil');
 
         $user = match ($perfil) {
-            'federal'  => User::where('govbr_sub', 'teste-federal-001')->first(),
-            'estadual' => User::where('govbr_sub', 'teste-estadual-go-002')->first(),
-            'municipal'=> User::where('govbr_sub', 'teste-municipal-alexania-003')->first(),
+            'federal'  => Usuario::where('govbr_sub', 'teste-federal-001')->first(),
+            'estadual' => Usuario::where('govbr_sub', 'teste-estadual-go-002')->first(),
+            'municipal'=> Usuario::where('govbr_sub', 'teste-municipal-alexania-003')->first(),
             default    => null,
         };
 
@@ -29,7 +29,7 @@ class GerarTokenTesteCommand extends Command
 
         $token = $user->createToken('teste-' . $perfil)->plainTextToken;
 
-        $this->info("Token para {$user->name} ({$perfil}):");
+        $this->info("Token para {$user->nome} ({$perfil}):");
         $this->line($token);
         $this->newLine();
         $this->comment('Use no header: Authorization: Bearer ' . substr($token, 0, 20) . '...');

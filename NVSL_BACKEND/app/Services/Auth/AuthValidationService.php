@@ -4,12 +4,13 @@ namespace App\Services\Auth;
 
 use App\DTOs\Auth\GovBrUserDTO;
 use App\Models\SolicitacaoCadastro;
-use App\Models\User;
+use App\Models\StatusSolicitacao;
+use App\Models\Usuario;
 use Illuminate\Validation\ValidationException;
 
 class AuthValidationService
 {
-    public function validarOuFalhar(GovBrUserDTO $govBrUser): User
+    public function validarOuFalhar(GovBrUserDTO $govBrUser): Usuario
     {
         $cpf = preg_replace('/\D/', '', (string) ($govBrUser->cpf ?? $govBrUser->sub));
         if (strlen($cpf) !== 11) {
@@ -18,21 +19,20 @@ class AuthValidationService
             ]);
         }
 
-        $cpfHash = User::hashCpf($cpf);
-        $user = User::where('govbr_sub', $govBrUser->sub)->first();
+        $user = Usuario::where('govbr_sub', $govBrUser->sub)->first();
 
-        if ($user && $user->cpf_hash && $user->cpf_hash !== $cpfHash) {
+        if ($user && $user->cpf && $user->cpf !== $cpf) {
             throw ValidationException::withMessages([
                 'auth' => 'Os dados do GOV.BR não correspondem ao cadastro existente no sistema.',
             ]);
         }
 
         if (!$user) {
-            $user = User::where('cpf_hash', $cpfHash)->first();
+            $user = Usuario::where('cpf', $cpf)->first();
         }
 
         if ($user) {
-            $this->sincronizarIdentidade($user, $govBrUser, $cpfHash);
+            $this->sincronizarIdentidade($user, $govBrUser, $cpf);
 
             if (!$user->possuiPerfilVigente()) {
                 throw ValidationException::withMessages([
@@ -43,16 +43,20 @@ class AuthValidationService
             return $user->fresh() ?? $user;
         }
 
-        $solicitacao = SolicitacaoCadastro::where('cpf_hash', $cpfHash)
+        $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
+        $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
+        $statusReprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::REPROVADO);
+
+        $solicitacao = SolicitacaoCadastro::whereHas('usuario', fn ($q) => $q->where('cpf', $cpf))
             ->latest('id')
             ->first();
 
         if ($solicitacao) {
-            $mensagem = match ($solicitacao->status) {
-                SolicitacaoCadastro::STATUS_EM_ANALISE => 'Solicitação de acesso em análise.',
-                SolicitacaoCadastro::STATUS_REPROVADO => 'Sua solicitação de cadastro foi reprovada.',
-                SolicitacaoCadastro::STATUS_APROVADO => 'Seu cadastro foi aprovado, mas nenhum perfil de acesso foi configurado. Procure o administrador do sistema.',
-                default => 'Seu acesso não pôde ser validado no momento.',
+            $mensagem = match ($solicitacao->status_id) {
+                $statusEmAnalise => 'Solicitação de acesso em análise.',
+                $statusReprovado => 'Sua solicitação de cadastro foi reprovada.',
+                $statusAprovado  => 'Seu cadastro foi aprovado, mas nenhum perfil de acesso foi configurado. Procure o administrador do sistema.',
+                default          => 'Seu acesso não pôde ser validado no momento.',
             };
 
             throw ValidationException::withMessages(['auth' => $mensagem]);
@@ -63,9 +67,9 @@ class AuthValidationService
         ]);
     }
 
-    private function sincronizarIdentidade(User $user, GovBrUserDTO $govBrUser, string $cpfHash): void
+    private function sincronizarIdentidade(Usuario $user, GovBrUserDTO $govBrUser, string $cpf): void
     {
-        $conflitoSub = User::where('govbr_sub', $govBrUser->sub)
+        $conflitoSub = Usuario::where('govbr_sub', $govBrUser->sub)
             ->where('id', '<>', $user->id)
             ->exists();
 
@@ -77,9 +81,9 @@ class AuthValidationService
 
         $user->fill([
             'govbr_sub' => $govBrUser->sub,
-            'cpf_hash' => $cpfHash,
-            'name' => $govBrUser->name ?: $user->name,
-            'email' => $govBrUser->email ?: $user->email,
+            'cpf'       => $cpf,
+            'nome'      => $govBrUser->name ?: $user->nome,
+            'email'     => $govBrUser->email ?: $user->email,
         ]);
 
         if ($user->isDirty()) {
