@@ -4,7 +4,7 @@
         :subtitle="'Aplique filtros e clique em <strong>Pesquisar</strong>.'"
         customClass="mb-3">
         <template v-slot:actions>
-          <br-button :color-mode="$appTheme" emphasis="primary" @click="abrirPainelCadastro" aria-label="Cadastrar usuário">
+          <br-button :color-mode="$appTheme ==='dark' ? $appTheme : undefined" emphasis="primary" @click="router.push('/cadastrar-usuario')" aria-label="Cadastrar usuário">
             Cadastrar usuário
           </br-button>
         </template>
@@ -172,6 +172,7 @@ import { useNotification } from '@/core/composables/useNotification'
 import { useAuth } from '@/core/composables/useAuth'
 import HeaderPage from '@/core/components/HeaderPage/HeaderPage.vue'
 import router from '@/router'
+import { BrButton, BrTooltip } from '@govbr-ds/webcomponents-vue'
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
 const { error, success } = useNotification()

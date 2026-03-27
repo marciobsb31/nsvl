@@ -8,6 +8,7 @@
 import { onMounted, watch } from 'vue';
 import { useBreadcrumb } from '@/core/composables/useBreadcrumb';
 import { useTheme } from '@/core/composables/useTheme';
+import { BrBreadcrumb } from '@govbr-ds/webcomponents-vue';
 
 const { items } = useBreadcrumb();
 const { mode } = useTheme();

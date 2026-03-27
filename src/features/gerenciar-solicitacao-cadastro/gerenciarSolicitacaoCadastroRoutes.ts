@@ -11,10 +11,19 @@ export const gerenciarSolicitacaoCadastroRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/cadastrar-usuario',
+    name: 'cadastrar-usuario',
+    component: () =>
+      import('@/features/gerenciar-solicitacao-cadastro/pages/CadastrarUsuarioPage.vue'),
+    meta: {
+      title: 'Cadastrar Usuário — NVSL',
+    },
+  },
+  {
     path: '/detalhar-solicitacao/:id',
     name: 'detalhar-solicitacao',
     component: () =>
-      import('@/features/gerenciar-solicitacao-cadastro/pages/DetalherSolicitacaoCadastroPage.vue'),
+      import('@/features/gerenciar-solicitacao-cadastro/pages/DetalheSolicitacaoCadastroPage.vue'),
     meta: {
       title: 'Detalhar/Avaliar Solicitação de Cadastro — NVSL',
     },
