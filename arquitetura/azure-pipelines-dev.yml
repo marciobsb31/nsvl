@@ -60,7 +60,8 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                envsubst < /public/env-config.js > public/env-config.js
+                envsubst < public/env-config.js > public/env-config
+                mv public/env-config public/env-config.js
                 cat public/env-config.js
           - task: Docker@2
             displayName: Build e Push da Imagem
