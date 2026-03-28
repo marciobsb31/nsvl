@@ -25,6 +25,10 @@ Desktop.ini
 # Evidências locais (não versionar)
 Evidencia_Cadastro_Perfil_NVSL.pdf
 
+# Documentação local (não enviar ao repositório)
+Documentos/
+docs/
+
 # Playwright artifacts
 NVSL_FRONTEND/playwright-report/
 NVSL_FRONTEND/test-results/
