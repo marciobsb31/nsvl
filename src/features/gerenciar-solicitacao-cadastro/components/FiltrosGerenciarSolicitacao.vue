@@ -92,7 +92,7 @@
         :disabled="carregando"
         aria-label="Pesquisar solicitações"
       >
-        Pesquisar
+        Listar
       </br-button>
     </div>
   </div>
