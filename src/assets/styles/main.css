@@ -190,4 +190,8 @@ button.br-button.circle,
   color: var(--color-secondary-07, #555);
 }
 
+input::placeholder {
+  font-style: normal;
+}
+
 

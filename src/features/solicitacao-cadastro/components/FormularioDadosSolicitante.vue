@@ -50,7 +50,7 @@
     <div class="col-12 col-md-6">
       <div class="br-input">
         <label for="input-email">E-mail institucional<span class="text-red-50 text-up-01"> *</span></label>
-        <input id="input-email" type="email" placeholder="seu.nome@email.com" v-model="emailInstitucional" />
+        <input id="input-email" type="email" placeholder="seu.nome@email.com" v-model="emailInstitucional" maxlength="60"/>
         <Feedback v-if="errorsEmail" :message="errorsEmail" type="danger" />
       </div>
     </div>

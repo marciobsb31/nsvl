@@ -417,7 +417,6 @@ onMounted(() => {
 /* —— Página (Padrão Digital / eGOV) —— */
 .solicitacao-page {
   width: 100%;
-  padding: 1rem 0 2.5rem;
   background: var(--background);
 }
 

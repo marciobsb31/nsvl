@@ -1,5 +1,16 @@
 <template>
   <div class="formulario-cadastrar-usuario">
+     <div class="formulario-header">
+      <h2 class="formulario-titulo">Cadastrar usuário</h2>
+      <button
+        class="br-button secondary small"
+        type="button"
+        @click="$emit('voltar')"
+        aria-label="Voltar"
+      >
+        Voltar
+      </button>
+    </div>
     <form novalidate @submit.prevent="onConfirmar">
       <div class="formulario-secao">
         <h3 class="secao-titulo">Dados do solicitante</h3>

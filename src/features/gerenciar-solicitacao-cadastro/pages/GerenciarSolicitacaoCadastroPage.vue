@@ -4,7 +4,7 @@
         :subtitle="'Aplique filtros e clique em <strong>Pesquisar</strong>.'"
         customClass="mb-3">
         <template v-slot:actions>
-          <br-button :color-mode="$appTheme ==='dark' ? $appTheme : undefined" emphasis="primary" @click="router.push('/cadastrar-usuario')" aria-label="Cadastrar usuário">
+          <br-button :color-mode="$appTheme ==='dark' ? $appTheme : undefined" emphasis="primary" @click="abrirPainelCadastro" aria-label="Cadastrar usuário">
             Cadastrar usuário
           </br-button>
         </template>
@@ -84,20 +84,17 @@
 
                 </td>
                 <td>
-                  <br-tooltip position="left">
                   <button
-                    class="br-button secondary small circle"
+                    class="br-button secondary small"
                     type="button"
-                    @click="detalhar(s.id)"
+                    @click="detalhar(s)"
                     :disabled="carregandoDetalhe"
                     :aria-label="rotuloBotaoDetalhar(s.status)"
                     :title="rotuloBotaoDetalhar(s.status)"
                     slot="trigger"
                   >
-                    <i class="fas fa-search" aria-hidden="true"></i>
+                    {{ rotuloBotaoDetalhar(s.status) }}
                   </button>
-                  <div slot="content">{{rotuloBotaoDetalhar(s.status)}}</div>
-                  </br-tooltip>
                 </td>
               </tr>
             </tbody>
@@ -337,51 +334,48 @@ function rotuloBotaoDetalhar(status: string) {
 
 const carregandoDetalhe = ref(false)
 
-const detalhar = (id: number) => {
-  router.push({name:'detalhar-solicitacao', params:{id}})
-}
 
-// async function detalhar(s: SolicitacaoGerenciarItem) {
-//   const id = s?.id
-//   if (id == null || id === undefined) {
-//     console.error('[Detalhar] ID inválido — item:', s)
-//     error('Não foi possível identificar a solicitação. Tente clicar em Listar novamente.')
-//     return
-//   }
-//   console.log('[Detalhar] Iniciando — id:', id, 'nome:', s?.nome)
-//   carregandoDetalhe.value = true
-//   painelCadastroAberto.value = false
-//   painelDetalharAberto.value = false
-//   detalheSelecionado.value = null
-//   try {
-//     const detalhe = await obterSolicitacaoCadastro(id)
-//     console.log('[Detalhar] Resposta da API:', detalhe ? { id: detalhe.id, nome: detalhe.nome, perfis: detalhe.perfis_vinculados?.length } : null)
-//     if (!detalhe?.id) {
-//       throw new Error('Resposta da API inválida: dados incompletos.')
-//     }
-//     detalheSelecionado.value = detalhe
-//     painelDetalharAberto.value = true
-//     console.log('[Detalhar] Painel aberto com sucesso.')
-//   } catch (e: unknown) {
-//     const err = e as { response?: { status?: number; data?: { message?: string } }; message?: string }
-//     const status = err?.response?.status
-//     let msg =
-//       err?.response?.data?.message ??
-//       err?.message ??
-//       'Erro ao carregar detalhes da solicitação.'
-//     if (status === 401) {
-//       msg = 'Sessão expirada. Faça login novamente.'
-//     } else if (status === 403) {
-//       msg = 'Acesso negado a esta solicitação.'
-//     } else if (status === 404) {
-//       msg = 'Solicitação não encontrada.'
-//     }
-//     console.error('[Detalhar] Erro ao abrir painel — status:', status, 'msg:', msg, 'objeto:', e)
-//     error(msg)
-//   } finally {
-//     carregandoDetalhe.value = false
-//   }
-// }
+async function detalhar(s: SolicitacaoGerenciarItem) {
+  const id = s?.id
+  if (id == null || id === undefined) {
+    console.error('[Detalhar] ID inválido — item:', s)
+    error('Não foi possível identificar a solicitação. Tente clicar em Listar novamente.')
+    return
+  }
+  console.log('[Detalhar] Iniciando — id:', id, 'nome:', s?.nome)
+  carregandoDetalhe.value = true
+  painelCadastroAberto.value = false
+  painelDetalharAberto.value = false
+  detalheSelecionado.value = null
+  try {
+    const detalhe = await obterSolicitacaoCadastro(id)
+    console.log('[Detalhar] Resposta da API:', detalhe ? { id: detalhe.id, nome: detalhe.nome, perfis: detalhe.perfis_vinculados?.length } : null)
+    if (!detalhe?.id) {
+      throw new Error('Resposta da API inválida: dados incompletos.')
+    }
+    detalheSelecionado.value = detalhe
+    painelDetalharAberto.value = true
+    console.log('[Detalhar] Painel aberto com sucesso.')
+  } catch (e: unknown) {
+    const err = e as { response?: { status?: number; data?: { message?: string } }; message?: string }
+    const status = err?.response?.status
+    let msg =
+      err?.response?.data?.message ??
+      err?.message ??
+      'Erro ao carregar detalhes da solicitação.'
+    if (status === 401) {
+      msg = 'Sessão expirada. Faça login novamente.'
+    } else if (status === 403) {
+      msg = 'Acesso negado a esta solicitação.'
+    } else if (status === 404) {
+      msg = 'Solicitação não encontrada.'
+    }
+    console.error('[Detalhar] Erro ao abrir painel — status:', status, 'msg:', msg, 'objeto:', e)
+    error(msg)
+  } finally {
+    carregandoDetalhe.value = false
+  }
+}
 
 async function aprovarSolicitacao(payload?: { perfilId?: string | number | null; vigenciaInicio?: string; vigenciaFim?: string }) {
   if (!detalheSelecionado.value) return

@@ -25,7 +25,7 @@ defineProps({
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(19, 81, 180, 0.08);
   border: 1px solid var(--color-secondary-03, #e8e8e8);
-  background: var(--bg-color, #fff);
+  background: var(--background);
 }
 
 .nvsl-card__title {

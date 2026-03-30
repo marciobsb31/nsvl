@@ -123,6 +123,9 @@ const logoAtual = computed(() => {
   .logo-gov {
     height: 50px;
   }
+  .logo{
+    height: 50px;
+  }
 }
 
 @media (max-width: 991px) {
