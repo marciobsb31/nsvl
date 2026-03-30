@@ -12,6 +12,11 @@
         :placeholder="placeholder"
         :value="displayValue"
         :disabled="disabled"
+        role="combobox"
+        aria-autocomplete="list"
+        :aria-expanded="isOpen"
+        :aria-controls="listboxId"
+        :aria-activedescendant="isOpen ? activeDescendantId : undefined"
         autocomplete="off"
         @input="onInput"
         @focus="onFocus"
@@ -25,7 +30,8 @@
         class="br-button"
         type="button"
         :aria-label="`Exibir lista de ${label}`"
-        tabindex="-1"
+        :aria-expanded="isOpen"
+        :aria-controls="listboxId"
         @click="toggle"
       >
         <i class="fas" :class="isOpen ? 'fa-angle-up' : 'fa-angle-down'" aria-hidden="true"></i>
@@ -34,8 +40,9 @@
     <div
       v-if="isOpen"
       class="br-list br-list--autocomplete"
+      :id="listboxId"
       role="listbox"
-      tabindex="0"
+      tabindex="-1"
       @keydown="onListKeydown"
     >
       <div
@@ -43,6 +50,7 @@
         :key="String(option.value)"
         class="br-item"
         role="option"
+        :id="optionId(option)"
         :aria-selected="index === highlightedIndex"
         :class="{ 'highlighted': index === highlightedIndex }"
         @mousedown.prevent="selectOption(option)"
@@ -98,6 +106,17 @@ const inputRef = ref<HTMLInputElement | null>(null)
 const isOpen = ref(false)
 const searchText = ref('')
 const highlightedIndex = ref(0)
+
+const listboxId = `listbox-${inputId}`
+
+function optionId(option: SelectAutocompleteOption) {
+  return `opt-${inputId}-${String(option.value)}`
+}
+
+const activeDescendantId = computed(() => {
+  const opt = filteredOptions.value[highlightedIndex.value]
+  return opt ? optionId(opt) : undefined
+})
 
 const filteredOptions = computed(() => {
   if (!props.options.length) return []

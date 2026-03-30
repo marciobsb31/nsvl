@@ -15,8 +15,14 @@
                 </div>
                 <div class="header-right">
                     <img v-if="logoGov && isDesktop" :src="logoGov" alt="Logo GOV" class="logo-gov" />
-                    <button class="br-button circle small ml-3" type="button" :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'" title="Alternar tema">
-                        <i class="fas fa-adjust" aria-hidden="true" @click="toggleTheme"></i>
+                    <button
+                        class="br-button circle small ml-3"
+                        type="button"
+                        :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
+                        title="Alternar tema"
+                        @click="toggleTheme"
+                    >
+                        <i class="fas fa-adjust" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
@@ -75,6 +81,15 @@ const logoAtual = computed(() => {
     min-width: 0;
 }
 .header-title {
+    cursor: pointer;
+}
+
+.header-home {
+    border: none;
+    background: transparent;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
     cursor: pointer;
 }
 .header-actions {

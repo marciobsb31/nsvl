@@ -24,6 +24,7 @@
           :validation-schema="schemaSolicitacao"
           :initial-values="initialValues"
           class="solicitacao-form"
+          :aria-busy="isSubmitting"
           @submit="onSubmit"
         >
           <Card
@@ -120,7 +121,7 @@
           <FormularioInformacaoSolicitante />
           <div class="modal-actions mt-3">
             <button class="br-button secondary" type="button" @click="fecharModalEditar">Cancelar</button>
-            <button class="br-button primary ml-2" type="submit" :disabled="editando">Salvar</button>
+            <button class="br-button primary ml-2" type="submit" :disabled="editando" :aria-busy="editando">Salvar</button>
           </div>
         </Form>
       </Modal>
@@ -135,7 +136,7 @@
         </p>
         <div class="modal-actions mt-3">
           <button class="br-button secondary" type="button" @click="fecharModalExcluir">Cancelar</button>
-          <button class="br-button danger ml-2" type="button" :disabled="excluindo" @click="executarExcluir">
+          <button class="br-button danger ml-2" type="button" :disabled="excluindo" :aria-busy="excluindo" @click="executarExcluir">
             {{ excluindo ? 'Excluindo...' : 'Excluir' }}
           </button>
         </div>

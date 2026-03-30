@@ -1,9 +1,19 @@
 <template>
     <section class="scrim">
         <div class="container">
-            <div class="div br-modal medium" aria-modal="true" role="dialog" aria-labelledby="modalalerttitle">
+            <div
+                ref="dialogEl"
+                class="div br-modal medium"
+                aria-modal="true"
+                role="dialog"
+                tabindex="-1"
+                :aria-labelledby="title ? titleId : undefined"
+                :aria-label="title ? undefined : 'Modal'"
+                @keydown.esc="closeModal"
+                @keydown.tab.prevent="onTab"
+            >
                 <div class="br-modal-header">
-                    <div class="modal-title" id="modalalerttitle" v-if="title">{{ title }}</div>
+                    <div class="modal-title" :id="titleId" v-if="title">{{ title }}</div>
                     <button class="br-button close circle" type="button" data-dismiss="br-modal" aria-label="Fechar" @click="closeModal"><i
                             class="fas fa-times" aria-hidden="true"></i>
                     </button>
@@ -27,6 +37,8 @@
 
 </template>
 <script setup lang="ts">
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+
 defineProps({
     title: {
         type: String,
@@ -43,6 +55,65 @@ defineProps({
 });
 
 const emit = defineEmits(['close', 'confirm']);
+
+const dialogEl = ref<HTMLElement | null>(null)
+const titleId = `modal-title-${Math.random().toString(36).slice(2, 10)}`
+const previouslyFocused = ref<HTMLElement | null>(null)
+
+function getFocusableElements() {
+    const root = dialogEl.value
+    if (!root) return [] as HTMLElement[]
+    const selector = [
+        'a[href]',
+        'button:not([disabled])',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])',
+    ].join(',')
+    return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter((el) => {
+        const style = window.getComputedStyle(el)
+        return style.display !== 'none' && style.visibility !== 'hidden'
+    })
+}
+
+function onTab(e: KeyboardEvent) {
+    const focusables = getFocusableElements()
+    if (!focusables.length) {
+        dialogEl.value?.focus()
+        return
+    }
+    const first = focusables[0]!
+    const last = focusables[focusables.length - 1]!
+    const active = document.activeElement as HTMLElement | null
+
+    if (e.shiftKey) {
+        if (!active || active === first || active === dialogEl.value) {
+            last.focus()
+        } else {
+            const idx = focusables.indexOf(active)
+            focusables[Math.max(idx - 1, 0)]?.focus()
+        }
+        return
+    }
+
+    if (!active || active === last) {
+        first.focus()
+        return
+    }
+    const idx = focusables.indexOf(active)
+    focusables[Math.min(idx + 1, focusables.length - 1)]?.focus()
+}
+
+onMounted(async () => {
+    previouslyFocused.value = (document.activeElement as HTMLElement) ?? null
+    await nextTick()
+    dialogEl.value?.focus()
+})
+
+onBeforeUnmount(() => {
+    previouslyFocused.value?.focus?.()
+})
 
 const closeModal = () => {
     // Emit close event

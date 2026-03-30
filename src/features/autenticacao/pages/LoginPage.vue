@@ -10,7 +10,14 @@
             </p>
           </div>
 
-          <div v-if="erro" class="br-message danger mb-3" role="alert">
+          <div
+            v-if="erro"
+            id="login-error"
+            ref="errorAlert"
+            class="br-message danger mb-3"
+            role="alert"
+            tabindex="-1"
+          >
             <div class="content">{{ erro }}</div>
           </div>
 
@@ -19,7 +26,6 @@
               type="button"
               class="br-button secondary block login-govbr__button"
               :disabled="carregandoGovBr"
-              aria-label="Entrar com GOV.BR"
               @click="entrarComGovBr"
             >
               {{ carregandoGovBr ? 'Redirecionando...' : 'Entrar com GOV.BR' }}
@@ -27,14 +33,27 @@
           </div>
 
           <!-- Perfil de acesso (apenas para testes locais — comentar quando não necessário) -->
-          <div class="login-divider">
+          <div class="login-divider" aria-hidden="true">
             <span>ou</span>
           </div>
 
-          <form @submit.prevent="entrar" class="login-form">
+          <form
+            @submit.prevent="entrar"
+            class="login-form"
+            :aria-busy="carregando || carregandoGovBr"
+          >
             <div class="login-perfil-field mb-3">
               <label for="perfil" class="login-perfil-label">Perfil de acesso</label>
-              <select id="perfil" v-model="perfil" class="login-perfil-select" required>
+              <span id="perfil-help" class="sr-only">
+                Campo usado apenas para testes locais.
+              </span>
+              <select
+                id="perfil"
+                v-model="perfil"
+                class="login-perfil-select"
+                required
+                aria-describedby="perfil-help"
+              >
                 <option value="federal">Federal — acesso a todas as solicitações</option>
                 <option value="estadual">Estadual (GO) — apenas solicitações da UF GO</option>
                 <option value="municipal">Municipal (Alexânia/GO) — apenas Alexânia</option>
@@ -45,7 +64,6 @@
               type="submit"
               class="br-button primary block"
               :disabled="carregando"
-              aria-label="Entrar"
             >
               {{ carregando ? 'Entrando...' : 'Entrar' }}
             </button>
@@ -55,7 +73,6 @@
             type="button"
             class="br-button success block mt-3 login-register-button"
             :disabled="carregandoGovBr"
-            aria-label="Solicitar cadastro"
             @click="entrarComGovBr"
           >
             {{ carregandoGovBr ? 'Redirecionando...' : 'Solicitar cadastro' }}
@@ -83,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import api from '@/services/ApiService'
@@ -101,6 +118,13 @@ const carregandoGovBr = ref(false)
 const carregando = ref(false)
 const perfil = ref<'federal' | 'estadual' | 'municipal'>('federal')
 const erro = ref('')
+const errorAlert = ref<HTMLElement | null>(null)
+
+watch(erro, async (value) => {
+  if (!value) return
+  await nextTick()
+  errorAlert.value?.focus()
+})
 
 // ── Token de teste (apenas dev) ────────────────────────────────────────────────
 async function entrar() {
@@ -198,6 +222,18 @@ async function processarRetornoGovBr() {
 </script>
 
 <style scoped>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .login-page {
   width: 100%;
   display: flex;
