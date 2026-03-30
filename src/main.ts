@@ -21,7 +21,7 @@ function bootstrap() {
 
     Object.defineProperty(app.config.globalProperties, '$appTheme', {
         get() {
-            return mode.value
+            return mode.value?.trim?.() || 'light'
         },
     })
 

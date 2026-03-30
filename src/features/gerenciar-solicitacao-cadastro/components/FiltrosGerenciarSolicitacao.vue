@@ -85,7 +85,7 @@
         Limpar Filtro
       </br-button>
       <br-button
-        :color-mode="$appTheme"
+        :color-mode="$appTheme === 'dark' ? 'dark' : undefined"
         emphasis="primary"
         type="button"
         @click="listar"
@@ -105,6 +105,7 @@ import { OPCOES_STATUS } from '../constants/opcoesFiltro'
 import { useEsferas } from '@/core/composables/useEsferas'
 import { useLocalidades } from '@/core/composables/useLocalidades'
 import type { FiltrosGerenciarSolicitacao } from '@/services/GerenciarSolicitacaoCadastroService'
+import { BrButton } from '@govbr-ds/webcomponents-vue'
 
 defineOptions({ name: 'FiltrosGerenciarSolicitacao' })
 

@@ -1,17 +1,5 @@
 <template>
   <div class="formulario-cadastrar-usuario">
-    <div class="formulario-header">
-      <h2 class="formulario-titulo">Cadastrar usuário</h2>
-      <button
-        class="br-button secondary small"
-        type="button"
-        @click="$emit('voltar')"
-        aria-label="Voltar"
-      >
-        Voltar
-      </button>
-    </div>
-
     <form novalidate @submit.prevent="onConfirmar">
       <div class="formulario-secao">
         <h3 class="secao-titulo">Dados do solicitante</h3>
@@ -728,7 +716,7 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 <style scoped>
 .formulario-cadastrar-usuario {
   padding: 1rem;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
 }
 
 .formulario-header {
@@ -763,7 +751,7 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 
 .secao-subtitulo {
   font-size: 0.875rem;
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color);
   margin: 0 0 1rem;
 }
 
@@ -824,28 +812,28 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 .cadastro-user-form-grid :deep(.br-input label) {
   font-weight: 600;
   font-size: 0.875rem;
-  color: var(--color-secondary-09, #333);
+  color: var(--dark-text-color);
   margin-bottom: 0.25rem;
 }
 
 .cadastro-field-hint {
   display: block;
   font-size: 0.75rem;
-  color: var(--color-secondary-06, #666);
+  color: var(--secondary-text-color-02);
   margin-top: 0.35rem;
   line-height: 1.35;
 }
 
 .cadastro-label-opcional {
   font-weight: 500;
-  color: var(--color-secondary-06, #666);
+  color: var(--secondary-text-color-02);
   font-size: 0.8125rem;
 }
 
 .input-hint {
   display: block;
   font-size: 0.75rem;
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color);
   margin-top: 0.25rem;
 }
 
@@ -869,7 +857,7 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
   right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--color-secondary-06, #888);
+  color: var(--secondary-text-color-02);
   pointer-events: none;
 }
 
