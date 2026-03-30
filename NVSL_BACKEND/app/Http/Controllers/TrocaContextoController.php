@@ -9,16 +9,25 @@ use App\Services\Audit\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'Contexto', description: 'Perfil ativo do usuário')]
 class TrocaContextoController extends Controller
 {
     public function __construct(
         private readonly AuditLogService $audit
     ) {}
 
-    /**
-     * GET /api/user/perfis-ativos
-     */
+    #[OA\Get(
+        path: '/api/user/perfis-ativos',
+        summary: 'Perfis vigentes do usuário',
+        tags: ['Contexto'],
+        security: [['BearerAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Lista em data[]'),
+            new OA\Response(response: 401, description: 'Não autenticado'),
+        ]
+    )]
     public function listarPerfisAtivos(): JsonResponse
     {
         $user = Auth::user();
@@ -40,12 +49,36 @@ class TrocaContextoController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/user/trocar-contexto
-     *
-     * Altera o perfil ativo do usuário. Marca o perfil_usuario.ativo = true
-     * e desmarca os demais.
-     */
+    #[OA\Post(
+        path: '/api/user/trocar-contexto',
+        summary: 'Define o perfil ativo (pivot perfil_usuario)',
+        tags: ['Contexto'],
+        security: [['BearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['perfil_usuario_id'],
+                properties: [
+                    new OA\Property(property: 'perfil_usuario_id', type: 'integer'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'user atualizado (toSafeArray)',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'user', ref: '#/components/schemas/UserResource'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Não autenticado'),
+            new OA\Response(response: 403, description: 'Perfil inválido para o usuário'),
+            new OA\Response(response: 422, description: 'Validação'),
+        ]
+    )]
     public function trocarContexto(Request $request): JsonResponse
     {
         $user = Auth::user();

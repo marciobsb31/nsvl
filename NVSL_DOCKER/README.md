@@ -30,7 +30,7 @@ docker exec -it nvsl-backend-fpm php artisan migrate
 
 As variáveis estão definidas no `docker-compose.yml`. Para alterar valores, edite o arquivo e execute `docker compose up --build -d`.
 
-> **⚠️ Atenção**: Variáveis `VITE_*` são embutidas no bundle durante o build. Alterações requerem rebuild da imagem.
+> **Atenção:** Variáveis `VITE_*` são embutidas no bundle durante o build. Alterações requerem rebuild da imagem.
 
 ## Documentação
 

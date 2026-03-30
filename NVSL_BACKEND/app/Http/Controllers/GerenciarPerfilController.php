@@ -6,20 +6,35 @@ use App\Exceptions\ApiException;
 use App\Http\Requests\CadastrarPerfilRequest;
 use App\Models\AuditLog;
 use App\Models\Perfil;
-use App\Models\Usuario;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'Gerenciar perfis', description: 'Administração do catálogo de perfis')]
 class GerenciarPerfilController extends Controller
 {
     public function __construct(
         private readonly AuditLogService $audit
     ) {}
 
+    #[OA\Get(
+        path: '/api/gerenciar-perfis',
+        summary: 'Lista perfis com filtros opcionais',
+        tags: ['Gerenciar perfis'],
+        security: [['BearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'nome', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['ativo', 'inativo'])),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Lista em data[]'),
+            new OA\Response(response: 401, description: 'Não autenticado'),
+        ]
+    )]
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
@@ -54,6 +69,20 @@ class GerenciarPerfilController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: '/api/gerenciar-perfis/{id}',
+        summary: 'Detalha um perfil',
+        tags: ['Gerenciar perfis'],
+        security: [['BearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Perfil em data'),
+            new OA\Response(response: 401, description: 'Não autenticado'),
+            new OA\Response(response: 404, description: 'Não encontrado'),
+        ]
+    )]
     public function show(int $id): JsonResponse
     {
         $user = Auth::user();
@@ -69,6 +98,28 @@ class GerenciarPerfilController extends Controller
         return response()->json(['data' => $this->formatarPerfil($perfil)]);
     }
 
+    #[OA\Post(
+        path: '/api/gerenciar-perfis',
+        summary: 'Cadastra perfil do catálogo oficial',
+        tags: ['Gerenciar perfis'],
+        security: [['BearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['nome'],
+                properties: [
+                    new OA\Property(property: 'nome', type: 'string'),
+                    new OA\Property(property: 'descricao', type: 'string', nullable: true),
+                    new OA\Property(property: 'ativo', type: 'boolean', nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Criado'),
+            new OA\Response(response: 401, description: 'Não autenticado'),
+            new OA\Response(response: 422, description: 'Validação'),
+        ]
+    )]
     public function store(CadastrarPerfilRequest $request): JsonResponse
     {
         $user = Auth::user();
@@ -104,6 +155,32 @@ class GerenciarPerfilController extends Controller
         ], 201);
     }
 
+    #[OA\Put(
+        path: '/api/gerenciar-perfis/{id}',
+        summary: 'Atualiza perfil',
+        tags: ['Gerenciar perfis'],
+        security: [['BearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['nome', 'ativo'],
+                properties: [
+                    new OA\Property(property: 'nome', type: 'string'),
+                    new OA\Property(property: 'descricao', type: 'string', nullable: true),
+                    new OA\Property(property: 'ativo', type: 'boolean'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Atualizado'),
+            new OA\Response(response: 401, description: 'Não autenticado'),
+            new OA\Response(response: 404, description: 'Não encontrado'),
+            new OA\Response(response: 422, description: 'Validação'),
+        ]
+    )]
     public function update(int $id, Request $request): JsonResponse
     {
         $user = Auth::user();
@@ -158,6 +235,20 @@ class GerenciarPerfilController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: '/api/gerenciar-perfis/{id}/historico',
+        summary: 'Histórico de auditoria do perfil',
+        tags: ['Gerenciar perfis'],
+        security: [['BearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Lista em data[]'),
+            new OA\Response(response: 401, description: 'Não autenticado'),
+            new OA\Response(response: 404, description: 'Não encontrado'),
+        ]
+    )]
     public function historico(int $id): JsonResponse
     {
         $user = Auth::user();
@@ -188,6 +279,25 @@ class GerenciarPerfilController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: '/api/gerenciar-perfis/hierarquia',
+        summary: 'Esfera do usuário e esferas permitidas para cadastro',
+        tags: ['Gerenciar perfis'],
+        security: [['BearerAuth' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'esfera_usuario e esferas_permitidas',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'esfera_usuario', type: 'string'),
+                        new OA\Property(property: 'esferas_permitidas', type: 'array', items: new OA\Items(type: 'string')),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Não autenticado'),
+        ]
+    )]
     public function hierarquia(): JsonResponse
     {
         $user = Auth::user();
@@ -200,6 +310,38 @@ class GerenciarPerfilController extends Controller
         return response()->json([
             'esfera_usuario'     => $esferaUsuario,
             'esferas_permitidas' => $this->esferasPermitidas($esferaUsuario),
+        ]);
+    }
+
+    #[OA\Get(
+        path: '/api/gerenciar-perfis/permissoes',
+        summary: 'Catálogo de permissões (legado)',
+        description: 'A modelagem atual não utiliza tabela de permissões granulares; retorna lista vazia.',
+        tags: ['Gerenciar perfis'],
+        security: [['BearerAuth' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'string')),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Não autenticado'),
+        ]
+    )]
+    public function permissoes(): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user) {
+            throw ApiException::unauthenticated();
+        }
+
+        return response()->json([
+            'data'    => [],
+            'message' => 'Catálogo de permissões não disponível nesta versão do sistema.',
         ]);
     }
 

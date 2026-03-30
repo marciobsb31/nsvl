@@ -1,27 +1,36 @@
 <template>
   <DefaultLayout>
     <section class="gerenciar-perfis" :class="{ 'painel-aberto': painelAberto }">
-      <header class="titulo-pagina">
+      <div class="titulo-pagina">
         <div class="titulo-pagina__topo">
           <div>
-            <h1 id="titulo-gerenciar-perfis" class="titulo-pagina__h1">Gerenciar Perfis</h1>
+            <h1 id="titulo-gerenciar-perfis" class="titulo-pagina__h1">
+              Gerenciar perfis de acesso no sistema
+            </h1>
             <p class="titulo-pagina__subtitulo">
-              Consulte, cadastre e edite os perfis de acesso do sistema NVSL.
+              Visualize, cadastre e edite os perfis de acesso do NVSL. A vigência e a hierarquia (federal, estadual e
+              municipal) definem quem pode criar ou alterar cada perfil.
             </p>
           </div>
           <button
             class="br-button primary small"
             type="button"
             @click="abrirCadastrar"
-            aria-label="Novo perfil"
+            aria-label="Cadastrar novo perfil"
           >
             <span class="titulo-pagina__btn-conteudo">
               <i class="fas fa-plus-circle" aria-hidden="true"></i>
-              <span>Novo Perfil</span>
+              <span>Novo perfil</span>
             </span>
           </button>
         </div>
-      </header>
+      </div>
+
+      <div v-if="contextoAtualLabel" class="contexto-banner" role="status" aria-live="polite">
+        <i class="fas fa-shield-alt contexto-banner__icon" aria-hidden="true"></i>
+        <span class="contexto-banner__label">Contexto ativo:</span>
+        <strong class="contexto-banner__valor">{{ contextoAtualLabel }}</strong>
+      </div>
 
       <Card custom-class="gerenciar-perfis__card mb-4">
         <div v-if="carregando" class="br-loading p-4" role="status" aria-live="polite">
@@ -40,12 +49,12 @@
               <tr>
                 <th scope="col" class="th-bold" :aria-sort="obterAriaSort('nome')">
                   <button class="th-sort-btn" type="button" @click="ordenarPor('nome')">
-                    Nome do Perfil <span class="th-sort-icon">{{ obterIconeSort('nome') }}</span>
+                    Nome do perfil <span class="th-sort-icon">{{ obterIndicadorSort('nome') }}</span>
                   </button>
                 </th>
                 <th scope="col" class="th-bold" :aria-sort="obterAriaSort('status')">
                   <button class="th-sort-btn" type="button" @click="ordenarPor('status')">
-                    Vigência <span class="th-sort-icon">{{ obterIconeSort('status') }}</span>
+                    Situação <span class="th-sort-icon">{{ obterIndicadorSort('status') }}</span>
                   </button>
                 </th>
                 <th scope="col" class="th-bold th-acoes">Ações</th>
@@ -163,12 +172,36 @@ import PainelFormularioPerfil from '../components/PainelFormularioPerfil.vue'
 import PainelHistoricoPerfil from '../components/PainelHistoricoPerfil.vue'
 import { listarPerfisGerenciar, obterHierarquia, type PerfilGerenciar } from '@/services/GerenciarPerfilService'
 import { useNotification } from '@/core/composables/useNotification'
+import { useAuth } from '@/core/composables/useAuth'
 import { useAuthStore } from '@/stores/authStore'
 
 defineOptions({ name: 'GerenciarPerfisPage' })
 
 const { error } = useNotification()
 const authStore = useAuthStore()
+const { user, perfilAtivo } = useAuth()
+
+const esferaMap: Record<string, string> = {
+  federal: 'Federal',
+  estadual: 'Estadual',
+  municipal: 'Municipal',
+}
+
+const contextoAtualLabel = computed(() => {
+  const perfil = perfilAtivo.value
+  const esfera = user.value?.esfera_atuacao
+  const uf = user.value?.uf_lotacao
+  const municipio = user.value?.municipio_lotacao
+  if (!perfil) {
+    return esfera ? esferaMap[esfera] ?? esfera : ''
+  }
+  const partes: string[] = []
+  if (perfil.nome) partes.push(perfil.nome)
+  if (esfera) partes.push(esferaMap[esfera] ?? esfera)
+  if (uf) partes.push(uf)
+  if (municipio) partes.push(municipio)
+  return partes.join(' — ')
+})
 
 const perfis = ref<PerfilGerenciar[]>([])
 const carregando = ref(false)
@@ -248,7 +281,7 @@ function obterAriaSort(coluna: string): 'none' | 'ascending' | 'descending' {
   return sortAsc.value ? 'ascending' : 'descending'
 }
 
-function obterIconeSort(coluna: string): string {
+function obterIndicadorSort(coluna: string): string {
   if (sortColuna.value !== coluna) return '↕'
   return sortAsc.value ? '↑' : '↓'
 }
@@ -347,26 +380,53 @@ onMounted(() => carregarPerfis())
 <style scoped>
 .gerenciar-perfis {
   width: 100%;
-  max-width: min(100%, 80rem);
-  margin: 0 auto;
-  padding: 1.25rem 1rem 2rem;
+  padding: 1.5rem 0;
   position: relative;
   display: flex;
   flex-direction: column;
 }
 
-@media (min-width: 576px) {
-  .gerenciar-perfis {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
+.contexto-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--color-primary-pastel, #dbe8fb);
+  border-left: 4px solid var(--color-primary-default, #1351b4);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: var(--color-secondary-08, #333);
+  transition: all 0.3s ease;
 }
 
-@media (min-width: 1200px) {
-  .gerenciar-perfis {
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
+.contexto-banner__icon {
+  color: var(--color-primary-default, #1351b4);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.contexto-banner__label {
+  color: var(--color-secondary-06, #888);
+  white-space: nowrap;
+}
+
+.contexto-banner__valor {
+  color: var(--color-primary-default, #1351b4);
+}
+
+[data-theme='dark'] .contexto-banner {
+  background: rgba(19, 81, 180, 0.15);
+  border-left-color: var(--color-primary-lighten-01, #4d7fd6);
+}
+
+[data-theme='dark'] .contexto-banner__icon,
+[data-theme='dark'] .contexto-banner__valor {
+  color: var(--color-primary-lighten-01, #4d7fd6);
+}
+
+[data-theme='dark'] .contexto-banner__label {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* Card — superfície neutra (GOVBR DS) */

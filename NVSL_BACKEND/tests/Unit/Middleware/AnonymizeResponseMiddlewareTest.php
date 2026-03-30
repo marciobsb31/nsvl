@@ -32,6 +32,22 @@ class AnonymizeResponseMiddlewareTest extends TestCase
     }
 
     #[Test]
+    public function preserva_cpf_mascarado_em_dados_aninhados(): void
+    {
+        $request = Request::create('/test');
+        $response = $this->middleware->handle($request, function () {
+            return new JsonResponse([
+                'data' => [
+                    ['id' => 1, 'nome' => 'Maria', 'cpf' => '529.982.247-25'],
+                ],
+            ]);
+        });
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertSame('529.982.247-25', $data['data'][0]['cpf']);
+    }
+
+    #[Test]
     public function remove_campos_sensiveis_aninhados(): void
     {
         $request = Request::create('/test');

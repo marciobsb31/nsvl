@@ -1,15 +1,15 @@
 # NVSL — Frontend
 
-Aplicação frontend do sistema **NVSL**, desenvolvida com **Vue 3 + Vite + TypeScript**, utilizando o [GOV.BR Design System](https://www.gov.br/ds/home) e autenticação via **GOV.BR SSO** (OAuth2/OIDC).
+Aplicação frontend do sistema **NVSL**, desenvolvida com **Vue 3 + Vite + TypeScript**, utilizando o [GOV.BR Design System](https://www.gov.br/ds/home) e autenticação via **GOV.BR SSO** mediada pelo **backend** (OAuth2/OIDC + PKCE no Laravel).
 
 ## Stack
 
 - **Vue 3** (Composition API, `<script setup>`)
-- **Vite 6** + TypeScript
-- **Vue Router 4** com guards de rota
+- **Vite** + TypeScript
+- **Vue Router** com guards de rota
 - **Pinia** para gerenciamento de estado
 - **@govbr-ds** — Design System oficial do Governo Federal
-- **oidc-client-ts** — Fluxo OAuth2/OIDC PKCE
+- **Axios** — chamadas à API; token Sanctum em `sessionStorage`
 
 ## Quick Start
 
@@ -22,7 +22,7 @@ cp .env.example .env
 
 # Iniciar servidor de desenvolvimento
 npm run dev
-# → http://localhost:5174
+# → http://localhost:5176 (porta fixa em vite.config.ts)
 ```
 
 ## Scripts
@@ -60,7 +60,7 @@ Acesse a documentação completa no repositório **DOCS**:
 
 Veja [`.env.example`](.env.example) para todas as variáveis necessárias.
 
-> **⚠️ Importante**: Nunca commitar o arquivo `.env` com valores reais.
+> **Importante:** Nunca commitar o arquivo `.env` com valores reais.
 
 # Arquitetura do Projeto
 
@@ -144,7 +144,7 @@ Exemplos:
 Armazena **tipos e interfaces TypeScript globais**, utilizadas em todo o
 projeto.
 
-⚠️ Não deve conter **tipagens específicas de módulos**.
+Não deve conter **tipagens específicas de módulos**.
 
 ------------------------------------------------------------------------
 
@@ -189,7 +189,7 @@ Define a **infraestrutura global de estado usando Pinia**, incluindo:
 -   Plugins do Pinia
 -   Persistência de estado
 
-⚠️ Nenhum **store de domínio** deve residir aqui.\
+Nenhum **store de domínio** deve residir aqui.\
 Apenas a **base global de configuração**.
 
 ------------------------------------------------------------------------

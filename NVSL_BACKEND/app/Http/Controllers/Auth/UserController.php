@@ -14,9 +14,15 @@ use OpenApi\Attributes as OA;
  *     @OA\Property(property="id", type="integer"),
  *     @OA\Property(property="name", type="string"),
  *     @OA\Property(property="email", type="string", nullable=true),
- *     @OA\Property(property="sub", type="string", description="Identificador GOV.BR")
+ *     @OA\Property(property="sub", type="string", description="Identificador GOV.BR"),
+ *     @OA\Property(property="esfera_atuacao", type="string", nullable=true),
+ *     @OA\Property(property="uf_lotacao", type="string", nullable=true),
+ *     @OA\Property(property="municipio_lotacao", type="string", nullable=true),
+ *     @OA\Property(property="perfil_ativo_id", type="integer", nullable=true),
+ *     @OA\Property(property="perfis_vigentes", type="array", @OA\Items(type="object"))
  * )
  */
+#[OA\Tag(name: 'Usuário')]
 class UserController extends Controller
 {
     #[OA\Get(

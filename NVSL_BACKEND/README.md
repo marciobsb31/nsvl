@@ -18,7 +18,7 @@ API REST do Sistema NVSL — autenticação GOV.BR, Laravel 12, PHP 8.4, Postgre
 ## Iniciar (Docker)
 
 ```bash
-cd ../DOCKER
+cd NVSL_DOCKER
 docker compose up -d --build
 ```
 
@@ -51,35 +51,32 @@ Se a importação IBGE falhar (sem internet), rode manualmente no container:
 | `GET` | `/api/auth/redirect` | Público | Retorna URL de login GOV.BR |
 | `GET` | `/redirect-gov` | Público | Callback OAuth (web); redireciona ao frontend com fragmento |
 | `GET` | `/logout` | Público | Redireciona ao login do frontend (`?from=logout`) |
-| `POST` | `/api/auth/logout` | 🔒 Bearer | Revoga o token Sanctum |
-| `GET` | `/api/user` | 🔒 Bearer | Dados do usuário autenticado |
+| `POST` | `/api/auth/logout` | Bearer | Revoga o token Sanctum |
+| `GET` | `/api/user` | Bearer | Dados do usuário autenticado |
 | `GET` | `/api/health` | Público | Status do banco e cache |
 
 ## Estrutura
 
 ```
 app/
-  DTOs/Auth/GovBrUserDTO.php           ← DTO imutável (readonly)
-  Http/Controllers/Auth/               ← GovBrAuth + User controllers
-  Http/Middleware/                     ← AnonymizeResponseMiddleware
-  Models/                              ← User (cpf_hash, toSafeArray) + AuditLog
-  Services/Auth/GovBrService.php       ← OAuth2 PKCE + UserInfo
-  Services/Audit/AuditLogService.php   ← Audit append-only
-  Providers/AppServiceProvider.php     ← DI + anotações OpenAPI globais
+  DTOs/Auth/GovBrUserDTO.php
+  Http/Controllers/                    # Auth, cadastros, localidades, health, …
+  Http/Middleware/AnonymizeResponseMiddleware.php
+  Models/Usuario.php, AuditLog.php, …
+  Services/Auth/, Services/Audit/
+  Providers/AppServiceProvider.php
 config/
   govbr.php, audit.php, l5-swagger.php, view.php
-routes/api.php                         ← 5 rotas documentadas
-database/migrations/                   ← users, audit_logs, personal_access_tokens
+routes/api.php, routes/web.php         # API + /redirect-gov, /logout
+database/migrations/
 docker/
   entrypoint.sh, nginx.conf, supervisord.conf, php.ini
 tests/
-  Feature/Auth/GovBrAuthControllerTest.php  ← 8 testes
-  Unit/Auth/GovBrServiceTest.php            ← 5 testes
 ```
 
 ## Segurança
 
-- **CPF**: HMAC-SHA256 irreversível antes de qualquer persistência
+- **CPF**: armazenado em `usuarios.cpf` (modelo atual); omitido nas respostas JSON da API (`toSafeArray` + middleware)
 - **Access Token GOV.BR**: nunca persistido — descartado após `/userinfo`
 - **PKCE**: `code_verifier` + `code_challenge` SHA-256 protege o fluxo OAuth2
 - **CSRF**: `state` aleatório validado em `hash_equals` no callback
@@ -107,22 +104,22 @@ Acesse `http://localhost:8081/api/docs`, clique em **Authorize** e insira o toke
 
 ## Variáveis de Ambiente
 
-Consulte `.env.example` para referência. As variáveis de produção são definidas no `DOCKER/docker-compose.yml`.
+Consulte `.env.example` para referência. As variáveis de ambiente local costumam estar no `NVSL_DOCKER/docker-compose.yml`.
 
-> ⚠️ Preencha `GOVBR_CLIENT_ID` e `GOVBR_CLIENT_SECRET` com os valores reais do GOV.BR.
+> **Atenção:** Preencha `GOVBR_CLIENT_ID` e `GOVBR_CLIENT_SECRET` com os valores reais do GOV.BR.
 
 ## Documentação Completa
 
-Disponível em [`DOCS/backend/`](../DOCS/backend/):
+Disponível em [`docs/backend/`](../docs/backend/):
 
-- [Arquitetura](../DOCS/backend/architecture.md)
-- [Autenticação GOV.BR](../DOCS/backend/authentication.md)
-- [Anonimização de Dados](../DOCS/backend/anonymization.md)
-- [Logs de Auditoria](../DOCS/backend/audit-logs.md)
-- [Segurança](../DOCS/backend/security.md)
-- [Swagger / OpenAPI](../DOCS/backend/swagger.md)
-- [Testes](../DOCS/backend/testing.md)
-- [Docker](../DOCS/backend/docker.md)
-- [Setup](../DOCS/backend/setup.md)
-- [SonarQube](../DOCS/backend/sonarqube.md)
-- [Contribuição](../DOCS/backend/contributing.md)
+- [Arquitetura](../docs/backend/architecture.md)
+- [Autenticação GOV.BR](../docs/backend/authentication.md)
+- [Anonimização de Dados](../docs/backend/anonymization.md)
+- [Logs de Auditoria](../docs/backend/audit-logs.md)
+- [Segurança](../docs/backend/security.md)
+- [Swagger / OpenAPI](../docs/backend/swagger.md)
+- [Testes](../docs/backend/testing.md)
+- [Docker](../docs/backend/docker.md)
+- [Setup](../docs/backend/setup.md)
+- [SonarQube](../docs/backend/sonarqube.md)
+- [Contribuição](../docs/backend/contributing.md)

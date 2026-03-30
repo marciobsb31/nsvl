@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'Sistema')]
 class HealthController extends Controller
 {
     // -------------------------------------------------------

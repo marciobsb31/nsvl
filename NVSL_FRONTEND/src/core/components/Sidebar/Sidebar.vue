@@ -53,6 +53,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/core/composables/useAuth'
 import { useBreakpoint } from '@/core/composables/useBreakpoint'
+import { exibirGerenciarPerfis } from '@/core/config/featureFlags'
 
 defineOptions({ name: 'Sidebar' })
 
@@ -91,6 +92,7 @@ const todosMenus: MenuItem[] = [
 const menusVisiveis = computed(() => {
   if (!user.value) return []
   return todosMenus.filter(item => {
+    if (item.to === '/gerenciar-perfis' && !exibirGerenciarPerfis) return false
     if (!item.modulo) return true
     return temPermissao(item.modulo)
   })

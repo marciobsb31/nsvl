@@ -20,7 +20,7 @@
             </div>
           </div>
           <button
-            v-if="possuiMultiplosPerfis"
+            v-if="exibirTrocaContexto && possuiMultiplosPerfis"
             class="header-btn-contexto"
             type="button"
             aria-label="Trocar contexto de perfil"
@@ -71,6 +71,7 @@
     </div>
 
     <TrocaContexto
+      v-if="exibirTrocaContexto"
       :visivel="modalTrocaContexto"
       @fechar="modalTrocaContexto = false"
       @contexto-alterado="handleContextoAlterado"
@@ -109,6 +110,9 @@ const sidebarAberto = ref(false)
 const sidebarRecolhido = ref(localStorage.getItem('nvsl_sidebar_recolhido') === 'true')
 const { mode } = useTheme()
 const modalTrocaContexto = ref(false)
+
+/** Exibir botão e modal de troca de perfil no cabeçalho */
+const exibirTrocaContexto = false
 
 const router = useRouter()
 const { isAuthenticated, userName, user, possuiMultiplosPerfis, perfilAtivo, contextKey } = useAuth()

@@ -31,8 +31,8 @@ class SolicitacaoCadastroRequest extends FormRequest
             'vigenciaFim'            => 'vigência fim',
             'emailInstitucional'     => 'e-mail institucional',
             'telefoneInstitucional'  => 'telefone institucional',
+            'telefonePessoal'        => 'telefone pessoal',
             'esferaAtuacao'          => 'esfera de atuação',
-            'aceiteTermo'            => 'aceite do termo de uso e privacidade',
         ];
     }
 
@@ -58,12 +58,12 @@ class SolicitacaoCadastroRequest extends FormRequest
             'CPF'                   => $cpfRules,
             'emailInstitucional'    => ['required', 'email', 'max:255'],
             'telefoneInstitucional' => ['required', 'string', 'regex:/^\d{10,11}$/', 'max:20'],
+            'telefonePessoal'       => ['nullable', 'string', 'regex:/^\d{10,11}$/', 'max:20'],
             'esferaAtuacao'         => ['required', Rule::in(['federal', 'estadual', 'municipal'])],
             'uf'                    => ['required', 'string', 'size:2'],
             'municipio'             => ['required', 'string', 'max:100'],
             'orgao'                 => ['required', 'string', 'max:255'],
             'cargo'                 => ['required', 'string', 'max:255'],
-            'aceiteTermo'           => ['required', 'accepted'],
             'perfilId'              => $perfilRules,
             'vigenciaInicio'        => $vigenciaInicioRules,
             'vigenciaFim'           => ['nullable', 'date', 'after_or_equal:vigenciaInicio'],
@@ -79,6 +79,13 @@ class SolicitacaoCadastroRequest extends FormRequest
         $tel = $this->input('telefoneInstitucional');
         if (is_string($tel)) {
             $this->merge(['telefoneInstitucional' => preg_replace('/\D/', '', $tel)]);
+        }
+        $telP = $this->input('telefonePessoal');
+        if ($telP === null || $telP === '') {
+            $this->merge(['telefonePessoal' => null]);
+        } elseif (is_string($telP)) {
+            $digits = preg_replace('/\D/', '', $telP);
+            $this->merge(['telefonePessoal' => $digits === '' ? null : $digits]);
         }
 
         $uf = $this->input('uf');

@@ -11,21 +11,8 @@ mkdir -pv /var/www/html/storage/framework/{cache,sessions,views}
 mkdir -pv /var/www/html/storage/framework/cache/data
 mkdir -pv /var/www/html/storage/logs
 
-chown www-data:www-data /var/www/html/storage
-chown www-data:www-data /var/www/html/storage/app
-chown www-data:www-data /var/www/html/storage/app/public
-chown www-data:www-data /var/www/html/storage/framework
-chown www-data:www-data /var/www/html/storage/framework/{cache,sessions,views}
-chown www-data:www-data /var/www/html/storage/framework/cache/data
-chown www-data:www-data /var/www/html/storage/logs
-
-chmod 775 /var/www/html/storage
-chmod 775 /var/www/html/storage/app
-chmod 775 /var/www/html/storage/app/public
-chmod 775 /var/www/html/storage/framework
-chmod 775 /var/www/html/storage/framework/{cache,sessions,views}
-chmod 775 /var/www/html/storage/framework/cache/data
-chmod 775 /var/www/html/storage/logs
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Loop simples de espera para o PostgreSQL subir
 until php -r "
@@ -72,6 +59,8 @@ php artisan db:seed --class=UsuarioExemploSeeder --force || true
 # Gera documentaÃ§Ã£o Swagger
 echo "[entrypoint] Gerando documentaÃ§Ã£o Swagger..."
 php artisan l5-swagger:generate || echo "[entrypoint] Aviso: falha ao gerar Swagger (ignorando)"
+
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 echo "[entrypoint] InicializaÃ§Ã£o concluÃ­da. Iniciando supervisord..."
 exec "$@"

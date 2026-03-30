@@ -4,7 +4,7 @@
       <div class="login-card br-card">
         <div class="login-panel login-panel--actions">
           <div class="login-header">
-            <h1 class="login-title">Acesse o sistema</h1>
+            <h1 class="login-title text-center">Acesse o sistema</h1>
             <p class="login-subtitle">
               Entre com sua conta GOV.BR para acessar o sistema.
             </p>
@@ -204,6 +204,9 @@ async function processarRetornoGovBr() {
 
 .login-header {
   margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
 
@@ -234,6 +237,8 @@ async function processarRetornoGovBr() {
 }
 
 .login-title {
+  width: 100%;
+  text-align: center;
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-primary-default, #1351b4);
@@ -241,9 +246,12 @@ async function processarRetornoGovBr() {
 }
 
 .login-subtitle {
+  width: 100%;
+  text-align: center;
   color: var(--color-secondary-07, #555);
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: 1.0625rem;
+  line-height: 1.45;
 }
 
 .login-form .block {

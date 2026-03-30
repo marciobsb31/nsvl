@@ -5,6 +5,6 @@ export const gerenciarPerfisRoutes: RouteRecordRaw[] = [
     path: '/gerenciar-perfis',
     name: 'gerenciar-perfis',
     component: () => import('./pages/GerenciarPerfisPage.vue'),
-    meta: { title: 'Gerenciar Perfis — NVSL', requiredModule: 'Gerenciar Perfis' },
+    meta: { title: 'Gerenciar perfis de acesso — NVSL', requiredModule: 'Gerenciar Perfis' },
   },
 ]

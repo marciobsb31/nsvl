@@ -4,6 +4,7 @@ import { gerenciarSolicitacaoCadastroRoutes } from '@/features/gerenciar-solicit
 import { gerenciarPerfisRoutes } from '@/features/gerenciar-perfis/gerenciarPerfisRoutes'
 import { useAuthStore } from '@/stores/authStore'
 import { useNotification } from '@/core/composables/useNotification'
+import { exibirGerenciarPerfis } from '@/core/config/featureFlags'
 
 /**
  * Roteador principal da aplicação
@@ -75,6 +76,10 @@ router.beforeEach(async (to) => {
 
   if (!token) {
     return { name: 'login' }
+  }
+
+  if (!exibirGerenciarPerfis && to.name === 'gerenciar-perfis') {
+    return { name: 'gerenciar-cadastros' }
   }
 
   if (!authStore.user && to.name !== 'login') {

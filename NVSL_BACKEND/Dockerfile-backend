@@ -1,6 +1,6 @@
 # ============================================================
 # NVSL Backend — Dockerfile
-# Build multi-stage: composer + PHP 8.3 FPM + Nginx + Supervisord
+# Build multi-stage: composer + PHP 8.4 FPM + Nginx + Supervisord
 # ============================================================
 
 # -------------------------------------------------------
@@ -82,10 +82,10 @@ RUN sed -i 's/\r$//' /entrypoint.sh \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache \
     && mkdir -p /var/run/nginx /var/log/nginx /var/log/supervisor
 
-EXPOSE 80
+EXPOSE 81
 
 #HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-#   CMD curl -sf http://localhost:80/api/health | grep -q '"status":"ok"' || exit 1
+#   CMD curl -sf http://localhost:81/api/health | grep -q '"status":"ok"' || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

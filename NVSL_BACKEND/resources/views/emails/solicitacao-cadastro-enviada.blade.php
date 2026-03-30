@@ -38,7 +38,7 @@
             </table>
 
             <p>A equipe responsável irá avaliar sua solicitação. Você será notificado sobre o resultado.</p>
-            <p><strong>Aceite do Termo de Uso e Privacidade:</strong> registrado em {{ $solicitacao->aceite_termo_at?->format('d/m/Y H:i:s') ?? $solicitacao->created_at->format('d/m/Y H:i:s') }}.</p>
+            <p><strong>Ciência do termo de uso e privacidade:</strong> registrada em {{ $solicitacao->aceite_termo_at?->format('d/m/Y H:i:s') ?? $solicitacao->created_at->format('d/m/Y H:i:s') }} (momento do envio da solicitação).</p>
         </div>
         <div class="footer">
             <p>Este é um e-mail automático do sistema NVSL. Não responda a esta mensagem.</p>

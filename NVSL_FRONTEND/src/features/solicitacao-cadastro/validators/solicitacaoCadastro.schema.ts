@@ -2,8 +2,8 @@ import * as yup from 'yup'
 import { verificarCpfDisponivel } from '@/services/SolicitacaoCadastroService'
 
 const MENSAGENS_CPF_EM_USO: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está em uso. Faça login ou solicite recuperação de acesso.',
-  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde o retorno.',
+  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está vinculado a um cadastro ativo. Faça login com GOV.BR para acessar o sistema.',
+  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde a avaliação da equipe gestora.',
 }
 
 /**
@@ -86,49 +86,11 @@ export const SolicitacaoCadastroSchema = yup.object({
       const digitos = value.replace(/\D/g, '')
       return digitos.length === 10 || digitos.length === 11
     }),
-  esferaAtuacao: yup
+  telefonePessoal: yup
     .string()
-    .required('Esfera de atuação é obrigatória')
-    .trim(),
-  uf: yup
-    .string()
-    .required('UF é obrigatória')
-    .trim(),
-  municipio: yup
-    .string()
-    .required('Município é obrigatório')
-    .trim(),
-  orgao: yup
-    .string()
-    .required('Organização é obrigatória')
-    .trim(),
-  cargo: yup
-    .string()
-    .required('Cargo é obrigatório')
-    .trim(),
-  aceiteTermo: yup
-    .boolean()
-    .oneOf([true], 'É necessário declarar ciência do Termo de uso e privacidade.'),
-})
-
-export const SolicitacaoCadastroSchemaGovBr = yup.object({
-  nome: yup
-    .string()
-    .required('Nome é obrigatório')
     .trim()
-    .matches(regexSomenteLetras, 'Nome deve conter apenas letras'),
-  CPF: yup.string().trim(),
-  emailInstitucional: yup
-    .string()
-    .required('E-mail institucional é obrigatório')
-    .trim()
-    .email('Informe um e-mail válido'),
-  telefoneInstitucional: yup
-    .string()
-    .required('Telefone institucional é obrigatório')
-    .trim()
-    .test('telefone', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
-      if (!value) return false
+    .test('telefone-pessoal', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
+      if (!value || !String(value).trim()) return true
       const digitos = value.replace(/\D/g, '')
       return digitos.length === 10 || digitos.length === 11
     }),
@@ -152,9 +114,64 @@ export const SolicitacaoCadastroSchemaGovBr = yup.object({
     .string()
     .required('Cargo é obrigatório')
     .trim(),
-  aceiteTermo: yup
-    .boolean()
-    .oneOf([true], 'É necessário declarar ciência do Termo de uso e privacidade.'),
+})
+
+export const SolicitacaoCadastroSchemaGovBr = yup.object({
+  nome: yup
+    .string()
+    .required('Nome é obrigatório')
+    .trim()
+    .matches(regexSomenteLetras, 'Nome deve conter apenas letras'),
+  CPF: yup
+    .string()
+    .trim()
+    .required('CPF é obrigatório')
+    .test('cpf-valido', 'CPF inválido. Confira os números digitados.', (value) => {
+      if (!value) return false
+      return validarCPF(value)
+    }),
+  emailInstitucional: yup
+    .string()
+    .required('E-mail institucional é obrigatório')
+    .trim()
+    .email('Informe um e-mail válido'),
+  telefoneInstitucional: yup
+    .string()
+    .required('Telefone institucional é obrigatório')
+    .trim()
+    .test('telefone', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
+      if (!value) return false
+      const digitos = value.replace(/\D/g, '')
+      return digitos.length === 10 || digitos.length === 11
+    }),
+  telefonePessoal: yup
+    .string()
+    .trim()
+    .test('telefone-pessoal', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
+      if (!value || !String(value).trim()) return true
+      const digitos = value.replace(/\D/g, '')
+      return digitos.length === 10 || digitos.length === 11
+    }),
+  esferaAtuacao: yup
+    .string()
+    .required('Esfera de atuação é obrigatória')
+    .trim(),
+  uf: yup
+    .string()
+    .required('UF é obrigatória')
+    .trim(),
+  municipio: yup
+    .string()
+    .required('Município é obrigatório')
+    .trim(),
+  orgao: yup
+    .string()
+    .required('Organização é obrigatória')
+    .trim(),
+  cargo: yup
+    .string()
+    .required('Cargo é obrigatório')
+    .trim(),
 })
 
 export const DadosSolicitanteSchema = yup.object({
@@ -182,6 +199,14 @@ export const DadosSolicitanteSchema = yup.object({
     .trim()
     .test('telefone', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
       if (!value) return false
+      const digitos = value.replace(/\D/g, '')
+      return digitos.length === 10 || digitos.length === 11
+    }),
+  telefonePessoal: yup
+    .string()
+    .trim()
+    .test('telefone-pessoal', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
+      if (!value || !String(value).trim()) return true
       const digitos = value.replace(/\D/g, '')
       return digitos.length === 10 || digitos.length === 11
     }),
@@ -215,6 +240,14 @@ export const SolicitacaoCadastroSchemaEdicao = yup.object({
     .trim()
     .test('telefone', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
       if (!value) return false
+      const digitos = value.replace(/\D/g, '')
+      return digitos.length === 10 || digitos.length === 11
+    }),
+  telefonePessoal: yup
+    .string()
+    .trim()
+    .test('telefone-pessoal', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
+      if (!value || !String(value).trim()) return true
       const digitos = value.replace(/\D/g, '')
       return digitos.length === 10 || digitos.length === 11
     }),

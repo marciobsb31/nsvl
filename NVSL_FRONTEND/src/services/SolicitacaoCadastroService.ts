@@ -20,10 +20,17 @@ export interface PerfilVinculado {
   cargo: string
 }
 
+export interface HistoricoReprovacaoItem {
+  data: string | null
+  motivo: string
+  avaliador: string | null
+}
+
 export interface SolicitacaoCadastroDetalhe extends SolicitacaoCadastroItem {
   cpf?: string
   email_institucional: string
   telefone_institucional: string
+  telefone_pessoal?: string | null
   esfera_atuacao: string
   uf: string
   municipio: string
@@ -35,6 +42,7 @@ export interface SolicitacaoCadastroDetalhe extends SolicitacaoCadastroItem {
   updated_at?: string
   perfis_vinculados?: PerfilVinculado[]
   pode_avaliar?: boolean
+  historico_reprovacoes?: HistoricoReprovacaoItem[]
 }
 
 export interface SolicitacaoCadastroPayload {
@@ -42,12 +50,13 @@ export interface SolicitacaoCadastroPayload {
   CPF?: string
   emailInstitucional: string
   telefoneInstitucional: string
+  telefonePessoal?: string | null
   esferaAtuacao: string
   uf: string
   municipio: string
   orgao: string
   cargo: string
-  aceiteTermo: boolean
+  aceiteTermo?: boolean
   perfilId?: number
   vigenciaInicio?: string
   vigenciaFim?: string

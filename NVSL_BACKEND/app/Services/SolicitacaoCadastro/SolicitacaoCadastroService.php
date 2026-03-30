@@ -17,8 +17,10 @@ use App\Services\Audit\AuditLogService;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Mail\SolicitacaoCadastroEnviada;
 
 class SolicitacaoCadastroService
 {
@@ -123,6 +125,7 @@ class SolicitacaoCadastroService
             'updated_at'                 => $solicitacao->updated_at?->toIso8601String(),
             'email_institucional'        => $solicitacao->email_institucional,
             'telefone_institucional'     => $solicitacao->telefone_institucional,
+            'telefone_pessoal'           => $solicitacao->telefone_pessoal,
             'esfera_atuacao'             => $solicitacao->esfera?->nome ?? '',
             'uf'                         => $solicitacao->ufRelacao?->sigla ?? '',
             'municipio'                  => $solicitacao->municipioRelacao?->nome ?? '',
@@ -133,7 +136,55 @@ class SolicitacaoCadastroService
             'vigencia_fim_solicitada'    => $solicitacao->vigencia_fim_solicitada?->format('Y-m-d'),
             'perfis_vinculados'          => $perfisVinculados,
             'pode_avaliar'               => $solicitacao->status_id === $statusEmAnalise,
+            'historico_reprovacoes'      => $this->montarHistoricoReprovacoes($solicitacao),
         ];
+    }
+
+    /**
+     * Eventos de reprovação (auditoria + fallback para registros antigos sem contexto).
+     *
+     * @return array<int, array{data: string|null, motivo: string, avaliador: string|null}>
+     */
+    private function montarHistoricoReprovacoes(SolicitacaoCadastro $solicitacao): array
+    {
+        if (($solicitacao->statusSolicitacao?->nome ?? '') !== StatusSolicitacao::REPROVADO) {
+            return [];
+        }
+
+        $logs = AuditLog::query()
+            ->with('user')
+            ->where('tabela_afetada', 'solicitacoes_cadastro')
+            ->where('registro_id', $solicitacao->id)
+            ->where('acao', 'gerenciar_cadastros.avaliacao')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $itens = [];
+        foreach ($logs as $log) {
+            $ctx = $log->contexto ?? [];
+            if (($ctx['status'] ?? '') !== 'reprovado') {
+                continue;
+            }
+            $motivo = $ctx['motivo_reprovacao'] ?? null;
+            if (! is_string($motivo) || trim($motivo) === '') {
+                continue;
+            }
+            $itens[] = [
+                'data'      => $log->created_at?->toIso8601String(),
+                'motivo'    => $motivo,
+                'avaliador' => $log->user?->nome,
+            ];
+        }
+
+        if ($itens === [] && $solicitacao->justificativa_reprovacao) {
+            $itens[] = [
+                'data'      => $solicitacao->updated_at?->toIso8601String(),
+                'motivo'    => $solicitacao->justificativa_reprovacao,
+                'avaliador' => null,
+            ];
+        }
+
+        return $itens;
     }
 
     // ------------------------------------------------------------------
@@ -184,7 +235,7 @@ class SolicitacaoCadastroService
             ->exists();
 
         if ($existente) {
-            throw ApiException::unprocessable('Já existe uma solicitação em análise para este CPF.');
+            throw ApiException::unprocessable('Já existe uma solicitação em análise para este CPF. Aguarde a avaliação da equipe gestora antes de enviar uma nova solicitação.');
         }
 
         $esferaNome = strtolower((string) ($dados['esferaAtuacao'] ?? ''));
@@ -219,6 +270,7 @@ class SolicitacaoCadastroService
             'user_id'                    => $usuario->id,
             'email_institucional'        => $dados['emailInstitucional'],
             'telefone_institucional'     => $dados['telefoneInstitucional'] ?? null,
+            'telefone_pessoal'           => $dados['telefonePessoal'] ?? null,
             'esfera_id'                  => $esferaId,
             'uf_id'                      => $ufId,
             'municipio_id'               => $municipioId,
@@ -247,8 +299,17 @@ class SolicitacaoCadastroService
             $solicitacao->id
         );
 
+        $solicitacao->load(['usuario', 'esfera', 'ufRelacao', 'municipioRelacao']);
+
+        try {
+            $destinatario = $dados['emailInstitucional'];
+            Mail::to($destinatario)->send(new SolicitacaoCadastroEnviada($solicitacao));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return [
-            'message'        => 'Solicitação registrada com sucesso.',
+            'message'        => 'Solicitação registrada com sucesso! Seu pedido está com o status "Em Análise" e será avaliado pela equipe gestora.',
             'solicitacao_id' => $solicitacao->id,
         ];
     }
@@ -299,11 +360,22 @@ class SolicitacaoCadastroService
             }
         });
 
-        $this->audit->log('gerenciar_cadastros.avaliacao', $user->id, [
+        $contextoAudit = [
             'solicitacao_id' => $solicitacao->id,
             'status'         => $statusNome,
             'perfil_id'      => $dados['perfil_id'] ?? null,
-        ], AuditLog::TIPO_UPDATE, 'solicitacoes_cadastro', $solicitacao->id);
+        ];
+        if ($statusNome === 'reprovado') {
+            $contextoAudit['motivo_reprovacao'] = $dados['justificativa'] ?? null;
+        }
+        $this->audit->log(
+            'gerenciar_cadastros.avaliacao',
+            $user->id,
+            $contextoAudit,
+            AuditLog::TIPO_UPDATE,
+            'solicitacoes_cadastro',
+            $solicitacao->id
+        );
 
         return [
             'message' => $statusNome === 'aprovado'

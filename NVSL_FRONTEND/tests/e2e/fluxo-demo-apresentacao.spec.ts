@@ -11,7 +11,7 @@ test.describe('Demo para apresentacao ao cliente', () => {
     }
   })
 
-  test('deve logar e preencher formulario de novo perfil', async ({ page }) => {
+  test('deve logar e exibir gerenciar cadastros', async ({ page }) => {
     await test.step('Acessa tela de login', async () => {
       await page.goto('/login')
       await expect(page.getByRole('heading', { name: 'Acesse o sistema' })).toBeVisible()
@@ -23,29 +23,10 @@ test.describe('Demo para apresentacao ao cliente', () => {
       await expect(page).toHaveURL(/gerenciar-cadastros/i)
     })
 
-    await test.step('Abre a tela de gerenciar perfis', async () => {
-      await page.goto('/gerenciar-perfis')
-      await expect(page.getByRole('heading', { name: 'Gerenciar Perfis' })).toBeVisible()
-    })
-
-    await test.step('Abre painel de cadastro de perfil', async () => {
-      await page.getByRole('button', { name: 'Novo perfil' }).click()
-      await expect(page.getByRole('heading', { name: 'Cadastrar perfil' })).toBeVisible()
-    })
-
-    await test.step('Preenche dados principais do formulario', async () => {
-      const nomePerfil = `Perfil Demo ${Date.now()}`
-      await page.fill('#pf-nome', nomePerfil)
-      await page.selectOption('#pf-esfera', 'estadual')
-      await page.selectOption('#pf-status', 'ativo')
-      await page.fill(
-        '#pf-descricao',
-        'Perfil preenchido automaticamente em demonstracao E2E com Playwright.'
-      )
-
-      await expect(page.locator('#pf-nome')).toHaveValue(nomePerfil)
-      await expect(page.locator('#pf-esfera')).toHaveValue('estadual')
-      await expect(page.locator('#pf-status')).toHaveValue('ativo')
+    await test.step('Confere tela principal apos login', async () => {
+      await expect(
+        page.getByRole('heading', { name: /Gerenciar solicitação de cadastros no sistema/i })
+      ).toBeVisible()
     })
   })
 

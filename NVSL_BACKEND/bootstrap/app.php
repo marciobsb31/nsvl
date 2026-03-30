@@ -21,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'anonymize' => \App\Http\Middleware\AnonymizeResponseMiddleware::class,
         ]);
 
+        // Privacy by design: remove campos sensíveis de toda resposta JSON da API
+        $middleware->prependToGroup('api', \App\Http\Middleware\AnonymizeResponseMiddleware::class);
+
         // CORS via configuração
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
     })

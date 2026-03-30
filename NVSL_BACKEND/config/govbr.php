@@ -16,12 +16,12 @@ if (empty($redirectUri)) {
 
 /*
  * frontend_url: para onde o navegador volta APÓS o callback em /redirect-gov (fragment #govbr_*).
- * Deve ser a MESMA origem onde o usuário abriu o NVSL (ex.: Docker :5176). Use GOVBR_FRONTEND_URL
- * se FRONTEND_URL estiver desatualizado em relação ao dev server.
+ * Deve ser a MESMA origem onde o usuário abriu o NVSL (Docker: http://localhost ; Vite dev: http://localhost:5176).
+ * Use GOVBR_FRONTEND_URL se FRONTEND_URL estiver desatualizado em relação ao dev server.
  */
 $frontendUrl = env('GOVBR_FRONTEND_URL');
 if (empty($frontendUrl)) {
-    $frontendUrl = env('FRONTEND_URL', 'http://localhost:5176');
+    $frontendUrl = env('FRONTEND_URL', 'http://localhost');
 }
 
 return [

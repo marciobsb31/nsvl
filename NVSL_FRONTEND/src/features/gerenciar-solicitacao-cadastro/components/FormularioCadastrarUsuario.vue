@@ -46,10 +46,11 @@
                 required
                 :aria-invalid="!!errorsCpf"
                 aria-describedby="cad-cpf-err cad-cpf-hint"
-                @blur="() => validateField('CPF')"
+                @blur="onCpfBlur"
               />
+              <span v-if="verificandoCpf" class="cadastro-field-hint cadastro-field-hint--loading">Verificando CPF...</span>
               <Feedback v-if="errorsCpf" id="cad-cpf-err" :message="errorsCpf" type="danger" />
-              <span id="cad-cpf-hint" class="cadastro-field-hint">Use um CPF ainda não cadastrado no sistema.</span>
+              <span v-if="!errorsCpf && !verificandoCpf" id="cad-cpf-hint" class="cadastro-field-hint">Use um CPF ainda não cadastrado no sistema.</span>
             </div>
           </div>
           <div class="col-12 col-md-6">
@@ -207,49 +208,17 @@
 
       <Card
         title="Termo de uso e privacidade"
-        subtitle="O aceite é registrado no momento da confirmação e envio da solicitação."
+        subtitle="A confirmação envia a solicitação e registra sua ciência conforme abaixo."
         custom-class="solicitacao-card solicitacao-card--termo formulario-termo-card"
       >
-        <div class="solicitacao-termo-box" role="region" aria-labelledby="cad-termo-titulo-visivel">
-          <h3 id="cad-termo-titulo-visivel" class="solicitacao-termo-box__titulo">
-            Declaração de ciência
-          </h3>
-          <p class="solicitacao-termo-box__texto">
-            Ao confirmar, você declara ter lido e aceitado o tratamento dos dados conforme a finalidade do NVSL:
-            os dados informados serão utilizados exclusivamente para <strong>análise</strong>,
-            <strong>habilitação</strong> e <strong>gestão de acesso</strong> ao sistema.
-          </p>
-          <p class="solicitacao-termo-box__texto solicitacao-termo-box__texto--muted">
-            O envio implica ciência quanto ao tratamento de dados pessoais e uso institucional, em conformidade com a
-            legislação aplicável.
-          </p>
-          <div class="solicitacao-termo-aceite">
-            <div class="solicitacao-termo-aceite__linha">
-              <input
-                id="cad-aceite-termo"
-                v-model="aceiteTermo"
-                type="checkbox"
-                class="solicitacao-termo-aceite__input"
-                :aria-invalid="errorsAceiteTermo ? 'true' : 'false'"
-                :aria-describedby="errorsAceiteTermo ? 'cad-aceite-termo-err' : undefined"
-              />
-              <label for="cad-aceite-termo" class="solicitacao-termo-aceite__label">
-                Declaro ter lido e aceito o Termo de uso e privacidade. O aceite será registrado ao confirmar e enviar
-                esta solicitação.
-              </label>
-            </div>
-            <p v-if="errorsAceiteTermo" id="cad-aceite-termo-err" class="solicitacao-termo-aceite__erro" role="alert">
-              {{ errorsAceiteTermo }}
-            </p>
-          </div>
-        </div>
+        <TermoUsoPrivacidade />
       </Card>
 
       <div class="formulario-acoes">
         <button class="br-button secondary" type="button" @click="$emit('voltar')">
           Cancelar
         </button>
-        <button class="br-button primary" type="submit" :disabled="enviando">
+        <button class="br-button primary" type="submit" :disabled="enviando || !formularioPreenchido">
           {{ enviando ? 'Confirmando...' : 'Confirmar' }}
         </button>
       </div>
@@ -274,13 +243,14 @@ import * as yup from 'yup'
 import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
 import Card from '@/core/components/Card/Card.vue'
 import Modal from '@/core/components/Modal/Modal.vue'
+import TermoUsoPrivacidade from '@/core/components/TermoUsoPrivacidade/TermoUsoPrivacidade.vue'
 import Feedback from '@/core/components/Feedback/Feedback.vue'
 import { useEsferas } from '@/core/composables/useEsferas'
 import { useLocalidades } from '@/core/composables/useLocalidades'
 import { usePerfis } from '@/core/composables/usePerfis'
 import { useNotification } from '@/core/composables/useNotification'
 import { validarCpf } from '@/core/utils/validarCpf'
-import { enviarSolicitacaoCadastro, type SolicitacaoCadastroPayload } from '@/services/SolicitacaoCadastroService'
+import { enviarSolicitacaoCadastro, verificarCpfDisponivel, type SolicitacaoCadastroPayload } from '@/services/SolicitacaoCadastroService'
 import type { PerfilOption } from '@/services/PerfilService'
 
 const regexSomenteLetras = /^[a-zA-ZáàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\s]+$/
@@ -309,8 +279,8 @@ const router = useRouter()
 const { success, error } = useNotification()
 
 const MENSAGENS_CPF: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está em uso. Faça login ou solicite recuperação de acesso.',
-  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde o retorno.',
+  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está vinculado a um cadastro ativo no sistema.',
+  'Já existe uma solicitação em análise para este CPF.': 'Já existe uma solicitação em análise para este CPF. Aguarde a avaliação da equipe gestora.',
   'O CPF informado é inválido.': 'CPF inválido. Confira os números digitados.',
 }
 
@@ -386,9 +356,6 @@ const schema = yup.object({
       if (!inicio) return true
       return value >= inicio
     }),
-  aceiteTermo: yup
-    .boolean()
-    .oneOf([true], 'É necessário declarar ciência do Termo de uso e privacidade.'),
 })
 
 const initialValues = {
@@ -404,10 +371,9 @@ const initialValues = {
   perfil: null,
   vigenciaInicio: '',
   vigenciaFim: '',
-  aceiteTermo: false,
 }
 
-const { validateField, setFieldValue, validate } = useForm({
+const { validateField, setFieldValue, setFieldError, validate, meta: formMeta } = useForm({
   validationSchema: schema,
   initialValues,
 })
@@ -419,6 +385,29 @@ const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<s
 const { value: esferaAtuacao, errorMessage: errorsEsfera } = useField<string>('esferaAtuacao')
 const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
 const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
+
+const verificandoCpf = ref(false)
+
+async function onCpfBlur() {
+  await validateField('CPF')
+  if (errorsCpf.value) return
+
+  const digitos = String(cpf.value ?? '').replace(/\D/g, '')
+  if (digitos.length !== 11) return
+  if (!validarCpf(digitos)) return
+
+  verificandoCpf.value = true
+  try {
+    const res = await verificarCpfDisponivel(digitos)
+    if (!res.disponivel) {
+      setFieldError('CPF', mapearMensagemCpf(res.mensagem))
+    }
+  } catch {
+    setFieldError('CPF', 'Não foi possível verificar o CPF. Tente novamente.')
+  } finally {
+    verificandoCpf.value = false
+  }
+}
 
 const { opcoesUf, opcoesMunicipio, carregarUfs } = useLocalidades(uf)
 const { opcoesEsfera, carregarEsferas } = useEsferas()
@@ -513,7 +502,14 @@ const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
 const { value: perfil, errorMessage: errorsPerfil } = useField<string | number | null>('perfil')
 const { value: vigenciaInicio, errorMessage: errorsVigenciaInicio } = useField<string>('vigenciaInicio')
 const { value: vigenciaFim, errorMessage: errorsVigenciaFim } = useField<string>('vigenciaFim')
-const { value: aceiteTermo, errorMessage: errorsAceiteTermo } = useField<boolean>('aceiteTermo')
+
+const formularioPreenchido = computed(() => {
+  const camposTexto = [nome, cpf, emailInstitucional, telefoneInstitucional, esferaAtuacao, uf, municipio, orgao, cargo]
+  const todosPreenchidos = camposTexto.every((f) => String(f.value ?? '').trim() !== '')
+  const perfilPreenchido = perfil.value !== null && perfil.value !== ''
+  const vigenciaPreenchida = String(vigenciaInicio.value ?? '').trim() !== ''
+  return todosPreenchidos && perfilPreenchido && vigenciaPreenchida && formMeta.value.valid
+})
 
 const MAPA_CAMPO_PARA_FOCO: Record<string, string> = {
   nome: 'cad-nome',
@@ -528,7 +524,6 @@ const MAPA_CAMPO_PARA_FOCO: Record<string, string> = {
   perfil: 'focusPerfil',
   vigenciaInicio: 'cad-vigencia-inicio',
   vigenciaFim: 'cad-vigencia-fim',
-  aceiteTermo: 'cad-aceite-termo',
 }
 
 function focusarCampo(campo: string) {
@@ -584,7 +579,6 @@ function lerValoresDosRefs(): Record<string, unknown> {
     perfil: perfil.value,
     vigenciaInicio: vigenciaInicio.value,
     vigenciaFim: vigenciaFim.value,
-    aceiteTermo: aceiteTermo.value,
   }
 }
 
@@ -642,7 +636,6 @@ function montarPayload(): SolicitacaoCadastroPayload {
     perfilId: !Number.isNaN(perfilNum) && perfilNum > 0 ? perfilNum : undefined,
     vigenciaInicio: String(vigenciaInicio.value ?? '').trim() || undefined,
     vigenciaFim: String(vigenciaFim.value ?? '').trim() || undefined,
-    aceiteTermo: true,
   }
 }
 
@@ -837,6 +830,11 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
   line-height: 1.35;
 }
 
+.cadastro-field-hint--loading {
+  color: var(--color-primary-default, #1351b4);
+  font-style: italic;
+}
+
 .cadastro-label-opcional {
   font-weight: 500;
   color: var(--color-secondary-06, #666);
@@ -880,71 +878,6 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 
 .formulario-termo-card :deep(.solicitacao-card) {
   margin-top: 0 !important;
-}
-
-/* Alinhado à página pública de solicitação de cadastro */
-.solicitacao-termo-box {
-  padding: 1rem 1.125rem;
-  border-radius: 6px;
-  border-left: 4px solid var(--color-primary-default, #1351b4);
-  background: var(--color-primary-pastel-01, #e8f0ff);
-}
-
-.solicitacao-termo-box__titulo {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-primary-darken-02, #0c326f);
-}
-
-.solicitacao-termo-box__texto {
-  margin: 0 0 0.75rem;
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: var(--color-secondary-09, #333);
-}
-
-.solicitacao-termo-box__texto:last-child {
-  margin-bottom: 0;
-}
-
-.solicitacao-termo-box__texto--muted {
-  color: var(--color-secondary-07, #555);
-  font-size: 0.8125rem;
-}
-
-.solicitacao-termo-aceite {
-  margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(19, 81, 180, 0.2);
-}
-
-.solicitacao-termo-aceite__linha {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-}
-
-.solicitacao-termo-aceite__input {
-  width: 1.125rem;
-  height: 1.125rem;
-  margin-top: 0.2rem;
-  flex-shrink: 0;
-  accent-color: var(--color-primary-default, #1351b4);
-  cursor: pointer;
-}
-
-.solicitacao-termo-aceite__label {
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: var(--color-secondary-09, #333);
-  cursor: pointer;
-}
-
-.solicitacao-termo-aceite__erro {
-  margin: 0.5rem 0 0;
-  font-size: 0.8125rem;
-  color: var(--color-danger, #e52207);
 }
 
 .formulario-acoes {

@@ -956,7 +956,7 @@ components:
         - uf
         - municipio
         - orgao
-        - aceiteTermo
+        - cargo
       properties:
         nome: { type: string, example: "Fulano da Silva" }
         CPF: { type: string, example: "12345678909" }
@@ -969,10 +969,10 @@ components:
         uf: { type: string, example: "DF" }
         municipio: { type: string, example: "Brasília" }
         orgao: { type: string, example: "Ministério dos Direitos Humanos" }
-        cargo: { type: string, nullable: true, example: "Analista" }
+        cargo: { type: string, example: "Analista" }
         aceiteTermo:
           type: boolean
-          description: Aceite do Termo de uso e privacidade (obrigatório; registrado no backend no momento do envio)
+          description: Opcional. A ciência do termo é implícita no envio; o backend registra o horário em aceite_termo_at.
 
     SolicitacaoCadastroCreateResponse:
       type: object

@@ -157,7 +157,48 @@
             <label>Telefone Institucional</label>
             <input type="text" :value="formatarTelefone(detalhe?.telefone_institucional)" readonly />
           </div>
+          <div class="br-input">
+            <label>Telefone pessoal</label>
+            <input
+              type="text"
+              :value="detalhe?.telefone_pessoal ? formatarTelefone(detalhe.telefone_pessoal) : '—'"
+              readonly
+            />
+          </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Histórico de reprovação (status reprovado) — abaixo dos dados do solicitante -->
+    <div v-if="detalhe?.status === 'reprovado'" class="painel-secao painel-secao--historico-reprovacao">
+      <h3 class="secao-titulo">Histórico de reprovação</h3>
+      <p class="secao-descricao">
+        Registro das decisões de reprovação com data e motivo informado pelo avaliador.
+      </p>
+      <div v-if="historicoReprovacoes.length === 0" class="br-message warning" role="status">
+        <div class="content">Nenhum motivo de reprovação registrado para esta solicitação.</div>
+      </div>
+      <div v-else class="table-responsive">
+        <table
+          class="br-table tabela-historico-reprovacao"
+          role="table"
+          aria-label="Histórico de reprovações da solicitação"
+        >
+          <thead>
+            <tr>
+              <th scope="col" class="th-bold">Data</th>
+              <th scope="col" class="th-bold">Motivo</th>
+              <th scope="col" class="th-bold">Responsável pela avaliação</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, idx) in historicoReprovacoes" :key="`reprov-${idx}-${item.data}`">
+              <td>{{ formatarDataHoraPtBr(item.data) }}</td>
+              <td class="td-motivo-reprovacao">{{ item.motivo }}</td>
+              <td>{{ item.avaliador ?? '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -383,7 +424,11 @@ import { ref, computed, watch, onMounted, reactive } from 'vue'
 import { usePerfis } from '@/core/composables/usePerfis'
 import Modal from '@/core/components/Modal/Modal.vue'
 import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
-import type { SolicitacaoCadastroDetalhe, PerfilVinculado } from '@/services/SolicitacaoCadastroService'
+import type {
+  SolicitacaoCadastroDetalhe,
+  PerfilVinculado,
+  HistoricoReprovacaoItem,
+} from '@/services/SolicitacaoCadastroService'
 
 defineOptions({ name: 'PainelDetalharSolicitacao' })
 
@@ -402,6 +447,11 @@ const emit = defineEmits<{
   (e: 'toggle-perfil', payload: { perfilUsuarioId: number; acao: 'ativar' | 'desativar' }): void
   (e: 'adicionar-perfil', payload: { perfilId: number | string; vigenciaInicio?: string; vigenciaFim?: string }): void
 }>()
+
+const historicoReprovacoes = computed<HistoricoReprovacaoItem[]>(() => {
+  const raw = props.detalhe?.historico_reprovacoes
+  return Array.isArray(raw) ? raw : []
+})
 
 const perfilSelecionado = ref<string | number | null>(null)
 const vigenciaInicio = ref('')
@@ -560,6 +610,24 @@ function formatarDataExibicao(val: string) {
     const d = new Date(val)
     if (isNaN(d.getTime())) return val
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  } catch {
+    return val
+  }
+}
+
+/** Data e hora em pt-BR (histórico de reprovação). */
+function formatarDataHoraPtBr(val: string | null | undefined) {
+  if (!val) return '—'
+  try {
+    const d = new Date(val)
+    if (isNaN(d.getTime())) return val
+    return d.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
   } catch {
     return val
   }
@@ -778,6 +846,27 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
   font-size: 1.125rem;
   font-weight: 600;
   margin: 0 0 0.75rem;
+}
+
+.secao-descricao {
+  font-size: 0.875rem;
+  color: var(--color-secondary-07, #555);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.painel-secao--historico-reprovacao .tabela-historico-reprovacao th.th-bold {
+  font-weight: 700;
+}
+
+.tabela-historico-reprovacao td {
+  vertical-align: top;
+}
+
+.tabela-historico-reprovacao .td-motivo-reprovacao {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 28rem;
 }
 
 .secao-grid-readonly,

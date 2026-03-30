@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null    $user_id               FK → usuarios.id
  * @property string      $email_institucional
  * @property string|null $telefone_institucional
+ * @property string|null $telefone_pessoal
  * @property int|null    $esfera_id             FK → esferas.id
  * @property int|null    $uf_id                 FK → ufs.id
  * @property int|null    $municipio_id          FK → municipios.id
@@ -35,6 +36,7 @@ class SolicitacaoCadastro extends Model
         'user_id',
         'email_institucional',
         'telefone_institucional',
+        'telefone_pessoal',
         'esfera_id',
         'uf_id',
         'municipio_id',

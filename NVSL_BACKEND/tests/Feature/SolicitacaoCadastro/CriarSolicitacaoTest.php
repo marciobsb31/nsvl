@@ -48,7 +48,6 @@ class CriarSolicitacaoTest extends TestCase
             'municipio'             => 'Brasília',
             'orgao'                 => 'Ministério da Saúde',
             'cargo'                 => 'Analista',
-            'aceiteTermo'           => true,
         ], $override);
     }
 
@@ -62,6 +61,19 @@ class CriarSolicitacaoTest extends TestCase
         $this->assertDatabaseHas('usuarios', [
             'cpf'       => '52998224725',
             'govbr_sub' => 'pending-52998224725',
+        ]);
+    }
+
+    #[Test]
+    public function persiste_telefone_pessoal_opcional(): void
+    {
+        $this->postJson('/api/solicitacoes-cadastro', $this->dadosSolicitacao([
+            'telefonePessoal' => '61988887777',
+        ]))
+            ->assertStatus(201);
+
+        $this->assertDatabaseHas('solicitacoes_cadastro', [
+            'telefone_pessoal' => '61988887777',
         ]);
     }
 
@@ -83,13 +95,6 @@ class CriarSolicitacaoTest extends TestCase
     public function email_institucional_obrigatorio(): void
     {
         $this->postJson('/api/solicitacoes-cadastro', $this->dadosSolicitacao(['emailInstitucional' => '']))
-            ->assertStatus(422);
-    }
-
-    #[Test]
-    public function aceite_termo_obrigatorio(): void
-    {
-        $this->postJson('/api/solicitacoes-cadastro', $this->dadosSolicitacao(['aceiteTermo' => false]))
             ->assertStatus(422);
     }
 

@@ -671,7 +671,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"Fulano da Silva\",\n  \"CPF\": \"12345678909\",\n  \"emailInstitucional\": \"fulano@email.com\",\n  \"telefoneInstitucional\": \"6133334444\",\n  \"telefonePessoal\": \"61999998888\",\n  \"esferaAtuacao\": \"federal\",\n  \"uf\": \"DF\",\n  \"municipio\": \"Brasília\",\n  \"orgao\": \"Ministerio dos Direitos Humanos\",\n  \"cargo\": \"Analista\",\n  \"aceiteTermo\": true\n}"
+              "raw": "{\n  \"nome\": \"Fulano da Silva\",\n  \"CPF\": \"12345678909\",\n  \"emailInstitucional\": \"fulano@email.com\",\n  \"telefoneInstitucional\": \"6133334444\",\n  \"telefonePessoal\": \"61999998888\",\n  \"esferaAtuacao\": \"federal\",\n  \"uf\": \"DF\",\n  \"municipio\": \"Brasília\",\n  \"orgao\": \"Ministerio dos Direitos Humanos\",\n  \"cargo\": \"Analista\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/solicitacoes-cadastro",

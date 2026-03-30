@@ -143,4 +143,29 @@ class AvaliarSolicitacaoTest extends TestCase
             'perfil_id' => $perfil->id,
         ]);
     }
+
+    #[Test]
+    public function detalhar_solicitacao_reprovada_retorna_historico_com_motivo_e_avaliador(): void
+    {
+        $user = $this->criarUsuarioFederal();
+        $s = SolicitacaoCadastro::factory()->create();
+        $motivo = 'Documentação insuficiente para aprovação do cadastro.';
+
+        $this->autenticar($user)
+            ->patchJson("/api/solicitacoes-cadastro/{$s->id}", [
+                'status'        => 'reprovado',
+                'justificativa' => $motivo,
+            ])
+            ->assertOk();
+
+        $res = $this->autenticar($user)
+            ->getJson("/api/solicitacoes-cadastro/{$s->id}")
+            ->assertOk()
+            ->assertJsonPath('status', 'reprovado');
+
+        $json = $res->json();
+        $this->assertIsArray($json['historico_reprovacoes'] ?? null);
+        $this->assertSame($motivo, $json['historico_reprovacoes'][0]['motivo']);
+        $this->assertSame($user->nome, $json['historico_reprovacoes'][0]['avaliador']);
+    }
 }

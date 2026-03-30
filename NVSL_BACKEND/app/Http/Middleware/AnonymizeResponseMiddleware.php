@@ -12,6 +12,12 @@ use Symfony\Component\HttpFoundation\Response;
  * Garante que dados internos (cpf_hash, tokens, etc.) nunca sejam
  * acidentalmente expostos em respostas da API, mesmo que um Model
  * seja retornado diretamente.
+ *
+ * Nota: a chave literal `cpf` NÃO é removida aqui porque listagens/detalhes de
+ * solicitações retornam CPF já mascarado (formato xxx.xxx.xxx-xx) via serviço;
+ * removê-la ocultava esses dados na interface. O CPF em claro (11 dígitos)
+ * não deve ser serializado em controllers — usar {@see \App\Models\Usuario::toSafeArray()}
+ * ou {@see \App\Helpers\CpfHelper::mascarar()}.
  */
 class AnonymizeResponseMiddleware
 {
@@ -20,7 +26,6 @@ class AnonymizeResponseMiddleware
      */
     private const SENSITIVE_FIELDS = [
         'cpf_hash',
-        'cpf',
         'password',
         'remember_token',
         'govbr_access_token',

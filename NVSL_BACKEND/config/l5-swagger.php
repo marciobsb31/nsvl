@@ -52,9 +52,15 @@ return [
             'docs'     => 'docs',
             'oauth2_callback' => 'api/oauth2-callback',
             'middleware' => [
-                'api'  => [],
-                'asset' => [],
-                'docs' => [],
+                'api' => [
+                    \App\Http\Middleware\DisallowSwaggerInProduction::class,
+                ],
+                'asset' => [
+                    \App\Http\Middleware\DisallowSwaggerInProduction::class,
+                ],
+                'docs' => [
+                    \App\Http\Middleware\DisallowSwaggerInProduction::class,
+                ],
                 'oauth2_callback' => [],
             ],
             'group_options' => [],

@@ -24,7 +24,8 @@ export default defineConfig({
         },
       },
     }),
-    vueDevTools(),
+    // Desliga no E2E/CI para subir o servidor mais rápido (Playwright webServer).
+    ...(process.env.VITE_DISABLE_DEVTOOLS === '1' ? [] : [vueDevTools()]),
   ],
   resolve: {
     alias: {

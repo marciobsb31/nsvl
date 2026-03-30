@@ -104,11 +104,11 @@ describe('GerenciarPerfisPage (/gerenciar-perfis)', () => {
     document.body.innerHTML = ''
   })
 
-  it('exibe título e botão Novo Perfil', async () => {
+  it('exibe título e botão Novo perfil', async () => {
     const w = mountPage()
     await flushPromises()
-    expect(w.text()).toContain('Gerenciar Perfis')
-    expect(w.find('[aria-label="Novo perfil"]').exists()).toBe(true)
+    expect(w.text()).toContain('Gerenciar perfis de acesso no sistema')
+    expect(w.find('[aria-label="Cadastrar novo perfil"]').exists()).toBe(true)
   })
 
   it('ao montar carrega perfis e hierarquia', async () => {
@@ -166,10 +166,10 @@ describe('GerenciarPerfisPage (/gerenciar-perfis)', () => {
     expect(w.findAll('tbody tr')).toHaveLength(10)
   })
 
-  it('abre painel em modo cadastrar ao clicar em Novo Perfil', async () => {
+  it('abre painel em modo cadastrar ao clicar em Novo perfil', async () => {
     const w = mountPage()
     await flushPromises()
-    await w.find('[aria-label="Novo perfil"]').trigger('click')
+    await w.find('[aria-label="Cadastrar novo perfil"]').trigger('click')
     await w.vm.$nextTick()
     expect(w.find('[data-testid="painel-form"]').exists()).toBe(true)
     expect(w.find('[data-testid="form-modo"]').text()).toBe('cadastrar')
@@ -225,7 +225,7 @@ describe('GerenciarPerfisPage (/gerenciar-perfis)', () => {
     listarPerfisGerenciar.mockResolvedValue([perfilBase()])
     const w = mountPage()
     await flushPromises()
-    await w.find('[aria-label="Novo perfil"]').trigger('click')
+    await w.find('[aria-label="Cadastrar novo perfil"]').trigger('click')
     await w.vm.$nextTick()
     listarPerfisGerenciar.mockClear()
     await w.find('[data-testid="emit-sucesso"]').trigger('click')

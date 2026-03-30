@@ -13,8 +13,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
+use OpenApi\Attributes as OA;
 use Throwable;
 
+#[OA\Tag(name: 'Autenticação', description: 'GOV.BR OAuth2 + PKCE e sessão Sanctum')]
 class GovBrAuthController extends Controller
 {
     public function __construct(
@@ -23,6 +25,25 @@ class GovBrAuthController extends Controller
         private readonly AuditLogService $auditLogService,
     ) {}
 
+    #[OA\Get(
+        path: '/api/auth/redirect',
+        summary: 'Inicia login GOV.BR',
+        description: 'Retorna a URL de autorização do SSO (PKCE + state em cache).',
+        tags: ['Autenticação'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'URL do SSO',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'url', type: 'string', format: 'uri'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Configuração GOV.BR incompleta'),
+            new OA\Response(response: 429, description: 'Limite de requisições'),
+        ]
+    )]
     public function redirect(): JsonResponse
     {
         $this->garantirConfiguracao();
@@ -48,6 +69,22 @@ class GovBrAuthController extends Controller
         return response()->json(['url' => $url]);
     }
 
+    #[OA\Get(
+        path: '/api/auth/callback',
+        summary: 'Callback OAuth2 (alternativo ao /redirect-gov)',
+        description: 'Mesmo fluxo do callback web: valida state/code, cria token Sanctum e redireciona ao frontend com fragmento.',
+        tags: ['Autenticação'],
+        parameters: [
+            new OA\Parameter(name: 'code', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'state', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'error', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'error_description', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 302, description: 'Redirecionamento para FRONTEND_URL/login#govbr_login_code=... ou govbr_error=...'),
+            new OA\Response(response: 429, description: 'Limite de requisições'),
+        ]
+    )]
     public function callback(Request $request): RedirectResponse
     {
         $govBrUser = null;
@@ -138,6 +175,35 @@ class GovBrAuthController extends Controller
         }
     }
 
+    #[OA\Post(
+        path: '/api/auth/exchange',
+        summary: 'Troca código de login por token Sanctum',
+        description: 'Envia o `govbr_login_code` recebido no fragmento da URL após o redirect do callback.',
+        tags: ['Autenticação'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['code'],
+                properties: [
+                    new OA\Property(property: 'code', type: 'string', description: 'Código descartável gerado após callback bem-sucedido'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Token e usuário seguro',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'token', type: 'string'),
+                        new OA\Property(property: 'user', ref: '#/components/schemas/UserResource'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Código inválido ou expirado'),
+            new OA\Response(response: 429, description: 'Limite de requisições'),
+        ]
+    )]
     public function exchange(Request $request): JsonResponse
     {
         $payload = $request->validate([
@@ -155,6 +221,25 @@ class GovBrAuthController extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: '/api/auth/logout',
+        summary: 'Encerra sessão Sanctum',
+        tags: ['Autenticação'],
+        security: [['BearerAuth' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Logout realizado',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Logout realizado com sucesso.'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Não autenticado'),
+            new OA\Response(response: 429, description: 'Limite de requisições'),
+        ]
+    )]
     public function logout(Request $request): JsonResponse
     {
         $user = $request->user();

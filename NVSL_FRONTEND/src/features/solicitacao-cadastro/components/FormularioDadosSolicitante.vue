@@ -67,6 +67,21 @@
         <Feedback v-if="errorsTelInst" :message="errorsTelInst" type="danger" />
       </div>
     </div>
+    <div class="col-12 col-md-6">
+      <div class="br-input">
+        <label for="input-tel-pessoal">Telefone pessoal</label>
+        <input
+          id="input-tel-pessoal"
+          type="tel"
+          placeholder="(00) 00000-0000"
+          v-model="telefonePessoal"
+          v-maska="telefoneMask"
+          autocomplete="tel-national"
+        />
+        <span class="solicitacao-field-hint">Opcional — para contato alternativo.</span>
+        <Feedback v-if="errorsTelPessoal" :message="errorsTelPessoal" type="danger" />
+      </div>
+    </div>
   </section>
 </template>
 <script setup lang="ts">
@@ -90,6 +105,7 @@ const { value: nome, errorMessage: errorsNome } = useField<string>('nome')
 const { value: CPF, errorMessage: errorsCPF } = useField<string>('CPF')
 const { value: emailInstitucional, errorMessage: errorsEmail } = useField<string>('emailInstitucional')
 const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<string>('telefoneInstitucional')
+const { value: telefonePessoal, errorMessage: errorsTelPessoal } = useField<string>('telefonePessoal')
 
 
 const { setFieldError } = useForm()
@@ -105,8 +121,8 @@ const cpfPreenchido = computed(() => {
 const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
 
 const MENSAGENS_CPF_EM_USO: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está em uso. Faça login ou solicite recuperação de acesso.',
-  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde o retorno.',
+  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está vinculado a um cadastro ativo. Faça login com GOV.BR para acessar o sistema.',
+  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde a avaliação da equipe gestora.',
   'CPF inválido. Verifique os dígitos informados.': 'CPF inválido. Confira os números digitados.',
   'Informe um CPF com 11 dígitos.': 'Informe os 11 dígitos do CPF.',
 }
