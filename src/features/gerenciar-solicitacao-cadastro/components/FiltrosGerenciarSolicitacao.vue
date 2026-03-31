@@ -3,15 +3,15 @@
     <div class="row filtros">
       <div class="col-12 col-md-6">
         <div class="br-input mb-2">
-          <label for="filtro-cpf">CPF</label>
-          <input id="filtro-cpf" type="text" placeholder="000.000.000-00" v-model="filtrosLocal.cpf"
-            v-maska="'###.###.###-##'" />
+          <label for="filtro-nome">Nome completo</label>
+          <input id="filtro-nome" type="text" placeholder="Informe o nome" v-model="filtrosLocal.nome" />
         </div>
       </div>
       <div class="col-12 col-md-6">
         <div class="br-input mb-2">
-          <label for="filtro-nome">Nome completo</label>
-          <input id="filtro-nome" type="text" placeholder="Informe o nome" v-model="filtrosLocal.nome" />
+          <label for="filtro-cpf">CPF</label>
+          <input id="filtro-cpf" type="text" placeholder="000.000.000-00" v-model="filtrosLocal.cpf"
+            v-maska="'###.###.###-##'" />
         </div>
       </div>
       <div class="col-12 col-md-4">
