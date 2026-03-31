@@ -247,6 +247,20 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
     expect(w.find('[data-testid="form-cadastro"]').exists()).toBe(true)
   })
 
+  it('com perfil Cliente não abre painel ao clicar em Cadastrar usuário', async () => {
+    mockPerfilAtivo.value = {
+      perfil_usuario_id: 9,
+      perfil_id: 9,
+      nome: 'Cliente',
+      ativo: true,
+    }
+    const w = mountPage()
+    await flushPromises()
+    await w.find('[aria-label="Cadastrar usuário"]').trigger('click')
+    await w.vm.$nextTick()
+    expect(w.find('[data-testid="form-cadastro"]').exists()).toBe(false)
+  })
+
   it('fecha painel cadastro e recarrega lista ao sucesso do formulário', async () => {
     const w = mountPage()
     await flushPromises()

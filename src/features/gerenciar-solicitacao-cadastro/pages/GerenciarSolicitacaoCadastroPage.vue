@@ -1,6 +1,12 @@
 <template>
   <DefaultLayout>
-    <section class="gerenciar-cadastros" :class="{ 'painel-aberto': painelCadastroAberto || painelDetalharAberto }">
+    <section
+      class="gerenciar-cadastros"
+      :class="{
+        'painel-aberto':
+          (painelCadastroAberto && !isPerfilCliente) || painelDetalharAberto,
+      }"
+    >
       <div class="titulo-pagina">
         <div class="titulo-pagina__topo">
           <div>
@@ -9,10 +15,11 @@
             </h1>
             <p class="titulo-pagina__subtitulo">Aplique filtros e clique em <strong>Pesquisar</strong>.</p>
           </div>
+          <!-- Reativar para perfil Cliente: @click="abrirPainelCadastro" (remover onCliqueCadastrarUsuario e guard isPerfilCliente no script). -->
           <button
             class="br-button primary small"
             type="button"
-            @click="abrirPainelCadastro"
+            @click="onCliqueCadastrarUsuario"
             aria-label="Cadastrar usuário"
           >
             Cadastrar usuário
@@ -128,15 +135,16 @@
 
       <Transition name="painel-fade">
         <div
-          v-if="painelCadastroAberto || painelDetalharAberto"
+          v-if="(painelCadastroAberto && !isPerfilCliente) || painelDetalharAberto"
           class="painel-overlay"
           aria-hidden="true"
           @click="fecharPainelAberto"
         ></div>
       </Transition>
+      <!-- Reativar painel para Cliente: v-if="painelCadastroAberto" (remover && !isPerfilCliente aqui e no overlay acima). -->
       <Transition name="painel-slide">
         <aside
-          v-if="painelCadastroAberto"
+          v-if="painelCadastroAberto && !isPerfilCliente"
           ref="painelCadastroRef"
           class="painel-cadastro"
           aria-label="Formulário cadastrar usuário"
@@ -197,6 +205,17 @@ defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
 const { error, success } = useNotification()
 const { user, contextKey, perfilAtivo } = useAuth()
+
+/**
+ * Perfil cujo cadastro via painel está temporariamente desligado (botão visível, sem ação).
+ * Reativar para perfil Cliente: apague isPerfilCliente, onCliqueCadastrarUsuario e watch(isPerfilCliente);
+ * no botão use @click="abrirPainelCadastro"; no overlay/aside de cadastro use só painelCadastroAberto
+ * (remova && !isPerfilCliente e ajuste :class da section).
+ */
+const isPerfilCliente = computed(() => {
+  const nome = perfilAtivo.value?.nome?.trim().toLowerCase()
+  return nome === 'cliente'
+})
 
 const solicitacoes = ref<SolicitacaoGerenciarItem[]>([])
 const carregando = ref(false)
@@ -298,6 +317,14 @@ function limparEpesquisar() {
 function abrirPainelCadastro() {
   painelDetalharAberto.value = false
   painelCadastroAberto.value = true
+}
+
+/**
+ * Perfil Cliente: clique sem efeito (painel oculto). Reativar: usar @click="abrirPainelCadastro" no botão e remover este handler.
+ */
+function onCliqueCadastrarUsuario() {
+  if (isPerfilCliente.value) return
+  abrirPainelCadastro()
 }
 
 function fecharPainelCadastro() {
@@ -527,6 +554,10 @@ watch(contextKey, () => {
   painelDetalharAberto.value = false
   detalheSelecionado.value = null
   limparEpesquisar()
+})
+
+watch(isPerfilCliente, (cliente) => {
+  if (cliente) fecharPainelCadastro()
 })
 
 onMounted(() => {
