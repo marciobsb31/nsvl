@@ -557,38 +557,7 @@ function obterIndicadorSort(coluna: string) {
   if (ordenarColuna.value !== coluna) return '↕'
   return ordenarAsc.value ? '↑' : '↓'
 }
-const esferaMap: Record<string, string> = {
-  federal: 'Federal',
-  estadual: 'Estadual',
-  municipal: 'Municipal',
-}
 
-const contextoAtualLabel = computed(() => {
-  const perfil = perfilAtivo.value
-  const esfera = user.value?.esfera_atuacao
-  const uf = user.value?.uf_lotacao
-  const municipio = user.value?.municipio_lotacao
-  if (!perfil) {
-    return esfera ? esferaMap[esfera] ?? esfera : ''
-  }
-  const partes: string[] = []
-  if (perfil.nome) partes.push(perfil.nome)
-  if (esfera) partes.push(esferaMap[esfera] ?? esfera)
-  if (uf) partes.push(uf)
-  if (municipio) partes.push(municipio)
-  return partes.join(' — ')
-})
-
-watch(contextKey, () => {
-  painelCadastroAberto.value = false
-  painelDetalharAberto.value = false
-  detalheSelecionado.value = null
-  limparEpesquisar()
-})
-
-watch(isPerfilCliente, (cliente) => {
-  if (cliente) fecharPainelCadastro()
-})
 
 const esferaMap: Record<string, string> = {
   federal: 'Federal',
