@@ -161,7 +161,7 @@
         <i class="fas fa-users fa-2x mb-2" aria-hidden="true"></i>
         <p>Nenhum perfil vinculado. Clique em <strong>Adicionar Perfil</strong> para vincular um novo perfil ao usuário.</p>
       </div>
-      <div v-else class="table-responsive">
+      <div v-else-if="!isMobile" class="table-responsive">
         <table class="br-table tabela-perfis" role="table">
           <thead>
             <tr>
@@ -240,6 +240,60 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <div v-if="isMobile && temPerfisVinculados">
+      <div class="row" v-for="(p, idx) in perfisVinculadosOrdenados" :key="`perfil-${idx}-${p.id ?? idx}`">
+        <div class="col-8 mb-1">
+          <label for="perfil">Perfil</label>
+          <p class="m-0">{{ p.perfil }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="vigente">Status</label><br>
+          <span class="br-tag" :class="p.vigente ? 'success' : 'danger'">
+            {{ p.vigente ? 'Ativo' : 'Inativo' }}
+          </span>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="vigencia_inicio">Vig. início</label>
+          <p class="m-0">{{ formatarDataExibicao(p.vigencia_inicio) }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="vigencia_fim">Vig. fim</label>
+          <p class="m-0">{{ formatarDataExibicao(p.vigencia_fim) }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="esfera">Esfera</label>
+          <p class="m-0">{{ p.esfera }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="uf">UF</label>
+          <p class="m-0">{{ p.uf }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="municipio">Município</label>
+          <p class="m-0">{{ p.municipio }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="orgao">Órgão</label>
+          <p class="m-0">{{ p.orgao }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="cargo">Cargo</label>
+          <p class="m-0">{{ p.cargo }}</p>
+        </div>
+        <div class="col-12">
+          <button
+                  class="br-button secondary small block"
+                  type="button"
+                  @click="$emit('toggle-perfil', { perfilUsuarioId: p.id, acao: p.vigente ? 'desativar' : 'ativar' })"
+                >
+                  {{ p.vigente ? 'Desativar' : 'Ativar' }}
+                </button>
+        </div>
+        <div class="col-12">
+          <span class="br-divider my-3"></span>
+        </div>
+      </div>
       </div>
       <div class="perfis-vinculados-acoes">
         <button
@@ -363,8 +417,10 @@ import { ref, computed, watch, onMounted, reactive } from 'vue'
 import { usePerfis } from '@/core/composables/usePerfis'
 import Modal from '@/core/components/Modal/Modal.vue'
 import type { SolicitacaoCadastroDetalhe, PerfilVinculado } from '@/services/SolicitacaoCadastroService'
+import { useBreakpoint } from '@/core/composables/useBreakpoint'
 
 defineOptions({ name: 'PainelDetalharSolicitacao' })
+const { isMobile } = useBreakpoint()
 
 const props = withDefaults(
   defineProps<{

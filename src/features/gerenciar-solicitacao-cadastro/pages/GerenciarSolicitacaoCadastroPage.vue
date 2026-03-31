@@ -14,7 +14,7 @@
         <FiltrosGerenciarSolicitacao :carregando="carregando" @pesquisar="aplicarFiltros" @limpar="limparEpesquisar" />
       </Card>
 
-      <Card custom-class="mb-4">
+      <Card custom-class="mb-4" v-if="!isMobile">
 
         <div v-if="carregando" class="br-loading p-4" role="status" aria-live="polite">
           <div class="loading-spinner" aria-hidden="true"></div>
@@ -102,6 +102,48 @@
         </div>
         
       </Card>
+      <Card custom-class="mb-4" v-if="isMobile && solicitacoesOrdenadas.length > 0">
+        <div class="row table-mobile" v-for="s in solicitacoesOrdenadas" :key="s.id">
+          <div class="col-12 mb-1">
+            <label for="nome">Nome completo</label>
+            <p class="m-0">{{ s.nome }}</p>
+          </div>
+          <div class="col-6 mb-1">
+            <label for="cpf">CPF</label>
+            <p class="m-0">{{ s.cpf }}</p>
+          </div>
+          <div class="col-6 mb-1">
+            <label for="esfera">Esfera de atuação</label>
+            <p class="m-0">{{ labelEsfera(s.esfera_atuacao) }}</p>
+          </div>
+          <div class="col-6 mb-1">
+            <label for="orgao">Órgão</label>
+            <p class="m-0">{{ s.orgao }}</p>
+          </div>
+          <div class="col-6 mb-1">
+          <label for="situacao">Situação</label><br></br>
+           <span class="br-tag" :class="classeStatus(s.status)">
+                    {{ labelStatus(s.status) }}
+                  </span>
+          </div>
+          <div class="col-12 mt-3">
+           <button
+                    class="br-button secondary small block"
+                    type="button"
+                    @click="detalhar(s)"
+                    :disabled="carregandoDetalhe"
+                    :aria-label="rotuloBotaoDetalhar(s.status)"
+                    :title="rotuloBotaoDetalhar(s.status)"
+                    slot="trigger"
+                  >
+                    {{ rotuloBotaoDetalhar(s.status) }}
+                  </button>
+          </div>
+          <div class="col-12 mt-3">
+            <span class="br-divider my-3"></span>
+          </div>
+        </div>
+      </Card>
 
       <Transition name="painel-fade">
         <div
@@ -168,12 +210,14 @@ import { obterSolicitacaoCadastro, type SolicitacaoCadastroDetalhe } from '@/ser
 import { useNotification } from '@/core/composables/useNotification'
 import { useAuth } from '@/core/composables/useAuth'
 import HeaderPage from '@/core/components/HeaderPage/HeaderPage.vue'
-import router from '@/router'
-import { BrButton, BrTooltip } from '@govbr-ds/webcomponents-vue'
+import { BrButton } from '@govbr-ds/webcomponents-vue'
+import { useBreakpoint } from '@/core/composables/useBreakpoint'
+
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
 const { error, success } = useNotification()
 const { user } = useAuth()
+const { isMobile } = useBreakpoint()
 
 const solicitacoes = ref<SolicitacaoGerenciarItem[]>([])
 const carregando = ref(false)
@@ -625,4 +669,5 @@ onMounted(() => {
   font-size: 0.75rem;
   color: var(--color-secondary-07, #555);
 }
+
 </style>
