@@ -1,6 +1,6 @@
 <template>
   <section class="row g-3 solicitacao-form-grid">
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-4">
       <SelectAutocomplete
         v-model="esferaAtuacao"
         label="Esfera de atuação"
@@ -11,7 +11,7 @@
       />
       <Feedback v-if="errorsEsfera" :message="errorsEsfera" type="danger" />
     </div>
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-3">
       <SelectAutocomplete
         v-model="uf"
         label="Estado (UF)"
@@ -22,7 +22,7 @@
       />
       <Feedback v-if="errorsUf" :message="errorsUf" type="danger" />
     </div>
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-5">
       <SelectAutocomplete
         v-model="municipio"
         label="Município"
@@ -33,7 +33,7 @@
       />
       <Feedback v-if="errorsMunicipio" :message="errorsMunicipio" type="danger" />
     </div>
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-7">
       <div class="br-input">
         <label for="input-orgao">Órgão de atuação<span class="text-red-50 text-up-01"> *</span></label>
         <input
@@ -41,14 +41,15 @@
           type="text"
           placeholder="Órgão ou secretaria responsável pela atuação no NVSL"
           v-model="orgao"
+          maxlength="60"
         />
         <Feedback v-if="errorsOrgao" :message="errorsOrgao" type="danger" />
       </div>
     </div>
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-5">
       <div class="br-input">
         <label for="input-cargo">Cargo / função<span class="text-red-50 text-up-01"> *</span></label>
-        <input id="input-cargo" type="text" placeholder="Cargo ou função exercida" v-model="cargo" />
+        <input id="input-cargo" type="text" placeholder="Cargo ou função exercida" v-model="cargo" maxlength="60" />
         <Feedback v-if="errorsCargo" :message="errorsCargo" type="danger" />
       </div>
     </div>

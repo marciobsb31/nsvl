@@ -50,7 +50,7 @@
     <div class="col-12 col-md-6">
       <div class="br-input">
         <label for="input-email">E-mail institucional<span class="text-red-50 text-up-01"> *</span></label>
-        <input id="input-email" type="email" placeholder="seu.nome@email.com" v-model="emailInstitucional" />
+        <input id="input-email" type="email" placeholder="seu.nome@email.com" v-model="emailInstitucional" maxlength="60"/>
         <Feedback v-if="errorsEmail" :message="errorsEmail" type="danger" />
       </div>
     </div>
@@ -123,8 +123,6 @@ const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
 const MENSAGENS_CPF_EM_USO: Record<string, string> = {
   'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está vinculado a um cadastro ativo. Faça login com GOV.BR para acessar o sistema.',
   'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde a avaliação da equipe gestora.',
-  'CPF inválido. Verifique os dígitos informados.': 'CPF inválido. Confira os números digitados.',
-  'Informe um CPF com 11 dígitos.': 'Informe os 11 dígitos do CPF.',
 }
 
 function mensagemCriativa(original: string): string {

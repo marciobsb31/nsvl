@@ -182,7 +182,7 @@ async function processarRetornoGovBr() {
 .login-subtitle {
   width: 100%;
   text-align: center;
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color);
   margin: 0;
   font-size: 1.0625rem;
   line-height: 1.45;

@@ -831,7 +831,7 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 }
 
 .cadastro-field-hint--loading {
-  color: var(--color-primary-default, #1351b4);
+  color: var(--primary-text-color);
   font-style: italic;
 }
 

@@ -1,32 +1,15 @@
 <template>
   <DefaultLayout>
-    <section
-      class="gerenciar-cadastros"
-      :class="{
-        'painel-aberto':
-          (painelCadastroAberto && !isPerfilCliente) || painelDetalharAberto,
-      }"
-    >
-      <div class="titulo-pagina">
-        <div class="titulo-pagina__topo">
-          <div>
-            <h1 id="titulo-gerenciar" class="titulo-pagina__h1">
-              Gerenciar solicitação de cadastros no sistema
-            </h1>
-            <p class="titulo-pagina__subtitulo">Aplique filtros e clique em <strong>Pesquisar</strong>.</p>
-          </div>
-          <!-- Reativar para perfil Cliente: @click="abrirPainelCadastro" (remover onCliqueCadastrarUsuario e guard isPerfilCliente no script). -->
-          <button
-            class="br-button primary small"
-            type="button"
-            @click="onCliqueCadastrarUsuario"
-            aria-label="Cadastrar usuário"
-          >
+      <HeaderPage title="Gerenciar solicitação de cadastros no sistema"
+        :subtitle="'Aplique filtros e clique em <strong>Pesquisar</strong>.'"
+        customClass="mb-3">
+        <template v-slot:actions>
+          <br-button :color-mode="$appTheme ==='dark' ? $appTheme : undefined" emphasis="primary" @click="onCliqueCadastrarUsuario" aria-label="Cadastrar usuário">
             Cadastrar usuário
-          </button>
-        </div>
-      </div>
-
+          </br-button>
+        </template>
+      </HeaderPage>
+        
       <div v-if="contextoAtualLabel" class="contexto-banner" role="status" aria-live="polite">
         <i class="fas fa-shield-alt contexto-banner__icon" aria-hidden="true"></i>
         <span class="contexto-banner__label">Contexto ativo:</span>
@@ -42,7 +25,7 @@
         />
       </Card>
 
-      <Card custom-class="mb-4">
+      <Card custom-class="mb-4" v-if="!isMobile">
 
         <div v-if="carregando" class="br-loading p-4" role="status" aria-live="polite">
           <div class="loading-spinner" aria-hidden="true"></div>
@@ -131,6 +114,49 @@
           v-model:pageSize="itensPorPagina"
           :total-items="solicitacoesOrdenadas.length"
         />
+        
+      </Card>
+      <Card custom-class="mb-4" v-if="isMobile && solicitacoesPaginadas.length > 0">
+        <div class="row table-mobile" v-for="s in solicitacoesPaginadas" :key="s.id">
+          <div class="col-12 mb-1">
+            <label for="nome">Nome completo</label>
+            <p class="m-0">{{ s.nome }}</p>
+          </div>
+          <div class="col-6 mb-1">
+            <label for="cpf">CPF</label>
+            <p class="m-0">{{ s.cpf }}</p>
+          </div>
+          <div class="col-6 mb-1">
+            <label for="esfera">Esfera de atuação</label>
+            <p class="m-0">{{ labelEsfera(s.esfera_atuacao) }}</p>
+          </div>
+          <div class="col-6 mb-1">
+            <label for="orgao">Órgão</label>
+            <p class="m-0">{{ s.orgao }}</p>
+          </div>
+          <div class="col-6 mb-1">
+          <label for="situacao">Situação</label><br></br>
+           <span class="br-tag" :class="classeStatus(s.status)">
+                    {{ labelStatus(s.status) }}
+                  </span>
+          </div>
+          <div class="col-12 mt-3">
+           <button
+                    class="br-button secondary small block"
+                    type="button"
+                    @click="detalhar(s)"
+                    :disabled="carregandoDetalhe"
+                    :aria-label="rotuloBotaoDetalhar(s.status)"
+                    :title="rotuloBotaoDetalhar(s.status)"
+                    slot="trigger"
+                  >
+                    {{ rotuloBotaoDetalhar(s.status) }}
+                  </button>
+          </div>
+          <div class="col-12 mt-3">
+            <span class="br-divider my-3"></span>
+          </div>
+        </div>
       </Card>
 
       <Transition name="painel-fade">
@@ -200,10 +226,15 @@ import {
 import { obterSolicitacaoCadastro, type SolicitacaoCadastroDetalhe } from '@/services/SolicitacaoCadastroService'
 import { useNotification } from '@/core/composables/useNotification'
 import { useAuth } from '@/core/composables/useAuth'
+import HeaderPage from '@/core/components/HeaderPage/HeaderPage.vue'
+import { BrButton } from '@govbr-ds/webcomponents-vue'
+import { useBreakpoint } from '@/core/composables/useBreakpoint'
 
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
 const { error, success } = useNotification()
+const { isMobile } = useBreakpoint()
+
 const { user, contextKey, perfilAtivo } = useAuth()
 
 /**
@@ -293,7 +324,7 @@ async function carregarSolicitacoes() {
   jaListou.value = true
   try {
     solicitacoes.value = await listarSolicitacoesGerenciar(filtrosAtivos.value)
-    paginaAtual.value = 1
+     paginaAtual.value = 1
   } catch {
     solicitacoes.value = []
     error('Não foi possível carregar as solicitações. Verifique se o backend está em execução.')
@@ -392,6 +423,7 @@ function rotuloBotaoDetalhar(status: string) {
 }
 
 const carregandoDetalhe = ref(false)
+
 
 async function detalhar(s: SolicitacaoGerenciarItem) {
   const id = s?.id
@@ -526,6 +558,38 @@ function obterIndicadorSort(coluna: string) {
   if (ordenarColuna.value !== coluna) return '↕'
   return ordenarAsc.value ? '↑' : '↓'
 }
+const esferaMap: Record<string, string> = {
+  federal: 'Federal',
+  estadual: 'Estadual',
+  municipal: 'Municipal',
+}
+
+const contextoAtualLabel = computed(() => {
+  const perfil = perfilAtivo.value
+  const esfera = user.value?.esfera_atuacao
+  const uf = user.value?.uf_lotacao
+  const municipio = user.value?.municipio_lotacao
+  if (!perfil) {
+    return esfera ? esferaMap[esfera] ?? esfera : ''
+  }
+  const partes: string[] = []
+  if (perfil.nome) partes.push(perfil.nome)
+  if (esfera) partes.push(esferaMap[esfera] ?? esfera)
+  if (uf) partes.push(uf)
+  if (municipio) partes.push(municipio)
+  return partes.join(' — ')
+})
+
+watch(contextKey, () => {
+  painelCadastroAberto.value = false
+  painelDetalharAberto.value = false
+  detalheSelecionado.value = null
+  limparEpesquisar()
+})
+
+watch(isPerfilCliente, (cliente) => {
+  if (cliente) fecharPainelCadastro()
+})
 
 const esferaMap: Record<string, string> = {
   federal: 'Federal',
@@ -803,4 +867,5 @@ onMounted(() => {
   font-size: 0.75rem;
   color: var(--color-secondary-07, #555);
 }
+
 </style>

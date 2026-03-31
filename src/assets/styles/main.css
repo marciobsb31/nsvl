@@ -222,3 +222,8 @@ textarea:focus-visible {
     min-height: 2.75rem;
   }
 }
+input::placeholder {
+  font-style: normal;
+}
+
+

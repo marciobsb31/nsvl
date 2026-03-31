@@ -16,7 +16,6 @@ coverage
 
 # Ambiente (Vite — não versionar credenciais)
 .env
-.env.*
 !.env.example
 
 # Editor directories and files

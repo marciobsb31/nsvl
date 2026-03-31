@@ -6,6 +6,8 @@ import '@govbr-ds/core/dist/core.min.js'
 import './assets/themes/dark.css'
 import './assets/themes/light.css'
 
+import { defineCustomElements } from '@govbr-ds/webcomponents/dist/loader/index.js'
+
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
@@ -14,6 +16,10 @@ import router from './router'
 import { vMaska } from 'maska/vue'
 
 function bootstrap() {
+    if (typeof window !== 'undefined') {
+        defineCustomElements()
+    }
+
     const app = createApp(App)
     const pinia = createPinia()
 

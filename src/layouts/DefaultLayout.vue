@@ -11,7 +11,6 @@
       <template #actions v-if="isAuthenticated">
         <div class="header-user">
           <div class="header-user-info">
-            <i class="fas fa-user-circle header-user-icon" aria-hidden="true"></i>
             <div class="header-user-dados">
               <span class="header-user-nome" aria-label="Usuário logado">{{ userName }}</span>
               <span v-if="perfilAtivoLabel" class="header-user-perfil" :title="perfilAtivoLabel">
@@ -19,7 +18,7 @@
               </span>
             </div>
           </div>
-          <button
+           <button
             v-if="exibirTrocaContexto && possuiMultiplosPerfis"
             class="header-btn-contexto"
             type="button"
@@ -64,13 +63,15 @@
         @toggle-recolher="sidebarRecolhido = !sidebarRecolhido"
       />
       <main ref="mainRef" id="main-content" class="layout-default__main" tabindex="-1">
-        <div class="container" :key="contextKey">
+        <div class="container main-content" >
+          <Breadcrumb customClass="mb-3"></Breadcrumb>
+           <div class="container" :key="contextKey"></div>
           <slot />
         </div>
       </main>
     </div>
 
-    <TrocaContexto
+     <TrocaContexto
       v-if="exibirTrocaContexto"
       :visivel="modalTrocaContexto"
       @fechar="modalTrocaContexto = false"
@@ -113,7 +114,6 @@ const modalTrocaContexto = ref(false)
 
 /** Exibir botão e modal de troca de perfil no cabeçalho */
 const exibirTrocaContexto = false
-
 const router = useRouter()
 const { isAuthenticated, userName, user, possuiMultiplosPerfis, perfilAtivo, contextKey } = useAuth()
 
@@ -233,9 +233,7 @@ watch(sidebarRecolhido, (v) => {
   align-items: center;
   gap: 1rem;
   padding: 0.5rem 0.75rem;
-  background: var(--color-secondary-01, #f8f8f8);
   border-radius: 8px;
-  border: 1px solid var(--color-secondary-04, #ddd);
 }
 
 .header-user-info {
@@ -252,13 +250,14 @@ watch(sidebarRecolhido, (v) => {
 .header-user-dados {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.125rem;
 }
 
 .header-user-nome {
   font-weight: 600;
-  font-size: 0.9375rem;
-  color: var(--color-secondary-08, #333);
+  font-size: 1rem;
+  color: var(--primary-text-color);
 }
 
 .header-user-perfil {
@@ -326,7 +325,7 @@ watch(sidebarRecolhido, (v) => {
   }
 
   .header-user-nome {
-    font-size: 0.875rem;
+    font-size: 1.1rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -344,6 +343,14 @@ watch(sidebarRecolhido, (v) => {
     padding: 0.4rem 0.6rem;
   }
 }
+
+  .header-btn-contexto__texto {
+    display: none;
+  }
+
+  .header-btn-contexto {
+    padding: 0.4rem 0.6rem;
+  }
 
 .footer {
   margin: 1rem;

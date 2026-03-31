@@ -11,15 +11,11 @@
     </p>
   </div>
 </template>
-
 <script setup lang="ts">
 import { useId } from 'vue'
-
 defineOptions({ name: 'TermoUsoPrivacidade' })
-
 const tituloId = useId()
 </script>
-
 <style scoped>
 .termo-uso-privacidade {
   padding: 1rem 1.125rem;
@@ -27,25 +23,21 @@ const tituloId = useId()
   border: none;
   background: var(--color-primary-pastel-01, #e8f0ff);
 }
-
 .termo-uso-privacidade__titulo {
   margin: 0 0 0.75rem;
   font-size: 1rem;
   font-weight: 600;
   color: var(--color-primary-darken-02, #0c326f);
 }
-
 .termo-uso-privacidade__texto {
   margin: 0 0 0.75rem;
   font-size: 0.875rem;
   line-height: 1.55;
   color: var(--color-secondary-09, #333);
 }
-
 .termo-uso-privacidade__texto:last-child {
   margin-bottom: 0;
 }
-
 .termo-uso-privacidade__texto--muted {
   color: var(--color-secondary-07, #555);
   font-size: 0.8125rem;

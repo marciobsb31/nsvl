@@ -215,7 +215,7 @@ async function handleSair() {
 
 .sidebar__toggle:hover {
   background: var(--color-primary-pastel, #e8f4fc);
-  color: var(--color-primary-default, #1351b4);
+  color: var(--primary-text-color);
 }
 
 .sidebar__nav {
