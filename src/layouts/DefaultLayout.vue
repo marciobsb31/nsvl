@@ -104,6 +104,7 @@ import { useBreakpoint } from '@/core/composables/useBreakpoint'
 import logoGovColor from '@/assets/images/logo/mdh_com_gov.png'
 import logoGovBranca from '@/assets/images/logo/mdh_com_gov_branca.png'
 import { useTheme } from '@/core/composables/useTheme'
+import Breadcrumb from '@/core/components/Breadcrumb/Breadcrumb.vue'
 
 const { isMobile } = useBreakpoint()
 const mainRef = ref<HTMLElement | null>(null)
