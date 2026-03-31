@@ -1,9 +1,7 @@
-# trigger:
-#   branches:
-#     include:
-#       - refs/heads/tre
-
-trigger: none
+trigger:
+  branches:
+    include:
+      - refs/heads/tre
 
 name: $(date:yyyyMMdd)$(rev:.r)
 
@@ -60,9 +58,9 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                envsubst < public/env-config.js > public/env-config
-                mv public/env-config public/env-config.js
-                cat public/env-config.js
+                envsubst < .env.example > .env
+                mv .env .env.example
+                cat .env.example
           - task: Docker@2
             displayName: Build e Push da Imagem
             inputs:

@@ -76,24 +76,23 @@
       </div>
     </div>
     <div class="filtros-acoes">
-      <br-button
-        emphasis="secondary"
+      <button
+        class="br-button secondary"
         type="button"
         @click="limparFiltros"
         aria-label="Limpar filtros"
       >
         Limpar Filtro
-      </br-button>
-      <br-button
-        :color-mode="$appTheme === 'dark' ? 'dark' : undefined"
-        emphasis="primary"
+      </button>
+      <button
+        class="br-button primary"
         type="button"
         @click="listar"
         :disabled="carregando"
         aria-label="Pesquisar solicitações"
       >
         Pesquisar
-      </br-button>
+      </button>
     </div>
   </div>
 </template>
@@ -105,7 +104,6 @@ import { OPCOES_STATUS } from '../constants/opcoesFiltro'
 import { useEsferas } from '@/core/composables/useEsferas'
 import { useLocalidades } from '@/core/composables/useLocalidades'
 import type { FiltrosGerenciarSolicitacao } from '@/services/GerenciarSolicitacaoCadastroService'
-import { BrButton } from '@govbr-ds/webcomponents-vue'
 
 defineOptions({ name: 'FiltrosGerenciarSolicitacao' })
 

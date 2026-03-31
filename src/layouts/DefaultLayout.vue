@@ -1,5 +1,6 @@
 <template>
   <div class="layout-default">
+    <a href="#main-content" class="skip-link">Ir para o conteúdo principal</a>
     <!-- Cabeçalho GOV.BR -->
     <Header
       title="NVSL"
@@ -13,17 +14,20 @@
             <i class="fas fa-user-circle header-user-icon" aria-hidden="true"></i>
             <div class="header-user-dados">
               <span class="header-user-nome" aria-label="Usuário logado">{{ userName }}</span>
-              <span v-if="userEsfera" class="header-user-perfil">{{ labelEsfera(userEsfera) }}</span>
+              <span v-if="perfilAtivoLabel" class="header-user-perfil" :title="perfilAtivoLabel">
+                {{ perfilAtivoLabel }}
+              </span>
             </div>
           </div>
           <button
-            class="br-button secondary small"
+            v-if="exibirTrocaContexto && possuiMultiplosPerfis"
+            class="header-btn-contexto"
             type="button"
-            aria-label="Sair da conta"
-            @click="handleLogout"
+            aria-label="Trocar contexto de perfil"
+            @click="modalTrocaContexto = true"
           >
-            <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
-            Sair
+            <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+            <span class="header-btn-contexto__texto">Troca de contexto</span>
           </button>
         </div>
       </template>
@@ -36,6 +40,7 @@
       type="button"
       aria-label="Abrir menu"
       :aria-expanded="sidebarAberto"
+      aria-controls="app-sidebar"
       @click="sidebarAberto = !sidebarAberto"
     >
       <i class="fas" :class="sidebarAberto ? 'fa-times' : 'fa-bars'" aria-hidden="true"></i>
@@ -52,18 +57,25 @@
     <!-- Conteúdo com sidebar e área principal -->
     <div class="layout-default__body">
       <Sidebar
+        id="app-sidebar"
         :class="{ 'sidebar--aberto': sidebarAberto }"
         :recolhido="sidebarRecolhido"
         :aberto="sidebarAberto"
         @toggle-recolher="sidebarRecolhido = !sidebarRecolhido"
       />
       <main ref="mainRef" id="main-content" class="layout-default__main" tabindex="-1">
-        <div class="container main-content">
-          <Breadcrumb customClass="mb-3"></Breadcrumb>
+        <div class="container" :key="contextKey">
           <slot />
         </div>
       </main>
     </div>
+
+    <TrocaContexto
+      v-if="exibirTrocaContexto"
+      :visivel="modalTrocaContexto"
+      @fechar="modalTrocaContexto = false"
+      @contexto-alterado="handleContextoAlterado"
+    />
 
     <Footer inverted>
       
@@ -86,38 +98,47 @@ import { useAuth } from '@/core/composables/useAuth'
 import Header from '@/core/components/Header/Header.vue'
 import Sidebar from '@/core/components/Sidebar/Sidebar.vue'
 import Footer from '@/core/components/Footer/Footer.vue'
-import ScrollToTop from '@/core/components/ScrollToTop/ScrollToTop.vue'
+import TrocaContexto from '@/core/components/TrocaContexto/TrocaContexto.vue'
 import { useBreakpoint } from '@/core/composables/useBreakpoint'
 import logoGovColor from '@/assets/images/logo/mdh_com_gov.png'
 import logoGovBranca from '@/assets/images/logo/mdh_com_gov_branca.png'
 import { useTheme } from '@/core/composables/useTheme'
-import Breadcrumb from '@/core/components/Breadcrumb/Breadcrumb.vue'
 
 const { isMobile } = useBreakpoint()
 const mainRef = ref<HTMLElement | null>(null)
 const sidebarAberto = ref(false)
 const sidebarRecolhido = ref(localStorage.getItem('nvsl_sidebar_recolhido') === 'true')
 const { mode } = useTheme()
+const modalTrocaContexto = ref(false)
+
+/** Exibir botão e modal de troca de perfil no cabeçalho */
+const exibirTrocaContexto = false
 
 const router = useRouter()
-const { isAuthenticated, userName, logout, user } = useAuth()
+const { isAuthenticated, userName, user, possuiMultiplosPerfis, perfilAtivo, contextKey } = useAuth()
 
-const userEsfera = computed(() => user.value?.esfera_atuacao ?? '')
-
-function labelEsfera(esfera: string) {
-  const map: Record<string, string> = {
-    federal: 'Federal',
-    estadual: 'Estadual',
-    municipal: 'Municipal',
-  }
-  return map[esfera] ?? esfera
+const esferaMap: Record<string, string> = {
+  federal: 'Federal',
+  estadual: 'Estadual',
+  municipal: 'Municipal',
 }
+
+const perfilAtivoLabel = computed(() => {
+  const perfil = perfilAtivo.value
+  const esfera = user.value?.esfera_atuacao
+  if (perfil) {
+    const partes = [perfil.nome]
+    if (esfera) partes.push(esferaMap[esfera] ?? esfera)
+    return partes.join(' — ')
+  }
+  return esfera ? (esferaMap[esfera] ?? esfera) : ''
+})
+
 const currentYear = computed(() => new Date().getFullYear())
 const logoGov = ref(logoGovColor)
 
-async function handleLogout() {
-  await logout()
-  router.push({ name: 'login' })
+function handleContextoAlterado() {
+  router.push('/gerenciar-cadastros')
 }
 
 const handleThemeChange = (theme: string) => {
@@ -135,7 +156,6 @@ watch(isMobile, (mobile) => {
 watch(sidebarRecolhido, (v) => {
   localStorage.setItem('nvsl_sidebar_recolhido', String(v))
 })
-
 </script>
 
 <style scoped>
@@ -156,10 +176,6 @@ watch(sidebarRecolhido, (v) => {
   padding: 1rem 0;
   background-color: var(--background);
   overflow: auto;
-}
-
-.main-content{
-  padding: 0 3rem;
 }
 
 @media (min-width: 576px) {
@@ -250,12 +266,41 @@ watch(sidebarRecolhido, (v) => {
   color: var(--color-secondary-06, #888);
 }
 
-.header-user .br-button {
+.header-btn-contexto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid var(--color-primary-default, #1351b4);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-primary-default, #1351b4);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
   flex-shrink: 0;
 }
 
-.header-user .br-button i {
-  margin-right: 0.35rem;
+.header-btn-contexto:hover {
+  background: var(--color-primary-default, #1351b4);
+  color: #fff;
+}
+
+.header-btn-contexto i {
+  font-size: 0.65rem;
+}
+
+[data-theme="dark"] .header-btn-contexto {
+  border-color: var(--color-primary-lighten-01, #4d7fd6);
+  color: var(--color-primary-lighten-01, #4d7fd6);
+}
+
+[data-theme="dark"] .header-btn-contexto:hover {
+  background: var(--color-primary-lighten-01, #4d7fd6);
+  color: #fff;
 }
 
 [data-theme="dark"] .header-user {
@@ -289,6 +334,14 @@ watch(sidebarRecolhido, (v) => {
 
   .header-user-perfil {
     display: none;
+  }
+
+  .header-btn-contexto__texto {
+    display: none;
+  }
+
+  .header-btn-contexto {
+    padding: 0.4rem 0.6rem;
   }
 }
 

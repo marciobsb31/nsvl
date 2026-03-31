@@ -20,19 +20,29 @@ export interface PerfilVinculado {
   cargo: string
 }
 
+export interface HistoricoReprovacaoItem {
+  data: string | null
+  motivo: string
+  avaliador: string | null
+}
+
 export interface SolicitacaoCadastroDetalhe extends SolicitacaoCadastroItem {
   cpf?: string
   email_institucional: string
   telefone_institucional: string
-  telefone_pessoal?: string
+  telefone_pessoal?: string | null
   esfera_atuacao: string
   uf: string
   municipio: string
   orgao: string
   cargo: string
+  perfil_id_solicitado?: number | null
+  vigencia_inicio_solicitada?: string | null
+  vigencia_fim_solicitada?: string | null
   updated_at?: string
   perfis_vinculados?: PerfilVinculado[]
   pode_avaliar?: boolean
+  historico_reprovacoes?: HistoricoReprovacaoItem[]
 }
 
 export interface SolicitacaoCadastroPayload {
@@ -40,19 +50,20 @@ export interface SolicitacaoCadastroPayload {
   CPF?: string
   emailInstitucional: string
   telefoneInstitucional: string
-  telefonePessoal?: string
+  telefonePessoal?: string | null
   esferaAtuacao: string
   uf: string
   municipio: string
   orgao: string
   cargo: string
+  aceiteTermo?: boolean
   perfilId?: number
   vigenciaInicio?: string
   vigenciaFim?: string
 }
 
-/** Payload para edição: CPF opcional (não retornado pela API por segurança) */
-export interface SolicitacaoCadastroUpdatePayload extends Omit<SolicitacaoCadastroPayload, 'CPF'> {
+export interface SolicitacaoCadastroUpdatePayload
+  extends Omit<SolicitacaoCadastroPayload, 'CPF' | 'aceiteTermo'> {
   CPF?: string
 }
 

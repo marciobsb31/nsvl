@@ -1,15 +1,15 @@
 # NVSL — Frontend
 
-Aplicação frontend do sistema **NVSL**, desenvolvida com **Vue 3 + Vite + TypeScript**, utilizando o [GOV.BR Design System](https://www.gov.br/ds/home) e autenticação via **GOV.BR SSO** (OAuth2/OIDC).
+Aplicação frontend do sistema **NVSL**, desenvolvida com **Vue 3 + Vite + TypeScript**, utilizando o [GOV.BR Design System](https://www.gov.br/ds/home) e autenticação via **GOV.BR SSO** mediada pelo **backend** (OAuth2/OIDC + PKCE no Laravel).
 
 ## Stack
 
 - **Vue 3** (Composition API, `<script setup>`)
-- **Vite 6** + TypeScript
-- **Vue Router 4** com guards de rota
+- **Vite** + TypeScript
+- **Vue Router** com guards de rota
 - **Pinia** para gerenciamento de estado
 - **@govbr-ds** — Design System oficial do Governo Federal
-- **oidc-client-ts** — Fluxo OAuth2/OIDC PKCE
+- **Axios** — chamadas à API; token Sanctum em `sessionStorage`
 
 ## Quick Start
 
@@ -22,7 +22,7 @@ cp .env.example .env
 
 # Iniciar servidor de desenvolvimento
 npm run dev
-# → http://localhost:5174
+# → http://localhost:5176 (porta fixa em vite.config.ts)
 ```
 
 ## Scripts
@@ -37,30 +37,31 @@ npm run dev
 ## Docker
 
 ```bash
-# A partir do repositório DOCKER
+# A partir da pasta docker/ na raiz do monorepo
+cd ../docker
 docker compose up --build -d
 ```
 
 ## Documentação
 
-Acesse a documentação completa no repositório **DOCS**:
+Documentação técnica em **documentacao/**:
 
 | Documento | Descrição |
 |---|---|
-| [Arquitetura](../DOCS/frontend/architecture.md) | Estrutura e padrões do projeto |
-| [Setup](../DOCS/frontend/setup.md) | Instalação e configuração |
-| [Autenticação GOV.BR](../DOCS/frontend/authentication.md) | Fluxo OIDC + PKCE |
-| [Design System](../DOCS/frontend/design-system.md) | GOV.BR DS — uso e componentes |
-| [Segurança](../DOCS/frontend/security.md) | Cabeçalhos, tokens, CSP |
-| [Acessibilidade](../DOCS/frontend/accessibility.md) | WCAG 2.1 AA + eMAG |
-| [Docker](../DOCS/frontend/docker.md) | Build e execução com Docker |
-| [Contribuição](../DOCS/frontend/contributing.md) | Padrões e fluxo de trabalho |
+| [Arquitetura](../documentacao/frontend/architecture.md) | Estrutura e padrões do projeto |
+| [Setup](../documentacao/frontend/setup.md) | Instalação e configuração |
+| [Autenticação GOV.BR](../documentacao/frontend/authentication.md) | Fluxo OIDC + PKCE |
+| [Design System](../documentacao/frontend/design-system.md) | GOV.BR DS — uso e componentes |
+| [Segurança](../documentacao/frontend/security.md) | Cabeçalhos, tokens, CSP |
+| [Acessibilidade](../documentacao/frontend/accessibility.md) | WCAG 2.1 AA + eMAG |
+| [Docker](../documentacao/frontend/docker.md) | Build e execução com Docker |
+| [Contribuição](../documentacao/frontend/contributing.md) | Padrões e fluxo de trabalho |
 
 ## Variáveis de Ambiente
 
 Veja [`.env.example`](.env.example) para todas as variáveis necessárias.
 
-> **⚠️ Importante**: Nunca commitar o arquivo `.env` com valores reais.
+> **Importante:** Nunca commitar o arquivo `.env` com valores reais.
 
 # Arquitetura do Projeto
 
@@ -144,7 +145,7 @@ Exemplos:
 Armazena **tipos e interfaces TypeScript globais**, utilizadas em todo o
 projeto.
 
-⚠️ Não deve conter **tipagens específicas de módulos**.
+Não deve conter **tipagens específicas de módulos**.
 
 ------------------------------------------------------------------------
 
@@ -189,7 +190,7 @@ Define a **infraestrutura global de estado usando Pinia**, incluindo:
 -   Plugins do Pinia
 -   Persistência de estado
 
-⚠️ Nenhum **store de domínio** deve residir aqui.\
+Nenhum **store de domínio** deve residir aqui.\
 Apenas a **base global de configuração**.
 
 ------------------------------------------------------------------------

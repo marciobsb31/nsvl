@@ -1,7 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { solicitacaoRoutes } from '@/features/solicitacao-cadastro/solicitacaoCadastroRoutes'
 import { gerenciarSolicitacaoCadastroRoutes } from '@/features/gerenciar-solicitacao-cadastro/gerenciarSolicitacaoCadastroRoutes'
+import { gerenciarPerfisRoutes } from '@/features/gerenciar-perfis/gerenciarPerfisRoutes'
 import { useAuthStore } from '@/stores/authStore'
+import { useNotification } from '@/core/composables/useNotification'
+import { exibirGerenciarPerfis } from '@/core/config/featureFlags'
 
 /**
  * Roteador principal da aplicação
@@ -49,12 +52,7 @@ const router = createRouter({
       component: () => import('@/features/plano-acao/pages/PlanoAcaoPage.vue'),
       meta: { title: 'Enviar plano de ação — NVSL' },
     },
-    {
-      path: '/gerenciar-perfis',
-      name: 'gerenciar-perfis',
-      component: () => import('@/features/gerenciar-perfis/pages/GerenciarPerfisPage.vue'),
-      meta: { title: 'Gerenciar Perfis — NVSL' },
-    },
+    ...gerenciarPerfisRoutes,
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
@@ -80,6 +78,10 @@ router.beforeEach(async (to) => {
     return { name: 'login' }
   }
 
+  if (!exibirGerenciarPerfis && to.name === 'gerenciar-perfis') {
+    return { name: 'gerenciar-cadastros' }
+  }
+
   if (!authStore.user && to.name !== 'login') {
     try {
       const api = (await import('@/services/ApiService')).default
@@ -88,6 +90,17 @@ router.beforeEach(async (to) => {
     } catch {
       sessionStorage.removeItem('nvsl_token')
       return { name: 'login' }
+    }
+  }
+
+  if (to.meta.requiredModule && authStore.user) {
+    const modulo = to.meta.requiredModule as string
+    const temPermissao = authStore.temPermissao(modulo)
+    const esfera = authStore.user.esfera_atuacao ?? 'federal'
+    if (esfera !== 'federal' && !temPermissao) {
+      const { error } = useNotification()
+      error('Acesso não permitido.')
+      return { name: 'home' }
     }
   }
 

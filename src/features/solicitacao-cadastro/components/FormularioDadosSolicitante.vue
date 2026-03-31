@@ -76,9 +76,10 @@
           placeholder="(00) 00000-0000"
           v-model="telefonePessoal"
           v-maska="telefoneMask"
+          autocomplete="tel-national"
         />
-        <Feedback v-if="errorsTelPessoal" :message="errorsTelPessoal" type="danger" />
         <span class="solicitacao-field-hint">Opcional — para contato alternativo.</span>
+        <Feedback v-if="errorsTelPessoal" :message="errorsTelPessoal" type="danger" />
       </div>
     </div>
   </section>
@@ -106,6 +107,7 @@ const { value: emailInstitucional, errorMessage: errorsEmail } = useField<string
 const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<string>('telefoneInstitucional')
 const { value: telefonePessoal, errorMessage: errorsTelPessoal } = useField<string>('telefonePessoal')
 
+
 const { setFieldError } = useForm()
 const verificandoCpf = ref(false)
 const cpfDisponivel = ref<boolean | null>(null)
@@ -119,8 +121,8 @@ const cpfPreenchido = computed(() => {
 const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
 
 const MENSAGENS_CPF_EM_USO: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está em uso. Faça login ou solicite recuperação de acesso.',
-  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde o retorno.',
+  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está vinculado a um cadastro ativo. Faça login com GOV.BR para acessar o sistema.',
+  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde a avaliação da equipe gestora.',
   'CPF inválido. Verifique os dígitos informados.': 'CPF inválido. Confira os números digitados.',
   'Informe um CPF com 11 dígitos.': 'Informe os 11 dígitos do CPF.',
 }
@@ -181,7 +183,7 @@ function filtrarSomenteLetras(event: Event) {
 .solicitacao-form-grid :deep(.br-input label) {
   font-weight: 600;
   font-size: 0.875rem;
-  color: var(--dark-text-color);
+  color: var(--color-secondary-09, #333);
   margin-bottom: 0.25rem;
 }
 
@@ -189,7 +191,7 @@ function filtrarSomenteLetras(event: Event) {
   display: block;
   font-size: 0.75rem;
   margin-top: 0.35rem;
-  color: var(--secondary-text-color-02);
+  color: var(--color-secondary-06, #666);
 }
 
 .input-hint {
@@ -198,7 +200,7 @@ function filtrarSomenteLetras(event: Event) {
   margin-top: 0.25rem;
 }
 .input-hint--loading {
-  color: var(--secondary-text-color);
+  color: var(--color-secondary-07, #555);
 }
 .input-hint--success {
   color: var(--color-success, #168821);

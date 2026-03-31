@@ -216,14 +216,6 @@ defineExpose({ focus })
   background-color: var(--color-primary-pastel, #e8f4fc);
 }
 
-[data-theme="dark"] .br-item.highlighted {
-  background-color: var(--background-gray);
-}
-
-[data-theme="dark"] .select-autocomplete button {
-    color: var(--pure-0);
-}
-
 .br-item--empty {
   padding: 1rem;
   color: var(--color-secondary-06, #888);

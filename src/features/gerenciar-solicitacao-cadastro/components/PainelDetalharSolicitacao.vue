@@ -60,6 +60,24 @@
             <input type="text" :value="detalhe.cargo" readonly />
           </div>
         </div>
+        <div v-if="detalhe.vigencia_inicio_solicitada || detalhe.vigencia_fim_solicitada" class="secao-linha-3cols">
+          <div class="br-input">
+            <label>Vigência informada na solicitação (início)</label>
+            <input
+              type="text"
+              :value="detalhe.vigencia_inicio_solicitada ? formatarDataExibicao(detalhe.vigencia_inicio_solicitada) : '—'"
+              readonly
+            />
+          </div>
+          <div class="br-input">
+            <label>Vigência informada na solicitação (fim)</label>
+            <input
+              type="text"
+              :value="detalhe.vigencia_fim_solicitada ? formatarDataExibicao(detalhe.vigencia_fim_solicitada) : '—'"
+              readonly
+            />
+          </div>
+        </div>
         <div class="secao-linha-3cols secao-avaliacao-campos">
           <div class="br-select mb-2 perfil-select">
             <label for="perfil-selecao">Perfil</label>
@@ -140,10 +158,47 @@
             <input type="text" :value="formatarTelefone(detalhe?.telefone_institucional)" readonly />
           </div>
           <div class="br-input">
-            <label>Telefone Pessoal (Opcional)</label>
-            <input type="text" :value="formatarTelefone(detalhe?.telefone_pessoal) || '—'" readonly />
+            <label>Telefone pessoal</label>
+            <input
+              type="text"
+              :value="detalhe?.telefone_pessoal ? formatarTelefone(detalhe.telefone_pessoal) : '—'"
+              readonly
+            />
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Histórico de reprovação (status reprovado) — abaixo dos dados do solicitante -->
+    <div v-if="detalhe?.status === 'reprovado'" class="painel-secao painel-secao--historico-reprovacao">
+      <h3 class="secao-titulo">Histórico de reprovação</h3>
+      <p class="secao-descricao">
+        Registro das decisões de reprovação com data e motivo informado pelo avaliador.
+      </p>
+      <div v-if="historicoReprovacoes.length === 0" class="br-message warning" role="status">
+        <div class="content">Nenhum motivo de reprovação registrado para esta solicitação.</div>
+      </div>
+      <div v-else class="table-responsive">
+        <table
+          class="br-table tabela-historico-reprovacao"
+          role="table"
+          aria-label="Histórico de reprovações da solicitação"
+        >
+          <thead>
+            <tr>
+              <th scope="col" class="th-bold">Data</th>
+              <th scope="col" class="th-bold">Motivo</th>
+              <th scope="col" class="th-bold">Responsável pela avaliação</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, idx) in historicoReprovacoes" :key="`reprov-${idx}-${item.data}`">
+              <td>{{ formatarDataHoraPtBr(item.data) }}</td>
+              <td class="td-motivo-reprovacao">{{ item.motivo }}</td>
+              <td>{{ item.avaliador ?? '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -214,7 +269,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(p, idx) in perfisVinculadosOrdenados" :key="`perfil-${idx}-${p.id ?? idx}`">
+            <tr v-for="(p, idx) in perfisVinculadosPaginados" :key="`perfil-${idx}-${p.id ?? idx}`">
               <td>{{ p.perfil }}</td>
               <td>{{ formatarDataExibicao(p.vigencia_inicio) }}</td>
               <td>{{ formatarDataExibicao(p.vigencia_fim) }}</td>
@@ -241,6 +296,12 @@
           </tbody>
         </table>
       </div>
+      <PaginationControls
+        v-if="perfisVinculadosOrdenados.length > 0"
+        v-model:currentPage="paginaAtualPerfis"
+        v-model:pageSize="itensPorPaginaPerfis"
+        :total-items="perfisVinculadosOrdenados.length"
+      />
       <div class="perfis-vinculados-acoes">
         <button
           class="br-button primary small"
@@ -362,7 +423,12 @@
 import { ref, computed, watch, onMounted, reactive } from 'vue'
 import { usePerfis } from '@/core/composables/usePerfis'
 import Modal from '@/core/components/Modal/Modal.vue'
-import type { SolicitacaoCadastroDetalhe, PerfilVinculado } from '@/services/SolicitacaoCadastroService'
+import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
+import type {
+  SolicitacaoCadastroDetalhe,
+  PerfilVinculado,
+  HistoricoReprovacaoItem,
+} from '@/services/SolicitacaoCadastroService'
 
 defineOptions({ name: 'PainelDetalharSolicitacao' })
 
@@ -381,6 +447,11 @@ const emit = defineEmits<{
   (e: 'toggle-perfil', payload: { perfilUsuarioId: number; acao: 'ativar' | 'desativar' }): void
   (e: 'adicionar-perfil', payload: { perfilId: number | string; vigenciaInicio?: string; vigenciaFim?: string }): void
 }>()
+
+const historicoReprovacoes = computed<HistoricoReprovacaoItem[]>(() => {
+  const raw = props.detalhe?.historico_reprovacoes
+  return Array.isArray(raw) ? raw : []
+})
 
 const perfilSelecionado = ref<string | number | null>(null)
 const vigenciaInicio = ref('')
@@ -421,6 +492,8 @@ const perfisVinculadosCount = computed(() => perfisVinculadosLista.value.length)
 const temPerfisVinculados = computed(() => perfisVinculadosCount.value > 0)
 const colunaOrdenacao = ref<ColunaOrdenacao | null>(null)
 const direcaoOrdenacao = ref<DirecaoOrdenacao>('asc')
+const paginaAtualPerfis = ref(1)
+const itensPorPaginaPerfis = ref(10)
 const perfisVinculadosOrdenados = computed<PerfilVinculadoExibicao[]>(() => {
   const lista = [...perfisVinculadosLista.value]
   if (!colunaOrdenacao.value) return lista
@@ -429,6 +502,11 @@ const perfisVinculadosOrdenados = computed<PerfilVinculadoExibicao[]>(() => {
   const direcao = direcaoOrdenacao.value === 'asc' ? 1 : -1
 
   return lista.sort((a, b) => compararValores(a, b, coluna) * direcao)
+})
+const perfisVinculadosPaginados = computed<PerfilVinculadoExibicao[]>(() => {
+  const inicio = (paginaAtualPerfis.value - 1) * itensPorPaginaPerfis.value
+  const fim = inicio + itensPorPaginaPerfis.value
+  return perfisVinculadosOrdenados.value.slice(inicio, fim)
 })
 
 const modalAdicionarPerfilVisivel = ref(false)
@@ -504,15 +582,23 @@ onMounted(async () => {
   await carregarPerfis()
 })
 
+function toInputDate(s?: string | null): string {
+  if (!s) return ''
+  const t = String(s).trim()
+  return t.length >= 10 ? t.slice(0, 10) : t
+}
+
 watch(
   () => props.detalhe,
   async (novo) => {
     if (novo) {
       await carregarPerfis()
-      const hoje = new Date()
-      vigenciaInicio.value = hoje.toISOString().slice(0, 10)
-      vigenciaFim.value = ''
-      perfilSelecionado.value = null
+      const hoje = new Date().toISOString().slice(0, 10)
+      vigenciaInicio.value = toInputDate(novo.vigencia_inicio_solicitada) || hoje
+      vigenciaFim.value = toInputDate(novo.vigencia_fim_solicitada) || ''
+      perfilSelecionado.value =
+        novo.perfil_id_solicitado != null && novo.perfil_id_solicitado > 0 ? novo.perfil_id_solicitado : null
+      paginaAtualPerfis.value = 1
     }
   },
   { immediate: true }
@@ -524,6 +610,24 @@ function formatarDataExibicao(val: string) {
     const d = new Date(val)
     if (isNaN(d.getTime())) return val
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  } catch {
+    return val
+  }
+}
+
+/** Data e hora em pt-BR (histórico de reprovação). */
+function formatarDataHoraPtBr(val: string | null | undefined) {
+  if (!val) return '—'
+  try {
+    const d = new Date(val)
+    if (isNaN(d.getTime())) return val
+    return d.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
   } catch {
     return val
   }
@@ -742,6 +846,27 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
   font-size: 1.125rem;
   font-weight: 600;
   margin: 0 0 0.75rem;
+}
+
+.secao-descricao {
+  font-size: 0.875rem;
+  color: var(--color-secondary-07, #555);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.painel-secao--historico-reprovacao .tabela-historico-reprovacao th.th-bold {
+  font-weight: 700;
+}
+
+.tabela-historico-reprovacao td {
+  vertical-align: top;
+}
+
+.tabela-historico-reprovacao .td-motivo-reprovacao {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 28rem;
 }
 
 .secao-grid-readonly,

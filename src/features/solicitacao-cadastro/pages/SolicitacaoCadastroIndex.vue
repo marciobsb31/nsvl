@@ -1,7 +1,17 @@
 <template>
   <PublicLayout full-width>
     <section class="solicitacao-page" aria-labelledby="solicitacao-titulo">
-      <div class="solicitacao-page__inner">   
+      <div class="solicitacao-page__inner">
+        <nav class="solicitacao-breadcrumb" aria-label="Navegação estrutural">
+          <ol class="solicitacao-breadcrumb__list">
+            <li>
+              <router-link :to="{ name: 'home' }" class="solicitacao-breadcrumb__link">Início</router-link>
+            </li>
+            <li aria-hidden="true" class="solicitacao-breadcrumb__sep">/</li>
+            <li class="solicitacao-breadcrumb__current">Solicitação de cadastro</li>
+          </ol>
+        </nav>
+
         <header class="solicitacao-hero">
           <h1 id="solicitacao-titulo" class="solicitacao-hero__title">
             Solicitação de cadastro
@@ -10,16 +20,16 @@
             Preencha os dados abaixo para solicitar acesso ao <strong>NVSL</strong>. Campos marcados com
             <span class="solicitacao-hero__req">*</span> são obrigatórios.
           </p>
-          <div class="solicitacao-govbr-msg">
-          <Message v-if="modoGovBr" >
-              <strong>Dados do GOV.BR:</strong> nome e CPF foram obtidos na autenticação e não podem ser alterados.
-          </Message>
-
-          </div>
         </header>
 
+        <div v-if="modoGovBr" class="br-message info solicitacao-govbr-msg" role="status">
+          <div class="content">
+            <strong>Dados do GOV.BR:</strong> nome e CPF foram obtidos na autenticação e não podem ser alterados.
+          </div>
+        </div>
+
         <Form
-          v-slot="{ values: formValues }"
+          v-slot="{ values: formValues, meta: formMeta }"
           :key="formKey"
           :validation-schema="schemaSolicitacao"
           :initial-values="initialValues"
@@ -44,23 +54,10 @@
 
           <Card
             title="Termo de uso e privacidade"
-            subtitle="O aceite é registrado no momento da confirmação e envio da solicitação."
+            subtitle="A confirmação envia a solicitação e registra sua ciência conforme abaixo."
             custom-class="solicitacao-card solicitacao-card--termo"
           >
-            <div class="solicitacao-termo-box" role="region" aria-labelledby="termo-titulo-visivel">
-              <h3 id="termo-titulo-visivel" class="solicitacao-termo-box__titulo">
-                Declaração de ciência
-              </h3>
-              <p class="solicitacao-termo-box__texto">
-                Ao confirmar, você declara ter lido e aceitado o tratamento dos dados conforme a finalidade do NVSL:
-                os dados informados serão utilizados exclusivamente para <strong>análise</strong>,
-                <strong>habilitação</strong> e <strong>gestão de acesso</strong> ao sistema.
-              </p>
-              <p class="solicitacao-termo-box__texto solicitacao-termo-box__texto--muted">
-                O envio implica ciência quanto ao tratamento de dados pessoais e uso institucional, em conformidade com a
-                legislação aplicável.
-              </p>
-            </div>
+            <TermoUsoPrivacidade />
           </Card>
 
           <div class="solicitacao-acoes">
@@ -74,7 +71,7 @@
             <button
               class="br-button primary solicitacao-acoes__btn solicitacao-acoes__btn--principal"
               type="submit"
-              :disabled="isSubmitting || !camposObrigatoriosPreenchidos(formValues)"
+              :disabled="isSubmitting || !camposObrigatoriosPreenchidos(formValues) || !formMeta.valid"
               :aria-busy="isSubmitting"
             >
               {{ isSubmitting ? 'Enviando...' : 'Confirmar e enviar solicitação' }}
@@ -91,8 +88,10 @@
         <div v-if="detalheVisualizar" class="detalhe-solicitacao">
           <p><strong>Nome:</strong> {{ detalheVisualizar.nome }}</p>
           <p><strong>E-mail:</strong> {{ detalheVisualizar.email_institucional }}</p>
-          <p><strong>Telefone institucional:</strong> {{ detalheVisualizar.telefone_institucional }}</p>
-          <p><strong>Telefone pessoal:</strong> {{ detalheVisualizar.telefone_pessoal || '-' }}</p>
+          <p><strong>Telefone institucional:</strong> {{ formatarTelefoneExibicao(detalheVisualizar.telefone_institucional) }}</p>
+          <p v-if="detalheVisualizar.telefone_pessoal">
+            <strong>Telefone pessoal:</strong> {{ formatarTelefoneExibicao(detalheVisualizar.telefone_pessoal) }}
+          </p>
           <p><strong>Esfera:</strong> {{ detalheVisualizar.esfera_atuacao }}</p>
           <p><strong>UF:</strong> {{ detalheVisualizar.uf }}</p>
           <p><strong>Município:</strong> {{ detalheVisualizar.municipio }}</p>
@@ -166,8 +165,7 @@ import {
 import { useNotification } from '@/core/composables/useNotification';
 import { useRouter } from 'vue-router';
 import Modal from '@/core/components/Modal/Modal.vue';
-import Message from '@/core/components/Message/Message.vue';
-
+import TermoUsoPrivacidade from '@/core/components/TermoUsoPrivacidade/TermoUsoPrivacidade.vue';
 
 defineOptions({
   name: 'SolicitacaoCadastroIndex'
@@ -185,6 +183,17 @@ function formatarCpf(cpf: string): string {
   const d = String(cpf).replace(/\D/g, '');
   if (d.length !== 11) return cpf;
   return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+function formatarTelefoneParaCampo(tel: string | null | undefined): string {
+  const d = String(tel ?? '').replace(/\D/g, '');
+  if (d.length === 11) return d.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  if (d.length === 10) return d.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  return '';
+}
+
+function formatarTelefoneExibicao(tel: string | null | undefined): string {
+  return formatarTelefoneParaCampo(tel) || String(tel ?? '');
 }
 
 const schemaSolicitacao = computed(() =>
@@ -216,13 +225,6 @@ const editando = ref(false);
 const modalExcluir = ref<boolean>(false);
 const solicitacaoExcluir = ref<SolicitacaoCadastroItem | null>(null);
 const excluindo = ref(false);
-
-const links = ref([
-  {
-    label: 'Solicitação de cadastro',
-    active: true
-  }
-]);
 
 function formatarData(data: string | undefined) {
   if (!data) return '-';
@@ -262,7 +264,7 @@ async function visualizar(id: number) {
     detalheVisualizar.value = await obterSolicitacaoCadastro(id);
     modalVisualizar.value = id;
   } catch {
-    error('Erro ao carregar detalhes da solicitação.');
+    error('Não foi possível carregar os detalhes da solicitação. Tente novamente.');
   }
 }
 
@@ -274,7 +276,7 @@ async function editar(id: number) {
       CPF: '',
       emailInstitucional: det.email_institucional,
       telefoneInstitucional: det.telefone_institucional,
-      telefonePessoal: det.telefone_pessoal || '',
+      telefonePessoal: formatarTelefoneParaCampo(det.telefone_pessoal),
       esferaAtuacao: det.esfera_atuacao,
       uf: det.uf,
       municipio: det.municipio,
@@ -283,7 +285,7 @@ async function editar(id: number) {
     };
     modalEditar.value = id;
   } catch {
-    error('Erro ao carregar solicitação para edição.');
+    error('Não foi possível carregar a solicitação para edição. Tente novamente.');
   }
 }
 
@@ -317,8 +319,8 @@ async function executarExcluir() {
   } catch (err: unknown) {
     const msg = err && typeof err === 'object' && 'response' in err
       ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-      : 'Erro ao excluir solicitação.';
-    error(msg ?? 'Erro ao excluir solicitação.');
+      : 'Não foi possível excluir a solicitação. Tente novamente.';
+    error(msg ?? 'Não foi possível excluir a solicitação. Tente novamente.');
   } finally {
     excluindo.value = false;
   }
@@ -328,11 +330,12 @@ async function onSubmitEditar(values: Record<string, unknown>) {
   if (!modalEditar.value) return;
   editando.value = true;
   try {
+    const tpEd = String(values.telefonePessoal ?? '').replace(/\D/g, '');
     const payload: SolicitacaoCadastroUpdatePayload = {
       nome: values.nome as string,
       emailInstitucional: values.emailInstitucional as string,
       telefoneInstitucional: values.telefoneInstitucional as string,
-      telefonePessoal: (values.telefonePessoal as string) || undefined,
+      telefonePessoal: tpEd.length >= 10 && tpEd.length <= 11 ? tpEd : null,
       esferaAtuacao: values.esferaAtuacao as string,
       uf: values.uf as string,
       municipio: values.municipio as string,
@@ -348,8 +351,8 @@ async function onSubmitEditar(values: Record<string, unknown>) {
   } catch (err: unknown) {
     const msg = err && typeof err === 'object' && 'response' in err
       ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-      : 'Erro ao atualizar solicitação.';
-    error(msg ?? 'Erro ao atualizar solicitação.');
+      : 'Não foi possível atualizar a solicitação. Verifique os dados e tente novamente.';
+    error(msg ?? 'Não foi possível atualizar a solicitação. Verifique os dados e tente novamente.');
   } finally {
     editando.value = false;
   }
@@ -358,31 +361,43 @@ async function onSubmitEditar(values: Record<string, unknown>) {
 async function onSubmit(values: Record<string, unknown>) {
   isSubmitting.value = true;
   try {
+    const tp = String(values.telefonePessoal ?? '').replace(/\D/g, '');
+    const telInst = String(values.telefoneInstitucional ?? '').replace(/\D/g, '');
     const payload: SolicitacaoCadastroPayload = {
-      nome: values.nome as string,
-      emailInstitucional: values.emailInstitucional as string,
-      telefoneInstitucional: values.telefoneInstitucional as string,
-      telefonePessoal: (values.telefonePessoal as string) || undefined,
-      esferaAtuacao: values.esferaAtuacao as string,
-      uf: values.uf as string,
-      municipio: values.municipio as string,
-      orgao: values.orgao as string,
-      cargo: values.cargo as string,
+      nome: String(values.nome ?? '').trim(),
+      emailInstitucional: String(values.emailInstitucional ?? '').trim(),
+      telefoneInstitucional: telInst,
+      telefonePessoal: tp.length >= 10 && tp.length <= 11 ? tp : null,
+      esferaAtuacao: String(values.esferaAtuacao ?? '').trim(),
+      uf: String(values.uf ?? '').trim().toUpperCase(),
+      municipio: String(values.municipio ?? '').trim(),
+      orgao: String(values.orgao ?? '').trim(),
+      cargo: String(values.cargo ?? '').trim(),
     };
     const cpfVal = values.CPF as string;
     if (cpfVal && !cpfVal.includes('*')) {
-      payload.CPF = cpfVal;
+      payload.CPF = cpfVal.replace(/\D/g, '');
     }
     await enviarSolicitacaoCadastro(payload);
-    success('Solicitação enviada com sucesso! Aguarde a análise da equipe. Redirecionando para o login...');
+    success('Solicitação enviada com sucesso! Sua solicitação está com o status "Em Análise" e será avaliada pela equipe gestora. Você será redirecionado para a tela de login.');
     setTimeout(() => {
       router.push({ name: 'login' });
-    }, 3000);
+    }, 4000);
   } catch (err: unknown) {
-    const msg = err && typeof err === 'object' && 'response' in err
-      ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-      : 'Não foi possível enviar. Verifique os dados e tente novamente.';
-    error(msg || 'Não foi possível enviar. Verifique os dados e tente novamente.');
+    const axErr = err as { response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } } };
+    let msg = '';
+    if (axErr?.response?.data?.message) {
+      msg = axErr.response.data.message;
+    } else if (axErr?.response?.status === 422) {
+      msg = 'Alguns campos possuem dados inválidos. Revise o formulário e tente novamente.';
+    } else if (axErr?.response?.status === 429) {
+      msg = 'Muitas tentativas em pouco tempo. Aguarde alguns instantes e tente novamente.';
+    } else if (axErr?.response?.status && axErr.response.status >= 500) {
+      msg = 'O servidor encontrou um erro inesperado. Tente novamente em alguns minutos.';
+    } else {
+      msg = 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
+    }
+    error(msg);
   } finally {
     isSubmitting.value = false;
   }
@@ -416,8 +431,8 @@ onMounted(() => {
 /* —— Página (Padrão Digital / eGOV) —— */
 .solicitacao-page {
   width: 100%;
-  padding: 1rem 0 2.5rem;
-  background: var(--background);
+  padding: 1.25rem 0 2.5rem;
+  background: var(--background, #fff);
 }
 
 .solicitacao-page__inner {
@@ -486,7 +501,7 @@ onMounted(() => {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.25;
-  color: var(--primary-text-dark-color);
+  color: var(--color-primary-darken-02, #0c326f);
   letter-spacing: -0.02em;
 }
 
@@ -501,7 +516,7 @@ onMounted(() => {
   max-width: 62rem;
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: var(--dark-text-color);
+  color: var(--color-secondary-08, #333);
 }
 
 .solicitacao-hero__req {
@@ -510,7 +525,13 @@ onMounted(() => {
 }
 
 .solicitacao-govbr-msg {
-  margin-top: 1rem;
+  margin: 0 0 1.25rem;
+  border: none;
+  border-radius: 6px;
+}
+.solicitacao-govbr-msg .content {
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 /* Cards empilhados */
@@ -534,45 +555,13 @@ onMounted(() => {
   margin-top: 0;
 }
 
-/* Caixa do termo */
-.solicitacao-termo-box {
-  padding: 1rem 1.125rem;
-  border-radius: 6px;
-  border-left: 4px solid var(--color-primary-default, #1351b4);
-  background: var(--color-primary-pastel-01, #e8f0ff);
-}
-
-.solicitacao-termo-box__titulo {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-primary-darken-02, #0c326f);
-}
-
-.solicitacao-termo-box__texto {
-  margin: 0 0 0.75rem;
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: var(--color-secondary-08);
-}
-
-.solicitacao-termo-box__texto:last-child {
-  margin-bottom: 0;
-}
-
-.solicitacao-termo-box__texto--muted {
-  color: var(--color-secondary-08);
-  font-size: 0.8125rem;
-}
-
 /* Ações */
 .solicitacao-acoes {
   display: flex;
   flex-direction: column-reverse;
   gap: 0.75rem;
-  margin-top: 0.25rem;
-  padding: 1.25rem 0 0;
-  border-top: 1px solid var(--color-secondary-03, #e8e8e8);
+  margin-top: 0.5rem;
+  padding: 1rem 0 0;
 }
 
 .solicitacao-acoes__btn {
@@ -597,10 +586,5 @@ onMounted(() => {
   .solicitacao-acoes__btn--principal {
     min-width: 14rem;
   }
-
-  br-breadcrumb .crumb-list {
-    display: none;
-  }
-  
 }
 </style>

@@ -1,17 +1,45 @@
 <template>
   <DefaultLayout>
-      <HeaderPage title="Gerenciar solicitação de cadastros no sistema"
-        :subtitle="'Aplique filtros e clique em <strong>Pesquisar</strong>.'"
-        customClass="mb-3">
-        <template v-slot:actions>
-          <br-button :color-mode="$appTheme ==='dark' ? $appTheme : undefined" emphasis="primary" @click="router.push('/cadastrar-usuario')" aria-label="Cadastrar usuário">
+    <section
+      class="gerenciar-cadastros"
+      :class="{
+        'painel-aberto':
+          (painelCadastroAberto && !isPerfilCliente) || painelDetalharAberto,
+      }"
+    >
+      <div class="titulo-pagina">
+        <div class="titulo-pagina__topo">
+          <div>
+            <h1 id="titulo-gerenciar" class="titulo-pagina__h1">
+              Gerenciar solicitação de cadastros no sistema
+            </h1>
+            <p class="titulo-pagina__subtitulo">Aplique filtros e clique em <strong>Pesquisar</strong>.</p>
+          </div>
+          <!-- Reativar para perfil Cliente: @click="abrirPainelCadastro" (remover onCliqueCadastrarUsuario e guard isPerfilCliente no script). -->
+          <button
+            class="br-button primary small"
+            type="button"
+            @click="onCliqueCadastrarUsuario"
+            aria-label="Cadastrar usuário"
+          >
             Cadastrar usuário
-          </br-button>
-        </template>
-      </HeaderPage>
+          </button>
+        </div>
+      </div>
+
+      <div v-if="contextoAtualLabel" class="contexto-banner" role="status" aria-live="polite">
+        <i class="fas fa-shield-alt contexto-banner__icon" aria-hidden="true"></i>
+        <span class="contexto-banner__label">Contexto ativo:</span>
+        <strong class="contexto-banner__valor">{{ contextoAtualLabel }}</strong>
+      </div>
 
       <Card custom-class="mb-4">
-        <FiltrosGerenciarSolicitacao :carregando="carregando" @pesquisar="aplicarFiltros" @limpar="limparEpesquisar" />
+        <FiltrosGerenciarSolicitacao
+          :key="contextKey"
+          :carregando="carregando"
+          @pesquisar="aplicarFiltros"
+          @limpar="limparEpesquisar"
+        />
       </Card>
 
       <Card custom-class="mb-4">
@@ -70,7 +98,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in solicitacoesOrdenadas" :key="s.id">
+              <tr v-for="s in solicitacoesPaginadas" :key="s.id">
                 <td>{{ s.cpf ?? '—' }}</td>
                 <td>{{ s.nome }}</td>
                 <td>{{ labelEsfera(s.esfera_atuacao) }}</td>
@@ -81,42 +109,42 @@
                   <span class="br-tag" :class="classeStatus(s.status)">
                     {{ labelStatus(s.status) }}
                   </span>
-
                 </td>
                 <td>
-                  <br-tooltip position="left">
                   <button
-                    class="br-button secondary small circle"
+                    class="br-button secondary small"
                     type="button"
-                    @click="detalhar(s.id)"
+                    @click="detalhar(s)"
                     :disabled="carregandoDetalhe"
                     :aria-label="rotuloBotaoDetalhar(s.status)"
-                    :title="rotuloBotaoDetalhar(s.status)"
-                    slot="trigger"
                   >
-                    <i class="fas fa-search" aria-hidden="true"></i>
+                    {{ rotuloBotaoDetalhar(s.status) }}
                   </button>
-                  <div slot="content">{{rotuloBotaoDetalhar(s.status)}}</div>
-                  </br-tooltip>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        
+        <PaginationControls
+          v-if="solicitacoesOrdenadas.length > 0"
+          v-model:currentPage="paginaAtual"
+          v-model:pageSize="itensPorPagina"
+          :total-items="solicitacoesOrdenadas.length"
+        />
       </Card>
 
       <Transition name="painel-fade">
         <div
-          v-if="painelCadastroAberto || painelDetalharAberto"
+          v-if="(painelCadastroAberto && !isPerfilCliente) || painelDetalharAberto"
           class="painel-overlay"
           aria-hidden="true"
           @click="fecharPainelAberto"
         ></div>
       </Transition>
+      <!-- Reativar painel para Cliente: v-if="painelCadastroAberto" (remover && !isPerfilCliente aqui e no overlay acima). -->
       <Transition name="painel-slide">
         <aside
-          v-if="painelCadastroAberto"
+          v-if="painelCadastroAberto && !isPerfilCliente"
           ref="painelCadastroRef"
           class="painel-cadastro"
           aria-label="Formulário cadastrar usuário"
@@ -147,13 +175,15 @@
           />
         </aside>
       </Transition>
+    </section>
   </DefaultLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Card from '@/core/components/Card/Card.vue'
+import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
 import FiltrosGerenciarSolicitacao from '../components/FiltrosGerenciarSolicitacao.vue'
 import FormularioCadastrarUsuario from '../components/FormularioCadastrarUsuario.vue'
 import PainelDetalharSolicitacao from '../components/PainelDetalharSolicitacao.vue'
@@ -170,19 +200,30 @@ import {
 import { obterSolicitacaoCadastro, type SolicitacaoCadastroDetalhe } from '@/services/SolicitacaoCadastroService'
 import { useNotification } from '@/core/composables/useNotification'
 import { useAuth } from '@/core/composables/useAuth'
-import HeaderPage from '@/core/components/HeaderPage/HeaderPage.vue'
-import router from '@/router'
-import { BrButton, BrTooltip } from '@govbr-ds/webcomponents-vue'
+
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
 const { error, success } = useNotification()
-const { user } = useAuth()
+const { user, contextKey, perfilAtivo } = useAuth()
+
+/**
+ * Perfil cujo cadastro via painel está temporariamente desligado (botão visível, sem ação).
+ * Reativar para perfil Cliente: apague isPerfilCliente, onCliqueCadastrarUsuario e watch(isPerfilCliente);
+ * no botão use @click="abrirPainelCadastro"; no overlay/aside de cadastro use só painelCadastroAberto
+ * (remova && !isPerfilCliente e ajuste :class da section).
+ */
+const isPerfilCliente = computed(() => {
+  const nome = perfilAtivo.value?.nome?.trim().toLowerCase()
+  return nome === 'cliente'
+})
 
 const solicitacoes = ref<SolicitacaoGerenciarItem[]>([])
 const carregando = ref(false)
 const jaListou = ref(false)
 const ordenarColuna = ref<string | null>(null)
 const ordenarAsc = ref(true)
+const paginaAtual = ref(1)
+const itensPorPagina = ref(10)
 
 const solicitacoesOrdenadas = computed(() => {
   const lista = [...solicitacoes.value]
@@ -222,6 +263,12 @@ const solicitacoesOrdenadas = computed(() => {
   return lista
 })
 
+const solicitacoesPaginadas = computed(() => {
+  const inicio = (paginaAtual.value - 1) * itensPorPagina.value
+  const fim = inicio + itensPorPagina.value
+  return solicitacoesOrdenadas.value.slice(inicio, fim)
+})
+
 function ordenarPor(coluna: string) {
   if (ordenarColuna.value === coluna) {
     ordenarAsc.value = !ordenarAsc.value
@@ -246,6 +293,7 @@ async function carregarSolicitacoes() {
   jaListou.value = true
   try {
     solicitacoes.value = await listarSolicitacoesGerenciar(filtrosAtivos.value)
+    paginaAtual.value = 1
   } catch {
     solicitacoes.value = []
     error('Não foi possível carregar as solicitações. Verifique se o backend está em execução.')
@@ -269,6 +317,14 @@ function limparEpesquisar() {
 function abrirPainelCadastro() {
   painelDetalharAberto.value = false
   painelCadastroAberto.value = true
+}
+
+/**
+ * Perfil Cliente: clique sem efeito (painel oculto). Reativar: usar @click="abrirPainelCadastro" no botão e remover este handler.
+ */
+function onCliqueCadastrarUsuario() {
+  if (isPerfilCliente.value) return
+  abrirPainelCadastro()
 }
 
 function fecharPainelCadastro() {
@@ -337,51 +393,47 @@ function rotuloBotaoDetalhar(status: string) {
 
 const carregandoDetalhe = ref(false)
 
-const detalhar = (id: number) => {
-  router.push({name:'detalhar-solicitacao', params:{id}})
+async function detalhar(s: SolicitacaoGerenciarItem) {
+  const id = s?.id
+  if (id == null || id === undefined) {
+    console.error('[Detalhar] ID inválido — item:', s)
+    error('Não foi possível identificar a solicitação. Tente clicar em Listar novamente.')
+    return
+  }
+  console.log('[Detalhar] Iniciando — id:', id, 'nome:', s?.nome)
+  carregandoDetalhe.value = true
+  painelCadastroAberto.value = false
+  painelDetalharAberto.value = false
+  detalheSelecionado.value = null
+  try {
+    const detalhe = await obterSolicitacaoCadastro(id)
+    console.log('[Detalhar] Resposta da API:', detalhe ? { id: detalhe.id, nome: detalhe.nome, perfis: detalhe.perfis_vinculados?.length } : null)
+    if (!detalhe?.id) {
+      throw new Error('Resposta da API inválida: dados incompletos.')
+    }
+    detalheSelecionado.value = detalhe
+    painelDetalharAberto.value = true
+    console.log('[Detalhar] Painel aberto com sucesso.')
+  } catch (e: unknown) {
+    const err = e as { response?: { status?: number; data?: { message?: string } }; message?: string }
+    const status = err?.response?.status
+    let msg =
+      err?.response?.data?.message ??
+      err?.message ??
+      'Erro ao carregar detalhes da solicitação.'
+    if (status === 401) {
+      msg = 'Sessão expirada. Faça login novamente.'
+    } else if (status === 403) {
+      msg = 'Acesso negado a esta solicitação.'
+    } else if (status === 404) {
+      msg = 'Solicitação não encontrada.'
+    }
+    console.error('[Detalhar] Erro ao abrir painel — status:', status, 'msg:', msg, 'objeto:', e)
+    error(msg)
+  } finally {
+    carregandoDetalhe.value = false
+  }
 }
-
-// async function detalhar(s: SolicitacaoGerenciarItem) {
-//   const id = s?.id
-//   if (id == null || id === undefined) {
-//     console.error('[Detalhar] ID inválido — item:', s)
-//     error('Não foi possível identificar a solicitação. Tente clicar em Listar novamente.')
-//     return
-//   }
-//   console.log('[Detalhar] Iniciando — id:', id, 'nome:', s?.nome)
-//   carregandoDetalhe.value = true
-//   painelCadastroAberto.value = false
-//   painelDetalharAberto.value = false
-//   detalheSelecionado.value = null
-//   try {
-//     const detalhe = await obterSolicitacaoCadastro(id)
-//     console.log('[Detalhar] Resposta da API:', detalhe ? { id: detalhe.id, nome: detalhe.nome, perfis: detalhe.perfis_vinculados?.length } : null)
-//     if (!detalhe?.id) {
-//       throw new Error('Resposta da API inválida: dados incompletos.')
-//     }
-//     detalheSelecionado.value = detalhe
-//     painelDetalharAberto.value = true
-//     console.log('[Detalhar] Painel aberto com sucesso.')
-//   } catch (e: unknown) {
-//     const err = e as { response?: { status?: number; data?: { message?: string } }; message?: string }
-//     const status = err?.response?.status
-//     let msg =
-//       err?.response?.data?.message ??
-//       err?.message ??
-//       'Erro ao carregar detalhes da solicitação.'
-//     if (status === 401) {
-//       msg = 'Sessão expirada. Faça login novamente.'
-//     } else if (status === 403) {
-//       msg = 'Acesso negado a esta solicitação.'
-//     } else if (status === 404) {
-//       msg = 'Solicitação não encontrada.'
-//     }
-//     console.error('[Detalhar] Erro ao abrir painel — status:', status, 'msg:', msg, 'objeto:', e)
-//     error(msg)
-//   } finally {
-//     carregandoDetalhe.value = false
-//   }
-// }
 
 async function aprovarSolicitacao(payload?: { perfilId?: string | number | null; vigenciaInicio?: string; vigenciaFim?: string }) {
   if (!detalheSelecionado.value) return
@@ -475,6 +527,39 @@ function obterIndicadorSort(coluna: string) {
   return ordenarAsc.value ? '↑' : '↓'
 }
 
+const esferaMap: Record<string, string> = {
+  federal: 'Federal',
+  estadual: 'Estadual',
+  municipal: 'Municipal',
+}
+
+const contextoAtualLabel = computed(() => {
+  const perfil = perfilAtivo.value
+  const esfera = user.value?.esfera_atuacao
+  const uf = user.value?.uf_lotacao
+  const municipio = user.value?.municipio_lotacao
+  if (!perfil) {
+    return esfera ? esferaMap[esfera] ?? esfera : ''
+  }
+  const partes: string[] = []
+  if (perfil.nome) partes.push(perfil.nome)
+  if (esfera) partes.push(esferaMap[esfera] ?? esfera)
+  if (uf) partes.push(uf)
+  if (municipio) partes.push(municipio)
+  return partes.join(' — ')
+})
+
+watch(contextKey, () => {
+  painelCadastroAberto.value = false
+  painelDetalharAberto.value = false
+  detalheSelecionado.value = null
+  limparEpesquisar()
+})
+
+watch(isPerfilCliente, (cliente) => {
+  if (cliente) fecharPainelCadastro()
+})
+
 onMounted(() => {
   limparEpesquisar()
 })
@@ -482,7 +567,94 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.gerenciar-cadastros {
+  padding: 1.5rem 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
 
+.contexto-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--color-primary-pastel, #dbe8fb);
+  border-left: 4px solid var(--color-primary-default, #1351b4);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: var(--color-secondary-08, #333);
+  transition: all 0.3s ease;
+}
+
+.contexto-banner__icon {
+  color: var(--color-primary-default, #1351b4);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.contexto-banner__label {
+  color: var(--color-secondary-06, #888);
+  white-space: nowrap;
+}
+
+.contexto-banner__valor {
+  color: var(--color-primary-default, #1351b4);
+}
+
+[data-theme="dark"] .contexto-banner {
+  background: rgba(19, 81, 180, 0.15);
+  border-left-color: var(--color-primary-lighten-01, #4d7fd6);
+}
+
+[data-theme="dark"] .contexto-banner__icon,
+[data-theme="dark"] .contexto-banner__valor {
+  color: var(--color-primary-lighten-01, #4d7fd6);
+}
+
+[data-theme="dark"] .contexto-banner__label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.titulo-pagina {
+  margin-bottom: 1.5rem;
+}
+
+.titulo-pagina__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 575px) {
+  .titulo-pagina__h1 {
+    font-size: 1.25rem;
+  }
+
+  .titulo-pagina__subtitulo {
+    font-size: 0.875rem;
+  }
+
+  .titulo-pagina__topo {
+    flex-direction: column;
+  }
+}
+
+.titulo-pagina__h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary-default, #1351b4);
+  margin: 0;
+}
+
+.titulo-pagina__subtitulo {
+  font-size: 1rem;
+  color: var(--color-secondary-07, #555);
+  margin: 0.5rem 0 0;
+}
 
 .painel-overlay {
   position: fixed;
