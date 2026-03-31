@@ -15,7 +15,16 @@
     "format": "prettier --write --experimental-cli src/",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "e2e": "playwright test --project=chromium",
+    "e2e:evidencias-gerenciar-cadastros": "playwright test tests/e2e/gerenciar-cadastros-evidencias.spec.ts --headed --project=chromium",
+    "e2e:prints-24249": "playwright test --project=chromium-prints-24249",
+    "docs:evidencias-gerenciar-pdf": "node scripts/generate-evidencias-gerenciar-cadastros-pdf.mjs",
+    "docs:evidencias-24249": "npm run e2e:prints-24249 && npm run docs:evidencias-gerenciar-pdf",
+    "e2e:ui": "playwright test --headed --project=chromium",
+    "e2e:debug": "playwright test --debug --project=chromium",
+    "e2e:report": "playwright show-report",
+    "docs:modelagem-pdf": "node scripts/generate-modelagem-pdf.mjs"
   },
   "dependencies": {
     "@govbr-ds/core": "^3.7.0",
@@ -32,6 +41,7 @@
     "yup": "^1.7.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^24.11.0",
     "@vitejs/plugin-vue": "^6.0.4",

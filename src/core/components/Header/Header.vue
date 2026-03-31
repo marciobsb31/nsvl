@@ -4,9 +4,11 @@
         <div class="container-lg">
             <div class="header-top">
                 <div class="header-info">
-                    <img v-if="logo" :src="logoAtual" alt="Logo GOV" class="logo" @click="goToHome" />
+                     <button v-if="logo" class="logo-btn" type="button" aria-label="Ir para a página inicial" @click="goToHome">
+                        <img :src="logoAtual" alt="Logo GOV" class="logo" />
+                    </button>
                     <template v-else>
-                        <div class="header-title text-blue-warm-vivid-70" @click="goToHome">{{ title }}</div>
+                        <button class="header-title text-blue-warm-vivid-70 header-title-btn" type="button" aria-label="Ir para a página inicial" @click="goToHome">{{ title }}</button>
                         <div class="header-subtitle text-gray-80">{{ subtitle }}</div>
                     </template>
                 </div>
@@ -84,6 +86,19 @@ const logoAtual = computed(() => {
     cursor: pointer;
 }
 
+.header-title-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+}
+.logo-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+}
+
 .header-home {
     border: none;
     background: transparent;
@@ -143,5 +158,7 @@ const logoAtual = computed(() => {
   .header-actions { grid-area: actions; justify-self: stretch; }
   .header-right { grid-area: right; }
 }
+
+
 
 </style>

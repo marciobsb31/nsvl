@@ -4,14 +4,25 @@
         :subtitle="'Aplique filtros e clique em <strong>Pesquisar</strong>.'"
         customClass="mb-3">
         <template v-slot:actions>
-          <br-button :color-mode="$appTheme ==='dark' ? $appTheme : undefined" emphasis="primary" @click="abrirPainelCadastro" aria-label="Cadastrar usuário">
+          <br-button :color-mode="$appTheme ==='dark' ? $appTheme : undefined" emphasis="primary" @click="onCliqueCadastrarUsuario" aria-label="Cadastrar usuário">
             Cadastrar usuário
           </br-button>
         </template>
       </HeaderPage>
+        
+      <div v-if="contextoAtualLabel" class="contexto-banner" role="status" aria-live="polite">
+        <i class="fas fa-shield-alt contexto-banner__icon" aria-hidden="true"></i>
+        <span class="contexto-banner__label">Contexto ativo:</span>
+        <strong class="contexto-banner__valor">{{ contextoAtualLabel }}</strong>
+      </div>
 
       <Card custom-class="mb-4">
-        <FiltrosGerenciarSolicitacao :carregando="carregando" @pesquisar="aplicarFiltros" @limpar="limparEpesquisar" />
+        <FiltrosGerenciarSolicitacao
+          :key="contextKey"
+          :carregando="carregando"
+          @pesquisar="aplicarFiltros"
+          @limpar="limparEpesquisar"
+        />
       </Card>
 
       <Card custom-class="mb-4" v-if="!isMobile">
@@ -70,7 +81,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in solicitacoesOrdenadas" :key="s.id">
+              <tr v-for="s in solicitacoesPaginadas" :key="s.id">
                 <td>{{ s.cpf ?? '—' }}</td>
                 <td>{{ s.nome }}</td>
                 <td>{{ labelEsfera(s.esfera_atuacao) }}</td>
@@ -100,10 +111,16 @@
             </tbody>
           </table>
         </div>
+        <PaginationControls
+          v-if="solicitacoesOrdenadas.length > 0"
+          v-model:currentPage="paginaAtual"
+          v-model:pageSize="itensPorPagina"
+          :total-items="solicitacoesOrdenadas.length"
+        />
         
       </Card>
-      <Card custom-class="mb-4" v-if="isMobile && solicitacoesOrdenadas.length > 0">
-        <div class="row table-mobile" v-for="s in solicitacoesOrdenadas" :key="s.id">
+      <Card custom-class="mb-4" v-if="isMobile && solicitacoesPaginadas.length > 0">
+        <div class="row table-mobile" v-for="s in solicitacoesPaginadas" :key="s.id">
           <div class="col-12 mb-1">
             <label for="nome">Nome completo</label>
             <p class="m-0">{{ s.nome }}</p>
@@ -147,7 +164,7 @@
 
       <Transition name="painel-fade">
         <div
-          v-if="painelCadastroAberto || painelDetalharAberto"
+          v-if="(painelCadastroAberto && !isPerfilCliente) || painelDetalharAberto"
           class="painel-overlay"
           aria-hidden="true"
           @click="fecharPainelAberto"
@@ -155,7 +172,7 @@
       </Transition>
       <Transition name="painel-slide">
         <aside
-          v-if="painelCadastroAberto"
+          v-if="painelCadastroAberto && !isPerfilCliente"
           ref="painelCadastroRef"
           class="painel-cadastro"
           aria-label="Formulário cadastrar usuário"
@@ -190,9 +207,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Card from '@/core/components/Card/Card.vue'
+import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
 import FiltrosGerenciarSolicitacao from '../components/FiltrosGerenciarSolicitacao.vue'
 import FormularioCadastrarUsuario from '../components/FormularioCadastrarUsuario.vue'
 import PainelDetalharSolicitacao from '../components/PainelDetalharSolicitacao.vue'
@@ -216,14 +234,28 @@ import { useBreakpoint } from '@/core/composables/useBreakpoint'
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
 const { error, success } = useNotification()
-const { user } = useAuth()
 const { isMobile } = useBreakpoint()
+
+const { user, contextKey, perfilAtivo } = useAuth()
+
+/**
+ * Perfil cujo cadastro via painel está temporariamente desligado (botão visível, sem ação).
+ * Reativar para perfil Cliente: apague isPerfilCliente, onCliqueCadastrarUsuario e watch(isPerfilCliente);
+ * no botão use @click="abrirPainelCadastro"; no overlay/aside de cadastro use só painelCadastroAberto
+ * (remova && !isPerfilCliente e ajuste :class da section).
+ */
+const isPerfilCliente = computed(() => {
+  const nome = perfilAtivo.value?.nome?.trim().toLowerCase()
+  return nome === 'cliente'
+})
 
 const solicitacoes = ref<SolicitacaoGerenciarItem[]>([])
 const carregando = ref(false)
 const jaListou = ref(false)
 const ordenarColuna = ref<string | null>(null)
 const ordenarAsc = ref(true)
+const paginaAtual = ref(1)
+const itensPorPagina = ref(10)
 
 const solicitacoesOrdenadas = computed(() => {
   const lista = [...solicitacoes.value]
@@ -263,6 +295,12 @@ const solicitacoesOrdenadas = computed(() => {
   return lista
 })
 
+const solicitacoesPaginadas = computed(() => {
+  const inicio = (paginaAtual.value - 1) * itensPorPagina.value
+  const fim = inicio + itensPorPagina.value
+  return solicitacoesOrdenadas.value.slice(inicio, fim)
+})
+
 function ordenarPor(coluna: string) {
   if (ordenarColuna.value === coluna) {
     ordenarAsc.value = !ordenarAsc.value
@@ -287,6 +325,7 @@ async function carregarSolicitacoes() {
   jaListou.value = true
   try {
     solicitacoes.value = await listarSolicitacoesGerenciar(filtrosAtivos.value)
+     paginaAtual.value = 1
   } catch {
     solicitacoes.value = []
     error('Não foi possível carregar as solicitações. Verifique se o backend está em execução.')
@@ -310,6 +349,14 @@ function limparEpesquisar() {
 function abrirPainelCadastro() {
   painelDetalharAberto.value = false
   painelCadastroAberto.value = true
+}
+
+/**
+ * Perfil Cliente: clique sem efeito (painel oculto). Reativar: usar @click="abrirPainelCadastro" no botão e remover este handler.
+ */
+function onCliqueCadastrarUsuario() {
+  if (isPerfilCliente.value) return
+  abrirPainelCadastro()
 }
 
 function fecharPainelCadastro() {
@@ -512,6 +559,38 @@ function obterIndicadorSort(coluna: string) {
   if (ordenarColuna.value !== coluna) return '↕'
   return ordenarAsc.value ? '↑' : '↓'
 }
+const esferaMap: Record<string, string> = {
+  federal: 'Federal',
+  estadual: 'Estadual',
+  municipal: 'Municipal',
+}
+
+const contextoAtualLabel = computed(() => {
+  const perfil = perfilAtivo.value
+  const esfera = user.value?.esfera_atuacao
+  const uf = user.value?.uf_lotacao
+  const municipio = user.value?.municipio_lotacao
+  if (!perfil) {
+    return esfera ? esferaMap[esfera] ?? esfera : ''
+  }
+  const partes: string[] = []
+  if (perfil.nome) partes.push(perfil.nome)
+  if (esfera) partes.push(esferaMap[esfera] ?? esfera)
+  if (uf) partes.push(uf)
+  if (municipio) partes.push(municipio)
+  return partes.join(' — ')
+})
+
+watch(contextKey, () => {
+  painelCadastroAberto.value = false
+  painelDetalharAberto.value = false
+  detalheSelecionado.value = null
+  limparEpesquisar()
+})
+
+watch(isPerfilCliente, (cliente) => {
+  if (cliente) fecharPainelCadastro()
+})
 
 onMounted(() => {
   limparEpesquisar()
@@ -521,6 +600,94 @@ onMounted(() => {
 
 <style scoped>
 
+.gerenciar-cadastros {
+  padding: 1.5rem 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.contexto-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--color-primary-pastel, #dbe8fb);
+  border-left: 4px solid var(--color-primary-default, #1351b4);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: var(--color-secondary-08, #333);
+  transition: all 0.3s ease;
+}
+
+.contexto-banner__icon {
+  color: var(--color-primary-default, #1351b4);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.contexto-banner__label {
+  color: var(--color-secondary-06, #888);
+  white-space: nowrap;
+}
+
+.contexto-banner__valor {
+  color: var(--color-primary-default, #1351b4);
+}
+
+[data-theme="dark"] .contexto-banner {
+  background: rgba(19, 81, 180, 0.15);
+  border-left-color: var(--color-primary-lighten-01, #4d7fd6);
+}
+
+[data-theme="dark"] .contexto-banner__icon,
+[data-theme="dark"] .contexto-banner__valor {
+  color: var(--color-primary-lighten-01, #4d7fd6);
+}
+
+[data-theme="dark"] .contexto-banner__label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.titulo-pagina {
+  margin-bottom: 1.5rem;
+}
+
+.titulo-pagina__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 575px) {
+  .titulo-pagina__h1 {
+    font-size: 1.25rem;
+  }
+
+  .titulo-pagina__subtitulo {
+    font-size: 0.875rem;
+  }
+
+  .titulo-pagina__topo {
+    flex-direction: column;
+  }
+}
+
+.titulo-pagina__h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary-default, #1351b4);
+  margin: 0;
+}
+
+.titulo-pagina__subtitulo {
+  font-size: 1rem;
+  color: var(--color-secondary-07, #555);
+  margin: 0.5rem 0 0;
+}
 
 .painel-overlay {
   position: fixed;

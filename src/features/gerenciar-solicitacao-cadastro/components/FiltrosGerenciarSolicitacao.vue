@@ -44,7 +44,7 @@
     </br-button>
     <br-button :color-mode="$appTheme === 'dark' ? 'dark' : undefined" emphasis="primary" type="button" @click="listar"
       :disabled="carregando" aria-label="Pesquisar solicitações">
-      Listar
+      Pesquisar
     </br-button>
   </div>
 </template>

@@ -7,6 +7,7 @@ export const solicitacaoRoutes: RouteRecordRaw[] = [
     component: () => import('@/features/solicitacao-cadastro/pages/SolicitacaoCadastroIndex.vue'),
     meta: {
       title: 'Solicitação de cadastro — NVSL',
+      public: true,
     },
     beforeEnter: (to, _from, next) => {
       if (!to.query.nome || !to.query.cpf) {

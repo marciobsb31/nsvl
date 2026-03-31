@@ -1,6 +1,6 @@
 <template>
   <div class="formulario-cadastrar-usuario">
-     <div class="formulario-header">
+    <div class="formulario-header">
       <h2 class="formulario-titulo">Cadastrar usuário</h2>
       <button
         class="br-button secondary small"
@@ -11,6 +11,7 @@
         Voltar
       </button>
     </div>
+
     <form novalidate @submit.prevent="onConfirmar">
       <div class="formulario-secao">
         <h3 class="secao-titulo">Dados do solicitante</h3>
@@ -45,10 +46,11 @@
                 required
                 :aria-invalid="!!errorsCpf"
                 aria-describedby="cad-cpf-err cad-cpf-hint"
-                @blur="() => validateField('CPF')"
+                @blur="onCpfBlur"
               />
+              <span v-if="verificandoCpf" class="cadastro-field-hint cadastro-field-hint--loading">Verificando CPF...</span>
               <Feedback v-if="errorsCpf" id="cad-cpf-err" :message="errorsCpf" type="danger" />
-              <span id="cad-cpf-hint" class="cadastro-field-hint">Use um CPF ainda não cadastrado no sistema.</span>
+              <span v-if="!errorsCpf && !verificandoCpf" id="cad-cpf-hint" class="cadastro-field-hint">Use um CPF ainda não cadastrado no sistema.</span>
             </div>
           </div>
           <div class="col-12 col-md-6">
@@ -85,24 +87,6 @@
               />
               <Feedback v-if="errorsTelInst" id="cad-tel-inst-err" :message="errorsTelInst" type="danger" />
               <span id="cad-tel-inst-hint" class="cadastro-field-hint">Fixo ou celular (10 ou 11 dígitos).</span>
-            </div>
-          </div>
-          <div class="col-12 col-md-6">
-            <div class="br-input">
-              <label for="cad-tel-pessoal">Telefone pessoal <span class="cadastro-label-opcional">(opcional)</span></label>
-              <input
-                id="cad-tel-pessoal"
-                type="tel"
-                inputmode="tel"
-                placeholder="(00) 00000-0000"
-                v-model="telefonePessoal"
-                v-maska="telefoneMask"
-                :aria-invalid="!!errorsTelPessoal"
-                aria-describedby="cad-tel-pessoal-err cad-tel-pessoal-hint"
-                @blur="() => validateField('telefonePessoal')"
-              />
-              <Feedback v-if="errorsTelPessoal" id="cad-tel-pessoal-err" :message="errorsTelPessoal" type="danger" />
-              <span id="cad-tel-pessoal-hint" class="cadastro-field-hint">Para contato alternativo.</span>
             </div>
           </div>
         </section>
@@ -222,11 +206,19 @@
         </div>
       </div>
 
+      <Card
+        title="Termo de uso e privacidade"
+        subtitle="A confirmação envia a solicitação e registra sua ciência conforme abaixo."
+        custom-class="solicitacao-card solicitacao-card--termo formulario-termo-card"
+      >
+        <TermoUsoPrivacidade />
+      </Card>
+
       <div class="formulario-acoes">
         <button class="br-button secondary" type="button" @click="$emit('voltar')">
           Cancelar
         </button>
-        <button class="br-button primary" type="submit" :disabled="enviando || !camposObrigatoriosPreenchidos">
+        <button class="br-button primary" type="submit" :disabled="enviando || !formularioPreenchido">
           {{ enviando ? 'Confirmando...' : 'Confirmar' }}
         </button>
       </div>
@@ -249,14 +241,16 @@ import { useRouter } from 'vue-router'
 import { useForm, useField } from 'vee-validate'
 import * as yup from 'yup'
 import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
+import Card from '@/core/components/Card/Card.vue'
 import Modal from '@/core/components/Modal/Modal.vue'
+import TermoUsoPrivacidade from '@/core/components/TermoUsoPrivacidade/TermoUsoPrivacidade.vue'
 import Feedback from '@/core/components/Feedback/Feedback.vue'
 import { useEsferas } from '@/core/composables/useEsferas'
 import { useLocalidades } from '@/core/composables/useLocalidades'
 import { usePerfis } from '@/core/composables/usePerfis'
 import { useNotification } from '@/core/composables/useNotification'
 import { validarCpf } from '@/core/utils/validarCpf'
-import { enviarSolicitacaoCadastro, type SolicitacaoCadastroPayload } from '@/services/SolicitacaoCadastroService'
+import { enviarSolicitacaoCadastro, verificarCpfDisponivel, type SolicitacaoCadastroPayload } from '@/services/SolicitacaoCadastroService'
 import type { PerfilOption } from '@/services/PerfilService'
 
 const regexSomenteLetras = /^[a-zA-ZáàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\s]+$/
@@ -285,8 +279,8 @@ const router = useRouter()
 const { success, error } = useNotification()
 
 const MENSAGENS_CPF: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está em uso. Faça login ou solicite recuperação de acesso.',
-  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde o retorno.',
+  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está vinculado a um cadastro ativo no sistema.',
+  'Já existe uma solicitação em análise para este CPF.': 'Já existe uma solicitação em análise para este CPF. Aguarde a avaliação da equipe gestora.',
   'O CPF informado é inválido.': 'CPF inválido. Confira os números digitados.',
 }
 
@@ -339,14 +333,6 @@ const schema = yup.object({
       const digitos = value.replace(/\D/g, '')
       return digitos.length >= 10 && digitos.length <= 11
     }),
-  telefonePessoal: yup
-    .string()
-    .trim()
-    .test('telefone', 'Informe um telefone válido com 11 dígitos (ex: (11) 99999-8888).', (value) => {
-      if (!value) return true
-      const digitos = value.replace(/\D/g, '')
-      return digitos.length === 11
-    }),
   esferaAtuacao: yup.string().required('Selecione a esfera de atuação.').trim(),
   uf: yup.string().required('Selecione o estado (UF).').trim(),
   municipio: yup
@@ -377,7 +363,6 @@ const initialValues = {
   CPF: '',
   emailInstitucional: '',
   telefoneInstitucional: '',
-  telefonePessoal: '',
   esferaAtuacao: '',
   uf: '',
   municipio: '',
@@ -388,7 +373,7 @@ const initialValues = {
   vigenciaFim: '',
 }
 
-const { validateField, setFieldValue, validate } = useForm({
+const { validateField, setFieldValue, setFieldError, validate, meta: formMeta } = useForm({
   validationSchema: schema,
   initialValues,
 })
@@ -397,10 +382,32 @@ const { value: nome, errorMessage: errorsNome } = useField<string>('nome')
 const { value: cpf, errorMessage: errorsCpf } = useField<string>('CPF')
 const { value: emailInstitucional, errorMessage: errorsEmail } = useField<string>('emailInstitucional')
 const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<string>('telefoneInstitucional')
-const { value: telefonePessoal, errorMessage: errorsTelPessoal } = useField<string>('telefonePessoal')
 const { value: esferaAtuacao, errorMessage: errorsEsfera } = useField<string>('esferaAtuacao')
 const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
 const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
+
+const verificandoCpf = ref(false)
+
+async function onCpfBlur() {
+  await validateField('CPF')
+  if (errorsCpf.value) return
+
+  const digitos = String(cpf.value ?? '').replace(/\D/g, '')
+  if (digitos.length !== 11) return
+  if (!validarCpf(digitos)) return
+
+  verificandoCpf.value = true
+  try {
+    const res = await verificarCpfDisponivel(digitos)
+    if (!res.disponivel) {
+      setFieldError('CPF', mapearMensagemCpf(res.mensagem))
+    }
+  } catch {
+    setFieldError('CPF', 'Não foi possível verificar o CPF. Tente novamente.')
+  } finally {
+    verificandoCpf.value = false
+  }
+}
 
 const { opcoesUf, opcoesMunicipio, carregarUfs } = useLocalidades(uf)
 const { opcoesEsfera, carregarEsferas } = useEsferas()
@@ -495,22 +502,13 @@ const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
 const { value: perfil, errorMessage: errorsPerfil } = useField<string | number | null>('perfil')
 const { value: vigenciaInicio, errorMessage: errorsVigenciaInicio } = useField<string>('vigenciaInicio')
 const { value: vigenciaFim, errorMessage: errorsVigenciaFim } = useField<string>('vigenciaFim')
-const camposObrigatoriosPreenchidos = computed(() => {
-  const obrigatoriosTexto = [
-    nome.value,
-    cpf.value,
-    emailInstitucional.value,
-    telefoneInstitucional.value,
-    esferaAtuacao.value,
-    uf.value,
-    municipio.value,
-    orgao.value,
-    cargo.value,
-    vigenciaInicio.value,
-  ]
-  const textosOk = obrigatoriosTexto.every((valor) => String(valor ?? '').trim() !== '')
-  const perfilOk = perfil.value !== null && String(perfil.value).trim() !== ''
-  return textosOk && perfilOk
+
+const formularioPreenchido = computed(() => {
+  const camposTexto = [nome, cpf, emailInstitucional, telefoneInstitucional, esferaAtuacao, uf, municipio, orgao, cargo]
+  const todosPreenchidos = camposTexto.every((f) => String(f.value ?? '').trim() !== '')
+  const perfilPreenchido = perfil.value !== null && perfil.value !== ''
+  const vigenciaPreenchida = String(vigenciaInicio.value ?? '').trim() !== ''
+  return todosPreenchidos && perfilPreenchido && vigenciaPreenchida && formMeta.value.valid
 })
 
 const MAPA_CAMPO_PARA_FOCO: Record<string, string> = {
@@ -518,7 +516,6 @@ const MAPA_CAMPO_PARA_FOCO: Record<string, string> = {
   CPF: 'cad-cpf',
   emailInstitucional: 'cad-email',
   telefoneInstitucional: 'cad-tel-inst',
-  telefonePessoal: 'cad-tel-pessoal',
   esferaAtuacao: 'focusEsfera',
   uf: 'focusUf',
   municipio: 'focusMunicipio',
@@ -574,7 +571,6 @@ function lerValoresDosRefs(): Record<string, unknown> {
     CPF: cpf.value,
     emailInstitucional: emailInstitucional.value,
     telefoneInstitucional: telefoneInstitucional.value,
-    telefonePessoal: telefonePessoal.value,
     esferaAtuacao: esferaAtuacao.value,
     uf: uf.value,
     municipio: municipio.value,
@@ -632,7 +628,6 @@ function montarPayload(): SolicitacaoCadastroPayload {
     CPF: cpfVal || undefined,
     emailInstitucional: String(emailInstitucional.value ?? '').trim(),
     telefoneInstitucional: String(telefoneInstitucional.value ?? '').replace(/\D/g, ''),
-    telefonePessoal: telefonePessoal.value ? String(telefonePessoal.value).replace(/\D/g, '') : undefined,
     esferaAtuacao: String(esferaAtuacao.value ?? '').toLowerCase(),
     uf: String(uf.value ?? '').toUpperCase(),
     municipio: String(municipio.value ?? '').trim(),
@@ -835,6 +830,11 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
   line-height: 1.35;
 }
 
+.cadastro-field-hint--loading {
+  color: var(--primary-text-color);
+  font-style: italic;
+}
+
 .cadastro-label-opcional {
   font-weight: 500;
   color: var(--secondary-text-color-02);
@@ -870,6 +870,14 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
   transform: translateY(-50%);
   color: var(--secondary-text-color-02);
   pointer-events: none;
+}
+
+.formulario-termo-card {
+  margin-bottom: 1.5rem;
+}
+
+.formulario-termo-card :deep(.solicitacao-card) {
+  margin-top: 0 !important;
 }
 
 .formulario-acoes {

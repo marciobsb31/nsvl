@@ -76,9 +76,10 @@
           placeholder="(00) 00000-0000"
           v-model="telefonePessoal"
           v-maska="telefoneMask"
+          autocomplete="tel-national"
         />
-        <Feedback v-if="errorsTelPessoal" :message="errorsTelPessoal" type="danger" />
         <span class="solicitacao-field-hint">Opcional — para contato alternativo.</span>
+        <Feedback v-if="errorsTelPessoal" :message="errorsTelPessoal" type="danger" />
       </div>
     </div>
   </section>
@@ -119,10 +120,8 @@ const cpfPreenchido = computed(() => {
 const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
 
 const MENSAGENS_CPF_EM_USO: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está em uso. Faça login ou solicite recuperação de acesso.',
-  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde o retorno.',
-  'CPF inválido. Verifique os dígitos informados.': 'CPF inválido. Confira os números digitados.',
-  'Informe um CPF com 11 dígitos.': 'Informe os 11 dígitos do CPF.',
+  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está vinculado a um cadastro ativo. Faça login com GOV.BR para acessar o sistema.',
+  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde a avaliação da equipe gestora.',
 }
 
 function mensagemCriativa(original: string): string {
