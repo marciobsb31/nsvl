@@ -9,11 +9,9 @@
               <i class="fas fa-times" aria-hidden="true"></i>
             </button>
           </div>
-
           <p class="tc-modal__descricao">
             Selecione o perfil que deseja utilizar. Menus, permissões e dados serão atualizados conforme o perfil escolhido.
           </p>
-
           <div class="tc-lista" role="radiogroup" aria-label="Perfis disponíveis">
             <button
               v-for="perfil in perfisAtivos"
@@ -51,12 +49,10 @@
               </div>
             </button>
           </div>
-
           <div v-if="trocandoContexto" class="tc-modal__loading">
             <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
             Atualizando contexto...
           </div>
-
           <div v-if="erroTroca" class="tc-modal__erro" role="alert">
             <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
             {{ erroTroca }}
@@ -66,26 +62,20 @@
     </Transition>
   </Teleport>
 </template>
-
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useAuth } from '@/core/composables/useAuth'
 import type { PerfilVigente } from '@/stores/authStore'
-
 defineOptions({ name: 'TrocaContexto' })
-
 const props = defineProps<{ visivel: boolean }>()
 const emit = defineEmits<{
   (e: 'fechar'): void
   (e: 'contexto-alterado'): void
 }>()
-
 const { perfisAtivos, perfilAtivo, trocandoContexto, trocarContexto, user } = useAuth()
-
 const modalRef = ref<HTMLElement | null>(null)
 const erroTroca = ref<string | null>(null)
 const selecionandoId = ref<number | null>(null)
-
 function labelEsfera(esfera: string) {
   const map: Record<string, string> = {
     federal: 'Federal',
@@ -94,17 +84,13 @@ function labelEsfera(esfera: string) {
   }
   return map[esfera] ?? esfera
 }
-
 function isPerfilAtivo(perfil: PerfilVigente) {
   return perfilAtivo.value?.perfil_usuario_id === perfil.perfil_usuario_id
 }
-
 async function selecionarPerfil(perfil: PerfilVigente) {
   if (isPerfilAtivo(perfil) || trocandoContexto.value) return
-
   erroTroca.value = null
   selecionandoId.value = perfil.perfil_usuario_id
-
   try {
     await trocarContexto(perfil.perfil_usuario_id)
     emit('contexto-alterado')
@@ -115,18 +101,15 @@ async function selecionarPerfil(perfil: PerfilVigente) {
     selecionandoId.value = null
   }
 }
-
 function fechar() {
   if (!trocandoContexto.value) {
     erroTroca.value = null
     emit('fechar')
   }
 }
-
 function handleEsc(e: KeyboardEvent) {
   if (e.key === 'Escape') fechar()
 }
-
 watch(() => props.visivel, (val) => {
   if (val) {
     document.addEventListener('keydown', handleEsc)
@@ -136,13 +119,11 @@ watch(() => props.visivel, (val) => {
     document.body.style.overflow = ''
   }
 })
-
 onUnmounted(() => {
   document.removeEventListener('keydown', handleEsc)
   document.body.style.overflow = ''
 })
 </script>
-
 <style scoped>
 .tc-overlay {
   position: fixed;
@@ -155,7 +136,6 @@ onUnmounted(() => {
   backdrop-filter: blur(2px);
   padding: 1rem;
 }
-
 .tc-modal {
   background: var(--color-secondary-01, #fff);
   border-radius: 12px;
@@ -167,7 +147,6 @@ onUnmounted(() => {
   flex-direction: column;
   overflow: hidden;
 }
-
 .tc-modal__header {
   display: flex;
   align-items: center;
@@ -175,14 +154,12 @@ onUnmounted(() => {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--color-secondary-04, #ddd);
 }
-
 .tc-modal__titulo {
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--color-primary-default, #1351b4);
   margin: 0;
 }
-
 .tc-modal__fechar {
   width: 36px;
   height: 36px;
@@ -197,12 +174,10 @@ onUnmounted(() => {
   font-size: 1rem;
   transition: background-color 0.2s, color 0.2s;
 }
-
 .tc-modal__fechar:hover {
   background: var(--color-secondary-03, #e8e8e8);
   color: var(--color-secondary-08, #333);
 }
-
 .tc-modal__descricao {
   padding: 1rem 1.5rem 0;
   margin: 0;
@@ -210,7 +185,6 @@ onUnmounted(() => {
   color: var(--color-secondary-06, #888);
   line-height: 1.5;
 }
-
 .tc-lista {
   padding: 1rem 1.5rem 1.5rem;
   overflow-y: auto;
@@ -218,7 +192,6 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 0.75rem;
 }
-
 .tc-card {
   display: flex;
   align-items: center;
@@ -234,32 +207,22 @@ onUnmounted(() => {
   font-family: inherit;
   font-size: inherit;
 }
-
 .tc-card:hover:not(:disabled):not(.tc-card--ativo) {
   border-color: var(--color-primary-default, #1351b4);
   background: var(--color-primary-pastel, #e8f4fc);
 }
-
 .tc-card--ativo {
   border-color: var(--color-primary-default, #1351b4);
   background: var(--color-primary-pastel, #e8f4fc);
   cursor: default;
 }
-
 .tc-card--selecionando {
   opacity: 0.7;
   pointer-events: none;
 }
-
 .tc-card:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.tc-card__indicador {
-  min-width: 52px;
-  display: flex;
-  justify-content: center;
 }
 
 .tc-card__badge-ativo {
@@ -274,12 +237,10 @@ onUnmounted(() => {
   border-radius: 4px;
   white-space: nowrap;
 }
-
 .tc-card__conteudo {
   flex: 1;
   min-width: 0;
 }
-
 .tc-card__nome {
   font-weight: 600;
   font-size: 0.9375rem;
@@ -287,13 +248,11 @@ onUnmounted(() => {
   display: block;
   margin-bottom: 0.35rem;
 }
-
 .tc-card__detalhes {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1rem;
 }
-
 .tc-card__detalhe {
   font-size: 0.8125rem;
   color: var(--color-secondary-06, #888);
@@ -301,32 +260,26 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.35rem;
 }
-
 .tc-card__detalhe i {
   font-size: 0.75rem;
   color: var(--color-primary-default, #1351b4);
   opacity: 0.7;
 }
-
 .tc-card__acao {
   flex-shrink: 0;
 }
-
 .tc-card__icone-ativo {
   font-size: 1.25rem;
   color: var(--color-primary-default, #1351b4);
 }
-
 .tc-card__icone-selecionar {
   font-size: 1rem;
   color: var(--color-secondary-05, #bbb);
   transition: color 0.2s;
 }
-
 .tc-card:hover:not(:disabled):not(.tc-card--ativo) .tc-card__icone-selecionar {
   color: var(--color-primary-default, #1351b4);
 }
-
 .tc-modal__loading {
   padding: 0 1.5rem 1rem;
   font-size: 0.875rem;
@@ -335,7 +288,6 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
 }
-
 .tc-modal__erro {
   padding: 0.75rem 1.5rem;
   margin: 0 1.5rem 1rem;
@@ -347,93 +299,74 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
 }
-
 /* Dark theme */
 [data-theme="dark"] .tc-modal {
   background: var(--color-secondary-02, #1a1a1a);
 }
-
 [data-theme="dark"] .tc-modal__header {
   border-color: rgba(255, 255, 255, 0.12);
 }
-
 [data-theme="dark"] .tc-card {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.12);
 }
-
 [data-theme="dark"] .tc-card:hover:not(:disabled):not(.tc-card--ativo) {
   background: rgba(19, 81, 180, 0.15);
   border-color: var(--color-primary-lighten-01, #4d7fd6);
 }
-
 [data-theme="dark"] .tc-card--ativo {
   background: rgba(19, 81, 180, 0.15);
   border-color: var(--color-primary-lighten-01, #4d7fd6);
 }
-
 [data-theme="dark"] .tc-card__nome {
   color: rgba(255, 255, 255, 0.95);
 }
-
 [data-theme="dark"] .tc-card__detalhe {
   color: rgba(255, 255, 255, 0.6);
 }
-
 [data-theme="dark"] .tc-modal__descricao {
   color: rgba(255, 255, 255, 0.55);
 }
-
 [data-theme="dark"] .tc-modal__fechar {
   color: rgba(255, 255, 255, 0.6);
 }
-
 [data-theme="dark"] .tc-modal__fechar:hover {
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.9);
 }
-
 [data-theme="dark"] .tc-modal__erro {
   background: rgba(183, 28, 28, 0.15);
   color: #ef9a9a;
 }
-
 /* Transição */
 .tc-fade-enter-active,
 .tc-fade-leave-active {
   transition: opacity 0.25s ease;
 }
-
 .tc-fade-enter-active .tc-modal,
 .tc-fade-leave-active .tc-modal {
   transition: transform 0.25s ease;
 }
-
 .tc-fade-enter-from,
 .tc-fade-leave-to {
   opacity: 0;
 }
-
 .tc-fade-enter-from .tc-modal {
   transform: scale(0.95) translateY(10px);
 }
-
 .tc-fade-leave-to .tc-modal {
   transform: scale(0.95) translateY(10px);
 }
-
 @media (max-width: 575px) {
   .tc-modal {
     max-height: 90vh;
     border-radius: 12px 12px 0 0;
     align-self: flex-end;
   }
-
   .tc-card__detalhes {
     flex-direction: column;
     gap: 0.25rem;
   }
-
   .tc-card__indicador {
     min-width: auto;
   }

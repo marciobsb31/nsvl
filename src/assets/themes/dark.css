@@ -1,4 +1,16 @@
 [data-theme="dark"] {
+/* Text colors Project */
+  --primary-text-color: var(--color-secondary-01);
+  --primary-text-dark-color: var(--pure-0);
+  --secondary-text-color: var(--pure-0);
+  --secondary-text-color-02: var(--pure-0);
+  --dark-text-color: var(--pure-0);
+
+  /* Border colors */
+  --border-login-color: var(--pure-0);
+  --border-card-color: var(--pure-0);
+
+/* Background colors */
   --background: var(--pure-100);
   --background-rgb: var(--background-dark-rgb);
 
@@ -7,6 +19,9 @@
 
   --background-alternative: var(--gray-cool-80);
   --background-alternative-rgb: var(--gray-cool-80-rgb);
+
+  /* Text colors high */
+  --secondary-text-color-high: var(--color-secondary-07);
 
   --border-color: var(--gray-cool-60);
   --border-color-alternative: var(--gray-cool-50);
@@ -36,8 +51,8 @@
   --active: var(--blue-warm-vivid-40);
   --active-rgb: var(--blue-warm-vivid-40-rgb);
 
-  --color-text-h1: var(--color-secondary-01);
-  --border-login-color: var(--pure-0);
+
+ 
   --background-gray: var(--gray-warm-90);
 }
 
@@ -46,13 +61,17 @@
 }
 
 [data-theme="dark"] .br-button.is-primary, [data-theme="dark"] .br-button.primary, [data-theme="dark"] .br-button[primary] {
-    --interactive-rgb: var(--color-dark-rgb);
-    background-color: var(--interactive-dark);
-    color: var(--pure-100);
+    --interactive-rgb: var(--color-dark-rgb) !important;
+    background-color: var(--interactive-dark) !important;
+    color: var(--pure-100) !important;
 }
 
 [data-theme="dark"] .br-select button {
     color: var(--pure-0);
+}
+
+[data-theme="dark"] .br-message .content{
+    color: var(--color-secondary-08) 
 }
 
 

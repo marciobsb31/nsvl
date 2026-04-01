@@ -25,14 +25,15 @@ defineProps({
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(19, 81, 180, 0.08);
   border: 1px solid var(--color-secondary-03, #e8e8e8);
-  background: var(--bg-color, #fff);
+  background: var(--background);
 }
 
 .nvsl-card__title {
   margin: 0;
+  padding: 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--color-primary-darken-02, #0c326f);
+  color: var(--primary-text-color);
   line-height: 1.35;
 }
 
@@ -40,7 +41,7 @@ defineProps({
   margin: 0.375rem 0 0;
   font-size: 0.875rem;
   line-height: 1.45;
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color);
   font-weight: 400;
 }
 

@@ -121,7 +121,7 @@ onMounted(() => {
 }
 
 .obrigatorio {
-  color: var(--color-primary-default, #1351b4);
+  color: var(--primary-text-color);
 }
 
 .field-with-feedback {
@@ -158,4 +158,5 @@ onMounted(() => {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
 </style>

@@ -2,15 +2,7 @@
   <PublicLayout full-width>
     <section class="solicitacao-page" aria-labelledby="solicitacao-titulo">
       <div class="solicitacao-page__inner">
-        <nav class="solicitacao-breadcrumb" aria-label="Navegação estrutural">
-          <ol class="solicitacao-breadcrumb__list">
-            <li>
-              <router-link :to="{ name: 'home' }" class="solicitacao-breadcrumb__link">Início</router-link>
-            </li>
-            <li aria-hidden="true" class="solicitacao-breadcrumb__sep">/</li>
-            <li class="solicitacao-breadcrumb__current">Solicitação de cadastro</li>
-          </ol>
-        </nav>
+         <Breadcrumb customClass="mb-3"></Breadcrumb>
 
         <header class="solicitacao-hero">
           <h1 id="solicitacao-titulo" class="solicitacao-hero__title">
@@ -34,6 +26,7 @@
           :validation-schema="schemaSolicitacao"
           :initial-values="initialValues"
           class="solicitacao-form"
+          :aria-busy="isSubmitting"
           @submit="onSubmit"
         >
           <Card
@@ -54,10 +47,10 @@
 
           <Card
             title="Termo de uso e privacidade"
-            subtitle="A confirmação envia a solicitação e registra sua ciência conforme abaixo."
+           subtitle="A confirmação envia a solicitação e registra sua ciência conforme abaixo."
             custom-class="solicitacao-card solicitacao-card--termo"
           >
-            <TermoUsoPrivacidade />
+             <TermoUsoPrivacidade />
           </Card>
 
           <div class="solicitacao-acoes">
@@ -119,7 +112,7 @@
           <FormularioInformacaoSolicitante />
           <div class="modal-actions mt-3">
             <button class="br-button secondary" type="button" @click="fecharModalEditar">Cancelar</button>
-            <button class="br-button primary ml-2" type="submit" :disabled="editando">Salvar</button>
+            <button class="br-button primary ml-2" type="submit" :disabled="editando" :aria-busy="editando">Salvar</button>
           </div>
         </Form>
       </Modal>
@@ -134,7 +127,7 @@
         </p>
         <div class="modal-actions mt-3">
           <button class="br-button secondary" type="button" @click="fecharModalExcluir">Cancelar</button>
-          <button class="br-button danger ml-2" type="button" :disabled="excluindo" @click="executarExcluir">
+          <button class="br-button danger ml-2" type="button" :disabled="excluindo" :aria-busy="excluindo" @click="executarExcluir">
             {{ excluindo ? 'Excluindo...' : 'Excluir' }}
           </button>
         </div>
@@ -166,6 +159,8 @@ import { useNotification } from '@/core/composables/useNotification';
 import { useRouter } from 'vue-router';
 import Modal from '@/core/components/Modal/Modal.vue';
 import TermoUsoPrivacidade from '@/core/components/TermoUsoPrivacidade/TermoUsoPrivacidade.vue';
+import Breadcrumb from '@/core/components/Breadcrumb/Breadcrumb.vue';
+
 
 defineOptions({
   name: 'SolicitacaoCadastroIndex'
@@ -285,7 +280,7 @@ async function editar(id: number) {
     };
     modalEditar.value = id;
   } catch {
-    error('Não foi possível carregar a solicitação para edição. Tente novamente.');
+     error('Não foi possível carregar a solicitação para edição. Tente novamente.');
   }
 }
 
@@ -379,12 +374,12 @@ async function onSubmit(values: Record<string, unknown>) {
       payload.CPF = cpfVal.replace(/\D/g, '');
     }
     await enviarSolicitacaoCadastro(payload);
-    success('Solicitação enviada com sucesso! Sua solicitação está com o status "Em Análise" e será avaliada pela equipe gestora. Você será redirecionado para a tela de login.');
+   success('Solicitação enviada com sucesso! Sua solicitação está com o status "Em Análise" e será avaliada pela equipe gestora. Você será redirecionado para a tela de login.');
     setTimeout(() => {
       router.push({ name: 'login' });
     }, 4000);
   } catch (err: unknown) {
-    const axErr = err as { response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } } };
+   const axErr = err as { response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } } };
     let msg = '';
     if (axErr?.response?.data?.message) {
       msg = axErr.response.data.message;
@@ -431,8 +426,7 @@ onMounted(() => {
 /* —— Página (Padrão Digital / eGOV) —— */
 .solicitacao-page {
   width: 100%;
-  padding: 1.25rem 0 2.5rem;
-  background: var(--background, #fff);
+  background: var(--background);
 }
 
 .solicitacao-page__inner {
@@ -501,7 +495,7 @@ onMounted(() => {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.25;
-  color: var(--color-primary-darken-02, #0c326f);
+  color: var(--primary-text-color);
   letter-spacing: -0.02em;
 }
 
@@ -516,7 +510,7 @@ onMounted(() => {
   max-width: 62rem;
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
 }
 
 .solicitacao-hero__req {
@@ -586,5 +580,6 @@ onMounted(() => {
   .solicitacao-acoes__btn--principal {
     min-width: 14rem;
   }
+  
 }
 </style>

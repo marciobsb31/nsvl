@@ -216,7 +216,7 @@
         <i class="fas fa-users fa-2x mb-2" aria-hidden="true"></i>
         <p>Nenhum perfil vinculado. Clique em <strong>Adicionar Perfil</strong> para vincular um novo perfil ao usuário.</p>
       </div>
-      <div v-else class="table-responsive">
+      <div v-else-if="!isMobile" class="table-responsive">
         <table class="br-table tabela-perfis" role="table">
           <thead>
             <tr>
@@ -296,7 +296,61 @@
           </tbody>
         </table>
       </div>
-      <PaginationControls
+      <div v-if="isMobile && temPerfisVinculados">
+      <div class="row" v-for="(p, idx) in perfisVinculadosOrdenados" :key="`perfil-${idx}-${p.id ?? idx}`">
+        <div class="col-8 mb-1">
+          <label for="perfil">Perfil</label>
+          <p class="m-0">{{ p.perfil }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="vigente">Status</label><br>
+          <span class="br-tag" :class="p.vigente ? 'success' : 'danger'">
+            {{ p.vigente ? 'Ativo' : 'Inativo' }}
+          </span>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="vigencia_inicio">Vig. início</label>
+          <p class="m-0">{{ formatarDataExibicao(p.vigencia_inicio) }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="vigencia_fim">Vig. fim</label>
+          <p class="m-0">{{ formatarDataExibicao(p.vigencia_fim) }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="esfera">Esfera</label>
+          <p class="m-0">{{ p.esfera }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="uf">UF</label>
+          <p class="m-0">{{ p.uf }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="municipio">Município</label>
+          <p class="m-0">{{ p.municipio }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="orgao">Órgão</label>
+          <p class="m-0">{{ p.orgao }}</p>
+        </div>
+        <div class="col-4 mb-1">
+          <label for="cargo">Cargo</label>
+          <p class="m-0">{{ p.cargo }}</p>
+        </div>
+        <div class="col-12">
+          <button
+                  class="br-button secondary small block"
+                  type="button"
+                  @click="$emit('toggle-perfil', { perfilUsuarioId: p.id, acao: p.vigente ? 'desativar' : 'ativar' })"
+                >
+                  {{ p.vigente ? 'Desativar' : 'Ativar' }}
+                </button>
+        </div>
+        <div class="col-12">
+          <span class="br-divider my-3"></span>
+        </div>
+      </div>
+      </div>
+        <PaginationControls
         v-if="perfisVinculadosOrdenados.length > 0"
         v-model:currentPage="paginaAtualPerfis"
         v-model:pageSize="itensPorPaginaPerfis"
@@ -429,8 +483,10 @@ import type {
   PerfilVinculado,
   HistoricoReprovacaoItem,
 } from '@/services/SolicitacaoCadastroService'
+import { useBreakpoint } from '@/core/composables/useBreakpoint'
 
 defineOptions({ name: 'PainelDetalharSolicitacao' })
+const { isMobile } = useBreakpoint()
 
 const props = withDefaults(
   defineProps<{
@@ -731,7 +787,7 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 <style scoped>
 .painel-detalhar-solicitacao {
   padding: 1rem;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
 }
 
 .painel-header {
@@ -767,7 +823,7 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 .painel-info-label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color);
 }
 
 .painel-status-badge,
@@ -820,7 +876,7 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 
 .painel-perfis-badge.sem-perfis {
   background: var(--color-secondary-02, #f0f0f0);
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color-high);
 }
 
 .painel-perfis-badge.com-perfis {
@@ -829,7 +885,7 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 }
 
 .text-muted {
-  color: var(--color-secondary-06, #888);
+  color: var(--secondary-text-color-02);
 }
 
 .painel-secao {
@@ -850,7 +906,7 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 
 .secao-descricao {
   font-size: 0.875rem;
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color);
   margin: 0 0 1rem;
   line-height: 1.5;
 }
@@ -983,14 +1039,14 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 .perfis-vinculados-titulo {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
   margin: 0 0 0.25rem;
 }
 
 .perfis-vinculados-subtitulo {
   font-size: 0.9375rem;
   font-weight: 400;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
   margin: 0;
   line-height: 1.4;
 }

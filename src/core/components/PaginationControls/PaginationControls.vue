@@ -11,7 +11,6 @@
       </select>
       </label>
     </div>
-
     <div class="pagination-controls__right">
       <span class="pagination-controls__info">
         {{ startItem }}-{{ endItem }} de {{ totalItems }}
@@ -38,12 +37,9 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 import { computed } from 'vue'
-
 defineOptions({ name: 'PaginationControls' })
-
 const props = withDefaults(defineProps<{
   totalItems: number
   currentPage: number
@@ -52,17 +48,14 @@ const props = withDefaults(defineProps<{
 }>(), {
   pageSizeOptions: () => [10, 20, 50],
 })
-
 const emit = defineEmits<{
   (e: 'update:currentPage', value: number): void
   (e: 'update:pageSize', value: number): void
 }>()
-
 const totalPages = computed(() => Math.max(1, Math.ceil(props.totalItems / props.pageSize)))
 const startItem = computed(() => (props.totalItems === 0 ? 0 : (props.currentPage - 1) * props.pageSize + 1))
 const endItem = computed(() => Math.min(props.totalItems, props.currentPage * props.pageSize))
 const showPageSize = computed(() => props.totalItems > 0)
-
 function onPageSizeChange(event: Event) {
   const target = event.target as HTMLSelectElement
   const parsed = Number(target.value)
@@ -72,7 +65,6 @@ function onPageSizeChange(event: Event) {
   }
 }
 </script>
-
 <style scoped>
 .pagination-controls {
   display: flex;
@@ -82,21 +74,18 @@ function onPageSizeChange(event: Event) {
   flex-wrap: wrap;
   padding-top: 0.75rem;
 }
-
 .pagination-controls__left,
 .pagination-controls__right {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
-
 .pagination-controls__label,
 .pagination-controls__info,
 .pagination-controls__page {
   font-size: 0.8125rem;
   color: var(--color-secondary-07, #555);
 }
-
 .pagination-controls__select {
   min-height: 2rem;
   border: 1px solid var(--color-secondary-04, #ccc);

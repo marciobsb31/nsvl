@@ -4,7 +4,7 @@
         <div class="container-lg">
             <div class="header-top">
                 <div class="header-info">
-                    <button v-if="logo" class="logo-btn" type="button" aria-label="Ir para a página inicial" @click="goToHome">
+                     <button v-if="logo" class="logo-btn" type="button" aria-label="Ir para a página inicial" @click="goToHome">
                         <img :src="logoAtual" alt="Logo GOV" class="logo" />
                     </button>
                     <template v-else>
@@ -17,7 +17,13 @@
                 </div>
                 <div class="header-right">
                     <img v-if="logoGov && isDesktop" :src="logoGov" alt="Logo GOV" class="logo-gov" />
-                    <button class="br-button circle small ml-3" type="button" :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'" title="Alternar tema" @click="toggleTheme">
+                    <button
+                        class="br-button circle small ml-3"
+                        type="button"
+                        :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
+                        title="Alternar tema"
+                        @click="toggleTheme"
+                    >
                         <i class="fas fa-adjust" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -91,10 +97,16 @@ const logoAtual = computed(() => {
     padding: 0;
     cursor: pointer;
 }
+
+.header-home {
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
 .header-actions {
     display: flex;
     justify-content: center;
-    align-items: center;
 }
 .header-actions--center {
     justify-self: center;
@@ -122,6 +134,9 @@ const logoAtual = computed(() => {
   .logo-gov {
     height: 50px;
   }
+  .logo{
+    height: 50px;
+  }
 }
 
 @media (max-width: 991px) {
@@ -139,5 +154,7 @@ const logoAtual = computed(() => {
   .header-actions { grid-area: actions; justify-self: stretch; }
   .header-right { grid-area: right; }
 }
+
+
 
 </style>

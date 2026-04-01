@@ -722,7 +722,7 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 <style scoped>
 .formulario-cadastrar-usuario {
   padding: 1rem;
-  color: var(--color-secondary-08, #333);
+  color: var(--secondary-text-color);
 }
 
 .formulario-header {
@@ -757,7 +757,7 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 
 .secao-subtitulo {
   font-size: 0.875rem;
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color, #555);
   margin: 0 0 1rem;
 }
 
@@ -818,33 +818,33 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 .cadastro-user-form-grid :deep(.br-input label) {
   font-weight: 600;
   font-size: 0.875rem;
-  color: var(--color-secondary-09, #333);
+  color: var(--dark-text-color);
   margin-bottom: 0.25rem;
 }
 
 .cadastro-field-hint {
   display: block;
   font-size: 0.75rem;
-  color: var(--color-secondary-06, #666);
+  color: var(--secondary-text-color-02, #666);
   margin-top: 0.35rem;
   line-height: 1.35;
 }
 
 .cadastro-field-hint--loading {
-  color: var(--color-primary-default, #1351b4);
+  color: var(--primary-text-color);
   font-style: italic;
 }
 
 .cadastro-label-opcional {
   font-weight: 500;
-  color: var(--color-secondary-06, #666);
+  color: var(--secondary-text-color-02, #666);
   font-size: 0.8125rem;
 }
 
 .input-hint {
   display: block;
   font-size: 0.75rem;
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color, #555);
   margin-top: 0.25rem;
 }
 
@@ -868,7 +868,7 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
   right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--color-secondary-06, #888);
+  color: var(--secondary-text-color-02, #888);
   pointer-events: none;
 }
 

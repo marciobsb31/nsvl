@@ -1,99 +1,51 @@
 <template>
   <div class="filtros-gerenciar">
-    <div class="filtros-grid">
-      <div class="filtros-row">
-        <div class="filtros-col">
-          <div class="br-input mb-2">
-            <label for="filtro-cpf">CPF</label>
-            <input
-              id="filtro-cpf"
-              type="text"
-              placeholder="000.000.000-00"
-              v-model="filtrosLocal.cpf"
-              v-maska="'###.###.###-##'"
-            />
-          </div>
-        </div>
-        <div class="filtros-col">
-          <div class="br-input mb-2">
-            <label for="filtro-nome">Nome completo</label>
-            <input
-              id="filtro-nome"
-              type="text"
-              placeholder="Informe o nome"
-              v-model="filtrosLocal.nome"
-            />
-          </div>
-        </div>
-        <div class="filtros-col">
-          <SelectAutocomplete
-            v-model="filtrosLocal.uf"
-            label="Estado (UF)"
-            placeholder="Selecione"
-            :options="opcoesUf"
-          />
+    <div class="row filtros">
+      <div class="col-12 col-md-6">
+        <div class="br-input mb-2">
+          <label for="filtro-nome">Nome completo</label>
+          <input id="filtro-nome" type="text" placeholder="Informe o nome" v-model="filtrosLocal.nome" />
         </div>
       </div>
-      <div class="filtros-row">
-        <div class="filtros-col">
-          <SelectAutocomplete
-            v-model="filtrosLocal.municipio"
-            label="Município"
-            :placeholder="filtrosLocal.uf ? 'Selecione o município' : 'Selecione primeiro a UF'"
-            :options="opcoesMunicipio"
-            :disabled="!filtrosLocal.uf"
-          />
-        </div>
-        <div class="filtros-col">
-          <div class="br-input mb-2">
-            <label for="filtro-orgao">Órgão de atuação</label>
-            <input
-              id="filtro-orgao"
-              type="text"
-              placeholder="Órgão"
-              v-model="filtrosLocal.orgao"
-            />
-          </div>
-        </div>
-        <div class="filtros-col">
-          <SelectAutocomplete
-            v-model="filtrosLocal.esfera"
-            label="Esfera de atuação"
-            placeholder="Selecione"
-            :options="opcoesEsfera"
-          />
+      <div class="col-12 col-md-6">
+        <div class="br-input mb-2">
+          <label for="filtro-cpf">CPF</label>
+          <input id="filtro-cpf" type="text" placeholder="000.000.000-00" v-model="filtrosLocal.cpf"
+            v-maska="'###.###.###-##'" />
         </div>
       </div>
-      <div class="filtros-row">
-        <div class="filtros-col">
-          <SelectAutocomplete
-            v-model="filtrosLocal.status"
-            label="Situação da solicitação"
-            placeholder="Selecione"
-            :options="OPCOES_STATUS"
-          />
+      <div class="col-12 col-md-4">
+        <SelectAutocomplete v-model="filtrosLocal.uf" label="Estado (UF)" placeholder="Selecione" :options="opcoesUf" />
+      </div>
+      <div class="col-12 col-md-4">
+        <SelectAutocomplete v-model="filtrosLocal.municipio" label="Município"
+          :placeholder="filtrosLocal.uf ? 'Selecione o município' : 'Selecione primeiro a UF'"
+          :options="opcoesMunicipio" :disabled="!filtrosLocal.uf" />
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="br-input mb-2">
+          <label for="filtro-orgao">Órgão de atuação</label>
+          <input id="filtro-orgao" type="text" placeholder="Órgão" v-model="filtrosLocal.orgao" />
         </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <SelectAutocomplete v-model="filtrosLocal.esfera" label="Esfera de atuação" placeholder="Selecione"
+          :options="opcoesEsfera" />
+      </div>
+      <div class="col-12 col-md-4">
+        <SelectAutocomplete v-model="filtrosLocal.status" label="Situação da solicitação" placeholder="Selecione"
+          :options="OPCOES_STATUS" />
       </div>
     </div>
-    <div class="filtros-acoes">
-      <button
-        class="br-button secondary"
-        type="button"
-        @click="limparFiltros"
-        aria-label="Limpar filtros"
-      >
-        Limpar Filtro
-      </button>
-      <button
-        class="br-button primary"
-        type="button"
-        @click="listar"
-        :disabled="carregando"
-        aria-label="Pesquisar solicitações"
-      >
-        Pesquisar
-      </button>
-    </div>
+  </div>
+  <div class="filtros-acoes">
+    <br-button emphasis="secondary" type="button" @click="limparFiltros" aria-label="Limpar filtros">
+      Limpar Filtro
+    </br-button>
+    <br-button :color-mode="$appTheme === 'dark' ? 'dark' : undefined" emphasis="primary" type="button" @click="listar"
+      :disabled="carregando" aria-label="Pesquisar solicitações">
+      Pesquisar
+    </br-button>
   </div>
 </template>
 
@@ -173,22 +125,6 @@ watch(
   margin-bottom: 1.5rem;
 }
 
-.filtros-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.filtros-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-
-.filtros-col {
-  min-width: 0;
-}
-
 .filtros-acoes {
   display: flex;
   gap: 1rem;
@@ -211,6 +147,7 @@ watch(
 }
 
 @media (min-width: 576px) and (max-width: 991px) {
+
   .filtros-row:first-child,
   .filtros-row:nth-child(2) {
     grid-template-columns: repeat(2, 1fr);
