@@ -13,5 +13,8 @@
   /* Background colors */
   --background: var(--pure-0);
   --background-gray: var(--gray-warm-10);
+
+  /* Text colors high */
+  --secondary-text-color-high: var(--color-secondary-07);
 }
 

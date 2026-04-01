@@ -787,7 +787,7 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 <style scoped>
 .painel-detalhar-solicitacao {
   padding: 1rem;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
 }
 
 .painel-header {
@@ -823,7 +823,7 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 .painel-info-label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color);
 }
 
 .painel-status-badge,
@@ -876,7 +876,7 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 
 .painel-perfis-badge.sem-perfis {
   background: var(--color-secondary-02, #f0f0f0);
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color-high);
 }
 
 .painel-perfis-badge.com-perfis {
@@ -885,7 +885,7 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 }
 
 .text-muted {
-  color: var(--color-secondary-06, #888);
+  color: var(--secondary-text-color-02);
 }
 
 .painel-secao {
@@ -906,7 +906,7 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 
 .secao-descricao {
   font-size: 0.875rem;
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color);
   margin: 0 0 1rem;
   line-height: 1.5;
 }
@@ -1039,14 +1039,14 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
 .perfis-vinculados-titulo {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
   margin: 0 0 0.25rem;
 }
 
 .perfis-vinculados-subtitulo {
   font-size: 0.9375rem;
   font-weight: 400;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
   margin: 0;
   line-height: 1.4;
 }

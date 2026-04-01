@@ -20,6 +20,9 @@
   --background-alternative: var(--gray-cool-80);
   --background-alternative-rgb: var(--gray-cool-80-rgb);
 
+  /* Text colors high */
+  --secondary-text-color-high: var(--color-secondary-07);
+
   --border-color: var(--gray-cool-60);
   --border-color-alternative: var(--gray-cool-50);
 
