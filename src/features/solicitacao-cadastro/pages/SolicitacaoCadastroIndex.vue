@@ -495,7 +495,7 @@ onMounted(() => {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.25;
-  color: var(--color-primary-darken-02, #0c326f);
+  color: var(--primary-text-color);
   letter-spacing: -0.02em;
 }
 
@@ -510,7 +510,7 @@ onMounted(() => {
   max-width: 62rem;
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: var(--color-secondary-08, #333);
+  color: var(--dark-text-color);
 }
 
 .solicitacao-hero__req {

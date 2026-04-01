@@ -158,7 +158,7 @@ function filtrarSomenteLetras(event: Event) {
 .solicitacao-form-grid :deep(.br-input label) {
   font-weight: 600;
   font-size: 0.875rem;
-  color: var(--color-secondary-09, #333);
+  color: var(--dark-text-color);
   margin-bottom: 0.25rem;
 }
 
@@ -166,7 +166,7 @@ function filtrarSomenteLetras(event: Event) {
   display: block;
   font-size: 0.75rem;
   margin-top: 0.35rem;
-  color: var(--color-secondary-06, #666);
+  color: var(--secondary-text-color-02);
 }
 
 .input-hint {
@@ -175,7 +175,7 @@ function filtrarSomenteLetras(event: Event) {
   margin-top: 0.25rem;
 }
 .input-hint--loading {
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color);
 }
 .input-hint--success {
   color: var(--color-success, #168821);

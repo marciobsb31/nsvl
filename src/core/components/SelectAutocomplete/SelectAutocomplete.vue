@@ -240,4 +240,8 @@ defineExpose({ focus })
   color: var(--color-secondary-06, #888);
   font-style: italic;
 }
+
+.select-autocomplete label {
+  color: var(--dark-text-color);
+}
 </style>

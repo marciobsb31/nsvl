@@ -818,7 +818,7 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 .cadastro-user-form-grid :deep(.br-input label) {
   font-weight: 600;
   font-size: 0.875rem;
-  color: var( --dark-text-color, #333);
+  color: var(--dark-text-color);
   margin-bottom: 0.25rem;
 }
 
