@@ -7,10 +7,6 @@ FROM node:20-alpine AS build
 # Define diretório de trabalho
 WORKDIR /app
 
-# Build args para variáveis Vite (API URL relativa = proxy no nginx)
-ARG VITE_API_BASE_URL=/api
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-
 # Copia arquivos de dependência primeiro (cache de camadas)
 COPY package*.json ./
 
@@ -42,8 +38,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
 
 # Healthcheck para orquestração
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -qO- http://localhost/index.html || exit 1
+#HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+#  CMD wget -qO- http://localhost:80/index.html || exit 1
 
 # Inicia o Nginx em foreground (não daemon)
 CMD ["nginx", "-g", "daemon off;"]
