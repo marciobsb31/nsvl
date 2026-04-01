@@ -2,15 +2,7 @@
   <PublicLayout full-width>
     <section class="solicitacao-page" aria-labelledby="solicitacao-titulo">
       <div class="solicitacao-page__inner">
-        <nav class="solicitacao-breadcrumb" aria-label="Navegação estrutural">
-          <ol class="solicitacao-breadcrumb__list">
-            <li>
-              <router-link :to="{ name: 'home' }" class="solicitacao-breadcrumb__link">Início</router-link>
-            </li>
-            <li aria-hidden="true" class="solicitacao-breadcrumb__sep">/</li>
-            <li class="solicitacao-breadcrumb__current">Solicitação de cadastro</li>
-          </ol>
-        </nav>
+         <Breadcrumb customClass="mb-3"></Breadcrumb>
 
         <header class="solicitacao-hero">
           <h1 id="solicitacao-titulo" class="solicitacao-hero__title">
@@ -166,8 +158,8 @@ import {
 import { useNotification } from '@/core/composables/useNotification';
 import { useRouter } from 'vue-router';
 import Modal from '@/core/components/Modal/Modal.vue';
-import Message from '@/core/components/Message/Message.vue';
 import TermoUsoPrivacidade from '@/core/components/TermoUsoPrivacidade/TermoUsoPrivacidade.vue';
+import Breadcrumb from '@/core/components/Breadcrumb/Breadcrumb.vue';
 
 
 defineOptions({

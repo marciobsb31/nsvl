@@ -30,6 +30,7 @@ defineProps({
 
 .nvsl-card__title {
   margin: 0;
+  padding: 0;
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--color-primary-darken-02, #0c326f);

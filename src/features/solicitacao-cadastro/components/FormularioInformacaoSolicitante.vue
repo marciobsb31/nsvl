@@ -1,5 +1,25 @@
 <template>
   <section class="row g-3 solicitacao-form-grid">
+        <div class="col-12 col-md-6">
+      <div class="br-input">
+        <label for="input-email">E-mail institucional<span class="text-red-50 text-up-01"> *</span></label>
+        <input id="input-email" type="email" placeholder="seu.nome@email.com" v-model="emailInstitucional" maxlength="60"/>
+        <Feedback v-if="errorsEmail" :message="errorsEmail" type="danger" />
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="br-input">
+        <label for="input-tel-inst">Telefone institucional<span class="text-red-50 text-up-01"> *</span></label>
+        <input
+          id="input-tel-inst"
+          type="tel"
+          placeholder="(00) 00000-0000"
+          v-model="telefoneInstitucional"
+          v-maska="telefoneMask"
+        />
+        <Feedback v-if="errorsTelInst" :message="errorsTelInst" type="danger" />
+      </div>
+    </div>
     <div class="col-12 col-md-4">
       <SelectAutocomplete
         v-model="esferaAtuacao"
@@ -78,6 +98,8 @@ const props = withDefaults(
   }>(),
   { aplicarRegrasHierarquia: false, usuarioLogado: null }
 )
+// Máscara dinâmica: fixo (##) ####-#### ou celular (##) #####-####
+const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
 
 const { opcoesEsfera, carregarEsferas } = useEsferas()
 
@@ -171,6 +193,8 @@ watch(opcoesMunicipioFiltradas, (opcoes) => {
 })
 const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
 const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
+const { value: emailInstitucional, errorMessage: errorsEmail } = useField<string>('emailInstitucional')
+const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<string>('telefoneInstitucional')
 
 
 

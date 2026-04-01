@@ -2,13 +2,13 @@
   <section class="row g-3 solicitacao-form-grid">
     <div class="col-12 col-md-6">
       <div class="br-input">
-        <label for="input-nome">Nome<span class="text-red-50 text-up-01"> *</span></label>
+        <label for="input-nome">Nome</label>
         <input
           id="input-nome"
           type="text"
           placeholder="Nome completo (somente letras)"
           v-model="nome"
-          :readonly="modoGovBr"
+          :disabled="modoGovBr"
           @input="filtrarSomenteLetras"
         />
         <Feedback v-if="errorsNome" :message="errorsNome" type="danger" />
@@ -34,8 +34,7 @@
           "
           v-model="CPF"
           v-maska="modoGovBr ? undefined : '###.###.###-##'"
-          :readonly="modoGovBr"
-          :disabled="verificandoCpf"
+          :disabled="verificandoCpf || modoGovBr"
           @blur="onCpfBlur"
         />
         <span v-if="verificandoCpf" class="input-hint input-hint--loading">
@@ -45,26 +44,6 @@
           <i class="fas fa-check-circle" aria-hidden="true"></i> CPF disponível
         </span>
         <Feedback v-if="errorsCPF" :message="errorsCPF" type="danger" />
-      </div>
-    </div>
-    <div class="col-12 col-md-6">
-      <div class="br-input">
-        <label for="input-email">E-mail institucional<span class="text-red-50 text-up-01"> *</span></label>
-        <input id="input-email" type="email" placeholder="seu.nome@email.com" v-model="emailInstitucional" maxlength="60"/>
-        <Feedback v-if="errorsEmail" :message="errorsEmail" type="danger" />
-      </div>
-    </div>
-    <div class="col-12 col-md-6">
-      <div class="br-input">
-        <label for="input-tel-inst">Telefone institucional<span class="text-red-50 text-up-01"> *</span></label>
-        <input
-          id="input-tel-inst"
-          type="tel"
-          placeholder="(00) 00000-0000"
-          v-model="telefoneInstitucional"
-          v-maska="telefoneMask"
-        />
-        <Feedback v-if="errorsTelInst" :message="errorsTelInst" type="danger" />
       </div>
     </div>
     <div class="col-12 col-md-6">
@@ -103,8 +82,6 @@ const props = withDefaults(defineProps<{
 
 const { value: nome, errorMessage: errorsNome } = useField<string>('nome')
 const { value: CPF, errorMessage: errorsCPF } = useField<string>('CPF')
-const { value: emailInstitucional, errorMessage: errorsEmail } = useField<string>('emailInstitucional')
-const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<string>('telefoneInstitucional')
 const { value: telefonePessoal, errorMessage: errorsTelPessoal } = useField<string>('telefonePessoal')
 
 

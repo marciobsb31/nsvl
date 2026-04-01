@@ -42,14 +42,14 @@
           <table class="br-table tabela-solicitacoes" role="table">
             <thead>
               <tr>
-                <th scope="col" class="th-bold" :aria-sort="obterAriaSort('cpf')">
-                  <button class="th-sort-btn" type="button" @click="ordenarPor('cpf')">
-                    CPF <span class="th-sort-icon">{{ obterIndicadorSort('cpf') }}</span>
-                  </button>
-                </th>
                 <th scope="col" class="th-bold" :aria-sort="obterAriaSort('nome')">
                   <button class="th-sort-btn" type="button" @click="ordenarPor('nome')">
                     Nome completo <span class="th-sort-icon">{{ obterIndicadorSort('nome') }}</span>
+                  </button>
+                </th>
+                <th scope="col" class="th-bold" :aria-sort="obterAriaSort('cpf')">
+                  <button class="th-sort-btn" type="button" @click="ordenarPor('cpf')">
+                    CPF <span class="th-sort-icon">{{ obterIndicadorSort('cpf') }}</span>
                   </button>
                 </th>
                 <th scope="col" class="th-bold" :aria-sort="obterAriaSort('esfera')">
