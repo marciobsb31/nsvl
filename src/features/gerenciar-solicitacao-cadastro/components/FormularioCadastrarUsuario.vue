@@ -2,90 +2,45 @@
   <div class="formulario-cadastrar-usuario">
     <div class="formulario-header">
       <h2 class="formulario-titulo">Cadastrar usuário</h2>
-      <button
-        class="br-button secondary small"
-        type="button"
-        @click="$emit('voltar')"
-        aria-label="Voltar"
-      >
+      <button class="br-button secondary small" type="button" @click="$emit('voltar')" aria-label="Voltar">
         Voltar
       </button>
     </div>
 
     <form novalidate @submit.prevent="onConfirmar">
       <div class="formulario-secao">
-        <h3 class="secao-titulo">Dados do solicitante</h3>
+        <h3 class="secao-titulo">Dados do(a) solicitante</h3>
         <section class="row g-3 cadastro-user-form-grid">
           <div class="col-12 col-md-6">
             <div class="br-input">
               <label for="cad-nome">Nome<span class="text-red-50 text-up-01"> *</span></label>
-              <input
-                id="cad-nome"
-                type="text"
-                placeholder="Nome completo (somente letras)"
-                v-model="nome"
-                required
-                autocomplete="name"
-                :aria-invalid="!!errorsNome"
-                aria-describedby="cad-nome-err"
-                @blur="() => validateField('nome')"
-              />
+              <input id="cad-nome" type="text" placeholder="Nome completo (somente letras)" v-model="nome" required
+                autocomplete="name" :aria-invalid="!!errorsNome" aria-describedby="cad-nome-err"
+                @blur="() => validateField('nome')" />
               <Feedback v-if="errorsNome" id="cad-nome-err" :message="errorsNome" type="danger" />
             </div>
           </div>
           <div class="col-12 col-md-6">
             <div class="br-input">
               <label for="cad-cpf">CPF<span class="text-red-50 text-up-01"> *</span></label>
-              <input
-                id="cad-cpf"
-                type="text"
-                inputmode="numeric"
-                placeholder="000.000.000-00"
-                v-model="cpf"
-                v-maska="'###.###.###-##'"
-                required
-                :aria-invalid="!!errorsCpf"
-                aria-describedby="cad-cpf-err cad-cpf-hint"
-                @blur="onCpfBlur"
-              />
-              <span v-if="verificandoCpf" class="cadastro-field-hint cadastro-field-hint--loading">Verificando CPF...</span>
+              <input id="cad-cpf" type="text" inputmode="numeric" placeholder="000.000.000-00" v-model="cpf"
+                v-maska="'###.###.###-##'" required :aria-invalid="!!errorsCpf"
+                aria-describedby="cad-cpf-err cad-cpf-hint" @blur="onCpfBlur" />
+              <span v-if="verificandoCpf" class="cadastro-field-hint cadastro-field-hint--loading">Verificando
+                CPF...</span>
               <Feedback v-if="errorsCpf" id="cad-cpf-err" :message="errorsCpf" type="danger" />
-              <span v-if="!errorsCpf && !verificandoCpf" id="cad-cpf-hint" class="cadastro-field-hint">Use um CPF ainda não cadastrado no sistema.</span>
+              <span v-if="!errorsCpf && !verificandoCpf" id="cad-cpf-hint" class="cadastro-field-hint">Use um CPF ainda
+                não cadastrado no sistema.</span>
             </div>
           </div>
+
           <div class="col-12 col-md-6">
             <div class="br-input">
-              <label for="cad-email">E-mail institucional<span class="text-red-50 text-up-01"> *</span></label>
-              <input
-                id="cad-email"
-                type="email"
-                autocomplete="email"
-                placeholder="seu.nome@email.com"
-                v-model="emailInstitucional"
-                required
-                :aria-invalid="!!errorsEmail"
-                aria-describedby="cad-email-err"
-                @blur="() => validateField('emailInstitucional')"
-              />
-              <Feedback v-if="errorsEmail" id="cad-email-err" :message="errorsEmail" type="danger" />
-            </div>
-          </div>
-          <div class="col-12 col-md-6">
-            <div class="br-input">
-              <label for="cad-tel-inst">Telefone institucional<span class="text-red-50 text-up-01"> *</span></label>
-              <input
-                id="cad-tel-inst"
-                type="tel"
-                inputmode="tel"
-                placeholder="(00) 00000-0000"
-                v-model="telefoneInstitucional"
-                v-maska="telefoneMask"
-                required
-                :aria-invalid="!!errorsTelInst"
-                aria-describedby="cad-tel-inst-err cad-tel-inst-hint"
-                @blur="() => validateField('telefoneInstitucional')"
-              />
-              <Feedback v-if="errorsTelInst" id="cad-tel-inst-err" :message="errorsTelInst" type="danger" />
+              <label for="cad-tel-inst">Telefone pessoal</label>
+              <input id="cad-tel-inst" type="tel" inputmode="tel" placeholder="(00) 00000-0000"
+                v-model="telefonePessoal" v-maska="telefoneMask" required :aria-invalid="!!errorsTelPessoal"
+                aria-describedby="cad-tel-inst-err cad-tel-inst-hint" @blur="() => validateField('telefonePessoal')" />
+              <Feedback v-if="errorsTelPessoal" id="cad-tel-inst-err" :message="errorsTelPessoal" type="danger" />
               <span id="cad-tel-inst-hint" class="cadastro-field-hint">Fixo ou celular (10 ou 11 dígitos).</span>
             </div>
           </div>
@@ -95,94 +50,78 @@
       <div class="formulario-secao">
         <h3 class="secao-titulo">Informação do(a) solicitante</h3>
         <p class="secao-subtitulo">Informações de atuação institucional do solicitante.</p>
-        <div class="secao-info-solicitante">
-          <div class="secao-linha">
-            <div class="field-with-feedback">
-            <SelectAutocomplete
-              ref="esferaRef"
-              :model-value="esferaAtuacao"
-              @update:model-value="onEsferaChange"
-              label="Esfera de atuação"
-              placeholder="Selecione"
-              :options="opcoesEsferaFiltradas"
-              :disabled="isEsferaBloqueada"
-              input-id="cad-esfera"
-              required
-            />
+        <section class="row g-3 cadastro-user-form-grid">
+          <div class="col-12 col-md-6">
+            <div class="br-input">
+              <label for="cad-email">E-mail institucional<span class="text-red-50 text-up-01"> *</span></label>
+              <input id="cad-email" type="email" autocomplete="email" placeholder="seu.nome@email.com"
+                v-model="emailInstitucional" required :aria-invalid="!!errorsEmail" aria-describedby="cad-email-err"
+                @blur="() => validateField('emailInstitucional')" />
+              <Feedback v-if="errorsEmail" id="cad-email-err" :message="errorsEmail" type="danger" />
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="br-input">
+              <label for="cad-tel-inst">Telefone institucional<span class="text-red-50 text-up-01"> *</span></label>
+              <input id="cad-tel-inst" type="tel" inputmode="tel" placeholder="(00) 00000-0000"
+                v-model="telefoneInstitucional" v-maska="telefoneMask" required :aria-invalid="!!errorsTelInst"
+                aria-describedby="cad-tel-inst-err cad-tel-inst-hint"
+                @blur="() => validateField('telefoneInstitucional')" />
+              <Feedback v-if="errorsTelInst" id="cad-tel-inst-err" :message="errorsTelInst" type="danger" />
+              <span id="cad-tel-inst-hint" class="cadastro-field-hint">Fixo ou celular (10 ou 11 dígitos).</span>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <SelectAutocomplete v-model="esferaAtuacao" label="Esfera de atuação" placeholder="Esfera de atuação"
+              :options="opcoesEsferaFiltradas" :disabled="isEsferaBloqueada" required />
             <Feedback v-if="errorsEsfera" :message="errorsEsfera" type="danger" />
           </div>
-          <div class="field-with-feedback">
-            <SelectAutocomplete
-              ref="ufRef"
-              :model-value="uf"
-              @update:model-value="onUfChange"
-              label="Estado (UF)"
-              placeholder="Selecione"
-              :options="opcoesUfFiltradas"
-              :disabled="isUfBloqueada"
-              input-id="cad-uf"
-              required
-            />
+          <div class="col-12 col-md-3">
+            <SelectAutocomplete ref="ufRef" :model-value="uf" @update:model-value="onUfChange" label="Estado (UF)"
+              placeholder="Selecione" :options="opcoesUfFiltradas" :disabled="isUfBloqueada" input-id="cad-uf"
+              required />
             <Feedback v-if="errorsUf" :message="errorsUf" type="danger" />
           </div>
-          <div class="field-with-feedback">
-            <SelectAutocomplete
-              ref="municipioRef"
-              :model-value="municipio"
-              @update:model-value="onMunicipioChange"
-              label="Município"
-              placeholder="Selecione o município."
-              :options="opcoesMunicipioFiltradas"
-              :disabled="!uf || isMunicipioBloqueado"
-              input-id="cad-municipio"
-              required
-            />
-              <Feedback v-if="uf && errorsMunicipio" :message="errorsMunicipio" type="danger" />
-            </div>
+          <div class="col-12 col-md-5">
+            <SelectAutocomplete ref="municipioRef" :model-value="municipio" @update:model-value="onMunicipioChange"
+              label="Município" placeholder="Selecione o município." :options="opcoesMunicipioFiltradas"
+              :disabled="!uf || isMunicipioBloqueado" input-id="cad-municipio" required />
+            <Feedback v-if="uf && errorsMunicipio" :message="errorsMunicipio" type="danger" />
           </div>
-          <div class="secao-linha">
-            <div class="br-input mb-2">
+          <div class="col-12 col-md-6">
+            <div class="br-input">
               <label for="cad-orgao">Órgão de atuação<span class="text-red-50 text-up-01"> *</span></label>
-              <input id="cad-orgao" type="text" placeholder="Órgão ou secretaria" v-model="orgao" required :aria-invalid="!!errorsOrgao" @blur="() => validateField('orgao')" />
+              <input id="cad-orgao" type="text" placeholder="Órgão ou secretaria" v-model="orgao" required
+                :aria-invalid="!!errorsOrgao" @blur="() => validateField('orgao')" />
               <Feedback v-if="errorsOrgao" :message="errorsOrgao" type="danger" />
             </div>
-            <div class="br-input mb-2">
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="br-input">
               <label for="cad-cargo">Cargo / função<span class="text-red-50 text-up-01"> *</span></label>
-              <input id="cad-cargo" type="text" placeholder="Cargo ou função exercida" v-model="cargo" required :aria-invalid="!!errorsCargo" @blur="() => validateField('cargo')" />
+              <input id="cad-cargo" type="text" placeholder="Cargo ou função exercida" v-model="cargo" required
+                :aria-invalid="!!errorsCargo" @blur="() => validateField('cargo')" />
               <Feedback v-if="errorsCargo" :message="errorsCargo" type="danger" />
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
       <div class="formulario-secao">
         <h3 class="secao-titulo">Dados de Perfil</h3>
         <div class="secao-perfil-linha">
           <div class="field-with-feedback">
-            <SelectAutocomplete
-              ref="perfilRef"
-              :model-value="perfil"
-              @update:model-value="onPerfilChange"
-              label="Perfil"
-              placeholder="Selecione o perfil"
-              :options="opcoesPerfilFiltradas"
-              input-id="cad-perfil"
-              required
-            />
+            <SelectAutocomplete ref="perfilRef" :model-value="perfil" @update:model-value="onPerfilChange"
+              label="Perfil" placeholder="Selecione o perfil" :options="opcoesPerfilFiltradas" input-id="cad-perfil"
+              required />
             <Feedback v-if="errorsPerfil" :message="errorsPerfil" type="danger" />
           </div>
           <div class="br-input mb-2">
             <label for="cad-vigencia-inicio">Vigência (início)<span class="text-red-50 text-up-01"> *</span></label>
             <div class="input-date-wrapper">
-              <input
-                id="cad-vigencia-inicio"
-                type="date"
-                v-model="vigenciaInicio"
-                :max="vigenciaFim || undefined"
-                aria-label="Data de início da vigência"
-                :aria-invalid="!!errorsVigenciaInicio"
-                @blur="() => validateField('vigenciaInicio')"
-              />
+              <input id="cad-vigencia-inicio" type="date" v-model="vigenciaInicio" :max="vigenciaFim || undefined"
+                aria-label="Data de início da vigência" :aria-invalid="!!errorsVigenciaInicio"
+                @blur="() => validateField('vigenciaInicio')" />
               <i class="fas fa-calendar-alt input-date-icon" aria-hidden="true"></i>
             </div>
             <Feedback v-if="errorsVigenciaInicio" :message="errorsVigenciaInicio" type="danger" />
@@ -190,48 +129,27 @@
           <div class="br-input mb-2">
             <label for="cad-vigencia-fim">Vigência (fim)</label>
             <div class="input-date-wrapper">
-              <input
-                id="cad-vigencia-fim"
-                type="date"
-                v-model="vigenciaFim"
-                :min="vigenciaInicio || undefined"
-                aria-label="Data de fim da vigência"
-                :aria-invalid="!!errorsVigenciaFim"
-                @blur="() => validateField('vigenciaFim')"
-              />
+              <input id="cad-vigencia-fim" type="date" v-model="vigenciaFim" :min="vigenciaInicio || undefined"
+                aria-label="Data de fim da vigência" :aria-invalid="!!errorsVigenciaFim"
+                @blur="() => validateField('vigenciaFim')" />
               <i class="fas fa-calendar-alt input-date-icon" aria-hidden="true"></i>
             </div>
             <Feedback v-if="errorsVigenciaFim" :message="errorsVigenciaFim" type="danger" />
           </div>
         </div>
       </div>
-
-      <Card
-        title="Termo de uso e privacidade"
-        subtitle="A confirmação envia a solicitação e registra sua ciência conforme abaixo."
-        custom-class="solicitacao-card solicitacao-card--termo formulario-termo-card"
-      >
-        <TermoUsoPrivacidade />
-      </Card>
-
       <div class="formulario-acoes">
         <button class="br-button secondary" type="button" @click="$emit('voltar')">
           Cancelar
         </button>
-        <button class="br-button primary" type="submit" :disabled="enviando || !formularioPreenchido">
+        <button class="br-button primary" type="submit" :disabled="enviando">
           {{ enviando ? 'Confirmando...' : 'Confirmar' }}
         </button>
       </div>
     </form>
 
-    <Modal
-      v-if="modalErroVisivel"
-      :title="tituloModalErro"
-      :content="mensagemErroModal"
-      :show-actions="true"
-      @close="fecharModalErro"
-      @confirm="fecharModalErro"
-    />
+    <Modal v-if="modalErroVisivel" :title="tituloModalErro" :content="mensagemErroModal" :show-actions="true"
+      @close="fecharModalErro" @confirm="fecharModalErro" />
   </div>
 </template>
 
@@ -356,6 +274,14 @@ const schema = yup.object({
       if (!inicio) return true
       return value >= inicio
     }),
+  telefonePessoal: yup
+    .string()
+    .trim()
+    .test('telefone-pessoal', 'Telefone deve ter 10 ou 11 dígitos', (value) => {
+      if (!value || !String(value).trim()) return true
+      const digitos = value.replace(/\D/g, '')
+      return digitos.length === 10 || digitos.length === 11
+    }),
 })
 
 const initialValues = {
@@ -363,6 +289,7 @@ const initialValues = {
   CPF: '',
   emailInstitucional: '',
   telefoneInstitucional: '',
+  telefonePessoal: '',
   esferaAtuacao: '',
   uf: '',
   municipio: '',
@@ -382,6 +309,7 @@ const { value: nome, errorMessage: errorsNome } = useField<string>('nome')
 const { value: cpf, errorMessage: errorsCpf } = useField<string>('CPF')
 const { value: emailInstitucional, errorMessage: errorsEmail } = useField<string>('emailInstitucional')
 const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<string>('telefoneInstitucional')
+const { value: telefonePessoal, errorMessage: errorsTelPessoal } = useField<string>('telefonePessoal')
 const { value: esferaAtuacao, errorMessage: errorsEsfera } = useField<string>('esferaAtuacao')
 const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
 const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
@@ -810,6 +738,7 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 }
 
 /* Dados do solicitante — alinhado ao padrão eGOV / solicitação pública */
+
 .cadastro-user-form-grid :deep(.br-input input:not([readonly])) {
   min-height: 2.5rem;
   border-radius: 6px;
@@ -851,7 +780,6 @@ function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'munic
 .field-with-feedback {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
 }
 
 /* Campos de data com ícone de calendário */

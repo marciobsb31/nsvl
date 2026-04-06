@@ -1,5 +1,5 @@
 <template>
-  <div class="mb-2 select-autocomplete" :class="{ 'is-open': isOpen }">
+  <div class="select-autocomplete" :class="{ 'is-open': isOpen }">
     <div class="br-input">
       <label :for="inputId">
         {{ label }}
