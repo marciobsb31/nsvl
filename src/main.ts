@@ -5,6 +5,7 @@ import '@govbr-ds/webcomponents-vue'
 import '@govbr-ds/core/dist/core.min.js'
 import './assets/themes/dark.css'
 import './assets/themes/light.css'
+import './assets/themes/acessibilidade.css'
 
 import { defineCustomElements } from '@govbr-ds/webcomponents/dist/loader/index.js'
 
