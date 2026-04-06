@@ -2,8 +2,8 @@
   <div class="termo-uso-privacidade" role="region" :aria-labelledby="tituloId">
     <h3 :id="tituloId" class="termo-uso-privacidade__titulo">Declaração de ciência</h3>
     <p class="termo-uso-privacidade__texto">
-      Ao confirmar, você declara ter lido e aceitado o tratamento dos dados conforme a finalidade do NVSL: os dados
-      informados serão utilizados exclusivamente para análise, habilitação e gestão de acesso ao sistema.
+      <strong>Ao confirmar a solicitação você aceita o seguinte termo de uso e privacidade:</strong>
+      os dados informados serão utilizados exclusivamente para fins de análise, habilitação e gestão de acesso ao sistema NVSL.
     </p>
     <p class="termo-uso-privacidade__texto termo-uso-privacidade__texto--muted">
       O envio implica ciência quanto ao tratamento de dados pessoais e uso institucional, em conformidade com a
