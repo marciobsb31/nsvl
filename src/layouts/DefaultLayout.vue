@@ -6,7 +6,6 @@
       title="NVSL"
       subtitle="Sistema de Gestão"
       :logoGov="logoGov"
-      @theme-change="handleThemeChange"
     >
       <template #actions v-if="isAuthenticated">
         <div class="header-user">
@@ -142,9 +141,9 @@ function handleContextoAlterado() {
   router.push('/gerenciar-cadastros')
 }
 
-const handleThemeChange = (theme: string) => {
-  logoGov.value = theme === 'dark' ? logoGovBranca : logoGovColor
-}
+watch(mode, (newMode) => {
+  logoGov.value = newMode === 'dark' ? logoGovBranca : logoGovColor
+})
 
 onMounted(() => {
   logoGov.value = mode.value === 'dark' ? logoGovBranca : logoGovColor

@@ -4,7 +4,6 @@
       title="NVSL"
       subtitle="Sistema de Gestão"
       :logoGov="logoGov"
-      @theme-change="handleThemeChange"
     />
 
     <main id="main-content" class="layout-public__main" :class="{ 'layout-public__main--full': fullWidth }" role="main" tabindex="-1">
@@ -24,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 withDefaults(
   defineProps<{ fullWidth?: boolean }>(),
@@ -41,9 +40,9 @@ const { mode } = useTheme()
 const currentYear = computed(() => new Date().getFullYear())
 const logoGov = ref(logoGovColor)
 
-const handleThemeChange = (theme: string) => {
-  logoGov.value = theme === 'dark' ? logoGovBranca : logoGovColor
-}
+watch(mode, (newMode) => {
+  logoGov.value = newMode === 'dark' ? logoGovBranca : logoGovColor
+})
 
 onMounted(() => {
   logoGov.value = mode.value === 'dark' ? logoGovBranca : logoGovColor

@@ -5,6 +5,7 @@
   --secondary-text-color: var(--color-secondary-07);
   --secondary-text-color-02: var(--color-secondary-06);
   --dark-text-color: var(--color-secondary-08);
+  --white-text-color: var(--pure-0);
 
   /* Border colors */
   --border-login-color: var(--cyan-vivid-40);
@@ -13,6 +14,7 @@
   /* Background colors */
   --background: var(--pure-0);
   --background-gray: var(--gray-warm-10);
+  --background-blue: var(--blue-warm-vivid-70);
 
   /* Text colors high */
   --secondary-text-color-high: var(--color-secondary-07);
