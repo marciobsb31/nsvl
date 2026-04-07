@@ -17,7 +17,7 @@
                 </div>
                 <div class="header-right">
                     <img v-if="logoGov && isDesktop" :src="logoGov" alt="Logo GOV" class="logo-gov" />
-                    <button
+                    <!-- <button
                         class="br-button circle small ml-3"
                         type="button"
                         :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
@@ -26,6 +26,13 @@
                     >
                         <i class="fas fa-adjust" aria-hidden="true"></i>
                     </button>
+                     <button class="br-button circle small ml-3 font-acessibilidade" type="button" aria-label="Diminuir Fonte" title="Diminuir Fonte">
+                        A-
+                    </button>
+                    <button class="br-button circle small ml-3 font-acessibilidade" type="button" aria-label="Aumentar Fonte" title="Aumentar Fonte">
+                        A+
+                    </button> -->
+                    <Accessibility />
                 </div>
             </div>
         </div>
@@ -39,6 +46,7 @@ import logobranca from '@/assets/images/logo/logo_novo_viver_branca.png'
 import { useBreakpoint } from '@/core/composables/useBreakpoint'
 import { useTheme } from '@/core/composables/useTheme';
 import { computed } from 'vue';
+import Accessibility from '../Accessibility/Accessibility.vue';
 
 const { isMobile, isDesktop } = useBreakpoint()
 const { setMode, mode } = useTheme()
@@ -55,14 +63,12 @@ defineProps({
     }
 });
 
-const emit = defineEmits(['theme-change']);
 const goToHome = () => {
     window.location.href = '/';
 };
 
 const toggleTheme = () => {
     setMode(mode.value === 'dark' ? 'light' : 'dark');
-    emit('theme-change', mode.value);
 };
 
 const logoAtual = computed(() => {
@@ -115,6 +121,7 @@ const logoAtual = computed(() => {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    gap: 1rem;
 }
 
 .logo-gov{
@@ -153,6 +160,10 @@ const logoAtual = computed(() => {
   .header-info { grid-area: info; }
   .header-actions { grid-area: actions; justify-self: stretch; }
   .header-right { grid-area: right; }
+}
+
+.font-acessibilidade {
+font-weight: var(--font-weight-bold);
 }
 
 
