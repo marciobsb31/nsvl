@@ -180,4 +180,9 @@ function filtrarSomenteLetras(event: Event) {
 .input-hint--success {
   color: var(--color-success, #168821);
 }
+
+.solicitacao-form-grid :deep(.br-input input:disabled) {
+  background-color: var(--background-gray);
+  cursor: not-allowed;
+}
 </style>

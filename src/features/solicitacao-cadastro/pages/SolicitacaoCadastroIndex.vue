@@ -30,24 +30,24 @@
           @submit="onSubmit"
         >
           <Card
-            title="Dados do solicitante"
-            subtitle="Identificação e contato institucional para análise da solicitação."
+            title="Dados do(a) solicitante"
+            subtitle="Nome e CPF são obtidos do GOV.BR, não permitem edição e devem permanecer com fundo cinza."
             custom-class="solicitacao-card solicitacao-card--first"
           >
             <FormularioDadosSolicitante :modo-gov-br="modoGovBr" />
           </Card>
 
           <Card
-            title="Atuação institucional"
-            subtitle="Esfera, localidade e órgão em que você atuará no sistema."
+            title="Informação do(a) solicitante"
+            subtitle="Informações de atuação institucional do solicitante."
             custom-class="solicitacao-card"
           >
             <FormularioInformacaoSolicitante />
           </Card>
 
           <Card
-            title="Termo de uso e privacidade"
-           subtitle="A confirmação envia a solicitação e registra sua ciência conforme abaixo."
+            title="Aceite do Termo de Uso e Privacidade"
+           subtitle="O aceite ocorre no ato da confirmação e envio da solicitação."
             custom-class="solicitacao-card solicitacao-card--termo"
           >
              <TermoUsoPrivacidade />
@@ -64,7 +64,7 @@
             <button
               class="br-button primary solicitacao-acoes__btn solicitacao-acoes__btn--principal"
               type="submit"
-              :disabled="isSubmitting || !camposObrigatoriosPreenchidos(formValues) || !formMeta.valid"
+              :disabled="isSubmitting"
               :aria-busy="isSubmitting"
             >
               {{ isSubmitting ? 'Enviando...' : 'Confirmar e enviar solicitação' }}
