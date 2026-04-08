@@ -10,11 +10,7 @@
         </template>
       </HeaderPage>
         
-      <div v-if="contextoAtualLabel" class="contexto-banner" role="status" aria-live="polite">
-        <i class="fas fa-shield-alt contexto-banner__icon" aria-hidden="true"></i>
-        <span class="contexto-banner__label">Contexto ativo:</span>
-        <strong class="contexto-banner__valor">{{ contextoAtualLabel }}</strong>
-      </div>
+          <Contexto />
 
       <Card custom-class="mb-4">
         <FiltrosGerenciarSolicitacao
@@ -228,6 +224,7 @@ import { useAuth } from '@/core/composables/useAuth'
 import HeaderPage from '@/core/components/HeaderPage/HeaderPage.vue'
 import { BrButton } from '@govbr-ds/webcomponents-vue'
 import { useBreakpoint } from '@/core/composables/useBreakpoint'
+import Contexto from '@/core/components/Contexto/Contexto.vue'
 
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
@@ -565,21 +562,6 @@ const esferaMap: Record<string, string> = {
   municipal: 'Municipal',
 }
 
-const contextoAtualLabel = computed(() => {
-  const perfil = perfilAtivo.value
-  const esfera = user.value?.esfera_atuacao
-  const uf = user.value?.uf_lotacao
-  const municipio = user.value?.municipio_lotacao
-  if (!perfil) {
-    return esfera ? esferaMap[esfera] ?? esfera : ''
-  }
-  const partes: string[] = []
-  if (perfil.nome) partes.push(perfil.nome)
-  if (esfera) partes.push(esferaMap[esfera] ?? esfera)
-  if (uf) partes.push(uf)
-  if (municipio) partes.push(municipio)
-  return partes.join(' — ')
-})
 
 watch(contextKey, () => {
   painelCadastroAberto.value = false
