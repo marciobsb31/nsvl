@@ -1,15 +1,15 @@
 #!/bin/sh
 set -e
 
-# echo "[entrypoint] Setando permissões storage"
-# mkdir -pv /var/www/html/storage/app/public/
-# mkdir -pv /var/www/html/storage/framework/{cache,sessions,views}
-# mkdir -pv /var/www/html/storage/framework/cache/data
-# mkdir -pv /var/www/html/storage/logs
+echo "[entrypoint] Setando permissões storaga"
+mkdir -pv /var/www/html/storage/app/public/
+mkdir -pv /var/www/html/storage/framework/{cache,sessions,views}
+mkdir -pv /var/www/html/storage/framework/cache/data
+mkdir -pv /var/www/html/storage/logs
 
-# chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-# chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-# chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # until php -r "
 #     try {
@@ -29,6 +29,8 @@ set -e
 
 # echo "[entrypoint] Banco disponÃ­vel!"
 
+
+
 echo "[entrypoint] Executando migrations..."
 php artisan migrate --force
 
@@ -38,7 +40,7 @@ php artisan localidades:importar-ibge || echo "[entrypoint] Aviso: importação 
 echo "[entrypoint] Executando seeders controlados..."
 php artisan db:seed --force || true
 
-echo "[entrypoint] Gerando documentação Swagger..."
+echo "[entrypoint] Gerando documentações Swagger..."
 php artisan l5-swagger:generate || echo "[entrypoint] Aviso: falha ao gerar Swagger (ignorando)"
 
 if [ "${APP_ENV}" = "local" ] || [ "${APP_ENV}" = "testing" ]; then
@@ -51,5 +53,5 @@ else
   php artisan route:cache
 fi
 
-echo "[entrypoint] Inicialização concluida. Iniciando supervisord..."
+echo "[entrypoint] Inicialização concluída. Iniciando supervisord..."
 exec "$@"
