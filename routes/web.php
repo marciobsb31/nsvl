@@ -15,12 +15,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return response()->json(['status' => 'ok', 'message' => 'NVSL API is running']);
+    return response()->json(['status' => 'ok', 'message' => 'NVSL API']);
 });
-
-Route::get('/redirect-gov', [GovBrAuthController::class, 'callback'])
-    ->middleware('throttle:30,1')
-    ->name('govbr.callback');
 
 /*
  * URL frequentemente cadastrada no MGI junto com a base e /redirect-gov.

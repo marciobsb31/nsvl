@@ -22,12 +22,15 @@ Route::get('/localidades/municipios', [LocalidadeController::class, 'municipios'
 Route::get('/localidades/completo', [LocalidadeController::class, 'completo'])
     ->name('localidades.completo');
 
-Route::get('/auth/redirect', [GovBrAuthController::class, 'redirect'])
+Route::get('/auth/url', [GovBrAuthController::class, 'redirect'])
+    ->middleware('throttle:30,1')
+    ->name('auth.url');
+Route::get('/auth/redirect', [GovBrAuthController::class, 'callback'])
     ->middleware('throttle:30,1')
     ->name('auth.redirect');
 Route::get('/auth/callback', [GovBrAuthController::class, 'callback'])
     ->middleware('throttle:30,1')
-    ->name('auth.callback');
+    ->name('auth.callback.legacy');
 Route::post('/auth/exchange', [GovBrAuthController::class, 'exchange'])
     ->middleware('throttle:30,1')
     ->name('auth.exchange');

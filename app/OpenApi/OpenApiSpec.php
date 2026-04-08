@@ -11,16 +11,6 @@ use OpenApi\Attributes as OA;
     contact: new OA\Contact(email: 'suporte@nvsl.gov.br'),
     license: new OA\License(name: 'Proprietário')
 )]
-#[OA\Server(
-    url: '{host}',
-    description: 'Servidor configurado por ambiente',
-    variables: [
-        new OA\ServerVariable(
-            serverVariable: 'host',
-            default: 'http://localhost:8081'
-        ),
-    ]
-)]
 #[OA\SecurityScheme(
     securityScheme: 'BearerAuth',
     type: 'http',

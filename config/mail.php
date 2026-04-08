@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'log'),
+    'default' => env('MAIL_DRIVER', env('MAIL_MAILER', 'log')),
 
     /*
     |--------------------------------------------------------------------------
@@ -39,7 +39,9 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => env('MAIL_SCHEME'),
+            'scheme' => (($scheme = env('MAIL_SCHEME', env('MAIL_ENCRYPTION'))) === 'null' || $scheme === '')
+                ? null
+                : $scheme,
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
             'port' => env('MAIL_PORT', 2525),

@@ -46,6 +46,31 @@ class GovBrAuthControllerTest extends TestCase
     }
 
     #[Test]
+    public function redirect_gov_redireciona_o_navegador_para_a_url_gerada(): void
+    {
+        $this->configurarGovbr();
+
+        $govbr = $this->createMock(GovBrService::class);
+        $govbr->expects($this->once())->method('gerarState')->willReturn('estado-browser');
+        $govbr->expects($this->once())->method('gerarNonce')->willReturn('nonce-browser');
+        $govbr->expects($this->once())->method('gerarCodeVerifier')->willReturn('verifier-browser');
+        $govbr->expects($this->once())->method('gerarCodeChallenge')->with('verifier-browser')->willReturn('challenge-browser');
+        $govbr->expects($this->once())->method('montarUrlAutorizacao')
+            ->with('estado-browser', 'nonce-browser', 'challenge-browser')
+            ->willReturn('https://sso.exemplo.gov.br/authorize?browser=1');
+
+        $controller = new GovBrAuthController(
+            $govbr,
+            $this->createStub(AuthValidationService::class),
+            $this->createStub(AuditLogService::class),
+        );
+
+        $response = $controller->redirectGov();
+
+        $this->assertSame('https://sso.exemplo.gov.br/authorize?browser=1', $response->getTargetUrl());
+    }
+
+    #[Test]
     public function exchange_retorna_payload_quando_o_codigo_existe_no_cache(): void
     {
         Cache::put('govbr:login-code:codigo-unitario', [
@@ -120,7 +145,7 @@ class GovBrAuthControllerTest extends TestCase
     {
         $this->configurarGovbr();
 
-        $response = $this->controller()->callback(Request::create('/api/auth/callback', 'GET', [
+        $response = $this->controller()->callback(Request::create('/api/auth/redirect', 'GET', [
             'error' => 'access_denied',
             'error_description' => 'Usuário cancelou o login',
         ]));
@@ -136,7 +161,7 @@ class GovBrAuthControllerTest extends TestCase
     {
         $this->configurarGovbr();
 
-        $response = $this->controller()->callback(Request::create('/api/auth/callback', 'GET'));
+        $response = $this->controller()->callback(Request::create('/api/auth/redirect', 'GET'));
 
         $this->assertStringContainsString(
             'govbr_error=Resposta+do+GOV.BR+incompleta.+O+c%C3%B3digo+de+autoriza%C3%A7%C3%A3o+n%C3%A3o+foi+recebido.',
@@ -149,7 +174,7 @@ class GovBrAuthControllerTest extends TestCase
     {
         $this->configurarGovbr();
 
-        $response = $this->controller()->callback(Request::create('/api/auth/callback', 'GET', [
+        $response = $this->controller()->callback(Request::create('/api/auth/redirect', 'GET', [
             'state' => 'estado-ausente',
             'code' => 'codigo-ausente',
         ]));
@@ -186,7 +211,7 @@ class GovBrAuthControllerTest extends TestCase
     {
         config()->set('govbr.client_id', 'cliente-teste');
         config()->set('govbr.client_secret', 'segredo-teste');
-        config()->set('govbr.redirect_uri', 'http://localhost:8081/redirect-gov');
+        config()->set('govbr.redirect_uri', 'http://localhost:8081/api/auth/redirect');
         config()->set('govbr.authorize_url', 'https://sso.exemplo.gov.br/authorize');
         config()->set('govbr.token_url', 'https://sso.exemplo.gov.br/token');
         config()->set('govbr.userinfo_url', 'https://sso.exemplo.gov.br/userinfo');

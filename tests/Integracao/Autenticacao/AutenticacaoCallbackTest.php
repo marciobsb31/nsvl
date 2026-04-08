@@ -59,7 +59,7 @@ class AutenticacaoCallbackTest extends TestCase
         $this->app->instance(GovBrService::class, $govBrService);
         $this->app->instance(AuthValidationService::class, $authValidationService);
 
-        $response = $this->get('/api/auth/callback?state=estado-ok&code=codigo-ok');
+        $response = $this->get('/api/auth/redirect?state=estado-ok&code=codigo-ok');
 
         $response->assertRedirect('http://frontend.local/login#govbr_login_code=login-code-ok');
 
@@ -105,7 +105,7 @@ class AutenticacaoCallbackTest extends TestCase
         $this->app->instance(GovBrService::class, $govBrService);
         $this->app->instance(AuthValidationService::class, $authValidationService);
 
-        $response = $this->get('/api/auth/callback?state=estado-pendente&code=codigo-pendente');
+        $response = $this->get('/api/auth/redirect?state=estado-pendente&code=codigo-pendente');
 
         $location = (string) $response->headers->get('Location');
 
@@ -123,7 +123,7 @@ class AutenticacaoCallbackTest extends TestCase
 
         Cache::forget('govbr:oauth:estado-ausente');
 
-        $response = $this->get('/api/auth/callback?state=estado-ausente&code=codigo-ausente');
+        $response = $this->get('/api/auth/redirect?state=estado-ausente&code=codigo-ausente');
 
         $response->assertRedirect();
         $this->assertStringContainsString(
@@ -156,7 +156,7 @@ class AutenticacaoCallbackTest extends TestCase
 
         $this->app->instance(GovBrService::class, $govBrService);
 
-        $response = $this->get('/api/auth/callback?state=estado-nonce&code=codigo-nonce');
+        $response = $this->get('/api/auth/redirect?state=estado-nonce&code=codigo-nonce');
 
         $response->assertRedirect();
         $this->assertStringContainsString(
@@ -182,7 +182,7 @@ class AutenticacaoCallbackTest extends TestCase
 
         $this->app->instance(GovBrService::class, $govBrService);
 
-        $response = $this->get('/api/auth/callback?state=estado-interno&code=codigo-interno');
+        $response = $this->get('/api/auth/redirect?state=estado-interno&code=codigo-interno');
 
         $response->assertRedirect();
         $this->assertStringContainsString(
@@ -195,7 +195,7 @@ class AutenticacaoCallbackTest extends TestCase
     {
         config()->set('govbr.client_id', 'cliente-teste');
         config()->set('govbr.client_secret', 'segredo-teste');
-        config()->set('govbr.redirect_uri', 'http://localhost:8081/redirect-gov');
+        config()->set('govbr.redirect_uri', 'http://localhost:8081/api/auth/redirect');
         config()->set('govbr.authorize_url', 'https://sso.exemplo.gov.br/authorize');
         config()->set('govbr.token_url', 'https://sso.exemplo.gov.br/token');
         config()->set('govbr.userinfo_url', 'https://sso.exemplo.gov.br/userinfo');

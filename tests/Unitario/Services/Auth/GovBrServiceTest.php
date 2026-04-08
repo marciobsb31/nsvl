@@ -22,7 +22,7 @@ class GovBrServiceTest extends TestCase
 
         config()->set('govbr.client_id', 'cliente-teste');
         config()->set('govbr.client_secret', 'segredo-teste');
-        config()->set('govbr.redirect_uri', 'http://localhost:8081/redirect-gov');
+        config()->set('govbr.redirect_uri', 'http://localhost:8081/api/auth/redirect');
         config()->set('govbr.authorize_url', 'https://sso.exemplo.gov.br/authorize');
         config()->set('govbr.token_url', 'https://sso.exemplo.gov.br/token');
         config()->set('govbr.userinfo_url', 'https://sso.exemplo.gov.br/userinfo');
@@ -55,7 +55,7 @@ class GovBrServiceTest extends TestCase
 
         $this->assertStringContainsString('https://sso.exemplo.gov.br/authorize?', $url);
         $this->assertStringContainsString('client_id=cliente-teste', $url);
-        $this->assertStringContainsString('redirect_uri=http%3A%2F%2Flocalhost%3A8081%2Fredirect-gov', $url);
+        $this->assertStringContainsString('redirect_uri=http%3A%2F%2Flocalhost%3A8081%2Fapi%2Fauth%2Fredirect', $url);
         $this->assertStringContainsString('scope=openid+email+profile', $url);
         $this->assertStringContainsString('state=estado', $url);
         $this->assertStringContainsString('nonce=nonce', $url);

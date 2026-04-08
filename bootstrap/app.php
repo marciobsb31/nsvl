@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->appendToGroup('api', AnonymizeResponseMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

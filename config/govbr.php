@@ -5,17 +5,17 @@ $baseUrl = rtrim(env('GOVBR_SSO_URL', 'https://sso.staging.acesso.gov.br'), '/')
 /*
  * redirect_uri: deve corresponder EXATAMENTE ao cadastrado no MGI para o client_id.
  * Para homologação (client_id h-nvsl.dev.mdh.gov.br), use a URL do ambiente homologado.
- * Para testes em localhost: solicite ao MGI a inclusão de http://localhost:8081/redirect-gov
+ * Para testes em localhost: solicite ao MGI a inclusão de http://localhost:8081/api/auth/redirect
  * nos redirect URIs permitidos. Roteiro: https://acesso.gov.br/roteiro-tecnico
  */
 $redirectUri = env('GOVBR_REDIRECT_URI');
 if (empty($redirectUri)) {
     $appUrl = rtrim(env('APP_URL', ''), '/');
-    $redirectUri = $appUrl ? $appUrl . '/redirect-gov' : 'https://h-nvsl.dev.mdh.gov.br/redirect-gov';
+    $redirectUri = $appUrl ? $appUrl . '/api/auth/redirect' : 'https://h-nvsl.dev.mdh.gov.br/api/auth/redirect';
 }
 
 /*
- * frontend_url: para onde o navegador volta APÓS o callback em /redirect-gov (fragment #govbr_*).
+ * frontend_url: para onde o navegador volta APÓS o callback em /api/auth/redirect (fragment #govbr_*).
  * Deve ser a MESMA origem onde o usuário abriu o NVSL (Docker: http://localhost ; Vite dev: http://localhost:5176).
  * Use GOVBR_FRONTEND_URL se FRONTEND_URL estiver desatualizado em relação ao dev server.
  */

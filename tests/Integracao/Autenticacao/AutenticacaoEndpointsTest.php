@@ -37,17 +37,33 @@ class AutenticacaoEndpointsTest extends TestCase
     {
         config()->set('govbr.client_id', 'cliente-teste');
         config()->set('govbr.client_secret', 'segredo-teste');
-        config()->set('govbr.redirect_uri', 'http://localhost:8081/redirect-gov');
+        config()->set('govbr.redirect_uri', 'http://localhost:8081/api/auth/redirect');
         config()->set('govbr.authorize_url', 'https://sso.exemplo.gov.br/authorize');
         config()->set('govbr.token_url', 'https://sso.exemplo.gov.br/token');
         config()->set('govbr.userinfo_url', 'https://sso.exemplo.gov.br/userinfo');
 
-        $response = $this->getJson('/api/auth/redirect');
+        $response = $this->getJson('/api/auth/url');
 
         $response->assertOk();
         $this->assertStringContainsString('https://sso.exemplo.gov.br/authorize', $response->json('url'));
         $this->assertStringContainsString('state=', $response->json('url'));
         $this->assertStringContainsString('code_challenge=', $response->json('url'));
+    }
+
+    #[Test]
+    public function redirect_gov_redireciona_o_navegador_para_o_sso(): void
+    {
+        config()->set('govbr.client_id', 'cliente-teste');
+        config()->set('govbr.client_secret', 'segredo-teste');
+        config()->set('govbr.redirect_uri', 'http://localhost:8081/api/auth/redirect');
+        config()->set('govbr.authorize_url', 'https://sso.exemplo.gov.br/authorize');
+        config()->set('govbr.token_url', 'https://sso.exemplo.gov.br/token');
+        config()->set('govbr.userinfo_url', 'https://sso.exemplo.gov.br/userinfo');
+
+        $response = $this->get('/redirect-gov');
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('https://sso.exemplo.gov.br/authorize', (string) $response->headers->get('Location'));
     }
 
     #[Test]
@@ -60,7 +76,7 @@ class AutenticacaoEndpointsTest extends TestCase
         config()->set('govbr.token_url', null);
         config()->set('govbr.userinfo_url', null);
 
-        $response = $this->getJson('/api/auth/redirect');
+        $response = $this->getJson('/api/auth/url');
 
         $response
             ->assertUnprocessable()
@@ -72,14 +88,14 @@ class AutenticacaoEndpointsTest extends TestCase
     {
         config()->set('govbr.client_id', 'cliente-teste');
         config()->set('govbr.client_secret', 'segredo-teste');
-        config()->set('govbr.redirect_uri', 'http://localhost:8081/redirect-gov');
+        config()->set('govbr.redirect_uri', 'http://localhost:8081/api/auth/redirect');
         config()->set('govbr.authorize_url', 'https://sso.exemplo.gov.br/authorize');
         config()->set('govbr.token_url', 'https://sso.exemplo.gov.br/token');
         config()->set('govbr.userinfo_url', 'https://sso.exemplo.gov.br/userinfo');
         config()->set('govbr.frontend_url', 'http://frontend.local');
         config()->set('govbr.frontend_login_path', '/login');
 
-        $response = $this->get('/api/auth/callback');
+        $response = $this->get('/api/auth/redirect');
 
         $response->assertRedirect();
         $this->assertStringContainsString(
