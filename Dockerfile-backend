@@ -67,7 +67,7 @@ RUN sed -i 's/\r$//' /entrypoint.sh \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache \
     && mkdir -p /var/run/nginx /var/log/nginx /var/log/supervisor
 
-EXPOSE 81
+EXPOSE 80
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

@@ -1,15 +1,15 @@
 #!/bin/sh
 set -e
 
-echo "[entrypoint] Setando permissões storage"
-mkdir -pv /var/www/html/storage/app/public/
-mkdir -pv /var/www/html/storage/framework/{cache,sessions,views}
-mkdir -pv /var/www/html/storage/framework/cache/data
-mkdir -pv /var/www/html/storage/logs
+# echo "[entrypoint] Setando permissões storage"
+# mkdir -pv /var/www/html/storage/app/public/
+# mkdir -pv /var/www/html/storage/framework/{cache,sessions,views}
+# mkdir -pv /var/www/html/storage/framework/cache/data
+# mkdir -pv /var/www/html/storage/logs
 
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # until php -r "
 #     try {
