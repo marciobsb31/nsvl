@@ -3,12 +3,14 @@
 namespace Tests\Integracao\Solicitacoes;
 
 use App\Exceptions\ApiException;
+use App\Mail\SolicitacaoCadastroAvaliada;
 use App\Models\Perfil;
 use App\Models\PerfilUsuario;
 use App\Models\SolicitacaoCadastro;
 use App\Models\StatusSolicitacao;
 use App\Models\Usuario;
 use App\Services\SolicitacaoCadastro\SolicitacaoCadastroService;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Integracao\TestCase;
@@ -333,6 +335,8 @@ class SolicitacaoCadastroServiceTest extends TestCase
     #[Test]
     public function reprova_solicitacao_e_persiste_justificativa(): void
     {
+        Mail::fake();
+
         $service = app(SolicitacaoCadastroService::class);
         $operador = $this->usuarioPorSub('teste-federal-001');
         $solicitacao = $this->solicitacaoPorCpfEStatus('55566677788', StatusSolicitacao::EM_ANALISE);
@@ -348,11 +352,19 @@ class SolicitacaoCadastroServiceTest extends TestCase
             'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::REPROVADO),
             'justificativa_reprovacao' => 'Documentação enviada está incompleta.',
         ]);
+
+        Mail::assertSent(SolicitacaoCadastroAvaliada::class, function (SolicitacaoCadastroAvaliada $mail) use ($solicitacao) {
+            return $mail->status === 'reprovado'
+                && $mail->solicitacao->id === $solicitacao->id
+                && $mail->hasTo($solicitacao->email_institucional);
+        });
     }
 
     #[Test]
     public function aprova_solicitacao_desativando_perfis_anteriores_e_vinculando_o_novo_perfil(): void
     {
+        Mail::fake();
+
         $service = app(SolicitacaoCadastroService::class);
         $operador = $this->usuarioPorSub('teste-federal-001');
         $solicitacao = $this->solicitacaoPorCpfEStatus('55566677788', StatusSolicitacao::EM_ANALISE);
@@ -388,6 +400,12 @@ class SolicitacaoCadastroServiceTest extends TestCase
             'perfil_id' => $perfilNovo->id,
             'ativo' => true,
         ]);
+
+        Mail::assertSent(SolicitacaoCadastroAvaliada::class, function (SolicitacaoCadastroAvaliada $mail) use ($solicitacao) {
+            return $mail->status === 'aprovado'
+                && $mail->solicitacao->id === $solicitacao->id
+                && $mail->hasTo($solicitacao->email_institucional);
+        });
     }
 
     #[Test]

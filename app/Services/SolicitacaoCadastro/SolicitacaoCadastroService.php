@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Mail\SolicitacaoCadastroEnviada;
+use App\Mail\SolicitacaoCadastroAvaliada;
 
 class SolicitacaoCadastroService
 {
@@ -376,6 +377,25 @@ class SolicitacaoCadastroService
             'solicitacoes_cadastro',
             $solicitacao->id
         );
+
+        try {
+            $destinatario = $solicitacao->email_institucional ?: $solicitacao->usuario?->email;
+            if (!empty($destinatario)) {
+                Mail::to($destinatario)->send(new SolicitacaoCadastroAvaliada(
+                    $solicitacao,
+                    $statusNome,
+                    $dados['justificativa'] ?? null
+                ));
+            }
+        } catch (\Throwable $e) {
+            logger()->error('Falha ao enviar e-mail de avaliacao da solicitacao.', [
+                'solicitacao_id' => $solicitacao->id,
+                'status' => $statusNome,
+                'destinatario' => $destinatario ?? null,
+                'erro' => $e->getMessage(),
+            ]);
+            report($e);
+        }
 
         return [
             'message' => $statusNome === 'aprovado'
