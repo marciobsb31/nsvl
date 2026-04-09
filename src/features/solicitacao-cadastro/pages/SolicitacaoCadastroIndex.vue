@@ -393,7 +393,6 @@ async function onSubmit(values: Record<string, unknown>) {
       msg = 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
     }
     error(msg);
-  } finally {
     isSubmitting.value = false;
   }
 }
@@ -580,6 +579,6 @@ onMounted(() => {
   .solicitacao-acoes__btn--principal {
     min-width: 14rem;
   }
-  
+
 }
 </style>
