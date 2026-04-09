@@ -217,7 +217,7 @@ class SolicitacaoCadastroService
                     'nome'      => $dados['nome'],
                     'email'     => $dados['emailInstitucional'],
                     'govbr_sub' => $govbrSub,
-                    'telefone'  => $dados['telefoneInstitucional'] ?? null,
+                    'telefone'  => $dados['telefonePessoal'] ?? null,
                 ]);
             } catch (QueryException $e) {
                 $msg = $e->getMessage();
@@ -346,9 +346,6 @@ class SolicitacaoCadastroService
             $solicitacao->update($updateData);
 
             if ($novoStatusId === $statusAprovado) {
-                PerfilUsuario::where('usuario_id', $solicitacao->user_id)
-                    ->update(['ativo' => false]);
-
                 PerfilUsuario::updateOrCreate(
                     [
                         'usuario_id' => $solicitacao->user_id,
@@ -445,8 +442,6 @@ class SolicitacaoCadastroService
         if (!$vinculo) {
             throw ApiException::notFound('Vínculo de perfil não encontrado.');
         }
-
-        PerfilUsuario::where('usuario_id', $usuarioSolicitante->id)->update(['ativo' => false]);
 
         $vinculo->update([
             'data_inicio_vigencia' => $vinculo->data_inicio_vigencia ?: now()->toDateString(),
@@ -569,11 +564,6 @@ class SolicitacaoCadastroService
 
     private function obterPerfisVinculados(SolicitacaoCadastro $solicitacao): array
     {
-        $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
-        if ($solicitacao->status_id !== $statusAprovado) {
-            return [];
-        }
-
         $usuario = $solicitacao->usuario;
         if (!$usuario) {
             return [];
@@ -587,11 +577,14 @@ class SolicitacaoCadastroService
         $perfis = $vinculos->map(function ($perfil, $index) use ($hoje, $solicitacao): array {
             $inicio  = $this->normalizarDataPivot($perfil->pivot->data_inicio_vigencia);
             $fim     = $this->normalizarDataPivot($perfil->pivot->data_fim_vigencia);
-            $vigente = (!$inicio || $inicio <= $hoje) && (!$fim || $fim >= $hoje);
-            $id      = (int) ($perfil->pivot->id ?? (($solicitacao->id * 1000) + $perfil->id + $index));
+            $perfilUsuarioId = (int) ($perfil->pivot->id ?? (($solicitacao->id * 1000) + $perfil->id + $index));
+            $ativo   = (bool) ($perfil->pivot->ativo ?? false);
+            $vigente = $ativo && (!$inicio || $inicio <= $hoje) && (!$fim || $fim >= $hoje);
 
             return [
-                'id'              => $id,
+                'id'              => $perfilUsuarioId,
+                'perfil_usuario_id' => $perfilUsuarioId,
+                'ativo'           => $ativo,
                 'perfil'          => $perfil->nome,
                 'vigencia_inicio' => $inicio ?? '—',
                 'vigencia_fim'    => $fim ?? '—',
@@ -604,7 +597,16 @@ class SolicitacaoCadastroService
             ];
         })->all();
 
-        usort($perfis, fn ($a, $b) => ($b['vigente'] ? 1 : 0) - ($a['vigente'] ? 1 : 0));
+        usort($perfis, function (array $a, array $b): int {
+            $ativoA = (int) (($a['ativo'] ?? false) ? 1 : 0);
+            $ativoB = (int) (($b['ativo'] ?? false) ? 1 : 0);
+
+            if ($ativoA !== $ativoB) {
+                return $ativoB <=> $ativoA;
+            }
+
+            return strcmp((string) ($a['perfil'] ?? ''), (string) ($b['perfil'] ?? ''));
+        });
 
         return $perfis;
     }
