@@ -11,6 +11,12 @@
       </template>
     </HeaderPage>
     <Contexto />
+
+    <Card custom-class="mb-4">
+      <FiltrosPerfis
+          @pesquisar="aplicarFiltros"
+          @limpar="limparEpesquisar"/>
+    </Card>
     <Card custom-class="gerenciar-perfis__card mb-4">
       <div v-if="carregando" class="br-loading p-4" role="status" aria-live="polite">
         <div class="loading-spinner" aria-hidden="true"></div>
@@ -97,6 +103,7 @@ import Card from '@/core/components/Card/Card.vue'
 import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
 import PainelFormularioPerfil from '../components/PainelFormularioPerfil.vue'
 import PainelHistoricoPerfil from '../components/PainelHistoricoPerfil.vue'
+import FiltrosPerfis from '../components/FiltrosPerfis.vue'
 import { computed, onMounted, ref } from 'vue'
 import { listarPerfisGerenciar, obterHierarquia, type PerfilGerenciar } from '@/services/GerenciarPerfilService'
 import { useNotification } from '@/core/composables/useNotification'
@@ -125,6 +132,7 @@ const sorteable = (payload: { column: string; asc: boolean }) => {
 }
 
 const perfis = ref<PerfilGerenciar[]>([])
+const filtrosAtivos = ref<any>({})
 const carregando = ref(false)
 const paginaAtual = ref(1)
 const itensPorPagina = ref(10)
@@ -267,13 +275,25 @@ function onDirtyChange(dirty: boolean) {
 }
 
 function labelSituacao(status: string): string {
-  return status === 'ativo' ? 'Vigente' : 'Não vigente'
+  return status === 'ativo' ? 'Ativo' : 'Inativo'
 }
 
 function classeSituacao(status: string): string {
-  return status === 'ativo' ? 'success' : 'warning'
+  return status === 'ativo' ? 'success' : 'danger'
 }
 
+
+function aplicarFiltros(filtros: any) {
+  filtrosAtivos.value = filtros
+  sorts.value = { column: null, asc: true }
+  carregarPerfis()
+}
+
+function limparEpesquisar() {
+  filtrosAtivos.value = {}
+  sorts.value = { column: null, asc: true }
+  carregarPerfis()
+}
 
 
 
