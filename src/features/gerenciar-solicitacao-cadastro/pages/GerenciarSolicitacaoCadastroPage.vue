@@ -483,16 +483,33 @@ async function onTogglePerfilVinculado(payload: { perfilUsuarioId: number; acao:
   if (!detalheSelecionado.value) return
 
   avaliando.value = true
+  const solicitacaoId = detalheSelecionado.value.id
   try {
     if (payload.acao === 'ativar') {
-      await apiAtivarPerfilVinculado(detalheSelecionado.value.id, payload.perfilUsuarioId)
+      await apiAtivarPerfilVinculado(solicitacaoId, payload.perfilUsuarioId)
       success('Cadastro ativado com sucesso.')
     } else {
-      await apiDesativarPerfilVinculado(detalheSelecionado.value.id, payload.perfilUsuarioId)
+      await apiDesativarPerfilVinculado(solicitacaoId, payload.perfilUsuarioId)
       success('Cadastro desativado com sucesso.')
     }
 
-    detalheSelecionado.value = await obterSolicitacaoCadastro(detalheSelecionado.value.id)
+    // Atualização otimista imediata para refletir no badge
+    if (detalheSelecionado.value?.perfis_vinculados) {
+      const perfisAtualizados = detalheSelecionado.value.perfis_vinculados.map(p => ({
+        ...p,
+        ativo: p.perfil_usuario_id === payload.perfilUsuarioId
+          ? (payload.acao === 'ativar')
+          : p.ativo,
+        vigente: p.perfil_usuario_id === payload.perfilUsuarioId
+          ? (payload.acao === 'ativar')
+          : p.vigente,
+      }))
+      detalheSelecionado.value = { ...detalheSelecionado.value, perfis_vinculados: perfisAtualizados }
+    }
+
+    // Re-fetch do servidor para garantir consistência
+    const atualizado = await obterSolicitacaoCadastro(solicitacaoId)
+    detalheSelecionado.value = { ...atualizado }
   } catch (e: unknown) {
     const msg =
       (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
