@@ -1,0 +1,6 @@
+window._env_ = {
+    VITE_API_BASE_URL: '${VITE_API_BASE_URL}',
+    VITE_APP_NAME: '${VITE_APP_NAME}',
+    VITE_APP_ENV: '${VITE_APP_ENV}',
+    VITE_APP_VERSION: '${VITE_APP_VERSION}'
+}

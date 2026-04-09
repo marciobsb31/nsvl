@@ -1,0 +1,1361 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "NVSL API",
+        "description": "API do Sistema NVSL com autenticação GOV.BR e gestão de perfis.",
+        "contact": {
+            "email": "suporte@nvsl.gov.br"
+        },
+        "license": {
+            "name": "Proprietário"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "{host}",
+            "description": "Servidor configurado por ambiente",
+            "variables": {
+                "host": {
+                    "default": "http://localhost:8081"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/auth/redirect": {
+            "get": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Inicia login GOV.BR",
+                "description": "Retorna a URL de autorização do SSO (PKCE + state em cache).",
+                "operationId": "e89c5e66848b282e97d6ab1f0a627a06",
+                "responses": {
+                    "200": {
+                        "description": "URL do SSO",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "url": {
+                                            "type": "string",
+                                            "format": "uri"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Configuração GOV.BR incompleta"
+                    },
+                    "429": {
+                        "description": "Limite de requisições"
+                    }
+                }
+            }
+        },
+        "/api/auth/callback": {
+            "get": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Callback OAuth2 (alternativo ao /redirect-gov)",
+                "description": "Mesmo fluxo do callback web: valida state/code, cria token Sanctum e redireciona ao frontend com fragmento.",
+                "operationId": "4ba9ecb97f49f920628f8f07753eb9c1",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "state",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "error",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "error_description",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirecionamento para FRONTEND_URL/login#govbr_login_code=... ou govbr_error=..."
+                    },
+                    "429": {
+                        "description": "Limite de requisições"
+                    }
+                }
+            }
+        },
+        "/api/auth/exchange": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Troca código de login por token Sanctum",
+                "description": "Envia o `govbr_login_code` recebido no fragmento da URL após o redirect do callback.",
+                "operationId": "8fa9ac53571a6b7cb376b282b0537a5b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "description": "Código descartável gerado após callback bem-sucedido",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token e usuário seguro",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Código inválido ou expirado"
+                    },
+                    "429": {
+                        "description": "Limite de requisições"
+                    }
+                }
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Encerra sessão Sanctum",
+                "operationId": "e7a649c32cbc482b7375c03e417a92e3",
+                "responses": {
+                    "200": {
+                        "description": "Logout realizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logout realizado com sucesso."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "429": {
+                        "description": "Limite de requisições"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/token-de-teste": {
+            "post": {
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Emite token Sanctum para usuário de teste",
+                "description": "Disponível apenas com APP_ENV=local ou testing (desabilitado em produção).",
+                "operationId": "87144eab9e2ba7da78310ff9ea6eaf1e",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "perfil": {
+                                        "description": "Qual usuário fixture usar",
+                                        "type": "string",
+                                        "enum": [
+                                            "federal",
+                                            "estadual",
+                                            "municipal"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token e usuário",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Ambiente não permitido"
+                    },
+                    "404": {
+                        "description": "Usuário de teste não encontrado (execute seeders)"
+                    },
+                    "429": {
+                        "description": "Limite de requisições"
+                    }
+                }
+            }
+        },
+        "/api/user": {
+            "get": {
+                "tags": [
+                    "Usuário"
+                ],
+                "summary": "Retorna os dados do usuário autenticado",
+                "description": "Campos sensíveis são omitidos da resposta.",
+                "operationId": "22a6f0a396f544b2567e620f838ed602",
+                "responses": {
+                    "200": {
+                        "description": "Dados seguros do usuário",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/esferas": {
+            "get": {
+                "tags": [
+                    "Cadastro"
+                ],
+                "summary": "Lista esferas de atuação",
+                "operationId": "cef278001f007457a969ca266b3c25f2",
+                "responses": {
+                    "200": {
+                        "description": "Lista value/label",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "value": {
+                                                        "type": "string"
+                                                    },
+                                                    "label": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/gerenciar-perfis": {
+            "get": {
+                "tags": [
+                    "Gerenciar perfis"
+                ],
+                "summary": "Lista perfis com filtros opcionais",
+                "operationId": "ee1156b303bcabfb370fda667fa9c6e0",
+                "parameters": [
+                    {
+                        "name": "nome",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ativo",
+                                "inativo"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista em data[]"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Gerenciar perfis"
+                ],
+                "summary": "Cadastra perfil do catálogo oficial",
+                "operationId": "dee2a37d1c30a333b66628e2eef65b10",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nome"
+                                ],
+                                "properties": {
+                                    "nome": {
+                                        "type": "string"
+                                    },
+                                    "descricao": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "ativo": {
+                                        "type": "boolean",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Criado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "422": {
+                        "description": "Validação"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/gerenciar-perfis/{id}": {
+            "get": {
+                "tags": [
+                    "Gerenciar perfis"
+                ],
+                "summary": "Detalha um perfil",
+                "operationId": "375dad40ea7b8b7d420b0d6637d1533d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Perfil em data"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Gerenciar perfis"
+                ],
+                "summary": "Atualiza perfil",
+                "operationId": "810d588a8611400f069c574961752831",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nome",
+                                    "ativo"
+                                ],
+                                "properties": {
+                                    "nome": {
+                                        "type": "string"
+                                    },
+                                    "descricao": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "ativo": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Atualizado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Não encontrado"
+                    },
+                    "422": {
+                        "description": "Validação"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/gerenciar-perfis/{id}/historico": {
+            "get": {
+                "tags": [
+                    "Gerenciar perfis"
+                ],
+                "summary": "Histórico de auditoria do perfil",
+                "operationId": "439c5aa7f1b039cddae662e2a5067e6f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista em data[]"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/gerenciar-perfis/hierarquia": {
+            "get": {
+                "tags": [
+                    "Gerenciar perfis"
+                ],
+                "summary": "Esfera do usuário e esferas permitidas para cadastro",
+                "operationId": "fa55bf76c8a54024c3b862769228247c",
+                "responses": {
+                    "200": {
+                        "description": "esfera_usuario e esferas_permitidas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "esfera_usuario": {
+                                            "type": "string"
+                                        },
+                                        "esferas_permitidas": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/gerenciar-perfis/permissoes": {
+            "get": {
+                "tags": [
+                    "Gerenciar perfis"
+                ],
+                "summary": "Catálogo de permissões (legado)",
+                "description": "A modelagem atual não utiliza tabela de permissões granulares; retorna lista vazia.",
+                "operationId": "b2fd8f204a9af7f1e4cc918137a91324",
+                "responses": {
+                    "200": {
+                        "description": "Lista vazia de permissões legadas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/health": {
+            "get": {
+                "tags": [
+                    "Sistema"
+                ],
+                "summary": "Verifica a saúde da aplicação",
+                "description": "Retorna status do banco de dados e cache. Útil para healthchecks de orquestração (Docker, Kubernetes).",
+                "operationId": "7134f626524ee8957bd6315b959ed4e1",
+                "responses": {
+                    "200": {
+                        "description": "Aplicação saudável",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "ok"
+                                        },
+                                        "database": {
+                                            "type": "string",
+                                            "example": "ok"
+                                        },
+                                        "cache": {
+                                            "type": "string",
+                                            "example": "ok"
+                                        },
+                                        "version": {
+                                            "type": "string",
+                                            "example": "1.0.0"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Serviço indisponível"
+                    }
+                }
+            }
+        },
+        "/api/localidades/ufs": {
+            "get": {
+                "tags": [
+                    "Localidades"
+                ],
+                "summary": "Lista todas as UFs",
+                "operationId": "2c5c15663e0e7ebad4d38bc35dd2e91d",
+                "responses": {
+                    "200": {
+                        "description": "UFs ordenadas por nome",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "value": {
+                                                        "type": "string"
+                                                    },
+                                                    "label": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/localidades/completo": {
+            "get": {
+                "tags": [
+                    "Localidades"
+                ],
+                "summary": "UFs e municípios por UF (payload único)",
+                "operationId": "4bf58eea83f76c47596a6da9192ef2ac",
+                "responses": {
+                    "200": {
+                        "description": "JSON com `data.ufs` (array) e `data.municipios_por_uf` (objeto sigla → municípios value/label)"
+                    }
+                }
+            }
+        },
+        "/api/localidades/municipios": {
+            "get": {
+                "tags": [
+                    "Localidades"
+                ],
+                "summary": "Municípios por sigla da UF",
+                "operationId": "d99c2555dc9013610464673e74c15f2f",
+                "parameters": [
+                    {
+                        "name": "uf",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "GO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de municípios",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "value": {
+                                                        "type": "string"
+                                                    },
+                                                    "label": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Parâmetro uf inválido"
+                    }
+                }
+            }
+        },
+        "/api/perfis": {
+            "get": {
+                "tags": [
+                    "Perfis"
+                ],
+                "summary": "Lista perfis oficiais ativos (select)",
+                "operationId": "c81e2826c91f75ac01a11c02c719ef50",
+                "responses": {
+                    "200": {
+                        "description": "Lista de perfis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/solicitacoes-cadastro": {
+            "get": {
+                "tags": [
+                    "Solicitações de cadastro"
+                ],
+                "summary": "Lista solicitações (filtros conforme política do usuário)",
+                "operationId": "57b1b2e7c3a27be08be00148cc95135d",
+                "parameters": [
+                    {
+                        "name": "cpf",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "nome",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "uf",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "municipio",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "orgao",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "esfera",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "federal",
+                                "estadual",
+                                "municipal"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "em_analise",
+                                "aprovado",
+                                "reprovado"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data[] — itens resumidos"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Solicitações de cadastro"
+                ],
+                "summary": "Cria solicitação (público ou autenticado)",
+                "operationId": "f6a5b6b4d05f378c3615ced8ccfe4361",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "description": "Campos: nome, CPF, emailInstitucional, telefoneInstitucional, esferaAtuacao, uf, municipio, orgao, cargo; perfilId e vigências conforme autenticação. A ciência do termo é implícita no envio.",
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Criado"
+                    },
+                    "422": {
+                        "description": "Validação"
+                    }
+                }
+            }
+        },
+        "/api/solicitacoes-cadastro/{id}": {
+            "get": {
+                "tags": [
+                    "Solicitações de cadastro"
+                ],
+                "summary": "Detalha solicitação",
+                "operationId": "5d89bd296615c8dd3da47bed3ea8a82f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payload de detalhamento"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "404": {
+                        "description": "Não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Solicitações de cadastro"
+                ],
+                "summary": "Avalia ou atualiza solicitação",
+                "operationId": "47be72d0cfc8d3dc931f9551d3541036",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "description": "Ver AvaliarSolicitacaoRequest",
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Atualizado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "404": {
+                        "description": "Não encontrado"
+                    },
+                    "422": {
+                        "description": "Validação"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/solicitacoes-cadastro/verificar-cpf": {
+            "get": {
+                "tags": [
+                    "Solicitações de cadastro"
+                ],
+                "summary": "Verifica CPF em solicitações existentes",
+                "operationId": "6df02436eb38ad58cf82bfbabca5b558",
+                "parameters": [
+                    {
+                        "name": "cpf",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resultado da verificação"
+                    },
+                    "429": {
+                        "description": "Limite de requisições"
+                    }
+                }
+            }
+        },
+        "/api/solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/ativar": {
+            "patch": {
+                "tags": [
+                    "Solicitações de cadastro"
+                ],
+                "summary": "Ativa perfil vinculado à solicitação",
+                "operationId": "c39f7b0fa205af33b0136c4ef7e7c4b0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "perfilUsuarioId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "404": {
+                        "description": "Não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/desativar": {
+            "patch": {
+                "tags": [
+                    "Solicitações de cadastro"
+                ],
+                "summary": "Desativa perfil vinculado",
+                "operationId": "2e04aab211cceb8877b460fa7ad5f98b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "perfilUsuarioId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "404": {
+                        "description": "Não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/solicitacoes-cadastro/{id}/perfis": {
+            "post": {
+                "tags": [
+                    "Solicitações de cadastro"
+                ],
+                "summary": "Adiciona perfil vinculado à solicitação aprovada",
+                "operationId": "5618a6c82df0d4d6b723fed762aecbf6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "description": "Ver AdicionarPerfilVinculadoRequest",
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Criado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "404": {
+                        "description": "Não encontrado"
+                    },
+                    "422": {
+                        "description": "Validação"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/perfis-ativos": {
+            "get": {
+                "tags": [
+                    "Contexto"
+                ],
+                "summary": "Perfis vigentes do usuário",
+                "operationId": "9d95ba2cd136f785ae6213787994bd41",
+                "responses": {
+                    "200": {
+                        "description": "Lista em data[]"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/trocar-contexto": {
+            "post": {
+                "tags": [
+                    "Contexto"
+                ],
+                "summary": "Define o perfil ativo (pivot perfil_usuario)",
+                "operationId": "8998279d49c041677dd421fc58bb927f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "perfil_usuario_id"
+                                ],
+                                "properties": {
+                                    "perfil_usuario_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "user atualizado (toSafeArray)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Perfil inválido para o usuário"
+                    },
+                    "422": {
+                        "description": "Validação"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "UserResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "sub": {
+                        "description": "Identificador GOV.BR",
+                        "type": "string"
+                    },
+                    "esfera_atuacao": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "uf_lotacao": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "municipio_lotacao": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "perfil_ativo_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "perfis_vigentes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "Sanctum"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Autenticação"
+        },
+        {
+            "name": "Usuário"
+        },
+        {
+            "name": "Cadastro",
+            "description": "Dados auxiliares de formulário"
+        },
+        {
+            "name": "Gerenciar perfis",
+            "description": "Administração do catálogo de perfis"
+        },
+        {
+            "name": "Sistema"
+        },
+        {
+            "name": "Localidades",
+            "description": "UFs e municípios (replica IBGE)"
+        },
+        {
+            "name": "Perfis",
+            "description": "Catálogo oficial para vínculos e formulários"
+        },
+        {
+            "name": "Solicitações de cadastro",
+            "description": "Fluxo público e gestão autenticada"
+        },
+        {
+            "name": "Contexto",
+            "description": "Perfil ativo do usuário"
+        }
+    ],
+    "security": [
+        {
+            "BearerAuth": []
+        }
+    ]
+}

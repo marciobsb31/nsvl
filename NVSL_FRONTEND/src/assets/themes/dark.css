@@ -1,0 +1,79 @@
+[data-theme="dark"] {
+/* Text colors Project */
+  --primary-text-color: var(--color-secondary-01);
+  --primary-text-dark-color: var(--pure-0);
+  --secondary-text-color: var(--pure-0);
+  --secondary-text-color-02: var(--pure-0);
+  --dark-text-color: var(--pure-0);
+
+  /* Border colors */
+  --border-login-color: var(--pure-0);
+  --border-card-color: var(--pure-0);
+
+/* Background colors */
+  --background: var(--pure-100);
+  --background-rgb: var(--background-dark-rgb);
+
+  --background-light: var(--gray-warm-90);
+  --background-light-rgb: var(--gray-warm-90-rgb);
+
+  --background-alternative: var(--gray-cool-80);
+  --background-alternative-rgb: var(--gray-cool-80-rgb);
+
+  /* Text colors high */
+  --secondary-text-color-high: var(--color-secondary-07);
+
+  --border-color: var(--gray-cool-60);
+  --border-color-alternative: var(--gray-cool-50);
+
+  --color: var(--color-dark);
+  --color-rgb: var(--color-dark-rgb);
+
+  --color-light: var(--pure-0);
+  --color-light-rgb: var(--pure-0-rgb);
+
+  --interactive: var(--interactive-dark);
+  --interactive-rgb: var(--interactive-dark-rgb);
+
+  --hover: var(--hover-dark);
+  --pressed: var(--pressed-dark);
+
+  --focus-color: var(--focus-color-dark);
+
+  --visited: var(--visited-dark);
+
+  --off: var(--gray-cool-60);
+  --off-rgb: var(--gray-cool-60-rgb);
+
+  --on: var(--blue-warm-vivid-30);
+  --on-rgb: var(--blue-warm-vivid-30-rgb);
+
+  --active: var(--blue-warm-vivid-40);
+  --active-rgb: var(--blue-warm-vivid-40-rgb);
+
+
+ 
+  --background-gray: var(--gray-warm-90);
+}
+
+[data-theme="dark"] .br-header {
+    background: var(--background-light);
+}
+
+[data-theme="dark"] .br-button.is-primary, [data-theme="dark"] .br-button.primary, [data-theme="dark"] .br-button[primary] {
+    --interactive-rgb: var(--color-dark-rgb) !important;
+    background-color: var(--interactive-dark) !important;
+    color: var(--pure-100) !important;
+}
+
+[data-theme="dark"] .br-select button {
+    color: var(--pure-0);
+}
+
+[data-theme="dark"] .br-message .content{
+    color: var(--color-secondary-08) 
+}
+
+
+
+
