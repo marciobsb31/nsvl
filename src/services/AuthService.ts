@@ -9,7 +9,7 @@ export interface AuthTokenResponse {
  * AuthService — encapsula todas as chamadas de autenticação GOV.BR.
  *
  * Fluxo OAuth2/OIDC com PKCE:
- *   1. getRedirectUrl()  → chama GET /api/auth/redirect → recebe URL do GOV.BR
+ *   1. getRedirectUrl()  → chama GET /api/auth/url → recebe URL do GOV.BR
  *   2. (browser redireciona ao GOV.BR, usuário autentica)
  *   3. GOV.BR chama de volta GET /api/auth/redirect?code=X&state=Y (backend)
  *   4. Backend processa o callback e redireciona para FRONTEND_URL/login#govbr_login_code=ABC
@@ -21,7 +21,7 @@ const AuthService = {
      * O backend gera state/nonce/PKCE, armazena em cache e retorna a URL completa.
      */
     async getRedirectUrl(): Promise<string> {
-        const { data } = await api.get<{ url?: string } | string>('/auth/redirect')
+        const { data } = await api.get<{ url?: string } | string>('/auth/url')
         const url = typeof data === 'string' ? data : data?.url
         if (!url) {
             throw new Error('URL de autenticação GOV.BR não disponível.')

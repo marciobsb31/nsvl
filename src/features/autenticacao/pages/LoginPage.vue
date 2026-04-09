@@ -46,6 +46,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import api from '@/services/ApiService'
+import AuthService from '@/services/AuthService'
 import PublicLayout from '@/layouts/PublicLayout.vue'
 
 defineOptions({ name: 'LoginPage' })
@@ -64,11 +65,7 @@ async function entrarComGovBr() {
   carregandoGovBr.value = true
   erro.value = ''
   try {
-    const { data } = await api.get<{ url?: string } | string>('/auth/redirect')
-    const url = typeof data === 'string' ? data : data?.url
-    if (!url) {
-      throw new Error('URL de autenticação GOV.BR não disponível.')
-    }
+    const url = await AuthService.getRedirectUrl()
     window.location.href = url
   } catch {
     erro.value = 'Login GOV.BR indisponível neste ambiente no momento.'
