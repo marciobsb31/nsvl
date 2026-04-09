@@ -534,6 +534,38 @@ class SolicitacaoCadastroServiceTest extends TestCase
     }
 
     #[Test]
+    public function ativar_perfil_desativa_o_anterior_para_respeitar_um_unico_ativo_por_usuario(): void
+    {
+        $service = app(SolicitacaoCadastroService::class);
+        $operador = $this->usuarioPorSub('teste-federal-001');
+        $solicitacao = $this->solicitacaoPorCpfEStatus('11122233344', StatusSolicitacao::APROVADO);
+        $usuarioId = SolicitacaoCadastro::query()->findOrFail($solicitacao->id)->user_id;
+
+        $perfilAtivo = PerfilUsuario::query()
+            ->where('usuario_id', $usuarioId)
+            ->where('ativo', true)
+            ->firstOrFail();
+
+        $perfilInativo = PerfilUsuario::query()
+            ->where('usuario_id', $usuarioId)
+            ->where('id', '!=', $perfilAtivo->id)
+            ->where('ativo', false)
+            ->firstOrFail();
+
+        $service->ativarPerfil($operador, $solicitacao->id, $perfilInativo->id);
+
+        $perfilAtivo->refresh();
+        $perfilInativo->refresh();
+
+        $this->assertFalse($perfilAtivo->ativo);
+        $this->assertTrue($perfilInativo->ativo);
+        $this->assertSame(1, PerfilUsuario::query()
+            ->where('usuario_id', $usuarioId)
+            ->where('ativo', true)
+            ->count());
+    }
+
+    #[Test]
     public function listar_aplica_filtros_textuais_e_de_catalogo(): void
     {
         $service = app(SolicitacaoCadastroService::class);

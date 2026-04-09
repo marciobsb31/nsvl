@@ -471,11 +471,11 @@ class SolicitacaoCadastroService
 
         $this->audit->log('gerenciar_cadastros.perfil_ativado', $user->id, [
             'solicitacao_id'    => $solicitacao->id,
-            'perfil_usuario_id' => $vinculo->id,
+            'perfil_usuario_id' => $perfilUsuarioId,
             'usuario_id'        => $usuarioSolicitante->id,
-        ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $vinculo->id);
+        ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $perfilUsuarioId);
 
-        return ['message' => 'Perfil vinculado ativado com sucesso.', 'data' => ['id' => $vinculo->id]];
+        return ['message' => 'Perfil vinculado ativado com sucesso.', 'data' => ['id' => $perfilUsuarioId]];
     }
 
     // ------------------------------------------------------------------
@@ -548,8 +548,6 @@ class SolicitacaoCadastroService
                 'perfil_id' => ['Este perfil já está vinculado ao usuário.'],
             ]);
         }
-
-        PerfilUsuario::where('usuario_id', $usuarioSolicitante->id)->update(['ativo' => false]);
 
         $vinculo = PerfilUsuario::create([
             'usuario_id'           => $usuarioSolicitante->id,
