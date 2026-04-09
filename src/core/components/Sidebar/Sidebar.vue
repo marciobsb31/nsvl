@@ -28,7 +28,7 @@
             :title="item.titulo"
           >
             <i :class="['fas', item.icone, 'sidebar__icon']" aria-hidden="true"></i>
-            <span v-if="!recolhido" class="sidebar__texto">{{ item.titulo }}</span>
+            <span v-if="!recolhido || aberto" class="sidebar__texto">{{ item.titulo }}</span>
           </router-link>
         </template>
         <span v-if="menusVisiveis.length" class="sidebar__divisor" aria-hidden="true"></span>
@@ -41,7 +41,7 @@
           aria-label="Sair"
         >
           <i class="fas fa-sign-out-alt sidebar__icon" aria-hidden="true"></i>
-          <span v-if="!recolhido" class="sidebar__texto">{{ saindo ? 'Saindo...' : 'Sair' }}</span>
+          <span v-if="!recolhido || aberto" class="sidebar__texto">{{ saindo ? 'Saindo...' : 'Sair' }}</span>
         </button>
       </nav>
     </div>

@@ -18,7 +18,7 @@
             <button
               type="button"
               class="br-button secondary block login-govbr__button"
-              :disabled="carregandoGovBr"
+              :disabled="carregandoGovBr || !govBrDisponivel"
               aria-label="Entrar com GOV.BR"
               @click="entrarComGovBr"
             >
@@ -29,7 +29,7 @@
           <button
             type="button"
             class="br-button success block mt-3 login-register-button"
-            :disabled="carregandoGovBr"
+            :disabled="carregandoGovBr || !govBrDisponivel"
             aria-label="Solicitar cadastro"
             @click="entrarComGovBr"
           >
@@ -54,14 +54,25 @@ defineOptions({ name: 'LoginPage' })
 const router = useRouter()
 const authStore = useAuthStore()
 
+const govBrDisponivel = String(import.meta.env.VITE_GOVBR_ENABLED ?? 'true').toLowerCase() === 'true'
 const carregandoGovBr = ref(false)
 const erro = ref('')
 
 onMounted(() => {
+  if (!govBrDisponivel) {
+    erro.value = 'Login GOV.BR indisponível neste ambiente no momento.'
+    return
+  }
+
   processarRetornoGovBr()
 })
 
 async function entrarComGovBr() {
+  if (!govBrDisponivel) {
+    erro.value = 'Login GOV.BR indisponível neste ambiente no momento.'
+    return
+  }
+
   carregandoGovBr.value = true
   erro.value = ''
   try {

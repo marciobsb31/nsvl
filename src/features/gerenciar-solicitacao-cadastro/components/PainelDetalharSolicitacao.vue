@@ -202,8 +202,8 @@
       </div>
     </div>
 
-    <!-- Perfis Vinculados — visível quando solicitação aprovada -->
-    <div v-if="detalhe?.status === 'aprovado'" class="painel-secao perfis-vinculados-secao">
+    <!-- Perfis Vinculados -->
+    <div v-if="detalhe" class="painel-secao perfis-vinculados-secao">
       <div class="perfis-vinculados-header">
         <div>
           <h3 class="perfis-vinculados-titulo">Perfis vinculados</h3>
@@ -214,7 +214,11 @@
       </div>
       <div v-if="!temPerfisVinculados" class="perfis-vinculados-vazio">
         <i class="fas fa-users fa-2x mb-2" aria-hidden="true"></i>
-        <p>Nenhum perfil vinculado. Clique em <strong>Adicionar Perfil</strong> para vincular um novo perfil ao usuário.</p>
+        <p>
+          {{ detalhe?.status === 'aprovado'
+            ? 'Nenhum perfil vinculado. Clique em Adicionar Perfil para vincular um novo perfil ao usuário.'
+            : 'Nenhum perfil vinculado para este solicitante.' }}
+        </p>
       </div>
       <div v-else-if="!isMobile" class="table-responsive">
         <table class="br-table tabela-perfis" role="table">
@@ -274,8 +278,8 @@
               <td>{{ formatarDataExibicao(p.vigencia_inicio) }}</td>
               <td>{{ formatarDataExibicao(p.vigencia_fim) }}</td>
               <td>
-                <span class="br-tag" :class="p.vigente ? 'success' : 'danger'">
-                  {{ p.vigente ? 'Ativo' : 'Inativo' }}
+                <span class="br-tag" :class="p.ativo ? 'success' : 'danger'">
+                  {{ p.ativo ? 'Ativo' : 'Inativo' }}
                 </span>
               </td>
               <td>{{ p.esfera }}</td>
@@ -287,9 +291,9 @@
                 <button
                   class="br-button secondary small"
                   type="button"
-                  @click="$emit('toggle-perfil', { perfilUsuarioId: p.id, acao: p.vigente ? 'desativar' : 'ativar' })"
+                  @click="$emit('toggle-perfil', { perfilUsuarioId: p.perfil_usuario_id, acao: p.ativo ? 'desativar' : 'ativar' })"
                 >
-                  {{ p.vigente ? 'Desativar' : 'Ativar' }}
+                  {{ p.ativo ? 'Desativar' : 'Ativar' }}
                 </button>
               </td>
             </tr>
@@ -304,8 +308,8 @@
         </div>
         <div class="col-4 mb-1">
           <label for="vigente">Status</label><br>
-          <span class="br-tag" :class="p.vigente ? 'success' : 'danger'">
-            {{ p.vigente ? 'Ativo' : 'Inativo' }}
+          <span class="br-tag" :class="p.ativo ? 'success' : 'danger'">
+            {{ p.ativo ? 'Ativo' : 'Inativo' }}
           </span>
         </div>
         <div class="col-4 mb-1">
@@ -340,9 +344,9 @@
           <button
                   class="br-button secondary small block"
                   type="button"
-                  @click="$emit('toggle-perfil', { perfilUsuarioId: p.id, acao: p.vigente ? 'desativar' : 'ativar' })"
+                  @click="$emit('toggle-perfil', { perfilUsuarioId: p.perfil_usuario_id, acao: p.ativo ? 'desativar' : 'ativar' })"
                 >
-                  {{ p.vigente ? 'Desativar' : 'Ativar' }}
+                  {{ p.ativo ? 'Desativar' : 'Ativar' }}
                 </button>
         </div>
         <div class="col-12">
@@ -356,7 +360,7 @@
         v-model:pageSize="itensPorPaginaPerfis"
         :total-items="perfisVinculadosOrdenados.length"
       />
-      <div class="perfis-vinculados-acoes">
+      <div v-if="detalhe?.status === 'aprovado'" class="perfis-vinculados-acoes">
         <button
           class="br-button primary small"
           type="button"
@@ -371,7 +375,7 @@
 
     <!-- Modal Adicionar Perfil -->
     <Modal
-      v-if="modalAdicionarPerfilVisivel"
+      v-if="modalAdicionarPerfilVisivel && detalhe?.status === 'aprovado'"
       title="Adicionar Perfil"
       :show-actions="false"
       @close="fecharModalAdicionarPerfil"
@@ -514,7 +518,11 @@ const vigenciaInicio = ref('')
 const vigenciaFim = ref('')
 const { opcoesPerfil, carregarPerfis } = usePerfis()
 
-type PerfilVinculadoExibicao = PerfilVinculado & { id: number }
+type PerfilVinculadoExibicao = PerfilVinculado & {
+  id: number
+  perfil_usuario_id: number
+  ativo: boolean
+}
 type ColunaOrdenacao =
   | 'perfil'
   | 'vigencia_inicio'
@@ -531,7 +539,9 @@ const perfisVinculadosLista = computed<PerfilVinculadoExibicao[]>(() => {
   const raw = props.detalhe?.perfis_vinculados
   if (!Array.isArray(raw) || raw.length === 0) return []
   return raw.map((p, i) => ({
-    id: p.id ?? (props.detalhe?.id ?? 0) * 1000 + i,
+    id: (props.detalhe?.id ?? 0) * 1000 + i,
+    perfil_usuario_id: p.perfil_usuario_id ?? p.id ?? (props.detalhe?.id ?? 0) * 1000 + i,
+    ativo: Boolean(p.ativo ?? p.vigente),
     perfil: p.perfil ?? '—',
     vigencia_inicio: p.vigencia_inicio ?? '—',
     vigencia_fim: p.vigencia_fim ?? '—',
@@ -770,7 +780,7 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
     case 'vigencia_fim':
       return normalizarData(a.vigencia_fim) - normalizarData(b.vigencia_fim)
     case 'vigente':
-      return Number(a.vigente) - Number(b.vigente)
+      return Number(a.ativo) - Number(b.ativo)
     case 'perfil':
     case 'esfera':
     case 'uf':

@@ -9,6 +9,8 @@ export interface SolicitacaoCadastroItem {
 
 export interface PerfilVinculado {
   id: number
+  perfil_usuario_id?: number
+  ativo?: boolean
   perfil: string
   vigencia_inicio: string
   vigencia_fim: string

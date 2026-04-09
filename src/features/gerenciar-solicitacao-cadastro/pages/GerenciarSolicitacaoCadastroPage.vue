@@ -10,11 +10,7 @@
         </template>
       </HeaderPage>
         
-      <div v-if="contextoAtualLabel" class="contexto-banner" role="status" aria-live="polite">
-        <i class="fas fa-shield-alt contexto-banner__icon" aria-hidden="true"></i>
-        <span class="contexto-banner__label">Contexto ativo:</span>
-        <strong class="contexto-banner__valor">{{ contextoAtualLabel }}</strong>
-      </div>
+          <Contexto />
 
       <Card custom-class="mb-4">
         <FiltrosGerenciarSolicitacao
@@ -27,7 +23,7 @@
 
       <Card custom-class="mb-4" v-if="!isMobile">
 
-        <div v-if="carregando" class="br-loading p-4" role="status" aria-live="polite">
+        <div v-if="carregando" class="loading-container" role="status" aria-live="polite">
           <div class="loading-spinner" aria-hidden="true"></div>
           <p class="mt-2">Carregando solicitações...</p>
         </div>
@@ -42,14 +38,14 @@
           <table class="br-table tabela-solicitacoes" role="table">
             <thead>
               <tr>
-                <th scope="col" class="th-bold" :aria-sort="obterAriaSort('nome')">
-                  <button class="th-sort-btn" type="button" @click="ordenarPor('nome')">
-                    Nome completo <span class="th-sort-icon">{{ obterIndicadorSort('nome') }}</span>
-                  </button>
-                </th>
                 <th scope="col" class="th-bold" :aria-sort="obterAriaSort('cpf')">
                   <button class="th-sort-btn" type="button" @click="ordenarPor('cpf')">
                     CPF <span class="th-sort-icon">{{ obterIndicadorSort('cpf') }}</span>
+                  </button>
+                </th>
+                <th scope="col" class="th-bold" :aria-sort="obterAriaSort('nome')">
+                  <button class="th-sort-btn" type="button" @click="ordenarPor('nome')">
+                    Nome completo <span class="th-sort-icon">{{ obterIndicadorSort('nome') }}</span>
                   </button>
                 </th>
                 <th scope="col" class="th-bold" :aria-sort="obterAriaSort('esfera')">
@@ -161,16 +157,15 @@
 
       <Transition name="painel-fade">
         <div
-          v-if="(painelCadastroAberto && !isPerfilCliente) || painelDetalharAberto"
+          v-if="painelCadastroAberto || painelDetalharAberto"
           class="painel-overlay"
           aria-hidden="true"
           @click="fecharPainelAberto"
         ></div>
       </Transition>
-      <!-- Reativar painel para Cliente: v-if="painelCadastroAberto" (remover && !isPerfilCliente aqui e no overlay acima). -->
       <Transition name="painel-slide">
         <aside
-          v-if="painelCadastroAberto && !isPerfilCliente"
+          v-if="painelCadastroAberto"
           ref="painelCadastroRef"
           class="painel-cadastro"
           aria-label="Formulário cadastrar usuário"
@@ -228,6 +223,7 @@ import { useAuth } from '@/core/composables/useAuth'
 import HeaderPage from '@/core/components/HeaderPage/HeaderPage.vue'
 import { BrButton } from '@govbr-ds/webcomponents-vue'
 import { useBreakpoint } from '@/core/composables/useBreakpoint'
+import Contexto from '@/core/components/Contexto/Contexto.vue'
 
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
@@ -235,17 +231,6 @@ const { error, success } = useNotification()
 const { isMobile } = useBreakpoint()
 
 const { user, contextKey, perfilAtivo } = useAuth()
-
-/**
- * Perfil cujo cadastro via painel está temporariamente desligado (botão visível, sem ação).
- * Reativar para perfil Cliente: apague isPerfilCliente, onCliqueCadastrarUsuario e watch(isPerfilCliente);
- * no botão use @click="abrirPainelCadastro"; no overlay/aside de cadastro use só painelCadastroAberto
- * (remova && !isPerfilCliente e ajuste :class da section).
- */
-const isPerfilCliente = computed(() => {
-  const nome = perfilAtivo.value?.nome?.trim().toLowerCase()
-  return nome === 'cliente'
-})
 
 const solicitacoes = ref<SolicitacaoGerenciarItem[]>([])
 const carregando = ref(false)
@@ -349,11 +334,7 @@ function abrirPainelCadastro() {
   painelCadastroAberto.value = true
 }
 
-/**
- * Perfil Cliente: clique sem efeito (painel oculto). Reativar: usar @click="abrirPainelCadastro" no botão e remover este handler.
- */
 function onCliqueCadastrarUsuario() {
-  if (isPerfilCliente.value) return
   abrirPainelCadastro()
 }
 
@@ -565,31 +546,12 @@ const esferaMap: Record<string, string> = {
   municipal: 'Municipal',
 }
 
-const contextoAtualLabel = computed(() => {
-  const perfil = perfilAtivo.value
-  const esfera = user.value?.esfera_atuacao
-  const uf = user.value?.uf_lotacao
-  const municipio = user.value?.municipio_lotacao
-  if (!perfil) {
-    return esfera ? esferaMap[esfera] ?? esfera : ''
-  }
-  const partes: string[] = []
-  if (perfil.nome) partes.push(perfil.nome)
-  if (esfera) partes.push(esferaMap[esfera] ?? esfera)
-  if (uf) partes.push(uf)
-  if (municipio) partes.push(municipio)
-  return partes.join(' — ')
-})
 
 watch(contextKey, () => {
   painelCadastroAberto.value = false
   painelDetalharAberto.value = false
   detalheSelecionado.value = null
   limparEpesquisar()
-})
-
-watch(isPerfilCliente, (cliente) => {
-  if (cliente) fecharPainelCadastro()
 })
 
 onMounted(() => {
@@ -778,6 +740,15 @@ onMounted(() => {
   .painel-cadastro {
     width: 75%;
   }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 1rem;
 }
 
 .loading-spinner {
