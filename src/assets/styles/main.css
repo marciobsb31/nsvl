@@ -39,7 +39,7 @@ body {
     sans-serif;
   font-size: 1rem;
   line-height: 1.5;
-  color: var(--color-secondary-09, #333333);
+  color: var(--dark-text-color);
   background-color: var(--color-secondary-01, #f8f8f8);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
