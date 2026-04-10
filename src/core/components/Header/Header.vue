@@ -5,7 +5,7 @@
             <div class="header-top">
                 <div class="header-info">
                      <button v-if="logo" class="logo-btn" type="button" aria-label="Ir para a página inicial" @click="goToHome">
-                        <img :src="logoAtual" alt="Logo GOV" class="logo" />
+                        <img :src="logoAtual" alt="Logo novo viver sem limites" class="logo" />
                     </button>
                     <template v-else>
                         <button class="header-title text-blue-warm-vivid-70 header-title-btn" type="button" aria-label="Ir para a página inicial" @click="goToHome">{{ title }}</button>

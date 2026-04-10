@@ -102,7 +102,7 @@ async function handleSair() {
   saindo.value = true
   try {
     await logout()
-    router.push({ name: 'home' })
+    router.push({ name: 'login' })
   } finally {
     saindo.value = false
   }

@@ -138,6 +138,7 @@ const perfilAtivoLabel = computed(() => {
   return esfera ? (esferaMap[esfera] ?? esfera) : ''
 })
 
+
 const currentYear = computed(() => new Date().getFullYear())
 const logoGov = ref(logoGovColor)
 
