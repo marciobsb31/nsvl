@@ -36,14 +36,6 @@
               @click="abrirVisualizar(row)" title="Visualizar perfil">
               Visualizar
             </button>
-            <button v-if="podeEditar(row)" class="br-button secondary small btn-acao btn-acao--editar" type="button"
-              @click="abrirEditar(row)" title="Editar perfil">
-              Editar
-            </button>
-            <button class="br-button secondary small btn-acao btn-acao--historico" type="button"
-              @click="abrirHistorico(row)" title="Histórico do perfil">
-              Histórico
-            </button>
             </div> 
           </template>
         </Table>
@@ -61,8 +53,6 @@
         <PainelFormularioPerfil
           v-if="modoPainel === 'cadastrar' || modoPainel === 'editar' || modoPainel === 'visualizar'" :modo="modoPainel"
           :perfil="perfilSelecionado" @voltar="tentarFecharPainel" @sucesso="onSucessoSalvar" @dirty="onDirtyChange" />
-        <PainelHistoricoPerfil v-else-if="modoPainel === 'historico' && perfilSelecionado" :perfil="perfilSelecionado"
-          @voltar="fecharPainel" />
       </aside>
     </Transition>
 
@@ -102,16 +92,13 @@ import Table from '@/core/components/Table/Table.vue'
 import Card from '@/core/components/Card/Card.vue'
 import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
 import PainelFormularioPerfil from '../components/PainelFormularioPerfil.vue'
-import PainelHistoricoPerfil from '../components/PainelHistoricoPerfil.vue'
 import FiltrosPerfis from '../components/FiltrosPerfis.vue'
 import { computed, onMounted, ref } from 'vue'
-import { listarPerfisGerenciar, obterHierarquia, type PerfilGerenciar } from '@/services/GerenciarPerfilService'
+import { listarPerfisGerenciar, type PerfilGerenciar } from '@/services/GerenciarPerfilService'
 import { useNotification } from '@/core/composables/useNotification'
-import { useAuthStore } from '@/stores/authStore'
 
 defineOptions({ name: 'GerenciarPerfisPage' })
 const { error } = useNotification()
-const authStore = useAuthStore()
 
 const columns = [{
   key: 'nome',
@@ -143,8 +130,6 @@ const perfilSelecionado = ref<PerfilGerenciar | null>(null)
 const painelAberto = ref(false)
 const formularioDirty = ref(false)
 const confirmarSairVisivel = ref(false)
-
-const esferasPermitidas = ref<string[]>(['federal', 'estadual', 'municipal'])
 
 const ariaPainel = computed(() => {
   const map: Record<ModoPainel, string> = {
@@ -185,26 +170,14 @@ const perfisPaginados = computed(() => {
   return perfisOrdenados.value.slice(inicio, fim)
 })
 
-function podeEditar(_perfil: PerfilGerenciar): boolean {
-  const esferaUsuario = (authStore.user?.esfera_atuacao ?? 'federal').toLowerCase()
-  if (esferaUsuario === 'municipal') {
-    return false
-  }
-  return esferaUsuario === 'federal' || esferasPermitidas.value.length > 0
-}
-
 onMounted(() => carregarPerfis())
 
 async function carregarPerfis() {
   carregando.value = true
   try {
-    const [listaPerfis, hierarquia] = await Promise.all([
-      listarPerfisGerenciar(),
-      obterHierarquia(),
-    ])
+    const listaPerfis = await listarPerfisGerenciar()
     perfis.value = listaPerfis
     paginaAtual.value = 1
-    esferasPermitidas.value = hierarquia.esferas_permitidas
   } catch {
     perfis.value = []
     error('Não foi possível carregar os perfis.')
@@ -223,20 +196,6 @@ function abrirCadastrar() {
 function abrirVisualizar(p: PerfilGerenciar) {
   perfilSelecionado.value = p
   modoPainel.value = 'visualizar'
-  formularioDirty.value = false
-  painelAberto.value = true
-}
-
-function abrirEditar(p: PerfilGerenciar) {
-  perfilSelecionado.value = p
-  modoPainel.value = 'editar'
-  formularioDirty.value = false
-  painelAberto.value = true
-}
-
-function abrirHistorico(p: PerfilGerenciar) {
-  perfilSelecionado.value = p
-  modoPainel.value = 'historico'
   formularioDirty.value = false
   painelAberto.value = true
 }

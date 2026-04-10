@@ -640,7 +640,7 @@ function validarHierarquiaNoFrontend(_values: Record<string, unknown>): string |
 
 function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'municipal' | 'desconhecido' {
   const label = nome.toLowerCase()
-  if (label.includes('nacional')) return 'federal'
+  if (label.includes('federal') || label.includes('nacional')) return 'federal'
   if (label.includes('estadual')) return 'estadual'
   if (label.includes('municipal')) return 'municipal'
   return 'desconhecido'
