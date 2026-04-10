@@ -196,15 +196,11 @@ class SolicitacaoCadastroService
     {
         $cpfDigits = preg_replace('/\D/', '', $dados['CPF'] ?? '');
 
-        if (strlen($cpfDigits) !== 11 && !$user) {
-            throw ApiException::unprocessable('CPF é obrigatório para solicitação sem autenticação.');
+        if (strlen($cpfDigits) !== 11) {
+            throw ApiException::unprocessable('CPF é obrigatório e deve conter 11 dígitos.');
         }
 
-        $cpf = strlen($cpfDigits) === 11 ? $cpfDigits : ($user?->cpf ?? null);
-
-        if (!$cpf) {
-            throw ApiException::unprocessable('CPF é obrigatório.');
-        }
+        $cpf = $cpfDigits;
 
         $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
 
@@ -229,6 +225,12 @@ class SolicitacaoCadastroService
                 }
                 throw $e;
             }
+        } else {
+            // Atualizar nome e email do usuário existente com os dados do formulário
+            $usuario->update([
+                'nome'  => $dados['nome'],
+                'email' => $dados['emailInstitucional'],
+            ]);
         }
 
         $existente = SolicitacaoCadastro::where('user_id', $usuario->id)

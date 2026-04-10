@@ -72,14 +72,6 @@ class SolicitacaoCadastroRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $usuarioAutenticado = Auth::guard('sanctum')->user();
-        if ($usuarioAutenticado) {
-            $this->merge([
-                'CPF' => $usuarioAutenticado->cpf,
-                'nome' => $usuarioAutenticado->nome,
-            ]);
-        }
-
         $cpf = $this->input('CPF');
         if (is_string($cpf)) {
             $this->merge(['CPF' => preg_replace('/\D/', '', $cpf)]);

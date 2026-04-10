@@ -42,7 +42,7 @@ class SolicitacaoCadastroRequestTest extends TestCase
     }
 
     #[Test]
-    public function prepara_payload_normalizando_campos_e_sobrescrevendo_dados_do_usuario_autenticado(): void
+    public function prepara_payload_normalizando_campos_sem_sobrescrever_dados_digitados_no_fluxo_autenticado(): void
     {
         $usuario = new Usuario([
             'cpf' => '11144477735',
@@ -55,8 +55,8 @@ class SolicitacaoCadastroRequestTest extends TestCase
 
         $request = new SolicitacaoCadastroRequest();
         $request->merge([
-            'CPF' => '111.444.777-35',
-            'nome' => 'Nome Ignorado',
+            'CPF' => '999.888.777-66',
+            'nome' => 'Candidato Interno',
             'telefoneInstitucional' => '(61) 99988-7766',
             'telefonePessoal' => '',
             'uf' => ' go ',
@@ -71,8 +71,8 @@ class SolicitacaoCadastroRequestTest extends TestCase
 
         $closure();
 
-        $this->assertSame('11144477735', $request->input('CPF'));
-        $this->assertSame('Maria Federal', $request->input('nome'));
+        $this->assertSame('99988877766', $request->input('CPF'));
+        $this->assertSame('Candidato Interno', $request->input('nome'));
         $this->assertSame('61999887766', $request->input('telefoneInstitucional'));
         $this->assertNull($request->input('telefonePessoal'));
         $this->assertSame('GO', $request->input('uf'));
