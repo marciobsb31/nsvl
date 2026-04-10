@@ -306,6 +306,17 @@ class SolicitacaoCadastroService
             $destinatario = $dados['emailInstitucional'];
             Mail::to($destinatario)->send(new SolicitacaoCadastroEnviada($solicitacao));
         } catch (\Throwable $e) {
+            logger()->error('Falha ao enviar e-mail de confirmação da solicitação.', [
+                'solicitacao_id' => $solicitacao->id,
+                'destinatario' => $destinatario ?? null,
+                'mailer' => config('mail.default'),
+                'host' => config('mail.mailers.smtp.host'),
+                'port' => config('mail.mailers.smtp.port'),
+                'scheme' => config('mail.mailers.smtp.scheme'),
+                'from' => config('mail.from.address'),
+                'auth_configurada' => !empty(config('mail.mailers.smtp.username')),
+                'erro' => $e->getMessage(),
+            ]);
             report($e);
         }
 
@@ -392,6 +403,12 @@ class SolicitacaoCadastroService
                 'solicitacao_id' => $solicitacao->id,
                 'status' => $statusNome,
                 'destinatario' => $destinatario ?? null,
+                'mailer' => config('mail.default'),
+                'host' => config('mail.mailers.smtp.host'),
+                'port' => config('mail.mailers.smtp.port'),
+                'scheme' => config('mail.mailers.smtp.scheme'),
+                'from' => config('mail.from.address'),
+                'auth_configurada' => !empty(config('mail.mailers.smtp.username')),
                 'erro' => $e->getMessage(),
             ]);
             report($e);
