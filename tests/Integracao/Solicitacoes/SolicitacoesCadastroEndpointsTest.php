@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Tests\Integracao\Solicitacoes;
 
@@ -28,7 +28,7 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'disponivel' => false,
-                'mensagem' => 'Este CPF já possui perfil ativo no sistema.',
+                'mensagem' => 'Este CPF jÃ¡ possui perfil ativo no sistema.',
             ]);
     }
 
@@ -51,7 +51,7 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'disponivel' => false,
-                'mensagem' => 'Já existe uma solicitação em análise para este CPF.',
+                'mensagem' => 'JÃ¡ existe uma solicitaÃ§Ã£o em anÃ¡lise para este CPF.',
             ]);
     }
 
@@ -68,7 +68,7 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             'telefonePessoal' => '61988776655',
             'esferaAtuacao' => 'federal',
             'uf' => 'DF',
-            'municipio' => 'Brasília',
+            'municipio' => 'BrasÃ­lia',
             'orgao' => 'Ministerio de Testes',
             'cargo' => 'Analista',
         ]);
@@ -102,10 +102,10 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             'telefonePessoal' => '61988776655',
             'esferaAtuacao' => 'federal',
             'uf' => 'DF',
-            'municipio' => 'Brasília',
+            'municipio' => 'BrasÃ­lia',
             'orgao' => 'Ministerio de Testes',
             'cargo' => 'Analista',
-            'perfilId' => $this->perfilPorNome('Gestor Nacional')->id,
+            'perfilId' => $this->perfilPorNome('Gestor Federal')->id,
             'vigenciaInicio' => now()->toDateString(),
         ]);
 
@@ -252,27 +252,28 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
 
         $this->getJson('/api/solicitacoes-cadastro/999999')
             ->assertNotFound()
-            ->assertJsonPath('message', 'Solicitação não encontrada.');
+            ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $this->patchJson('/api/solicitacoes-cadastro/999999', [
             'status' => 'aprovado',
-            'perfil_id' => $this->perfilPorNome('Gestor Nacional')->id,
+            'perfil_id' => $this->perfilPorNome('Gestor Federal')->id,
             'vigencia_inicio' => now()->toDateString(),
         ])->assertNotFound()
-            ->assertJsonPath('message', 'Solicitação não encontrada.');
+            ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $this->patchJson('/api/solicitacoes-cadastro/999999/perfis/1/ativar')
             ->assertNotFound()
-            ->assertJsonPath('message', 'Solicitação não encontrada.');
+            ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $this->patchJson('/api/solicitacoes-cadastro/999999/perfis/1/desativar')
             ->assertNotFound()
-            ->assertJsonPath('message', 'Solicitação não encontrada.');
+            ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $this->postJson('/api/solicitacoes-cadastro/999999/perfis', [
             'perfil_id' => $this->perfilPorNome('Administrador Municipal')->id,
             'vigencia_inicio' => now()->toDateString(),
         ])->assertNotFound()
-            ->assertJsonPath('message', 'Solicitação não encontrada.');
+            ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
     }
 }
+

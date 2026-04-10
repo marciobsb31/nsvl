@@ -11,8 +11,9 @@ class PerfilTest extends TestCase
     #[Test]
     public function retorna_indice_no_catalogo_oficial(): void
     {
-        $this->assertSame(0, Perfil::indiceNoCatalogo('Gestor Nacional'));
+        $this->assertSame(0, Perfil::indiceNoCatalogo('Gestor Federal'));
         $this->assertSame(5, Perfil::indiceNoCatalogo('Administrador Municipal'));
+        $this->assertSame(7, Perfil::indiceNoCatalogo('Visitante Municipal'));
     }
 
     #[Test]

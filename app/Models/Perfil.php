@@ -23,12 +23,14 @@ class Perfil extends Model
      * @var list<string>
      */
     public const CATALOGO_OFICIAL = [
-        'Gestor Nacional',
+        'Gestor Federal',
         'Gestor Estadual',
         'Gestor Municipal',
-        'Administrador Nacional',
         'Administrador Estadual',
         'Administrador Municipal',
+        'Visitante Federal',
+        'Visitante Estadual',
+        'Visitante Municipal',
     ];
 
     public static function indiceNoCatalogo(string $nome): int
