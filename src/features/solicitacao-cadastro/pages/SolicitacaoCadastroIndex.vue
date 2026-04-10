@@ -14,11 +14,6 @@
           </p>
         </header>
 
-        <div v-if="modoGovBr" class="br-message info solicitacao-govbr-msg" role="status">
-          <div class="content">
-            <strong>Dados do GOV.BR:</strong> nome e CPF foram obtidos na autenticação e não podem ser alterados.
-          </div>
-        </div>
 
         <Form
           v-slot="{ values: formValues, meta: formMeta }"
@@ -31,7 +26,7 @@
         >
           <Card
             title="Dados do(a) solicitante"
-            subtitle="Nome e CPF são obtidos do GOV.BR, não permitem edição e devem permanecer com fundo cinza."
+            subtitle="Dados do GOV.BR: nome e CPF foram obtidos na autenticação e não podem ser alterados."
             custom-class="solicitacao-card solicitacao-card--first"
           >
             <FormularioDadosSolicitante :modo-gov-br="modoGovBr" />

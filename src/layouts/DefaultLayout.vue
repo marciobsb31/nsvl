@@ -78,7 +78,7 @@
     />
 
     <Footer inverted>
-      
+
       <template #info>
         <div v-if="isMobile" class="mt-3">
           <img :src="logoGov" alt="Logo GOV" class="logo-gov" />
@@ -88,6 +88,8 @@
         </div>
       </template>
     </Footer>
+
+    <ScrollToTop />
   </div>
 </template>
 
@@ -104,6 +106,7 @@ import logoGovColor from '@/assets/images/logo/mdh_com_gov.png'
 import logoGovBranca from '@/assets/images/logo/mdh_com_gov_branca.png'
 import { useTheme } from '@/core/composables/useTheme'
 import Breadcrumb from '@/core/components/Breadcrumb/Breadcrumb.vue'
+import ScrollToTop from '@/core/components/ScrollToTop/ScrollToTop.vue'
 
 const { isMobile } = useBreakpoint()
 const mainRef = ref<HTMLElement | null>(null)
@@ -156,6 +159,8 @@ watch(isMobile, (mobile) => {
 watch(sidebarRecolhido, (v) => {
   localStorage.setItem('nvsl_sidebar_recolhido', String(v))
 })
+
+
 </script>
 
 <style scoped>
@@ -192,7 +197,7 @@ watch(sidebarRecolhido, (v) => {
 
 .layout-menu-toggle {
   position: fixed;
-  bottom: 1.5rem;
+  bottom: 9rem;
   right: 1.5rem;
   z-index: 998;
   width: 48px;

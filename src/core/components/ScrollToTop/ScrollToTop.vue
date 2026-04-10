@@ -82,7 +82,7 @@ onUnmounted(() => {
 <style scoped>
 .scroll-to-top {
   position: fixed;
-  bottom: 1.5rem;
+  bottom: 3.5rem;
   right: 1.5rem;
   z-index: 996;
   width: 44px;
