@@ -9,7 +9,7 @@
           </br-button>
         </template>
       </HeaderPage>
-        
+
           <Contexto />
 
       <Card custom-class="mb-4">
@@ -34,7 +34,7 @@
           <p v-if="jaListou" class="small">Ajuste os filtros ou cadastre uma nova solicitação.</p>
         </div>
 
-        <div v-else class="table-responsive">
+        <div v-else class="table-responsive" >
           <table class="br-table tabela-solicitacoes" role="table">
             <thead>
               <tr>
@@ -110,7 +110,7 @@
           v-model:pageSize="itensPorPagina"
           :total-items="solicitacoesOrdenadas.length"
         />
-        
+
       </Card>
       <Card custom-class="mb-4" v-if="isMobile && solicitacoesPaginadas.length > 0">
         <div class="row table-mobile" v-for="s in solicitacoesPaginadas" :key="s.id">
@@ -782,6 +782,10 @@ onMounted(() => {
   to {
     transform: rotate(360deg);
   }
+}
+
+.table-responsive {
+  overflow-x: auto;
 }
 
 .tabela-solicitacoes th.th-bold {
