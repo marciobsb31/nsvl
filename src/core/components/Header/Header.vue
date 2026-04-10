@@ -54,17 +54,21 @@ const { setMode, mode } = useTheme()
 defineOptions({
     name: 'HeaderComponent'
 });
-defineProps({
+const props = defineProps({
     title: String,
     subtitle: String,
     logoGov: {
+        type: String,
+        required: false
+    },
+    redirectUrl: {
         type: String,
         required: false
     }
 });
 
 const goToHome = () => {
-    window.location.href = '/';
+    window.location.href = props.redirectUrl || '/';
 };
 
 const toggleTheme = () => {

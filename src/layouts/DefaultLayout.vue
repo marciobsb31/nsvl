@@ -6,6 +6,7 @@
       title="NVSL"
       subtitle="Sistema de Gestão"
       :logoGov="logoGov"
+      redirectUrl="/gerenciar-cadastros"
     >
       <template #actions v-if="isAuthenticated">
         <div class="header-user">
