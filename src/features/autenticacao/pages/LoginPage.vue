@@ -124,7 +124,7 @@ async function processarRetornoGovBr() {
     )
     sessionStorage.setItem('nvsl_token', data.token)
     authStore.setUser(data.user)
-    await router.replace({ name: 'gerenciar-cadastros' })
+    await router.replace({ name: 'home' })
   } catch (e: unknown) {
     const res = (e as { response?: { data?: { message?: string } } })?.response
     erro.value = res?.data?.message ?? 'Falha ao concluir a autenticação com GOV.BR.'
