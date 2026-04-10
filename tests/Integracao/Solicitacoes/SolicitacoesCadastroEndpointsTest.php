@@ -89,6 +89,51 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
     }
 
     #[Test]
+    public function cria_solicitacao_interna_com_cpf_do_formulario_sem_sobrescrever_com_usuario_logado(): void
+    {
+        $operador = $this->autenticarComoFederal();
+        $cpfFormulario = Usuario::factory()->make()->cpf;
+
+        $response = $this->postJson('/api/solicitacoes-cadastro', [
+            'nome' => 'Novo Cadastrado Interno',
+            'CPF' => $cpfFormulario,
+            'emailInstitucional' => 'novo.interno@teste.gov.br',
+            'telefoneInstitucional' => '61999887766',
+            'telefonePessoal' => '61988776655',
+            'esferaAtuacao' => 'federal',
+            'uf' => 'DF',
+            'municipio' => 'Brasília',
+            'orgao' => 'Ministerio de Testes',
+            'cargo' => 'Analista',
+            'perfilId' => $this->perfilPorNome('Gestor Nacional')->id,
+            'vigenciaInicio' => now()->toDateString(),
+        ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonStructure(['message', 'solicitacao_id']);
+
+        $this->assertNotSame($operador->cpf, $cpfFormulario);
+
+        $this->assertDatabaseHas('usuarios', [
+            'cpf' => $cpfFormulario,
+            'nome' => 'Novo Cadastrado Interno',
+        ]);
+
+        $this->assertDatabaseHas('solicitacoes_cadastro', [
+            'email_institucional' => 'novo.interno@teste.gov.br',
+            'orgao' => 'Ministerio de Testes',
+        ]);
+
+        $solicitacaoId = (int) $response->json('solicitacao_id');
+        $usuarioDaSolicitacao = SolicitacaoCadastro::query()->findOrFail($solicitacaoId)->user;
+
+        $this->assertNotNull($usuarioDaSolicitacao);
+        $this->assertSame($cpfFormulario, $usuarioDaSolicitacao->cpf);
+        $this->assertNotSame($operador->id, $usuarioDaSolicitacao->id);
+    }
+
+    #[Test]
     public function lista_solicitacoes_visiveis_para_operador_federal(): void
     {
         $this->autenticarComoFederal();
