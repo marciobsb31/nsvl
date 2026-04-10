@@ -38,7 +38,7 @@
                 type="text"
                 maxlength="100"
                 :disabled="somenteLeitura || salvando"
-                placeholder="Ex: Gestor Nacional..."
+                placeholder="Ex: Gestor Federal..."
                 :aria-invalid="!!erros.nome"
                 aria-describedby="pf-nome-err"
               />

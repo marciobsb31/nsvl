@@ -12,12 +12,14 @@ export interface PerfilOption {
 }
 
 const PERFIS_PERMITIDOS_ORDEM = [
-  'Administrador Nacional',
-  'Administrador Estadual',
-  'Administrador Municipal',
-  'Gestor Nacional',
+  'Gestor Federal',
   'Gestor Estadual',
   'Gestor Municipal',
+  'Administrador Estadual',
+  'Administrador Municipal',
+  'Visitante Federal',
+  'Visitante Estadual',
+  'Visitante Municipal',
 ] as const
 
 /**

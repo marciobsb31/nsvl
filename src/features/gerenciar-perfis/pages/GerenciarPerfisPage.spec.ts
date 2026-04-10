@@ -6,11 +6,9 @@ import { useAuthStore } from '@/stores/authStore'
 import type { PerfilGerenciar } from '@/services/GerenciarPerfilService'
 
 const listarPerfisGerenciar = vi.fn()
-const obterHierarquia = vi.fn()
 
 vi.mock('@/services/GerenciarPerfilService', () => ({
   listarPerfisGerenciar: (...args: unknown[]) => listarPerfisGerenciar(...args),
-  obterHierarquia: (...args: unknown[]) => obterHierarquia(...args),
 }))
 
 const errorMock = vi.fn()
@@ -94,10 +92,6 @@ describe('GerenciarPerfisPage (/gerenciar-perfis)', () => {
     setupAuth('federal')
     vi.clearAllMocks()
     listarPerfisGerenciar.mockResolvedValue([])
-    obterHierarquia.mockResolvedValue({
-      esfera_usuario: 'federal',
-      esferas_permitidas: ['federal', 'estadual', 'municipal'],
-    })
   })
 
   afterEach(() => {
@@ -111,16 +105,14 @@ describe('GerenciarPerfisPage (/gerenciar-perfis)', () => {
     expect(w.find('[aria-label="Cadastrar novo perfil"]').exists()).toBe(true)
   })
 
-  it('ao montar carrega perfis e hierarquia', async () => {
+  it('ao montar carrega perfis', async () => {
     mountPage()
     await flushPromises()
     expect(listarPerfisGerenciar).toHaveBeenCalledWith()
-    expect(obterHierarquia).toHaveBeenCalled()
   })
 
   it('mostra estado de carregamento enquanto a API não responde', async () => {
     listarPerfisGerenciar.mockImplementation(() => new Promise(() => {}))
-    obterHierarquia.mockImplementation(() => new Promise(() => {}))
     const w = mountPage()
     await w.vm.$nextTick()
     expect(w.text()).toContain('Carregando perfis')
@@ -184,41 +176,12 @@ describe('GerenciarPerfisPage (/gerenciar-perfis)', () => {
     expect(w.find('[data-testid="form-modo"]').text()).toBe('visualizar')
   })
 
-  it('abre painel em modo editar quando usuário pode editar', async () => {
-    listarPerfisGerenciar.mockResolvedValue([perfilBase()])
-    const w = mountPage()
-    await flushPromises()
-    await w.find('.btn-acao--editar').trigger('click')
-    await w.vm.$nextTick()
-    expect(w.find('[data-testid="form-modo"]').text()).toBe('editar')
-  })
-
-  it('não exibe botão Editar para usuário municipal', async () => {
-    setupAuth('municipal')
+  it('não exibe botões Editar e Histórico na listagem', async () => {
     listarPerfisGerenciar.mockResolvedValue([perfilBase()])
     const w = mountPage()
     await flushPromises()
     expect(w.find('.btn-acao--editar').exists()).toBe(false)
-  })
-
-  it('abre painel de histórico', async () => {
-    listarPerfisGerenciar.mockResolvedValue([perfilBase()])
-    const w = mountPage()
-    await flushPromises()
-    await w.find('.btn-acao--historico').trigger('click')
-    await w.vm.$nextTick()
-    expect(w.find('[data-testid="painel-hist"]').exists()).toBe(true)
-  })
-
-  it('fecha painel histórico ao voltar', async () => {
-    listarPerfisGerenciar.mockResolvedValue([perfilBase()])
-    const w = mountPage()
-    await flushPromises()
-    await w.find('.btn-acao--historico').trigger('click')
-    await w.vm.$nextTick()
-    await w.find('[data-testid="hist-voltar"]').trigger('click')
-    await w.vm.$nextTick()
-    expect(w.find('[data-testid="painel-hist"]').exists()).toBe(false)
+    expect(w.find('.btn-acao--historico').exists()).toBe(false)
   })
 
   it('ao salvar com sucesso fecha painel e recarrega lista', async () => {
@@ -236,7 +199,6 @@ describe('GerenciarPerfisPage (/gerenciar-perfis)', () => {
 
   it('chama error quando falha ao carregar perfis', async () => {
     listarPerfisGerenciar.mockRejectedValue(new Error('fail'))
-    obterHierarquia.mockResolvedValue({ esfera_usuario: 'federal', esferas_permitidas: ['federal'] })
     mountPage()
     await flushPromises()
     expect(errorMock).toHaveBeenCalledWith('Não foi possível carregar os perfis.')
