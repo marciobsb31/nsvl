@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: 'Sistema')]
@@ -42,11 +42,11 @@ class HealthController extends Controller
             'cache'    => $this->checkCache(),
         ];
 
-        $allOk  = !in_array('error', $checks, true);
+        $allOk = ! in_array('error', $checks, true);
         $status = $allOk ? 200 : 503;
 
         return response()->json(array_merge(
-            ['status'  => $allOk ? 'ok' : 'degraded'],
+            ['status' => $allOk ? 'ok' : 'degraded'],
             $checks,
             ['version' => config('app.version', '1.0.0')],
         ), $status);
@@ -56,6 +56,7 @@ class HealthController extends Controller
     {
         try {
             DB::connection()->getPdo();
+
             return 'ok';
         } catch (\Exception) {
             return 'error';
@@ -67,6 +68,7 @@ class HealthController extends Controller
         try {
             Cache::put('health_check', true, 5);
             Cache::forget('health_check');
+
             return 'ok';
         } catch (\Exception) {
             return 'error';

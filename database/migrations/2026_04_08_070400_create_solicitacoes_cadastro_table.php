@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('solicitacoes_cadastro', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('usuarios')->cascadeOnDelete();
+            $table->foreignId('usuario_id')->constrained('usuarios')->cascadeOnDelete();
             $table->string('email_institucional');
             $table->string('telefone_institucional', 20);
             $table->string('telefone_pessoal', 20)->nullable();
@@ -28,7 +28,7 @@ return new class extends Migration
             $table->text('justificativa_reprovacao')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'status_id'], 'solicitacoes_cadastro_user_status_idx');
+            $table->index(['usuario_id', 'status_id'], 'solicitacoes_cadastro_usuario_status_idx');
             $table->index(['esfera_id', 'uf_id', 'municipio_id'], 'solicitacoes_cadastro_geo_idx');
         });
 

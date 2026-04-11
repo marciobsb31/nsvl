@@ -15,7 +15,7 @@ class AnonymizeResponseMiddlewareTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->middleware = new AnonymizeResponseMiddleware();
+        $this->middleware = new AnonymizeResponseMiddleware;
     }
 
     #[Test]
@@ -23,8 +23,8 @@ class AnonymizeResponseMiddlewareTest extends TestCase
     {
         $request = Request::create('/teste');
         $response = $this->middleware->handle($request, fn () => new JsonResponse([
-            'nome' => 'Joao',
-            'password' => 'segredo',
+            'nome'          => 'Joao',
+            'password'      => 'segredo',
             'client_secret' => 'token-interno',
         ]));
 
@@ -46,9 +46,9 @@ class AnonymizeResponseMiddlewareTest extends TestCase
 
         $jsonResponse = $this->middleware->handle($request, fn () => new JsonResponse([
             'usuario' => [
-                'nome' => 'Maria',
+                'nome'           => 'Maria',
                 'remember_token' => 'segredo',
-                'dados' => [
+                'dados'          => [
                     'govbr_refresh_token' => 'refresh',
                 ],
             ],

@@ -17,12 +17,12 @@ class AuditLogService
     /**
      * Registra uma ação no auditoria_log.
      *
-     * @param string     $acao            Ex: 'auth.login', 'gerenciar_cadastros.listagem'
-     * @param int|null   $userId          ID do usuário (quem fez a ação)
-     * @param array      $contexto        Dados adicionais (sem informações sensíveis)
-     * @param string     $tipoOperacao    login|logout|insert|update|delete|view
-     * @param string|null $tabelaAfetada  Ex: 'solicitacoes_cadastro'
-     * @param int|null   $registroId      ID do registro inserido/alterado
+     * @param  string  $acao  Ex: 'auth.login', 'gerenciar_cadastros.listagem'
+     * @param  int|null  $userId  ID do usuário (quem fez a ação)
+     * @param  array  $contexto  Dados adicionais (sem informações sensíveis)
+     * @param  string  $tipoOperacao  login|logout|insert|update|delete|view
+     * @param  string|null  $tabelaAfetada  Ex: 'solicitacoes_cadastro'
+     * @param  int|null  $registroId  ID do registro inserido/alterado
      */
     public function log(
         string $acao,

@@ -4,6 +4,7 @@ namespace Tests\Unitario\Http\Controllers;
 
 use App\Exceptions\ApiException;
 use App\Http\Controllers\SolicitacaoCadastroController;
+use App\Http\Requests\SolicitacaoCadastroRequest;
 use App\Services\SolicitacaoCadastro\SolicitacaoCadastroService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,7 +45,7 @@ class SolicitacaoCadastroControllerTest extends TestCase
             ->with('11144477735')
             ->willReturn([
                 'disponivel' => true,
-                'mensagem' => 'CPF disponível para cadastro.',
+                'mensagem'   => 'CPF disponível para cadastro.',
             ]);
 
         $controller = new SolicitacaoCadastroController($service);
@@ -68,11 +69,11 @@ class SolicitacaoCadastroControllerTest extends TestCase
             ->method('criar')
             ->with(null, ['CPF' => '11144477735'])
             ->willReturn([
-                'message' => 'Solicitação registrada com sucesso!',
+                'message'        => 'Solicitação registrada com sucesso!',
                 'solicitacao_id' => 123,
             ]);
 
-        $request = \Mockery::mock(\App\Http\Requests\SolicitacaoCadastroRequest::class)->makePartial();
+        $request = \Mockery::mock(SolicitacaoCadastroRequest::class)->makePartial();
         $request->shouldReceive('all')
             ->once()
             ->andReturn(['CPF' => '11144477735']);

@@ -2,38 +2,21 @@
 
 namespace App\Models;
 
+use App\Traits\FilterScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Model SolicitacaoCadastro — solicitações de acesso ao sistema
- *
- * @property int         $id
- * @property int|null    $user_id               FK → usuarios.id
- * @property string      $email_institucional
- * @property string|null $telefone_institucional
- * @property string|null $telefone_pessoal
- * @property int|null    $esfera_id             FK → esferas.id
- * @property int|null    $uf_id                 FK → ufs.id
- * @property int|null    $municipio_id          FK → municipios.id
- * @property string      $orgao
- * @property string|null $cargo
- * @property int|null    $perfil_id_solicitado  FK → perfis.id
- * @property \Carbon\Carbon|null $vigencia_inicio_solicitada
- * @property \Carbon\Carbon|null $vigencia_fim_solicitada
- * @property int|null    $status_id             FK → status_solicitacao.id
- * @property \Carbon\Carbon|null $aceite_termo_at
- * @property string|null $justificativa_reprovacao
- */
 class SolicitacaoCadastro extends Model
 {
+    use FilterScope;
     use HasFactory;
+
     protected $table = 'solicitacoes_cadastro';
 
     protected $fillable = [
-        'user_id',
+        'usuario_id',
         'email_institucional',
         'telefone_institucional',
         'telefone_pessoal',
@@ -55,10 +38,10 @@ class SolicitacaoCadastro extends Model
         'vigencia_inicio_solicitada' => 'date',
         'vigencia_fim_solicitada'    => 'date',
         'esfera_id'                  => 'integer',
-        'uf_id'           => 'integer',
-        'municipio_id'    => 'integer',
-        'status_id'       => 'integer',
-        'user_id'         => 'integer',
+        'uf_id'                      => 'integer',
+        'municipio_id'               => 'integer',
+        'status_id'                  => 'integer',
+        'usuario_id'                 => 'integer',
     ];
 
     // -------------------------------------------------------
@@ -67,7 +50,7 @@ class SolicitacaoCadastro extends Model
 
     public function usuario(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'user_id');
+        return $this->belongsTo(Usuario::class, 'usuario_id');
     }
 
     public function esfera(): BelongsTo
@@ -140,7 +123,7 @@ class SolicitacaoCadastro extends Model
      *  - Estadual: apenas mesma esfera + mesma UF
      *  - Municipal: apenas mesma esfera + mesma UF + mesmo município
      *
-     * @param Builder<self> $query
+     * @param  Builder<self>  $query
      */
     public function scopeVisivelPara(Builder $query, Usuario $user): void
     {
@@ -158,6 +141,7 @@ class SolicitacaoCadastro extends Model
             $ufId = Uf::where('sigla', $ufSigla)->value('id');
             $query->where('esfera_id', $esferaId)
                 ->where('uf_id', $ufId);
+
             return;
         }
 

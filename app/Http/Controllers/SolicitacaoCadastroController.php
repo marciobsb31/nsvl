@@ -3,16 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\ApiException;
+use App\Filters\SolicitacaoCadastroFilter;
 use App\Http\Requests\AdicionarPerfilVinculadoRequest;
 use App\Http\Requests\AvaliarSolicitacaoRequest;
 use App\Http\Requests\ListarSolicitacoesRequest;
 use App\Http\Requests\SolicitacaoCadastroRequest;
+use App\Http\Resources\SolicitacaoCadastroResource;
 use App\Models\SolicitacaoCadastro;
-use App\Models\Usuario;
 use App\Services\SolicitacaoCadastro\SolicitacaoCadastroService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use OpenApi\Attributes as OA;
 
@@ -26,8 +27,8 @@ class SolicitacaoCadastroController extends Controller
     #[OA\Get(
         path: '/api/solicitacoes-cadastro',
         summary: 'Lista solicitações (filtros conforme política do usuário)',
-        tags: ['Solicitações de cadastro'],
         security: [['BearerAuth' => []]],
+        tags: ['Solicitações de cadastro'],
         parameters: [
             new OA\Parameter(name: 'cpf', in: 'query', schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'nome', in: 'query', schema: new OA\Schema(type: 'string')),
@@ -42,19 +43,21 @@ class SolicitacaoCadastroController extends Controller
             new OA\Response(response: 401, description: 'Não autenticado'),
         ]
     )]
-    public function index(ListarSolicitacoesRequest $request): JsonResponse
+    public function index(SolicitacaoCadastroFilter $filter, ListarSolicitacoesRequest $request)
     {
-        $user = $this->usuarioAutenticado();
-        $filtros = $request->validated();
+        $solicitacoes = SolicitacaoCadastro::query()
+            ->with(['ufRelacao', 'municipioRelacao', 'esfera', 'statusSolicitacao'])
+            ->filters($filter)
+            ->paginate();
 
-        return response()->json(['data' => $this->service->listar($user, $filtros)]);
+        return SolicitacaoCadastroResource::collection($solicitacoes);
     }
 
     #[OA\Get(
         path: '/api/solicitacoes-cadastro/{id}',
         summary: 'Detalha solicitação',
-        tags: ['Solicitações de cadastro'],
         security: [['BearerAuth' => []]],
+        tags: ['Solicitações de cadastro'],
         parameters: [
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
@@ -65,30 +68,24 @@ class SolicitacaoCadastroController extends Controller
             new OA\Response(response: 404, description: 'Não encontrado'),
         ]
     )]
-    public function show(int $id): JsonResponse
+    public function show(SolicitacaoCadastro $solicitacaoCadastro)
     {
-        $user = $this->usuarioAutenticado();
-        $solicitacao = SolicitacaoCadastro::find($id);
-        if (!$solicitacao) {
-            throw ApiException::notFound('Solicitação não encontrada.');
-        }
+        Gate::authorize('view', $solicitacaoCadastro);
 
-        Gate::authorize('view', $solicitacao);
-
-        return response()->json($this->service->detalhar($user, $id));
+        return SolicitacaoCadastroResource::make($solicitacaoCadastro);
     }
 
     #[OA\Post(
         path: '/api/solicitacoes-cadastro',
         summary: 'Cria solicitação (público ou autenticado)',
-        tags: ['Solicitações de cadastro'],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                type: 'object',
-                description: 'Campos: nome, CPF, emailInstitucional, telefoneInstitucional, esferaAtuacao, uf, municipio, orgao, cargo; perfilId e vigências conforme autenticação. A ciência do termo é implícita no envio.'
+                description: 'Campos: nome, CPF, emailInstitucional, telefoneInstitucional, esferaAtuacao, uf, municipio, orgao, cargo; perfilId e vigências conforme autenticação. A ciência do termo é implícita no envio.',
+                type: 'object'
             )
         ),
+        tags: ['Solicitações de cadastro'],
         responses: [
             new OA\Response(response: 201, description: 'Criado'),
             new OA\Response(response: 422, description: 'Validação'),
@@ -96,26 +93,25 @@ class SolicitacaoCadastroController extends Controller
     )]
     public function store(SolicitacaoCadastroRequest $request): JsonResponse
     {
-        $user = Auth::guard('sanctum')->user();
-        $result = $this->service->criar($user, $request->all());
+        $result = $this->service->criar($request->validated());
 
-        return response()->json($result, 201);
+        return response()->json($result, Response::HTTP_CREATED);
     }
 
     #[OA\Patch(
         path: '/api/solicitacoes-cadastro/{id}',
         summary: 'Avalia ou atualiza solicitação',
-        tags: ['Solicitações de cadastro'],
         security: [['BearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            content: new OA\JsonContent(
+                description: 'Ver AvaliarSolicitacaoRequest',
+                type: 'object'
+            )
+        ),
+        tags: ['Solicitações de cadastro'],
         parameters: [
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
-        requestBody: new OA\RequestBody(
-            content: new OA\JsonContent(
-                type: 'object',
-                description: 'Ver AvaliarSolicitacaoRequest'
-            )
-        ),
         responses: [
             new OA\Response(response: 200, description: 'Atualizado'),
             new OA\Response(response: 401, description: 'Não autenticado'),
@@ -126,9 +122,9 @@ class SolicitacaoCadastroController extends Controller
     )]
     public function update(AvaliarSolicitacaoRequest $request, int $id): JsonResponse
     {
-        $user = $this->usuarioAutenticado();
+        $user = auth()->user();
         $solicitacao = SolicitacaoCadastro::find($id);
-        if (!$solicitacao) {
+        if (! $solicitacao) {
             throw ApiException::notFound('Solicitação não encontrada.');
         }
 
@@ -159,8 +155,8 @@ class SolicitacaoCadastroController extends Controller
     #[OA\Patch(
         path: '/api/solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/ativar',
         summary: 'Ativa perfil vinculado à solicitação',
-        tags: ['Solicitações de cadastro'],
         security: [['BearerAuth' => []]],
+        tags: ['Solicitações de cadastro'],
         parameters: [
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'perfilUsuarioId', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
@@ -174,9 +170,9 @@ class SolicitacaoCadastroController extends Controller
     )]
     public function ativarPerfilVinculado(int $id, int $perfilUsuarioId): JsonResponse
     {
-        $user = $this->usuarioAutenticado();
+        $user = auth()->user();
         $solicitacao = SolicitacaoCadastro::find($id);
-        if (!$solicitacao) {
+        if (! $solicitacao) {
             throw ApiException::notFound('Solicitação não encontrada.');
         }
 
@@ -188,8 +184,8 @@ class SolicitacaoCadastroController extends Controller
     #[OA\Patch(
         path: '/api/solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/desativar',
         summary: 'Desativa perfil vinculado',
-        tags: ['Solicitações de cadastro'],
         security: [['BearerAuth' => []]],
+        tags: ['Solicitações de cadastro'],
         parameters: [
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'perfilUsuarioId', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
@@ -203,9 +199,9 @@ class SolicitacaoCadastroController extends Controller
     )]
     public function desativarPerfilVinculado(int $id, int $perfilUsuarioId): JsonResponse
     {
-        $user = $this->usuarioAutenticado();
+        $user = auth()->user();
         $solicitacao = SolicitacaoCadastro::find($id);
-        if (!$solicitacao) {
+        if (! $solicitacao) {
             throw ApiException::notFound('Solicitação não encontrada.');
         }
 
@@ -217,17 +213,17 @@ class SolicitacaoCadastroController extends Controller
     #[OA\Post(
         path: '/api/solicitacoes-cadastro/{id}/perfis',
         summary: 'Adiciona perfil vinculado à solicitação aprovada',
-        tags: ['Solicitações de cadastro'],
         security: [['BearerAuth' => []]],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
         requestBody: new OA\RequestBody(
             content: new OA\JsonContent(
                 type: 'object',
                 description: 'Ver AdicionarPerfilVinculadoRequest'
             )
         ),
+        tags: ['Solicitações de cadastro'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
         responses: [
             new OA\Response(response: 201, description: 'Criado'),
             new OA\Response(response: 401, description: 'Não autenticado'),
@@ -238,26 +234,16 @@ class SolicitacaoCadastroController extends Controller
     )]
     public function adicionarPerfilVinculado(AdicionarPerfilVinculadoRequest $request, int $id): JsonResponse
     {
-        $user = $this->usuarioAutenticado();
         $solicitacao = SolicitacaoCadastro::find($id);
-        if (!$solicitacao) {
+        if (! $solicitacao) {
             throw ApiException::notFound('Solicitação não encontrada.');
         }
 
         Gate::authorize('update', $solicitacao);
 
         return response()->json(
-            $this->service->adicionarPerfil($user, $id, $request->validated()),
-            201
+            $this->service->adicionarPerfil($id, $request->validated()),
+            Response::HTTP_CREATED
         );
-    }
-
-    private function usuarioAutenticado(): Usuario
-    {
-        $user = Auth::user();
-        if (!$user instanceof Usuario) {
-            throw ApiException::unauthenticated();
-        }
-        return $user;
     }
 }

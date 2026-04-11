@@ -20,7 +20,7 @@ class UserFactory extends Factory
             'cpf'       => $cpf,
             'nome'      => fake()->name(),
             'email'     => fake()->unique()->safeEmail(),
-            'govbr_sub' => 'teste-' . fake()->unique()->uuid(),
+            'govbr_sub' => 'teste-'.fake()->unique()->uuid(),
             'telefone'  => fake()->optional()->numerify('###########'),
         ];
     }

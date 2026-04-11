@@ -2,9 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\Esfera;
 use App\Models\SolicitacaoCadastro;
-use App\Models\Uf;
 use App\Models\Usuario;
 
 class SolicitacaoCadastroPolicy
@@ -38,6 +36,7 @@ class SolicitacaoCadastroPolicy
         if ($esfera === 'municipal') {
             $solMunicipio = $solicitacao->municipioRelacao?->nome ?? '';
             $userMunicipio = $user->municipio_lotacao ?? '';
+
             return $solEsfera === 'municipal'
                 && $solUfSigla === $userUf
                 && $solMunicipio === $userMunicipio;

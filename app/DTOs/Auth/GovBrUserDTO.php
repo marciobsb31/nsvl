@@ -26,11 +26,11 @@ readonly class GovBrUserDTO
     public static function fromArray(array $data): self
     {
         return new self(
-            sub:     $data['sub']     ?? '',
-            name:    $data['name']    ?? '',
-            email:   $data['email']   ?? null,
-            amr:     $data['amr']     ?? null,
-            cpf:     $data['sub']     ?? null, // GOV.BR retorna o CPF como 'sub'
+            sub: $data['sub'] ?? '',
+            name: $data['name'] ?? '',
+            email: $data['email'] ?? null,
+            amr: $data['amr'] ?? null,
+            cpf: $data['sub'] ?? null, // GOV.BR retorna o CPF como 'sub'
         );
     }
 }

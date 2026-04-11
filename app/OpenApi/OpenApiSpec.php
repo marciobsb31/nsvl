@@ -18,6 +18,4 @@ use OpenApi\Attributes as OA;
     bearerFormat: 'Sanctum',
     description: 'Token Sanctum obtido após autenticação GOV.BR.'
 )]
-final class OpenApiSpec
-{
-}
+final class OpenApiSpec {}

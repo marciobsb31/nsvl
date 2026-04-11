@@ -38,7 +38,7 @@ class ImportarLocalidadesIbgeCommand extends Command
 
         DB::transaction(function () use ($estados): void {
             $this->inserirUfs($estados);
-            $this->info('UFs sincronizadas: ' . count($estados));
+            $this->info('UFs sincronizadas: '.count($estados));
 
             $municipiosPorUf = $this->buscarMunicipios($estados);
             $ufIdsPorSigla = Uf::query()->pluck('id', 'sigla');
@@ -50,7 +50,7 @@ class ImportarLocalidadesIbgeCommand extends Command
             $totalMun = 0;
             foreach ($municipiosPorUf as $sigla => $municipios) {
                 $ufId = $ufIdsPorSigla[$sigla] ?? null;
-                if ($ufId === null || !is_array($municipios)) {
+                if ($ufId === null || ! is_array($municipios)) {
                     $bar?->advance();
 
                     continue;
@@ -63,7 +63,7 @@ class ImportarLocalidadesIbgeCommand extends Command
                     }
                     $rows[] = [
                         'uf_id' => $ufId,
-                        'nome' => $m['nome'],
+                        'nome'  => $m['nome'],
                     ];
                 }
 
@@ -93,7 +93,7 @@ class ImportarLocalidadesIbgeCommand extends Command
     private function buscarEstados(): array
     {
         $response = Http::timeout(60)->get(self::IBGE_ESTADOS_URL);
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             return [];
         }
 
@@ -103,7 +103,7 @@ class ImportarLocalidadesIbgeCommand extends Command
     }
 
     /**
-     * @param list<array<string, mixed>> $estados
+     * @param  list<array<string, mixed>>  $estados
      */
     private function inserirUfs(array $estados): void
     {
@@ -114,7 +114,7 @@ class ImportarLocalidadesIbgeCommand extends Command
             }
             $rows[] = [
                 'sigla' => strtoupper((string) $e['sigla']),
-                'nome' => (string) $e['nome'],
+                'nome'  => (string) $e['nome'],
             ];
         }
 
@@ -126,14 +126,14 @@ class ImportarLocalidadesIbgeCommand extends Command
     }
 
     /**
-     * @param list<array<string, mixed>> $estados
+     * @param  list<array<string, mixed>>  $estados
      * @return array<string, list<array<string, mixed>>>
      */
     private function buscarMunicipios(array $estados): array
     {
         $estadosComId = array_values(array_filter(
             $estados,
-            static fn ($e) => !empty($e['id']) && !empty($e['sigla'])
+            static fn ($e) => ! empty($e['id']) && ! empty($e['sigla'])
         ));
 
         if ($estadosComId === []) {
@@ -143,14 +143,14 @@ class ImportarLocalidadesIbgeCommand extends Command
         $responses = Http::pool(fn (Pool $pool) => collect($estadosComId)->map(
             fn ($estado) => $pool->as(strtoupper((string) $estado['sigla']))
                 ->timeout(90)
-                ->get(self::IBGE_ESTADOS_URL . '/' . $estado['id'] . '/municipios')
+                ->get(self::IBGE_ESTADOS_URL.'/'.$estado['id'].'/municipios')
         )->all());
 
         $resultado = [];
         foreach ($estadosComId as $estado) {
             $sigla = strtoupper((string) $estado['sigla']);
             $response = $responses[$sigla] ?? null;
-            if ($response === null || !$response->successful()) {
+            if ($response === null || ! $response->successful()) {
                 $this->newLine();
                 $this->warn("Falha ao obter municípios da UF {$sigla} no IBGE.");
                 $resultado[$sigla] = [];

@@ -6,18 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property int    $id
- * @property string $nome   em_analise|aprovado|reprovado
+ * @property int $id
+ * @property string $nome em_analise|aprovado|reprovado
  */
 class StatusSolicitacao extends Model
 {
     protected $table = 'status_solicitacao';
-    public $timestamps = false;
 
     protected $fillable = ['nome'];
 
     public const EM_ANALISE = 'em_analise';
+
     public const APROVADO = 'aprovado';
+
     public const REPROVADO = 'reprovado';
 
     public function solicitacoesCadastro(): HasMany

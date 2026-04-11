@@ -12,10 +12,10 @@ class AvaliarSolicitacaoRequestTest extends TestCase
     #[Test]
     public function monta_regras_para_aprovacao_e_reprovacao(): void
     {
-        $requestAprovado = new AvaliarSolicitacaoRequest();
+        $requestAprovado = new AvaliarSolicitacaoRequest;
         $requestAprovado->merge(['status' => StatusSolicitacao::APROVADO]);
 
-        $requestReprovado = new AvaliarSolicitacaoRequest();
+        $requestReprovado = new AvaliarSolicitacaoRequest;
         $requestReprovado->merge(['status' => StatusSolicitacao::REPROVADO]);
 
         $this->assertArrayHasKey('perfil_id', $requestAprovado->rules());

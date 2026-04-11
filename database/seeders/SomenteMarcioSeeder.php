@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace Database\Seeders;
 
@@ -76,17 +76,17 @@ class SomenteMarcioSeeder extends Seeder
         ] as $v) {
             $perfil = $perfis->get($v['perfil']);
             PerfilUsuario::create([
-                'usuario_id'             => $marcio->id,
-                'perfil_id'              => $perfil->id,
-                'data_inicio_vigencia'   => $v['inicio'],
-                'data_fim_vigencia'      => $v['fim'],
-                'ativo'                  => $v['ativo'],
+                'usuario_id'           => $marcio->id,
+                'perfil_id'            => $perfil->id,
+                'data_inicio_vigencia' => $v['inicio'],
+                'data_fim_vigencia'    => $v['fim'],
+                'ativo'                => $v['ativo'],
             ]);
         }
 
         if ($ufGO && $esferaEstadual && $statusAprovado) {
             SolicitacaoCadastro::create([
-                'user_id'                => $marcio->id,
+                'usuario_id'             => $marcio->id,
                 'email_institucional'    => 'marcio.pereira@ministerio.gov.br',
                 'telefone_institucional' => '61999887766',
                 'esfera_id'              => $esferaEstadual->id,
@@ -101,7 +101,7 @@ class SomenteMarcioSeeder extends Seeder
         }
         if ($ufGO && $esferaMunicipal && $statusAprovado) {
             SolicitacaoCadastro::create([
-                'user_id'                => $marcio->id,
+                'usuario_id'             => $marcio->id,
                 'email_institucional'    => 'marcio.pereira@ministerio.gov.br',
                 'telefone_institucional' => '61999887766',
                 'esfera_id'              => $esferaMunicipal->id,
@@ -116,7 +116,7 @@ class SomenteMarcioSeeder extends Seeder
         }
         if ($ufDF && $esferaFederal && $statusAprovado) {
             SolicitacaoCadastro::create([
-                'user_id'                => $marcio->id,
+                'usuario_id'             => $marcio->id,
                 'email_institucional'    => 'marcio.pereira@ministerio.gov.br',
                 'telefone_institucional' => '61999887766',
                 'esfera_id'              => $esferaFederal->id,
@@ -144,7 +144,7 @@ class SomenteMarcioSeeder extends Seeder
             ->keyBy('nome');
 
         foreach (self::NOMES_PERFIL as $nome) {
-            if (!$colecao->has($nome)) {
+            if (! $colecao->has($nome)) {
                 throw new \RuntimeException(
                     "SomenteMarcioSeeder: perfil \"{$nome}\" nÃ£o encontrado. Execute PerfilSeeder antes."
                 );
@@ -154,4 +154,3 @@ class SomenteMarcioSeeder extends Seeder
         return $colecao;
     }
 }
-

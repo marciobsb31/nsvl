@@ -1,7 +1,7 @@
 <?php
 
-$frontendUrl  = rtrim((string) env('GOVBR_FRONTEND_URL', env('FRONTEND_URL', 'http://localhost:5176')), '/');
-$appUrl       = rtrim((string) env('APP_URL', 'http://localhost:8081'), '/');
+$frontendUrl = rtrim((string) env('GOVBR_FRONTEND_URL', env('FRONTEND_URL', 'http://localhost:5176')), '/');
+$appUrl = rtrim((string) env('APP_URL', 'http://localhost:8081'), '/');
 
 $origins = array_values(array_unique(array_filter([
     $frontendUrl,
@@ -12,7 +12,7 @@ $origins = array_values(array_unique(array_filter([
     'https://nvsl.mdh.gov.br',
     'https://nvsl.hlog.mdh.gov.br',
     'https://nvsl.dev.mdh.gov.br',
-    
+
 ])));
 
 return [

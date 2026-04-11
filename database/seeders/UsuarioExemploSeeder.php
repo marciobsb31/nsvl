@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace Database\Seeders;
 
@@ -16,13 +16,16 @@ use Illuminate\Support\Collection;
 
 /**
  * UsuÃ¡rios e solicitaÃ§Ãµes de demonstraÃ§Ã£o alinhados ao catÃ¡logo em {@see PerfilSeeder}
- * ({@see \App\Models\Perfil::CATALOGO_OFICIAL}).
+ * ({@see Perfil::CATALOGO_OFICIAL}).
  */
 class UsuarioExemploSeeder extends Seeder
 {
     private const CPF_FEDERAL = '11144477735';
+
     private const CPF_ESTADUAL = '52998224725';
+
     private const CPF_MUNICIPAL = '98765432100';
+
     private const CPF_WALYSON = '73583278100';
 
     /** Perfis usados neste seeder (todos existentes em PerfilSeeder). */
@@ -85,13 +88,13 @@ class UsuarioExemploSeeder extends Seeder
         // o Ãºltimo id (federal) seja o contexto exibido em esfera_atuacao (latest).
         if ($statusAprovado) {
             SolicitacaoCadastro::query()
-                ->where('user_id', $federal->id)
+                ->where('usuario_id', $federal->id)
                 ->where('status_id', $statusAprovado->id)
                 ->delete();
         }
         if ($ufGO && $esferaEstadual && $statusAprovado) {
             SolicitacaoCadastro::create([
-                'user_id'                => $federal->id,
+                'usuario_id'             => $federal->id,
                 'email_institucional'    => 'maria.federal@ministerio.gov.br',
                 'telefone_institucional' => '61999887766',
                 'esfera_id'              => $esferaEstadual->id,
@@ -106,7 +109,7 @@ class UsuarioExemploSeeder extends Seeder
         }
         if ($ufGO && $esferaMunicipal && $statusAprovado) {
             SolicitacaoCadastro::create([
-                'user_id'                => $federal->id,
+                'usuario_id'             => $federal->id,
                 'email_institucional'    => 'maria.federal@ministerio.gov.br',
                 'telefone_institucional' => '61999887766',
                 'esfera_id'              => $esferaMunicipal->id,
@@ -121,7 +124,7 @@ class UsuarioExemploSeeder extends Seeder
         }
         if ($ufDF && $esferaFederal && $statusAprovado) {
             SolicitacaoCadastro::create([
-                'user_id'                => $federal->id,
+                'usuario_id'             => $federal->id,
                 'email_institucional'    => 'maria.federal@ministerio.gov.br',
                 'telefone_institucional' => '61999887766',
                 'esfera_id'              => $esferaFederal->id,
@@ -151,7 +154,7 @@ class UsuarioExemploSeeder extends Seeder
 
         if ($ufDF && $esferaFederal && $statusAprovado) {
             SolicitacaoCadastro::updateOrCreate(
-                ['user_id' => $walyson->id, 'status_id' => $statusAprovado->id, 'esfera_id' => $esferaFederal->id],
+                ['usuario_id' => $walyson->id, 'status_id' => $statusAprovado->id, 'esfera_id' => $esferaFederal->id],
                 [
                     'email_institucional'    => 'walysonmaxwel@hotmail.com',
                     'telefone_institucional' => '61999999999',
@@ -181,7 +184,7 @@ class UsuarioExemploSeeder extends Seeder
 
         if ($ufGO && $esferaEstadual && $statusAprovado) {
             SolicitacaoCadastro::updateOrCreate(
-                ['user_id' => $estadual->id, 'status_id' => $statusAprovado->id, 'esfera_id' => $esferaEstadual->id],
+                ['usuario_id' => $estadual->id, 'status_id' => $statusAprovado->id, 'esfera_id' => $esferaEstadual->id],
                 [
                     'email_institucional'    => 'joao.estadual@go.gov.br',
                     'telefone_institucional' => '62987654321',
@@ -212,7 +215,7 @@ class UsuarioExemploSeeder extends Seeder
         if ($ufGO && $esferaMunicipal && $statusAprovado) {
             $munAlexania = Municipio::where('nome', 'AlexÃ¢nia')->where('uf_id', $ufGO->id)->first();
             SolicitacaoCadastro::updateOrCreate(
-                ['user_id' => $municipal->id, 'status_id' => $statusAprovado->id, 'esfera_id' => $esferaMunicipal->id],
+                ['usuario_id' => $municipal->id, 'status_id' => $statusAprovado->id, 'esfera_id' => $esferaMunicipal->id],
                 [
                     'email_institucional'    => 'ana.municipal@alexania.go.gov.br',
                     'telefone_institucional' => '62965432109',
@@ -245,7 +248,7 @@ class UsuarioExemploSeeder extends Seeder
 
         if ($ufDF && $esferaEstadual && $statusAprovado) {
             SolicitacaoCadastro::updateOrCreate(
-                ['user_id' => $carlos->id, 'status_id' => $statusAprovado->id, 'esfera_id' => $esferaEstadual->id],
+                ['usuario_id' => $carlos->id, 'status_id' => $statusAprovado->id, 'esfera_id' => $esferaEstadual->id],
                 [
                     'email_institucional'    => 'carlos.souza@ministerio.gov.br',
                     'telefone_institucional' => '61999887766',
@@ -262,16 +265,16 @@ class UsuarioExemploSeeder extends Seeder
         // --- 6. MÃ¡rcio Pereira da Silva (GOV.BR) â€” mesmos vÃ­nculos federais de Maria + contexto federal (Ãºltima solicitaÃ§Ã£o) ---
         if ($legado = Usuario::query()->where('cpf', '47385199806')->first()) {
             PerfilUsuario::query()->where('usuario_id', $legado->id)->delete();
-            SolicitacaoCadastro::query()->where('user_id', $legado->id)->delete();
-            AuditLog::query()->where('user_id', $legado->id)->delete();
+            SolicitacaoCadastro::query()->where('usuario_id', $legado->id)->delete();
+            AuditLog::query()->where('usuario_id', $legado->id)->delete();
             $legado->tokens()->delete();
             $legado->delete();
         }
 
         $marcio = Usuario::updateOrCreate(
-            ['cpf' => '00012482196'],
+            ['cpf' => '71217485090'],
             [
-                'govbr_sub' => '00012482196',
+                'govbr_sub' => '71217485090',
                 'nome'      => 'Marcio Pereira da Silva',
                 'email'     => 'marcio.pereira@ministerio.gov.br',
                 'telefone'  => null,
@@ -288,13 +291,13 @@ class UsuarioExemploSeeder extends Seeder
 
         if ($statusAprovado) {
             SolicitacaoCadastro::query()
-                ->where('user_id', $marcio->id)
+                ->where('usuario_id', $marcio->id)
                 ->where('status_id', $statusAprovado->id)
                 ->delete();
         }
         if ($ufGO && $esferaEstadual && $statusAprovado) {
             SolicitacaoCadastro::create([
-                'user_id'                => $marcio->id,
+                'usuario_id'             => $marcio->id,
                 'email_institucional'    => 'marcio.pereira@ministerio.gov.br',
                 'telefone_institucional' => '61999887766',
                 'esfera_id'              => $esferaEstadual->id,
@@ -309,7 +312,7 @@ class UsuarioExemploSeeder extends Seeder
         }
         if ($ufGO && $esferaMunicipal && $statusAprovado) {
             SolicitacaoCadastro::create([
-                'user_id'                => $marcio->id,
+                'usuario_id'             => $marcio->id,
                 'email_institucional'    => 'marcio.pereira@ministerio.gov.br',
                 'telefone_institucional' => '61999887766',
                 'esfera_id'              => $esferaMunicipal->id,
@@ -324,7 +327,7 @@ class UsuarioExemploSeeder extends Seeder
         }
         if ($ufDF && $esferaFederal && $statusAprovado) {
             SolicitacaoCadastro::create([
-                'user_id'                => $marcio->id,
+                'usuario_id'             => $marcio->id,
                 'email_institucional'    => 'marcio.pereira@ministerio.gov.br',
                 'telefone_institucional' => '61999887766',
                 'esfera_id'              => $esferaFederal->id,
@@ -357,7 +360,7 @@ class UsuarioExemploSeeder extends Seeder
         if ($ufGO && $esferaEstadual && $statusAprovado) {
             $munAnapolis = Municipio::where('nome', 'AnÃ¡polis')->where('uf_id', $ufGO->id)->first();
             SolicitacaoCadastro::updateOrCreate(
-                ['user_id' => $roberto->id, 'status_id' => $statusAprovado->id, 'esfera_id' => $esferaEstadual->id],
+                ['usuario_id' => $roberto->id, 'status_id' => $statusAprovado->id, 'esfera_id' => $esferaEstadual->id],
                 [
                     'email_institucional'    => 'roberto.alves@go.gov.br',
                     'telefone_institucional' => '62976543210',
@@ -408,7 +411,7 @@ class UsuarioExemploSeeder extends Seeder
             ->keyBy('nome');
 
         foreach (self::NOMES_PERFIL as $nome) {
-            if (!$colecao->has($nome)) {
+            if (! $colecao->has($nome)) {
                 throw new \RuntimeException(
                     "UsuarioExemploSeeder: perfil \"{$nome}\" nÃ£o encontrado. Execute PerfilSeeder antes."
                 );
@@ -431,11 +434,11 @@ class UsuarioExemploSeeder extends Seeder
         foreach ($vinculos as $v) {
             $perfil = $perfis->get($v['perfil']);
             PerfilUsuario::create([
-                'usuario_id'             => $usuarioId,
-                'perfil_id'              => $perfil->id,
-                'data_inicio_vigencia'   => $v['inicio'],
-                'data_fim_vigencia'      => $v['fim'],
-                'ativo'                  => $v['ativo'],
+                'usuario_id'           => $usuarioId,
+                'perfil_id'            => $perfil->id,
+                'data_inicio_vigencia' => $v['inicio'],
+                'data_fim_vigencia'    => $v['fim'],
+                'ativo'                => $v['ativo'],
             ]);
         }
     }
@@ -448,27 +451,27 @@ class UsuarioExemploSeeder extends Seeder
         ?Uf $ufGO,
         Collection $perfis
     ): void {
-        if (!$ufGO || !$esferaEstadual || !$esferaMunicipal || !$statusEmAnalise || !$statusReprovado) {
+        if (! $ufGO || ! $esferaEstadual || ! $esferaMunicipal || ! $statusEmAnalise || ! $statusReprovado) {
             return;
         }
 
         $extras = [
             [
-                'cpf' => '55566677788', 'nome' => 'Fernanda Lima', 'email' => 'fernanda.lima@go.gov.br',
-                'esfera_id' => $esferaEstadual->id, 'uf_id' => $ufGO->id, 'municipio_nome' => 'GoiÃ¢nia',
-                'orgao' => 'SEDUC-GO', 'cargo' => 'Gestora estadual', 'status_id' => $statusEmAnalise->id,
+                'cpf'         => '55566677788', 'nome' => 'Fernanda Lima', 'email' => 'fernanda.lima@go.gov.br',
+                'esfera_id'   => $esferaEstadual->id, 'uf_id' => $ufGO->id, 'municipio_nome' => 'GoiÃ¢nia',
+                'orgao'       => 'SEDUC-GO', 'cargo' => 'Gestora estadual', 'status_id' => $statusEmAnalise->id,
                 'perfil_nome' => 'Gestor Estadual',
             ],
             [
-                'cpf' => '12345678901', 'nome' => 'PatrÃ­cia Mendes', 'email' => 'patricia.mendes@alexania.go.gov.br',
-                'esfera_id' => $esferaMunicipal->id, 'uf_id' => $ufGO->id, 'municipio_nome' => 'AlexÃ¢nia',
-                'orgao' => 'Prefeitura de AlexÃ¢nia', 'cargo' => 'Servidora municipal', 'status_id' => $statusEmAnalise->id,
+                'cpf'         => '12345678901', 'nome' => 'PatrÃ­cia Mendes', 'email' => 'patricia.mendes@alexania.go.gov.br',
+                'esfera_id'   => $esferaMunicipal->id, 'uf_id' => $ufGO->id, 'municipio_nome' => 'AlexÃ¢nia',
+                'orgao'       => 'Prefeitura de AlexÃ¢nia', 'cargo' => 'Servidora municipal', 'status_id' => $statusEmAnalise->id,
                 'perfil_nome' => 'Gestor Municipal',
             ],
             [
-                'cpf' => '11223344556', 'nome' => 'Lucas Ferreira', 'email' => 'lucas.ferreira@alexania.go.gov.br',
-                'esfera_id' => $esferaMunicipal->id, 'uf_id' => $ufGO->id, 'municipio_nome' => 'AlexÃ¢nia',
-                'orgao' => 'Secretaria Municipal de SaÃºde', 'cargo' => 'Coordenador', 'status_id' => $statusReprovado->id,
+                'cpf'         => '11223344556', 'nome' => 'Lucas Ferreira', 'email' => 'lucas.ferreira@alexania.go.gov.br',
+                'esfera_id'   => $esferaMunicipal->id, 'uf_id' => $ufGO->id, 'municipio_nome' => 'AlexÃ¢nia',
+                'orgao'       => 'Secretaria Municipal de SaÃºde', 'cargo' => 'Coordenador', 'status_id' => $statusReprovado->id,
                 'perfil_nome' => 'Gestor Municipal',
             ],
         ];
@@ -476,9 +479,9 @@ class UsuarioExemploSeeder extends Seeder
         $ufSP = Uf::where('sigla', 'SP')->first();
         if ($ufSP) {
             $extras[] = [
-                'cpf' => '77889900112', 'nome' => 'Mariana Santos', 'email' => 'mariana.santos@sp.gov.br',
-                'esfera_id' => $esferaEstadual->id, 'uf_id' => $ufSP->id, 'municipio_nome' => 'SÃ£o Paulo',
-                'orgao' => 'Secretaria do Estado de SÃ£o Paulo', 'cargo' => 'Analista', 'status_id' => $statusEmAnalise->id,
+                'cpf'         => '77889900112', 'nome' => 'Mariana Santos', 'email' => 'mariana.santos@sp.gov.br',
+                'esfera_id'   => $esferaEstadual->id, 'uf_id' => $ufSP->id, 'municipio_nome' => 'SÃ£o Paulo',
+                'orgao'       => 'Secretaria do Estado de SÃ£o Paulo', 'cargo' => 'Analista', 'status_id' => $statusEmAnalise->id,
                 'perfil_nome' => 'Administrador Estadual',
             ];
         }
@@ -498,7 +501,7 @@ class UsuarioExemploSeeder extends Seeder
             $perfilId = $perfis->get($e['perfil_nome'])->id;
 
             SolicitacaoCadastro::updateOrCreate(
-                ['user_id' => $usuario->id, 'esfera_id' => $e['esfera_id'], 'status_id' => $e['status_id']],
+                ['usuario_id' => $usuario->id, 'esfera_id' => $e['esfera_id'], 'status_id' => $e['status_id']],
                 [
                     'email_institucional'    => $e['email'],
                     'telefone_institucional' => '00000000000',
@@ -513,4 +516,3 @@ class UsuarioExemploSeeder extends Seeder
         }
     }
 }
-

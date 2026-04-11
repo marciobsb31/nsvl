@@ -20,16 +20,16 @@ class PerfilUsuarioConstraintTest extends TestCase
 
         PerfilUsuario::create([
             'usuario_id' => $usuario->id,
-            'perfil_id' => $perfilUm->id,
-            'ativo' => true,
+            'perfil_id'  => $perfilUm->id,
+            'ativo'      => true,
         ]);
 
         $this->expectException(QueryException::class);
 
         PerfilUsuario::create([
             'usuario_id' => $usuario->id,
-            'perfil_id' => $perfilDois->id,
-            'ativo' => true,
+            'perfil_id'  => $perfilDois->id,
+            'ativo'      => true,
         ]);
     }
 }

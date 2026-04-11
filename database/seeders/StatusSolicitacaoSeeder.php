@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\StatusSolicitacaoEnum;
 use App\Models\StatusSolicitacao;
 use Illuminate\Database\Seeder;
 
@@ -9,16 +10,12 @@ class StatusSolicitacaoSeeder extends Seeder
 {
     public function run(): void
     {
-        $status = [
-            ['nome' => 'em_analise'],
-            ['nome' => 'aprovado'],
-            ['nome' => 'reprovado'],
-        ];
-
-        foreach ($status as $s) {
-            StatusSolicitacao::firstOrCreate(
-                ['nome' => $s['nome']],
-            );
+        foreach (StatusSolicitacaoEnum::cases() as $status) {
+            StatusSolicitacao::firstOrCreate([
+                'id' => $status->value,
+            ], [
+                'nome' => $status->label(),
+            ]);
         }
     }
 }

@@ -34,5 +34,5 @@ Route::get('/logout', function () {
     $base = rtrim((string) config('govbr.frontend_url'), '/');
     $login = (string) config('govbr.frontend_login_path', '/login');
 
-    return redirect()->away($base . $login . (str_contains($login, '?') ? '&' : '?') . 'from=logout');
+    return redirect()->away($base.$login.(str_contains($login, '?') ? '&' : '?').'from=logout');
 })->name('web.logout');

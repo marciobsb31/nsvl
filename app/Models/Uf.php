@@ -8,13 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Model Uf — Unidade Federativa (estado).
  *
- * @property int    $id
+ * @property int $id
  * @property string $sigla
  * @property string $nome
  */
 class Uf extends Model
 {
     protected $table = 'ufs';
+
     public $timestamps = false;
 
     protected $fillable = [

@@ -17,9 +17,9 @@ class HealthCheckTest extends TestCase
         $response
             ->assertOk()
             ->assertJson([
-                'status' => 'ok',
+                'status'   => 'ok',
                 'database' => 'ok',
-                'cache' => 'ok',
+                'cache'    => 'ok',
             ]);
     }
 
@@ -37,9 +37,9 @@ class HealthCheckTest extends TestCase
         $response
             ->assertStatus(503)
             ->assertJson([
-                'status' => 'degraded',
+                'status'   => 'degraded',
                 'database' => 'error',
-                'cache' => 'ok',
+                'cache'    => 'ok',
             ]);
     }
 
@@ -47,7 +47,7 @@ class HealthCheckTest extends TestCase
     public function retorna_status_degradado_quando_o_cache_falha(): void
     {
         DB::shouldReceive('connection')->once()->andReturnSelf();
-        DB::shouldReceive('getPdo')->once()->andReturn(new \stdClass());
+        DB::shouldReceive('getPdo')->once()->andReturn(new \stdClass);
         Cache::shouldReceive('put')
             ->once()
             ->andThrow(new \Exception('cache indisponivel'));
@@ -57,9 +57,9 @@ class HealthCheckTest extends TestCase
         $response
             ->assertStatus(503)
             ->assertJson([
-                'status' => 'degraded',
+                'status'   => 'degraded',
                 'database' => 'ok',
-                'cache' => 'error',
+                'cache'    => 'error',
             ]);
     }
 }

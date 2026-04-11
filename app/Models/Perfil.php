@@ -7,14 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property int         $id
- * @property string      $nome
+ * @property int $id
+ * @property string $nome
  * @property string|null $descricao
- * @property bool        $ativo
+ * @property bool $ativo
  */
 class Perfil extends Model
 {
     use HasFactory;
+
     protected $table = 'perfis';
 
     /**

@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('status_solicitacao', function (Blueprint $table) {
             $table->id();
             $table->string('nome', 50)->unique();
+            $table->timestamps();
         });
 
         Schema::create('ufs', function (Blueprint $table) {

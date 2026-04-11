@@ -52,7 +52,7 @@ class SolicitacaoCadastroVisibilidadeTest extends TestCase
     #[Test]
     public function policy_permte_estadual_na_mesma_uf_e_nega_outras_esferas(): void
     {
-        $policy = new SolicitacaoCadastroPolicy();
+        $policy = new SolicitacaoCadastroPolicy;
         $estadual = $this->usuarioPorSub('teste-estadual-go-002');
 
         $permitida = SolicitacaoCadastro::query()
@@ -71,7 +71,7 @@ class SolicitacaoCadastroVisibilidadeTest extends TestCase
     #[Test]
     public function policy_permte_municipal_apenas_no_mesmo_municipio(): void
     {
-        $policy = new SolicitacaoCadastroPolicy();
+        $policy = new SolicitacaoCadastroPolicy;
         $municipal = $this->usuarioPorSub('teste-municipal-alexania-003');
 
         $permitida = SolicitacaoCadastro::query()

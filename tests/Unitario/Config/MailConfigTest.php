@@ -49,7 +49,7 @@ class MailConfigTest extends TestCase
 
     private function setEnvValue(string $name, ?string $value): void
     {
-        if (!array_key_exists($name, $this->originalEnv)) {
+        if (! array_key_exists($name, $this->originalEnv)) {
             $current = getenv($name);
             $this->originalEnv[$name] = $current === false ? null : $current;
         }
@@ -66,7 +66,7 @@ class MailConfigTest extends TestCase
             return;
         }
 
-        putenv($name . '=' . $value);
+        putenv($name.'='.$value);
         $_ENV[$name] = $value;
         $_SERVER[$name] = $value;
     }

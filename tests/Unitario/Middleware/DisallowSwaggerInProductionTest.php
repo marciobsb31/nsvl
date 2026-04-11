@@ -15,7 +15,7 @@ class DisallowSwaggerInProductionTest extends TestCase
     {
         $this->app['env'] = 'local';
 
-        $middleware = new DisallowSwaggerInProduction();
+        $middleware = new DisallowSwaggerInProduction;
         $request = Request::create('/api/docs');
 
         $response = $middleware->handle($request, fn () => response('ok', 200));
@@ -29,7 +29,7 @@ class DisallowSwaggerInProductionTest extends TestCase
     {
         $this->app['env'] = 'production';
 
-        $middleware = new DisallowSwaggerInProduction();
+        $middleware = new DisallowSwaggerInProduction;
         $request = Request::create('/api/docs');
 
         $this->expectException(NotFoundHttpException::class);
@@ -42,7 +42,7 @@ class DisallowSwaggerInProductionTest extends TestCase
     {
         $this->app['env'] = 'prod';
 
-        $middleware = new DisallowSwaggerInProduction();
+        $middleware = new DisallowSwaggerInProduction;
         $request = Request::create('/api/docs');
 
         $this->expectException(NotFoundHttpException::class);

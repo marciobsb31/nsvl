@@ -47,7 +47,7 @@ class TokenDeTesteController extends Controller
     )]
     public function store(Request $request): JsonResponse
     {
-        if (!in_array(config('app.env'), ['local', 'testing'], true)) {
+        if (! in_array(config('app.env'), ['local', 'testing'], true)) {
             throw ApiException::forbidden('Acesso não permitido.');
         }
 
@@ -61,11 +61,11 @@ class TokenDeTesteController extends Controller
             default     => null,
         };
 
-        if (!$user) {
+        if (! $user) {
             throw ApiException::notFound('Usuário de teste não encontrado.');
         }
 
-        $token = $user->createToken('teste-' . $perfil)->plainTextToken;
+        $token = $user->createToken('teste-'.$perfil)->plainTextToken;
 
         return response()->json([
             'token' => $token,

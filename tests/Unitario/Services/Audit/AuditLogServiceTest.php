@@ -23,9 +23,9 @@ class AuditLogServiceTest extends TestCase
         );
 
         $resultado = $closure([
-            'cpf' => '11144477735',
+            'cpf'   => '11144477735',
             'token' => 'segredo',
-            'nome' => 'Maria',
+            'nome'  => 'Maria',
         ]);
 
         $this->assertSame('***', $resultado['cpf']);

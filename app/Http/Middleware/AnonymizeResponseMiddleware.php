@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Helpers\CpfHelper;
+use App\Models\Usuario;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,8 +18,8 @@ use Symfony\Component\HttpFoundation\Response;
  * Nota: a chave literal `cpf` NÃO é removida aqui porque listagens/detalhes de
  * solicitações retornam CPF já mascarado (formato xxx.xxx.xxx-xx) via serviço;
  * removê-la ocultava esses dados na interface. O CPF em claro (11 dígitos)
- * não deve ser serializado em controllers — usar {@see \App\Models\Usuario::toSafeArray()}
- * ou {@see \App\Helpers\CpfHelper::mascarar()}.
+ * não deve ser serializado em controllers — usar {@see Usuario::toSafeArray()}
+ * ou {@see CpfHelper::mascarar()}.
  */
 class AnonymizeResponseMiddleware
 {
@@ -39,7 +41,7 @@ class AnonymizeResponseMiddleware
         $response = $next($request);
 
         // Aplica apenas em respostas JSON
-        if (!$response->headers->contains('Content-Type', 'application/json')) {
+        if (! $response->headers->contains('Content-Type', 'application/json')) {
             return $response;
         }
 
@@ -58,6 +60,7 @@ class AnonymizeResponseMiddleware
         foreach ($data as $key => &$value) {
             if (in_array($key, self::SENSITIVE_FIELDS, true)) {
                 unset($data[$key]);
+
                 continue;
             }
 

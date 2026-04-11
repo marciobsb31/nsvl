@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace Tests\Integracao\Contexto;
 
@@ -73,9 +73,8 @@ class ContextoUsuarioTest extends TestCase
             ->assertJsonPath('user.perfil_ativo_id', $novoPerfil->id);
 
         $this->assertDatabaseHas('perfil_usuario', [
-            'id' => $novoPerfil->id,
+            'id'    => $novoPerfil->id,
             'ativo' => true,
         ]);
     }
 }
-
