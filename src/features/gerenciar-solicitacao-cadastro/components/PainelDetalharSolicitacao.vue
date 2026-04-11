@@ -291,6 +291,8 @@
                 <button
                   class="br-button secondary small"
                   type="button"
+                  :disabled="props.ehProprioCadastro && p.ativo"
+                  :title="props.ehProprioCadastro && p.ativo ? 'Você não pode desativar seu próprio cadastro' : undefined"
                   @click="$emit('toggle-perfil', { perfilUsuarioId: p.perfil_usuario_id, acao: p.ativo ? 'desativar' : 'ativar' })"
                 >
                   {{ p.ativo ? 'Desativar' : 'Ativar' }}
@@ -344,6 +346,8 @@
           <button
                   class="br-button secondary small block"
                   type="button"
+                  :disabled="props.ehProprioCadastro && p.ativo"
+                  :title="props.ehProprioCadastro && p.ativo ? 'Você não pode desativar seu próprio cadastro' : undefined"
                   @click="$emit('toggle-perfil', { perfilUsuarioId: p.perfil_usuario_id, acao: p.ativo ? 'desativar' : 'ativar' })"
                 >
                   {{ p.ativo ? 'Desativar' : 'Ativar' }}
@@ -496,6 +500,7 @@ const props = withDefaults(
   defineProps<{
     detalhe: SolicitacaoCadastroDetalhe & { cpf?: string } | null
     avaliando?: boolean
+    ehProprioCadastro?: boolean
   }>(),
   {}
 )

@@ -188,6 +188,7 @@
           <PainelDetalharSolicitacao
             :detalhe="detalheSelecionado"
             :avaliando="avaliando"
+            :eh-proprio-cadastro="ehProprioCadastro"
             @voltar="fecharPainelDetalhar"
             @aprovar="aprovarSolicitacao"
             @reprovar="reprovarSolicitacao"
@@ -297,6 +298,11 @@ const painelDetalharAberto = ref(false)
 const detalheSelecionado = ref<(SolicitacaoCadastroDetalhe & { cpf?: string }) | null>(null)
 const painelCadastroAberto = ref(false)
 const avaliando = ref(false)
+
+const ehProprioCadastro = computed(() => {
+  if (!detalheSelecionado.value?.usuario_id || !user.value?.id) return false
+  return detalheSelecionado.value.usuario_id === user.value.id
+})
 
 function onCadastroSucesso() {
   fecharPainelCadastro()
