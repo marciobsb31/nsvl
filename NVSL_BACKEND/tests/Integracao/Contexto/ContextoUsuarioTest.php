@@ -2,6 +2,7 @@
 
 namespace Tests\Integracao\Contexto;
 
+use App\Models\AuditLog;
 use App\Models\PerfilUsuario;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Integracao\TestCase;
@@ -37,7 +38,7 @@ class ContextoUsuarioTest extends TestCase
         $response
             ->assertOk()
             ->assertJsonCount(6, 'data')
-            ->assertJsonFragment(['nome' => 'Gestor Nacional']);
+            ->assertJsonFragment(['nome' => 'Gestor Federal']);
     }
 
     #[Test]
@@ -49,7 +50,18 @@ class ContextoUsuarioTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertJsonCount(6, 'data');
+            ->assertJsonCount(6, 'data')
+            ->assertJsonStructure([
+                'data' => [[
+                    'perfil_usuario_id',
+                    'perfil_id',
+                    'nome',
+                    'esfera',
+                    'uf',
+                    'municipio',
+                    'orgao',
+                ]],
+            ]);
     }
 
     #[Test]
@@ -59,8 +71,7 @@ class ContextoUsuarioTest extends TestCase
 
         $novoPerfil = PerfilUsuario::query()
             ->where('usuario_id', $usuario->id)
-            ->where('ativo', false)
-            ->orderBy('id')
+            ->whereHas('perfil', fn ($q) => $q->where('nome', 'Gestor Estadual'))
             ->firstOrFail();
 
         $response = $this->postJson('/api/user/trocar-contexto', [
@@ -70,11 +81,19 @@ class ContextoUsuarioTest extends TestCase
         $response
             ->assertOk()
             ->assertJsonPath('message', 'Contexto alterado com sucesso.')
-            ->assertJsonPath('user.perfil_ativo_id', $novoPerfil->id);
+            ->assertJsonPath('user.perfil_ativo_id', $novoPerfil->id)
+            ->assertJsonPath('user.esfera_atuacao', 'Estadual');
 
         $this->assertDatabaseHas('perfil_usuario', [
             'id' => $novoPerfil->id,
             'ativo' => true,
+        ]);
+
+        $this->assertDatabaseHas('auditoria_log', [
+            'user_id' => $usuario->id,
+            'acao' => 'contexto.troca',
+            'registro_id' => $novoPerfil->id,
+            'tipo_operacao' => AuditLog::TIPO_UPDATE,
         ]);
     }
 }

@@ -50,7 +50,7 @@ const router = createRouter({
       path: '/enviar-plano-acao',
       name: 'enviar-plano-acao',
       component: () => import('@/features/plano-acao/pages/PlanoAcaoPage.vue'),
-      meta: { title: 'Enviar plano de ação — NVSL', requiredModule: 'Enviar Plano de Ação' },
+      meta: { title: 'Enviar plano de ação — NVSL' },
     },
     ...gerenciarPerfisRoutes,
     {
@@ -95,9 +95,11 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiredModule && authStore.user) {
     const modulo = to.meta.requiredModule as string
-    if (!authStore.temPermissao(modulo)) {
+    const temPermissao = authStore.temPermissao(modulo)
+    const esfera = authStore.user.esfera_atuacao ?? 'federal'
+    if (esfera !== 'federal' && !temPermissao) {
       const { error } = useNotification()
-      error('Acesso não permitido para o seu perfil.')
+      error('Acesso não permitido.')
       return { name: 'home' }
     }
   }

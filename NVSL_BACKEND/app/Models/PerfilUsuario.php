@@ -24,6 +24,10 @@ class PerfilUsuario extends Model
         'perfil_id',
         'data_inicio_vigencia',
         'data_fim_vigencia',
+        'esfera',
+        'uf',
+        'municipio',
+        'orgao',
         'ativo',
     ];
 

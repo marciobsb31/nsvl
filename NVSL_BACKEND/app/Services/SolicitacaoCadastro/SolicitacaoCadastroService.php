@@ -82,6 +82,20 @@ class SolicitacaoCadastroService
             'orgao'          => $s->orgao,
         ])->values()->all();
 
+        usort($itens, function (array $a, array $b): int {
+            $prioridadeA = ($a['status'] ?? '') === StatusSolicitacao::EM_ANALISE ? 0 : 1;
+            $prioridadeB = ($b['status'] ?? '') === StatusSolicitacao::EM_ANALISE ? 0 : 1;
+
+            if ($prioridadeA !== $prioridadeB) {
+                return $prioridadeA <=> $prioridadeB;
+            }
+
+            $dataA = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
+            $dataB = strtotime((string) ($b['created_at'] ?? '')) ?: 0;
+
+            return $dataB <=> $dataA;
+        });
+
         $this->audit->log('gerenciar_cadastros.listagem', $user->id, [
             'total_registros' => count($itens),
             'filtros'         => array_filter($filtros),
@@ -135,6 +149,7 @@ class SolicitacaoCadastroService
             'perfil_id_solicitado'       => $solicitacao->perfil_id_solicitado,
             'vigencia_inicio_solicitada' => $solicitacao->vigencia_inicio_solicitada?->format('Y-m-d'),
             'vigencia_fim_solicitada'    => $solicitacao->vigencia_fim_solicitada?->format('Y-m-d'),
+            'usuario_id'                 => $solicitacao->user_id,
             'perfis_vinculados'          => $perfisVinculados,
             'pode_avaliar'               => $solicitacao->status_id === $statusEmAnalise,
             'historico_reprovacoes'      => $this->montarHistoricoReprovacoes($solicitacao),
@@ -196,15 +211,11 @@ class SolicitacaoCadastroService
     {
         $cpfDigits = preg_replace('/\D/', '', $dados['CPF'] ?? '');
 
-        if (strlen($cpfDigits) !== 11 && !$user) {
-            throw ApiException::unprocessable('CPF é obrigatório para solicitação sem autenticação.');
+        if (strlen($cpfDigits) !== 11) {
+            throw ApiException::unprocessable('CPF é obrigatório e deve conter 11 dígitos.');
         }
 
-        $cpf = strlen($cpfDigits) === 11 ? $cpfDigits : ($user?->cpf ?? null);
-
-        if (!$cpf) {
-            throw ApiException::unprocessable('CPF é obrigatório.');
-        }
+        $cpf = $cpfDigits;
 
         $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
 
@@ -229,6 +240,12 @@ class SolicitacaoCadastroService
                 }
                 throw $e;
             }
+        } else {
+            // Atualizar nome e email do usuário existente com os dados do formulário
+            $usuario->update([
+                'nome'  => $dados['nome'],
+                'email' => $dados['emailInstitucional'],
+            ]);
         }
 
         $existente = SolicitacaoCadastro::where('user_id', $usuario->id)
@@ -237,6 +254,16 @@ class SolicitacaoCadastroService
 
         if ($existente) {
             throw ApiException::unprocessable('Já existe uma solicitação em análise para este CPF. Aguarde a avaliação da equipe gestora antes de enviar uma nova solicitação.');
+        }
+
+        $totalPerfisAtivos = PerfilUsuario::where('usuario_id', $usuario->id)
+            ->where('ativo', true)
+            ->count();
+
+        $totalPerfisDisponiveis = count(Perfil::CATALOGO_OFICIAL);
+
+        if ($totalPerfisAtivos >= $totalPerfisDisponiveis) {
+            throw ApiException::unprocessable('Este usuário já possui todos os ' . $totalPerfisDisponiveis . ' perfis disponíveis. Não é possível solicitar novos perfis.');
         }
 
         $esferaNome = strtolower((string) ($dados['esferaAtuacao'] ?? ''));
@@ -261,8 +288,6 @@ class SolicitacaoCadastroService
             $municipioId,
             $perfilIdSolicitado
         );
-
-        $this->verificarDuplicidade($usuario->id, $perfilIdSolicitado);
 
         $vigenciaInicioSol = $this->normalizarDataSolicitacaoOpcional($dados['vigenciaInicio'] ?? null);
         $vigenciaFimSol    = $this->normalizarDataSolicitacaoOpcional($dados['vigenciaFim'] ?? null);
@@ -336,12 +361,6 @@ class SolicitacaoCadastroService
             ]);
         }
 
-        // Visitantes não podem aprovar nem reprovar
-        $this->bloquearVisitante($user);
-
-        // RN01: Verificar hierarquia de avaliação
-        $this->validarHierarquiaAvaliacao($user, $dados);
-
         $statusNome = $dados['status'];
         $novoStatusId = $statusNome === 'aprovado' ? $statusAprovado : $statusReprovado;
 
@@ -353,12 +372,6 @@ class SolicitacaoCadastroService
             $solicitacao->update($updateData);
 
             if ($novoStatusId === $statusAprovado) {
-                // Desativa todos os perfis do usuário antes de ativar o aprovado
-                // (respeita a constraint unique perfil_usuario_um_ativo_por_usuario_idx)
-                PerfilUsuario::where('usuario_id', $solicitacao->user_id)
-                    ->where('ativo', true)
-                    ->update(['ativo' => false]);
-
                 PerfilUsuario::updateOrCreate(
                     [
                         'usuario_id' => $solicitacao->user_id,
@@ -367,6 +380,10 @@ class SolicitacaoCadastroService
                     [
                         'data_inicio_vigencia' => $dados['vigencia_inicio'] ?? null,
                         'data_fim_vigencia'    => $dados['vigencia_fim'] ?? null,
+                        'esfera'               => $solicitacao->esfera?->codigo,
+                        'uf'                   => $solicitacao->ufRelacao?->sigla,
+                        'municipio'            => $solicitacao->municipioRelacao?->nome,
+                        'orgao'                => $solicitacao->orgao,
                         'ativo'                => true,
                     ]
                 );
@@ -446,10 +463,17 @@ class SolicitacaoCadastroService
             return ['disponivel' => false, 'mensagem' => 'Já existe uma solicitação em análise para este CPF.'];
         }
 
-        // Verificar se possui perfil vigente (ativo) — se sim, bloqueia
         $usuario = Usuario::where('cpf', $cpf)->first();
-        if ($usuario && $usuario->possuiPerfilVigente()) {
-            return ['disponivel' => false, 'mensagem' => 'Este CPF já possui perfil ativo no sistema.'];
+        if ($usuario) {
+            $totalPerfisAtivos = PerfilUsuario::where('usuario_id', $usuario->id)
+                ->where('ativo', true)
+                ->count();
+
+            $totalPerfisDisponiveis = count(Perfil::CATALOGO_OFICIAL);
+
+            if ($totalPerfisAtivos >= $totalPerfisDisponiveis) {
+                return ['disponivel' => false, 'mensagem' => 'Este CPF já possui todos os perfis disponíveis (' . $totalPerfisDisponiveis . '). Não é possível solicitar novos perfis.'];
+            }
         }
 
         return ['disponivel' => true, 'mensagem' => 'CPF disponível para cadastro.'];
@@ -461,8 +485,6 @@ class SolicitacaoCadastroService
 
     public function ativarPerfil(Usuario $user, int $solicitacaoId, int $perfilUsuarioId): array
     {
-        $this->bloquearVisitante($user);
-
         $solicitacao = $this->buscarSolicitacao($solicitacaoId);
         $usuarioSolicitante = $solicitacao->usuario;
         if (!$usuarioSolicitante) {
@@ -477,13 +499,6 @@ class SolicitacaoCadastroService
             throw ApiException::notFound('Vínculo de perfil não encontrado.');
         }
 
-        // Desativa todos os perfis do usuário antes de ativar o selecionado
-        // (respeita a constraint unique perfil_usuario_um_ativo_por_usuario_idx)
-        PerfilUsuario::where('usuario_id', $usuarioSolicitante->id)
-            ->where('id', '!=', $vinculo->id)
-            ->where('ativo', true)
-            ->update(['ativo' => false]);
-
         $vinculo->update([
             'data_inicio_vigencia' => $vinculo->data_inicio_vigencia ?: now()->toDateString(),
             'data_fim_vigencia'    => null,
@@ -492,11 +507,11 @@ class SolicitacaoCadastroService
 
         $this->audit->log('gerenciar_cadastros.perfil_ativado', $user->id, [
             'solicitacao_id'    => $solicitacao->id,
-            'perfil_usuario_id' => $vinculo->id,
+            'perfil_usuario_id' => $perfilUsuarioId,
             'usuario_id'        => $usuarioSolicitante->id,
-        ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $vinculo->id);
+        ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $perfilUsuarioId);
 
-        return ['message' => 'Perfil vinculado ativado com sucesso.', 'data' => ['id' => $vinculo->id]];
+        return ['message' => 'Perfil vinculado ativado com sucesso.', 'data' => ['id' => $perfilUsuarioId]];
     }
 
     // ------------------------------------------------------------------
@@ -505,12 +520,14 @@ class SolicitacaoCadastroService
 
     public function desativarPerfil(Usuario $user, int $solicitacaoId, int $perfilUsuarioId): array
     {
-        $this->bloquearVisitante($user);
-
         $solicitacao = $this->buscarSolicitacao($solicitacaoId);
         $usuarioSolicitante = $solicitacao->usuario;
         if (!$usuarioSolicitante) {
             throw ApiException::notFound('Usuário da solicitação não encontrado.');
+        }
+
+        if ($user->id === $usuarioSolicitante->id) {
+            throw ApiException::forbidden('Você não pode desativar seu próprio cadastro.');
         }
 
         $vinculo = PerfilUsuario::where('id', $perfilUsuarioId)
@@ -540,58 +557,6 @@ class SolicitacaoCadastroService
         ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $vinculo->id);
 
         return ['message' => 'Perfil vinculado desativado com sucesso.', 'data' => ['id' => $vinculo->id]];
-    }
-
-    // ------------------------------------------------------------------
-    // Adicionar perfil vinculado
-    // ------------------------------------------------------------------
-
-    public function adicionarPerfil(Usuario $user, int $solicitacaoId, array $dados): array
-    {
-        $this->bloquearVisitante($user);
-
-        $solicitacao = $this->buscarSolicitacao($solicitacaoId);
-        $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
-
-        if ($solicitacao->status_id !== $statusAprovado) {
-            throw ValidationException::withMessages([
-                'status' => ['Apenas solicitações aprovadas permitem adicionar novos perfis vinculados.'],
-            ]);
-        }
-
-        $usuarioSolicitante = $solicitacao->usuario;
-        if (!$usuarioSolicitante) {
-            throw ApiException::notFound('Usuário da solicitação não encontrado.');
-        }
-
-        $vinculoExistente = PerfilUsuario::where('usuario_id', $usuarioSolicitante->id)
-            ->where('perfil_id', (int) $dados['perfil_id'])
-            ->first();
-
-        if ($vinculoExistente) {
-            throw ValidationException::withMessages([
-                'perfil_id' => ['Este perfil já está vinculado ao usuário.'],
-            ]);
-        }
-
-        PerfilUsuario::where('usuario_id', $usuarioSolicitante->id)->update(['ativo' => false]);
-
-        $vinculo = PerfilUsuario::create([
-            'usuario_id'           => $usuarioSolicitante->id,
-            'perfil_id'            => (int) $dados['perfil_id'],
-            'data_inicio_vigencia' => $dados['vigencia_inicio'] ?? null,
-            'data_fim_vigencia'    => $dados['vigencia_fim'] ?? null,
-            'ativo'                => true,
-        ]);
-
-        $this->audit->log('gerenciar_cadastros.perfil_adicionado', $user->id, [
-            'solicitacao_id'    => $solicitacao->id,
-            'perfil_usuario_id' => $vinculo->id,
-            'perfil_id'         => $vinculo->perfil_id,
-            'usuario_id'        => $usuarioSolicitante->id,
-        ], AuditLog::TIPO_INSERT, 'perfil_usuario', $vinculo->id);
-
-        return ['message' => 'Perfil vinculado adicionado com sucesso.', 'data' => ['id' => $vinculo->id]];
     }
 
     // ==================================================================
@@ -789,33 +754,6 @@ class SolicitacaoCadastroService
         }
     }
 
-    private function verificarDuplicidade(int $userId, ?int $perfilIdSolicitado): void
-    {
-        // Sem perfil solicitado, não há como validar duplicidade de perfil ativo.
-        if (!$perfilIdSolicitado) {
-            return;
-        }
-
-        // Verificar se o usuário já possui o mesmo perfil ATIVO (vigente)
-        $query = PerfilUsuario::where('usuario_id', $userId)
-            ->where('ativo', true)
-            ->where('perfil_id', $perfilIdSolicitado)
-            ->where('data_inicio_vigencia', '<=', now()->toDateString())
-            ->where(function ($q) {
-                $q->whereNull('data_fim_vigencia')
-                  ->orWhere('data_fim_vigencia', '>=', now()->toDateString());
-            });
-
-        if ($query->exists()) {
-            $nomePerfil = Perfil::find($perfilIdSolicitado)?->nome;
-            $msg = $nomePerfil
-                ? "Você já possui o perfil ativo: {$nomePerfil}."
-                : 'Você já possui este perfil ativo.';
-
-            throw ApiException::unprocessable($msg);
-        }
-    }
-
     private function normalizarDataPivot(mixed $valor): ?string
     {
         if ($valor === null || $valor === '') {
@@ -827,60 +765,5 @@ class SolicitacaoCadastroService
         }
 
         return Carbon::parse((string) $valor)->format('Y-m-d');
-    }
-
-    /**
-     * Visitantes possuem acesso somente-consulta e não podem avaliar solicitações.
-     */
-    private function bloquearVisitante(Usuario $user): void
-    {
-        $perfilAtivo = $user->perfilUsuarioAtivo();
-        $nome = $perfilAtivo?->perfil?->nome ?? '';
-
-        if (str_starts_with(mb_strtolower($nome), 'visitante')) {
-            throw ApiException::forbidden('Perfis do tipo Visitante possuem acesso somente de consulta.');
-        }
-    }
-
-    /**
-     * RN01: Valida que o avaliador possui permissão para aprovar o perfil solicitado.
-     */
-    private function validarHierarquiaAvaliacao(Usuario $avaliador, array $dados): void
-    {
-        if (($dados['status'] ?? '') !== 'aprovado') {
-            return; // Reprovação não exige validação de hierarquia de perfil
-        }
-
-        $perfilIdSolicitado = (int) ($dados['perfil_id'] ?? 0);
-        if (!$perfilIdSolicitado) {
-            return;
-        }
-
-        $perfilSolicitado = Perfil::find($perfilIdSolicitado);
-        if (!$perfilSolicitado) {
-            return;
-        }
-
-        $perfilAtivo = $avaliador->perfilUsuarioAtivo();
-        $nomePerfilAvaliador = $perfilAtivo
-            ? ($perfilAtivo->perfil?->nome ?? '')
-            : '';
-
-        // Se não tem perfil ativo, tenta inferir do primeiro perfil vigente
-        if (!$nomePerfilAvaliador) {
-            $primeiroVigente = $avaliador->perfisVigentes()->first();
-            $nomePerfilAvaliador = $primeiroVigente?->nome ?? '';
-        }
-
-        $hierarquia = Perfil::HIERARQUIA_AVALIACAO;
-        $permitidos = $hierarquia[$nomePerfilAvaliador] ?? [];
-
-        if (!empty($permitidos) && !in_array($perfilSolicitado->nome, $permitidos, true)) {
-            throw ValidationException::withMessages([
-                'perfil_id' => [
-                    "Seu perfil ({$nomePerfilAvaliador}) não tem permissão para aprovar o perfil \"{$perfilSolicitado->nome}\".",
-                ],
-            ]);
-        }
     }
 }

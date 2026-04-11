@@ -30,6 +30,7 @@ export interface HistoricoReprovacaoItem {
 
 export interface SolicitacaoCadastroDetalhe extends SolicitacaoCadastroItem {
   cpf?: string
+  usuario_id?: number
   email_institucional: string
   telefone_institucional: string
   telefone_pessoal?: string | null

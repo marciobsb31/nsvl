@@ -8,21 +8,10 @@
               Gerenciar perfis de acesso no sistema
             </h1>
             <p class="titulo-pagina__subtitulo">
-              Visualize, cadastre e edite os perfis de acesso do NVSL. A vigência e a hierarquia (federal, estadual e
-              municipal) definem quem pode criar ou alterar cada perfil.
+              Visualize e edite os perfis de acesso do NVSL. A vigência e a hierarquia (federal, estadual e
+              municipal) definem quem pode alterar cada perfil.
             </p>
           </div>
-          <button
-            class="br-button primary small"
-            type="button"
-            @click="abrirCadastrar"
-            aria-label="Cadastrar novo perfil"
-          >
-            <span class="titulo-pagina__btn-conteudo">
-              <i class="fas fa-plus-circle" aria-hidden="true"></i>
-              <span>Novo perfil</span>
-            </span>
-          </button>
         </div>
       </div>
 
@@ -120,7 +109,7 @@
       <Transition name="painel-slide">
         <aside v-if="painelAberto" class="painel-lateral" :aria-label="ariaPainel">
           <PainelFormularioPerfil
-            v-if="modoPainel === 'cadastrar' || modoPainel === 'editar' || modoPainel === 'visualizar'"
+            v-if="modoPainel === 'editar' || modoPainel === 'visualizar'"
             :modo="modoPainel"
             :perfil="perfilSelecionado"
             @voltar="tentarFecharPainel"
@@ -211,8 +200,8 @@ const sortAsc = ref(true)
 const paginaAtual = ref(1)
 const itensPorPagina = ref(10)
 
-type ModoPainel = 'cadastrar' | 'editar' | 'visualizar' | 'historico'
-const modoPainel = ref<ModoPainel>('cadastrar')
+type ModoPainel = 'editar' | 'visualizar' | 'historico'
+const modoPainel = ref<ModoPainel>('visualizar')
 const perfilSelecionado = ref<PerfilGerenciar | null>(null)
 const painelAberto = ref(false)
 const formularioDirty = ref(false)
@@ -223,7 +212,6 @@ const esferasPermitidas = ref<string[]>(['federal', 'estadual', 'municipal'])
 
 const ariaPainel = computed(() => {
   const map: Record<ModoPainel, string> = {
-    cadastrar: 'Cadastrar novo perfil',
     editar: 'Editar perfil',
     visualizar: 'Visualizar perfil',
     historico: 'Histórico do perfil',
@@ -304,13 +292,6 @@ async function carregarPerfis() {
   }
 }
 
-function abrirCadastrar() {
-  perfilSelecionado.value = null
-  modoPainel.value = 'cadastrar'
-  formularioDirty.value = false
-  painelAberto.value = true
-}
-
 function abrirVisualizar(p: PerfilGerenciar) {
   perfilSelecionado.value = p
   modoPainel.value = 'visualizar'
@@ -333,7 +314,7 @@ function abrirHistorico(p: PerfilGerenciar) {
 }
 
 function tentarFecharPainel() {
-  if (formularioDirty.value && (modoPainel.value === 'cadastrar' || modoPainel.value === 'editar')) {
+  if (formularioDirty.value && modoPainel.value === 'editar') {
     confirmarSairVisivel.value = true
     return
   }

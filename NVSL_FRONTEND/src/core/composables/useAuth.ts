@@ -14,7 +14,6 @@ export function useAuth() {
         perfisAtivos: computed(() => authStore.perfisAtivos),
         possuiMultiplosPerfis: computed(() => authStore.possuiMultiplosPerfis),
         perfilAtivo: computed(() => authStore.perfilAtivo),
-        isVisitante: computed(() => authStore.isVisitante),
         trocandoContexto: computed(() => authStore.trocandoContexto),
         contextKey: computed(() => authStore.contextKey),
         temPermissao: authStore.temPermissao,

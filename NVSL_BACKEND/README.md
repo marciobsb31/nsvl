@@ -165,7 +165,7 @@ Cobertura combinada:
 
 ## Swagger
 
-O Swagger deve permanecer funcional em `http://localhost:8081/api/docs`.
+O Swagger deve permanecer funcional em `http://localhost:8081/api/docs` e também em ambientes publicados, usando a URL definida em `APP_URL`.
 
 Comando de geracao:
 
@@ -179,6 +179,9 @@ Diretrizes:
 - todo endpoint novo precisa ter anotacao OpenAPI correspondente
 - o Swagger deve continuar documentando os endpoints implementados
 - alteracoes de contrato devem ser validadas junto com os testes de integracao
+- `APP_URL` deve refletir a URL publica real da API em cada ambiente
+- `L5_SWAGGER_CONST_HOST` deve acompanhar o `APP_URL`
+- em ambientes atras de proxy, manter `L5_SWAGGER_PROXY=true`
 
 ## Convencoes de desenvolvimento
 

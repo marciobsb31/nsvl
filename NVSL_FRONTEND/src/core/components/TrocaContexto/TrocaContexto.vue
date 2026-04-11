@@ -1,378 +1,352 @@
-<template>
-  <Teleport to="body">
-    <Transition name="tc-fade">
-      <div v-if="visivel" class="tc-overlay" @click.self="fechar" role="dialog" aria-modal="true" aria-label="Troca de contexto">
-        <div class="tc-modal" ref="modalRef">
-          <div class="tc-modal__header">
-            <h2 class="tc-modal__titulo">Troca de Contexto</h2>
-            <button type="button" class="tc-modal__fechar" aria-label="Fechar" @click="fechar">
-              <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
+﻿<template>
+  <div v-if="possuiMultiplosPerfis" class="tc-dropdown" ref="dropdownRef">
+    <button
+      type="button"
+      class="tc-dropdown__trigger"
+      :disabled="trocandoContexto"
+      @click="aberto = !aberto"
+      aria-haspopup="listbox"
+      :aria-expanded="aberto"
+      aria-label="Trocar contexto de perfil"
+    >
+      <i class="fas fa-exchange-alt tc-dropdown__icone" aria-hidden="true"></i>
+      <span class="tc-dropdown__label">
+        {{ perfilAtivo?.nome ?? 'Selecionar perfil' }}
+        <small v-if="perfilAtivo?.esfera" class="tc-dropdown__esfera">{{ labelEsfera(perfilAtivo.esfera) }}</small>
+      </span>
+      <i class="fas fa-chevron-down tc-dropdown__seta" :class="{ 'tc-dropdown__seta--aberto': aberto }" aria-hidden="true"></i>
+    </button>
+
+    <Transition name="tc-slide">
+      <ul v-if="aberto" class="tc-dropdown__menu" role="listbox" aria-label="Perfis disponíveis">
+        <li
+          v-for="perfil in perfisAtivos"
+          :key="perfil.perfil_usuario_id"
+          class="tc-dropdown__item"
+          :class="{
+            'tc-dropdown__item--ativo': isPerfilAtivo(perfil),
+            'tc-dropdown__item--selecionando': selecionandoId === perfil.perfil_usuario_id,
+          }"
+          role="option"
+          :aria-selected="isPerfilAtivo(perfil)"
+          @click="selecionarPerfil(perfil)"
+        >
+          <div class="tc-dropdown__item-info">
+            <span class="tc-dropdown__item-nome">
+              {{ perfil.nome }}
+              <span v-if="isPerfilAtivo(perfil)" class="tc-dropdown__badge">Ativo</span>
+            </span>
+            <span class="tc-dropdown__item-detalhes">
+              {{ montarDetalhes(perfil) }}
+            </span>
           </div>
-          <p class="tc-modal__descricao">
-            Selecione o perfil que deseja utilizar. Menus, permissões e dados serão atualizados conforme o perfil escolhido.
-          </p>
-          <div class="tc-lista" role="radiogroup" aria-label="Perfis disponíveis">
-            <button
-              v-for="perfil in perfisAtivos"
-              :key="perfil.perfil_usuario_id"
-              type="button"
-              class="tc-card"
-              :class="{ 'tc-card--ativo': isPerfilAtivo(perfil), 'tc-card--selecionando': selecionandoId === perfil.perfil_usuario_id }"
-              :aria-pressed="isPerfilAtivo(perfil)"
-              :disabled="trocandoContexto"
-              @click="selecionarPerfil(perfil)"
-            >
-              <div class="tc-card__indicador">
-                <span v-if="isPerfilAtivo(perfil)" class="tc-card__badge-ativo">Em uso</span>
-              </div>
-              <div class="tc-card__conteudo">
-                <span class="tc-card__nome">{{ perfil.nome }}</span>
-                <div class="tc-card__detalhes">
-                  <span class="tc-card__detalhe" v-if="perfil.esfera">
-                    <i class="fas fa-layer-group" aria-hidden="true"></i>
-                    {{ labelEsfera(perfil.esfera) }}
-                  </span>
-                  <span class="tc-card__detalhe" v-if="perfil.uf">
-                    <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                    {{ perfil.uf }}
-                  </span>
-                  <span class="tc-card__detalhe" v-if="perfil.municipio">
-                    <i class="fas fa-city" aria-hidden="true"></i>
-                    {{ perfil.municipio }}
-                  </span>
-                  <span class="tc-card__detalhe" v-if="perfil.orgao">
-                    <i class="fas fa-building" aria-hidden="true"></i>
-                    {{ perfil.orgao }}
-                  </span>
-                </div>
-              </div>
-              <div class="tc-card__acao">
-                <i v-if="isPerfilAtivo(perfil)" class="fas fa-check-circle tc-card__icone-ativo" aria-hidden="true"></i>
-                <i v-else class="fas fa-arrow-right tc-card__icone-selecionar" aria-hidden="true"></i>
-              </div>
-            </button>
-          </div>
-          <div v-if="trocandoContexto" class="tc-modal__loading">
-            <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-            Atualizando contexto...
-          </div>
-          <div v-if="erroTroca" class="tc-modal__erro" role="alert">
-            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-            {{ erroTroca }}
-          </div>
-        </div>
-      </div>
+          <i v-if="selecionandoId === perfil.perfil_usuario_id" class="fas fa-spinner fa-spin tc-dropdown__item-loading" aria-hidden="true"></i>
+          <i v-else-if="isPerfilAtivo(perfil)" class="fas fa-check-circle tc-dropdown__item-check" aria-hidden="true"></i>
+        </li>
+
+        <li v-if="erroTroca" class="tc-dropdown__erro" role="alert">
+          <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+          {{ erroTroca }}
+        </li>
+      </ul>
     </Transition>
-  </Teleport>
+  </div>
 </template>
+
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuth } from '@/core/composables/useAuth'
 import type { PerfilVigente } from '@/stores/authStore'
+
 defineOptions({ name: 'TrocaContexto' })
-const props = defineProps<{ visivel: boolean }>()
+
 const emit = defineEmits<{
-  (e: 'fechar'): void
   (e: 'contexto-alterado'): void
 }>()
-const { perfisAtivos, perfilAtivo, trocandoContexto, trocarContexto } = useAuth()
-const modalRef = ref<HTMLElement | null>(null)
+
+const { perfisAtivos, perfilAtivo, possuiMultiplosPerfis, trocandoContexto, trocarContexto } = useAuth()
+
+const dropdownRef = ref<HTMLElement | null>(null)
+const aberto = ref(false)
 const erroTroca = ref<string | null>(null)
 const selecionandoId = ref<number | null>(null)
+
 function labelEsfera(esfera: string) {
-  const map: Record<string, string> = {
-    federal: 'Federal',
-    estadual: 'Estadual',
-    municipal: 'Municipal',
-  }
+  const map: Record<string, string> = { federal: 'Federal', estadual: 'Estadual', municipal: 'Municipal' }
   return map[esfera] ?? esfera
 }
+
 function isPerfilAtivo(perfil: PerfilVigente) {
   return perfilAtivo.value?.perfil_usuario_id === perfil.perfil_usuario_id
 }
+
+function valorCampo(valor?: string | null): string {
+  return (valor ?? '').trim()
+}
+
+function montarDetalhes(perfil: PerfilVigente): string {
+  const partes: string[] = []
+  if (perfil.esfera) partes.push(labelEsfera(perfil.esfera))
+  if (valorCampo(perfil.uf)) partes.push(perfil.uf!)
+  if (valorCampo(perfil.municipio)) partes.push(perfil.municipio!)
+  if (valorCampo(perfil.orgao)) partes.push(perfil.orgao!)
+  return partes.join(' · ') || 'Sem informações adicionais'
+}
+
 async function selecionarPerfil(perfil: PerfilVigente) {
   if (isPerfilAtivo(perfil) || trocandoContexto.value) return
   erroTroca.value = null
   selecionandoId.value = perfil.perfil_usuario_id
   try {
     await trocarContexto(perfil.perfil_usuario_id)
+    aberto.value = false
     emit('contexto-alterado')
-    emit('fechar')
   } catch {
     erroTroca.value = 'Não foi possível trocar o contexto. Tente novamente.'
   } finally {
     selecionandoId.value = null
   }
 }
-function fechar() {
-  if (!trocandoContexto.value) {
-    erroTroca.value = null
-    emit('fechar')
+
+function handleClickOutside(e: MouseEvent) {
+  if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node)) {
+    aberto.value = false
   }
 }
+
 function handleEsc(e: KeyboardEvent) {
-  if (e.key === 'Escape') fechar()
+  if (e.key === 'Escape') aberto.value = false
 }
-watch(() => props.visivel, (val) => {
-  if (val) {
-    document.addEventListener('keydown', handleEsc)
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.removeEventListener('keydown', handleEsc)
-    document.body.style.overflow = ''
-  }
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside, true)
+  document.addEventListener('keydown', handleEsc)
 })
+
 onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside, true)
   document.removeEventListener('keydown', handleEsc)
-  document.body.style.overflow = ''
 })
 </script>
+
 <style scoped>
-.tc-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
+.tc-dropdown {
+  position: relative;
+}
+
+.tc-dropdown__trigger {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
-  padding: 1rem;
-}
-.tc-modal {
-  background: var(--color-secondary-01, #fff);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-  width: 100%;
-  max-width: 560px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.tc-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--color-secondary-04, #ddd);
-}
-.tc-modal__titulo {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--color-primary-default, #1351b4);
-  margin: 0;
-}
-.tc-modal__fechar {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: transparent;
-  color: var(--color-secondary-06, #888);
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  transition: background-color 0.2s, color 0.2s;
-}
-.tc-modal__fechar:hover {
-  background: var(--color-secondary-03, #e8e8e8);
-  color: var(--color-secondary-08, #333);
-}
-.tc-modal__descricao {
-  padding: 1rem 1.5rem 0;
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--color-secondary-06, #888);
-  line-height: 1.5;
-}
-.tc-lista {
-  padding: 1rem 1.5rem 1.5rem;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.tc-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  border: 2px solid var(--color-secondary-04, #ddd);
-  border-radius: 8px;
-  background: var(--color-secondary-01, #fff);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-  width: 100%;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
   font-family: inherit;
-  font-size: inherit;
+  border: 1px solid var(--color-primary-default, #1351b4);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-primary-default, #1351b4);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  white-space: nowrap;
+  max-width: 260px;
 }
-.tc-card:hover:not(:disabled):not(.tc-card--ativo) {
-  border-color: var(--color-primary-default, #1351b4);
-  background: var(--color-primary-pastel, #e8f4fc);
+
+.tc-dropdown__trigger:hover {
+  background: var(--color-primary-default, #1351b4);
+  color: #fff;
 }
-.tc-card--ativo {
-  border-color: var(--color-primary-default, #1351b4);
-  background: var(--color-primary-pastel, #e8f4fc);
-  cursor: default;
-}
-.tc-card--selecionando {
-  opacity: 0.7;
-  pointer-events: none;
-}
-.tc-card:disabled {
+
+.tc-dropdown__trigger:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.tc-card__badge-ativo {
-  display: inline-block;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #fff;
-  background: var(--color-primary-default, #1351b4);
-  border-radius: 4px;
+.tc-dropdown__icone {
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.tc-dropdown__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
-}
-.tc-card__conteudo {
-  flex: 1;
-  min-width: 0;
-}
-.tc-card__nome {
-  font-weight: 600;
-  font-size: 0.9375rem;
-  color: var(--color-secondary-08, #333);
-  display: block;
-  margin-bottom: 0.35rem;
-}
-.tc-card__detalhes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-}
-.tc-card__detalhe {
-  font-size: 0.8125rem;
-  color: var(--color-secondary-06, #888);
   display: flex;
   align-items: center;
   gap: 0.35rem;
 }
-.tc-card__detalhe i {
-  font-size: 0.75rem;
-  color: var(--color-primary-default, #1351b4);
-  opacity: 0.7;
+
+.tc-dropdown__esfera {
+  font-weight: 400;
+  opacity: 0.75;
+  font-size: 0.7rem;
 }
-.tc-card__acao {
+
+.tc-dropdown__seta {
+  font-size: 0.55rem;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.tc-dropdown__seta--aberto {
+  transform: rotate(180deg);
+}
+
+/* ---- Menu ---- */
+.tc-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 9000;
+  min-width: 300px;
+  max-width: 420px;
+  max-height: 360px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.35rem 0;
+  list-style: none;
+  background: var(--color-secondary-01, #fff);
+  border: 1px solid var(--color-secondary-04, #ddd);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.tc-dropdown__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.tc-dropdown__item:hover:not(.tc-dropdown__item--ativo):not(.tc-dropdown__item--selecionando) {
+  background: var(--color-primary-pastel, #e8f4fc);
+}
+
+.tc-dropdown__item--ativo {
+  background: var(--color-primary-pastel, #e8f4fc);
+  cursor: default;
+}
+
+.tc-dropdown__item--selecionando {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.tc-dropdown__item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-dropdown__item-nome {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-secondary-08, #333);
+}
+
+.tc-dropdown__badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--color-success, #168821);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.tc-dropdown__item-detalhes {
+  display: block;
+  font-size: 0.725rem;
+  color: var(--color-secondary-06, #888);
+  margin-top: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tc-dropdown__item-check {
+  color: var(--color-success, #168821);
+  font-size: 1rem;
   flex-shrink: 0;
 }
-.tc-card__icone-ativo {
-  font-size: 1.25rem;
+
+.tc-dropdown__item-loading {
   color: var(--color-primary-default, #1351b4);
-}
-.tc-card__icone-selecionar {
-  font-size: 1rem;
-  color: var(--color-secondary-05, #bbb);
-  transition: color 0.2s;
-}
-.tc-card:hover:not(:disabled):not(.tc-card--ativo) .tc-card__icone-selecionar {
-  color: var(--color-primary-default, #1351b4);
-}
-.tc-modal__loading {
-  padding: 0 1.5rem 1rem;
   font-size: 0.875rem;
-  color: var(--color-primary-default, #1351b4);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-shrink: 0;
 }
-.tc-modal__erro {
-  padding: 0.75rem 1.5rem;
-  margin: 0 1.5rem 1rem;
-  font-size: 0.875rem;
+
+.tc-dropdown__erro {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
   color: #b71c1c;
   background: #fdecea;
-  border-radius: 6px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
+
 /* Dark theme */
-[data-theme="dark"] .tc-modal {
+[data-theme="dark"] .tc-dropdown__trigger {
+  border-color: var(--color-primary-lighten-01, #4d7fd6);
+  color: var(--color-primary-lighten-01, #4d7fd6);
+}
+[data-theme="dark"] .tc-dropdown__trigger:hover {
+  background: var(--color-primary-lighten-01, #4d7fd6);
+  color: #fff;
+}
+[data-theme="dark"] .tc-dropdown__menu {
   background: var(--color-secondary-02, #1a1a1a);
-}
-[data-theme="dark"] .tc-modal__header {
   border-color: rgba(255, 255, 255, 0.12);
 }
-[data-theme="dark"] .tc-card {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-[data-theme="dark"] .tc-card:hover:not(:disabled):not(.tc-card--ativo) {
+[data-theme="dark"] .tc-dropdown__item:hover:not(.tc-dropdown__item--ativo) {
   background: rgba(19, 81, 180, 0.15);
-  border-color: var(--color-primary-lighten-01, #4d7fd6);
 }
-[data-theme="dark"] .tc-card--ativo {
+[data-theme="dark"] .tc-dropdown__item--ativo {
   background: rgba(19, 81, 180, 0.15);
-  border-color: var(--color-primary-lighten-01, #4d7fd6);
 }
-[data-theme="dark"] .tc-card__nome {
+[data-theme="dark"] .tc-dropdown__item-nome {
   color: rgba(255, 255, 255, 0.95);
 }
-[data-theme="dark"] .tc-card__detalhe {
-  color: rgba(255, 255, 255, 0.6);
-}
-[data-theme="dark"] .tc-modal__descricao {
+[data-theme="dark"] .tc-dropdown__item-detalhes {
   color: rgba(255, 255, 255, 0.55);
 }
-[data-theme="dark"] .tc-modal__fechar {
-  color: rgba(255, 255, 255, 0.6);
-}
-[data-theme="dark"] .tc-modal__fechar:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
-}
-[data-theme="dark"] .tc-modal__erro {
+[data-theme="dark"] .tc-dropdown__erro {
   background: rgba(183, 28, 28, 0.15);
   color: #ef9a9a;
 }
-/* Transição */
-.tc-fade-enter-active,
-.tc-fade-leave-active {
-  transition: opacity 0.25s ease;
+
+/* Transition */
+.tc-slide-enter-active,
+.tc-slide-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
-.tc-fade-enter-active .tc-modal,
-.tc-fade-leave-active .tc-modal {
-  transition: transform 0.25s ease;
-}
-.tc-fade-enter-from,
-.tc-fade-leave-to {
+.tc-slide-enter-from,
+.tc-slide-leave-to {
   opacity: 0;
+  transform: translateY(-6px);
 }
-.tc-fade-enter-from .tc-modal {
-  transform: scale(0.95) translateY(10px);
-}
-.tc-fade-leave-to .tc-modal {
-  transform: scale(0.95) translateY(10px);
-}
+
+/* Responsive */
 @media (max-width: 575px) {
-  .tc-modal {
-    max-height: 90vh;
-    border-radius: 12px 12px 0 0;
-    align-self: flex-end;
+  .tc-dropdown__label,
+  .tc-dropdown__esfera,
+  .tc-dropdown__seta {
+    display: none;
   }
-  .tc-card__detalhes {
-    flex-direction: column;
-    gap: 0.25rem;
+  .tc-dropdown__trigger {
+    padding: 0.4rem 0.6rem;
   }
-  .tc-card__indicador {
-    min-width: auto;
+  .tc-dropdown__menu {
+    min-width: 260px;
+    right: -0.5rem;
   }
 }
 </style>

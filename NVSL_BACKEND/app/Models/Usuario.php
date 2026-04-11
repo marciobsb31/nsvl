@@ -56,7 +56,7 @@ class Usuario extends Authenticatable
     public function perfis(): BelongsToMany
     {
         return $this->belongsToMany(Perfil::class, 'perfil_usuario', 'usuario_id', 'perfil_id')
-            ->withPivot(['id', 'data_inicio_vigencia', 'data_fim_vigencia', 'ativo'])
+            ->withPivot(['id', 'data_inicio_vigencia', 'data_fim_vigencia', 'esfera', 'uf', 'municipio', 'orgao', 'ativo'])
             ->withTimestamps();
     }
 
@@ -113,13 +113,7 @@ class Usuario extends Authenticatable
      */
     public function getEsferaAtuacaoAttribute(): string
     {
-        $solicitacao = $this->solicitacoesCadastro()
-            ->whereHas('statusSolicitacao', fn ($q) => $q->where('nome', 'aprovado'))
-            ->latest('id')
-            ->with('esfera')
-            ->first();
-
-        return $solicitacao?->esfera?->nome ?? 'federal';
+        return (string) ($this->contextoAtivo()['esfera'] ?? 'federal');
     }
 
     /**
@@ -127,13 +121,7 @@ class Usuario extends Authenticatable
      */
     public function getUfLotacaoAttribute(): ?string
     {
-        $solicitacao = $this->solicitacoesCadastro()
-            ->whereHas('statusSolicitacao', fn ($q) => $q->where('nome', 'aprovado'))
-            ->latest('id')
-            ->with('ufRelacao')
-            ->first();
-
-        return $solicitacao?->ufRelacao?->sigla;
+        return $this->contextoAtivo()['uf'];
     }
 
     /**
@@ -141,13 +129,7 @@ class Usuario extends Authenticatable
      */
     public function getMunicipioLotacaoAttribute(): ?string
     {
-        $solicitacao = $this->solicitacoesCadastro()
-            ->whereHas('statusSolicitacao', fn ($q) => $q->where('nome', 'aprovado'))
-            ->latest('id')
-            ->with('municipioRelacao')
-            ->first();
-
-        return $solicitacao?->municipioRelacao?->nome;
+        return $this->contextoAtivo()['municipio'];
     }
 
     // -------------------------------------------------------
@@ -157,34 +139,34 @@ class Usuario extends Authenticatable
     public function toSafeArray(): array
     {
         $perfisVigentes = $this->perfisVigentes();
-
-        // Pré-carrega solicitações aprovadas para enriquecer dados por perfil (§5.4)
-        $solicitacoesAprovadas = $this->solicitacoesCadastro()
+        $solicitacoesAprovadasPorPerfil = $this->solicitacoesCadastro()
             ->whereHas('statusSolicitacao', fn ($q) => $q->where('nome', 'aprovado'))
+            ->whereNotNull('perfil_id_solicitado')
+            ->latest('id')
             ->with(['esfera', 'ufRelacao', 'municipioRelacao'])
-            ->orderByDesc('id')
-            ->get();
+            ->get()
+            ->unique('perfil_id_solicitado')
+            ->keyBy('perfil_id_solicitado');
 
-        $perfisArray = $perfisVigentes->map(function (Perfil $p) use ($solicitacoesAprovadas) {
-            $esferaPerfil = Perfil::ESFERA_POR_PERFIL[$p->nome] ?? null;
+        $perfisArray = $perfisVigentes
+            ->map(function (Perfil $p) use ($solicitacoesAprovadasPorPerfil): array {
+                $solicitacao = $solicitacoesAprovadasPorPerfil->get($p->id);
 
-            $solicitacao = $solicitacoesAprovadas->first(
-                fn ($s) => strtolower($s->esfera?->nome ?? '') === $esferaPerfil
-            );
-
-            return [
-                'perfil_usuario_id'     => $p->pivot->id,
-                'perfil_id'             => $p->id,
-                'nome'                  => $p->nome,
-                'esfera'                => $esferaPerfil,
-                'uf'                    => $solicitacao?->ufRelacao?->sigla,
-                'municipio'             => $solicitacao?->municipioRelacao?->nome,
-                'orgao'                 => $solicitacao?->orgao,
-                'data_inicio_vigencia'  => $p->pivot->data_inicio_vigencia,
-                'data_fim_vigencia'     => $p->pivot->data_fim_vigencia,
-                'ativo'                 => (bool) $p->pivot->ativo,
-            ];
-        })->values()->toArray();
+                return [
+                    'perfil_usuario_id'     => $p->pivot->id,
+                    'perfil_id'             => $p->id,
+                    'nome'                  => $p->nome,
+                    'esfera'                => $this->nomeEsfera($p->pivot->esfera) ?? $solicitacao?->esfera?->nome,
+                    'uf'                    => $p->pivot->uf ?? $solicitacao?->ufRelacao?->sigla,
+                    'municipio'             => $p->pivot->municipio ?? $solicitacao?->municipioRelacao?->nome,
+                    'orgao'                 => $p->pivot->orgao ?? $solicitacao?->orgao,
+                    'data_inicio_vigencia'  => $p->pivot->data_inicio_vigencia,
+                    'data_fim_vigencia'     => $p->pivot->data_fim_vigencia,
+                    'ativo'                 => (bool) $p->pivot->ativo,
+                ];
+            })
+            ->values()
+            ->toArray();
 
         $perfilAtivoPivot = collect($perfisArray)->firstWhere('ativo', true)
             ?? collect($perfisArray)->first();
@@ -194,11 +176,69 @@ class Usuario extends Authenticatable
             'name'              => $this->nome,
             'email'             => $this->email,
             'sub'               => $this->govbr_sub,
-            'esfera_atuacao'    => $this->esfera_atuacao,
-            'uf_lotacao'        => $this->uf_lotacao,
-            'municipio_lotacao' => $this->municipio_lotacao,
+            'esfera_atuacao'    => $perfilAtivoPivot['esfera'] ?? 'federal',
+            'uf_lotacao'        => $perfilAtivoPivot['uf'] ?? null,
+            'municipio_lotacao' => $perfilAtivoPivot['municipio'] ?? null,
+            'orgao_lotacao'     => $perfilAtivoPivot['orgao'] ?? null,
             'perfis_vigentes'   => $perfisArray,
             'perfil_ativo_id'   => $perfilAtivoPivot['perfil_usuario_id'] ?? null,
         ];
+    }
+
+    private function contextoAtivo(): array
+    {
+        $perfisVigentes = $this->perfisVigentes();
+        $perfilAtivo = $perfisVigentes->first(fn (Perfil $perfil) => (bool) $perfil->pivot->ativo)
+            ?? $perfisVigentes->first();
+
+        $perfilAtivoId = $perfilAtivo?->id;
+        $solicitacaoDoPerfil = $perfilAtivoId
+            ? $this->solicitacaoAprovadaMaisRecente($perfilAtivoId)
+            : null;
+        $solicitacaoFallback = $this->solicitacaoAprovadaMaisRecente();
+
+        return [
+            'esfera' => $this->nomeEsfera($perfilAtivo?->pivot->esfera)
+                ?? $solicitacaoDoPerfil?->esfera?->nome
+                ?? $solicitacaoFallback?->esfera?->nome
+                ?? 'federal',
+            'uf' => $perfilAtivo?->pivot->uf
+                ?? $solicitacaoDoPerfil?->ufRelacao?->sigla
+                ?? $solicitacaoFallback?->ufRelacao?->sigla,
+            'municipio' => $perfilAtivo?->pivot->municipio
+                ?? $solicitacaoDoPerfil?->municipioRelacao?->nome
+                ?? $solicitacaoFallback?->municipioRelacao?->nome,
+            'orgao' => $perfilAtivo?->pivot->orgao
+                ?? $solicitacaoDoPerfil?->orgao
+                ?? $solicitacaoFallback?->orgao,
+        ];
+    }
+
+    private function solicitacaoAprovadaMaisRecente(?int $perfilIdSolicitado = null): ?SolicitacaoCadastro
+    {
+        $query = $this->solicitacoesCadastro()
+            ->whereHas('statusSolicitacao', fn ($q) => $q->where('nome', 'aprovado'))
+            ->with(['esfera', 'ufRelacao', 'municipioRelacao'])
+            ->latest('id');
+
+        if ($perfilIdSolicitado !== null) {
+            $query->where('perfil_id_solicitado', $perfilIdSolicitado);
+        }
+
+        return $query->first();
+    }
+
+    private function nomeEsfera(?string $codigoEsfera): ?string
+    {
+        if (!$codigoEsfera) {
+            return null;
+        }
+
+        return match (mb_strtolower($codigoEsfera)) {
+            'federal' => 'Federal',
+            'estadual' => 'Estadual',
+            'municipal' => 'Municipal',
+            default => $codigoEsfera,
+        };
     }
 }

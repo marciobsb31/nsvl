@@ -60,8 +60,6 @@ export async function obterHistorico(id: number): Promise<HistoricoItem[]> {
 export interface HierarquiaInfo {
   esfera_usuario: string
   esferas_permitidas: string[]
-  perfil_ativo?: string
-  perfis_aprovaveis?: Array<{ id: number; nome: string }>
 }
 
 export async function obterHierarquia(): Promise<HierarquiaInfo> {

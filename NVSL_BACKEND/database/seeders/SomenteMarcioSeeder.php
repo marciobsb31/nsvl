@@ -15,16 +15,16 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Remove todos os usuários, vínculos e solicitações e recria apenas
- * Marcio Pereira da Silva (CPF 00012482196) com perfil federal equivalente ao cenário de teste anterior.
+ * Remove todos os usuÃ¡rios, vÃ­nculos e solicitaÃ§Ãµes e recria apenas
+ * Marcio Pereira da Silva (CPF 00012482196) com perfil federal equivalente ao cenÃ¡rio de teste anterior.
  */
 class SomenteMarcioSeeder extends Seeder
 {
     private const NOMES_PERFIL = [
-        'Gestor Nacional',
+        'Gestor Federal',
         'Gestor Estadual',
         'Gestor Municipal',
-        'Administrador Nacional',
+        'Visitante Federal',
         'Administrador Estadual',
         'Administrador Municipal',
     ];
@@ -52,10 +52,10 @@ class SomenteMarcioSeeder extends Seeder
         $ufDF = Uf::where('sigla', 'DF')->first();
         $ufGO = Uf::where('sigla', 'GO')->first();
         $munBrasilia = $ufDF
-            ? Municipio::where('nome', 'Brasília')->where('uf_id', $ufDF->id)->first()
+            ? Municipio::where('nome', 'BrasÃ­lia')->where('uf_id', $ufDF->id)->first()
             : null;
         $munAlexania = $ufGO
-            ? Municipio::where('nome', 'Alexânia')->where('uf_id', $ufGO->id)->first()
+            ? Municipio::where('nome', 'AlexÃ¢nia')->where('uf_id', $ufGO->id)->first()
             : null;
 
         $marcio = Usuario::create([
@@ -67,10 +67,10 @@ class SomenteMarcioSeeder extends Seeder
         ]);
 
         foreach ([
-            ['perfil' => 'Gestor Nacional', 'ativo' => true, 'inicio' => $hoje, 'fim' => null],
+            ['perfil' => 'Gestor Federal', 'ativo' => true, 'inicio' => $hoje, 'fim' => null],
             ['perfil' => 'Gestor Estadual', 'ativo' => false, 'inicio' => $hoje, 'fim' => null],
             ['perfil' => 'Gestor Municipal', 'ativo' => false, 'inicio' => $hoje, 'fim' => null],
-            ['perfil' => 'Administrador Nacional', 'ativo' => false, 'inicio' => $hoje, 'fim' => null],
+            ['perfil' => 'Visitante Federal', 'ativo' => false, 'inicio' => $hoje, 'fim' => null],
             ['perfil' => 'Administrador Estadual', 'ativo' => false, 'inicio' => $hoje, 'fim' => null],
             ['perfil' => 'Administrador Municipal', 'ativo' => false, 'inicio' => $hoje, 'fim' => null],
         ] as $v) {
@@ -123,8 +123,8 @@ class SomenteMarcioSeeder extends Seeder
                 'uf_id'                  => $ufDF->id,
                 'municipio_id'           => $munBrasilia?->id,
                 'orgao'                  => 'Ministério dos Direitos Humanos e da Cidadania',
-                'cargo'                  => 'Gestor nacional',
-                'perfil_id_solicitado'   => $perfis->get('Gestor Nacional')->id,
+                'cargo'                  => 'Gestor Federal',
+                'perfil_id_solicitado'   => $perfis->get('Gestor Federal')->id,
                 'status_id'              => $statusAprovado->id,
                 'aceite_termo_at'        => now(),
             ]);
@@ -146,7 +146,7 @@ class SomenteMarcioSeeder extends Seeder
         foreach (self::NOMES_PERFIL as $nome) {
             if (!$colecao->has($nome)) {
                 throw new \RuntimeException(
-                    "SomenteMarcioSeeder: perfil \"{$nome}\" não encontrado. Execute PerfilSeeder antes."
+                    "SomenteMarcioSeeder: perfil \"{$nome}\" nÃ£o encontrado. Execute PerfilSeeder antes."
                 );
             }
         }
@@ -154,3 +154,4 @@ class SomenteMarcioSeeder extends Seeder
         return $colecao;
     }
 }
+

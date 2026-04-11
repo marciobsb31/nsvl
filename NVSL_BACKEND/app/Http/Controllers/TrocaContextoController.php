@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\ApiException;
 use App\Models\AuditLog;
 use App\Models\PerfilUsuario;
+use App\Models\Usuario;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,41 +31,14 @@ class TrocaContextoController extends Controller
     )]
     public function listarPerfisAtivos(): JsonResponse
     {
+        /** @var Usuario|null $user */
         $user = Auth::user();
         if (!$user) {
             throw ApiException::unauthenticated();
         }
 
-        $perfisVigentes = $user->perfisVigentes();
-
-        // Pré-carrega solicitações aprovadas para enriquecer dados por perfil
-        $solicitacoesAprovadas = $user->solicitacoesCadastro()
-            ->whereHas('statusSolicitacao', fn ($q) => $q->where('nome', 'aprovado'))
-            ->with(['esfera', 'ufRelacao', 'municipioRelacao'])
-            ->orderByDesc('id')
-            ->get();
-
         return response()->json([
-            'data' => $perfisVigentes->map(function ($p) use ($solicitacoesAprovadas) {
-                $esferaPerfil = \App\Models\Perfil::ESFERA_POR_PERFIL[$p->nome] ?? null;
-
-                $solicitacao = $solicitacoesAprovadas->first(
-                    fn ($s) => strtolower($s->esfera?->nome ?? '') === $esferaPerfil
-                );
-
-                return [
-                    'perfil_usuario_id'     => $p->pivot->id,
-                    'perfil_id'             => $p->id,
-                    'nome'                  => $p->nome,
-                    'esfera'                => $esferaPerfil,
-                    'uf'                    => $solicitacao?->ufRelacao?->sigla,
-                    'municipio'             => $solicitacao?->municipioRelacao?->nome,
-                    'orgao'                 => $solicitacao?->orgao,
-                    'data_inicio_vigencia'  => $p->pivot->data_inicio_vigencia,
-                    'data_fim_vigencia'     => $p->pivot->data_fim_vigencia,
-                    'ativo'                 => (bool) $p->pivot->ativo,
-                ];
-            })->values(),
+            'data' => $user->toSafeArray()['perfis_vigentes'],
         ]);
     }
 
@@ -100,6 +74,7 @@ class TrocaContextoController extends Controller
     )]
     public function trocarContexto(Request $request): JsonResponse
     {
+        /** @var Usuario|null $user */
         $user = Auth::user();
         if (!$user) {
             throw ApiException::unauthenticated();

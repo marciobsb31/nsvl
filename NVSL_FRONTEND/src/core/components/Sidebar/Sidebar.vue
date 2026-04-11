@@ -85,7 +85,7 @@ const todosMenus: MenuItem[] = [
   { to: '/gerenciar-cadastros', titulo: 'Gerenciar Cadastros', icone: 'fa-users', modulo: 'Gerenciar Cadastros' },
   { to: '/relatorios', titulo: 'Relatórios', icone: 'fa-chart-bar', modulo: 'Relatórios' },
   { to: '/gestao-planos-acao', titulo: 'Gestão de Planos de ação', icone: 'fa-clipboard-list', modulo: 'Plano de Ação' },
-  { to: '/enviar-plano-acao', titulo: 'Enviar plano de ação', icone: 'fa-paper-plane', modulo: 'Enviar Plano de Ação' },
+  { to: '/enviar-plano-acao', titulo: 'Enviar plano de ação', icone: 'fa-paper-plane', modulo: 'Plano de Ação' },
   { to: '/gerenciar-perfis', titulo: 'Gerenciar Perfis', icone: 'fa-user-shield', modulo: 'Gerenciar Perfis' },
 ]
 

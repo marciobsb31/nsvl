@@ -3,7 +3,6 @@
 namespace Tests\Unitario\Http\Controllers;
 
 use App\Exceptions\ApiException;
-use App\Models\Perfil;
 use App\Http\Controllers\TrocaContextoController;
 use App\Models\Usuario;
 use App\Services\Audit\AuditLogService;
@@ -44,21 +43,21 @@ class TrocaContextoControllerTest extends TestCase
     #[Test]
     public function lista_perfis_ativos_mapeando_o_payload_do_usuario(): void
     {
-        $perfil = new Perfil([
-            'id' => 2,
-            'nome' => 'Gestor Estadual',
-        ]);
-        $perfil->pivot = (object) [
-            'id' => 99,
-            'data_inicio_vigencia' => '2026-01-01',
-            'data_fim_vigencia' => null,
-            'ativo' => true,
-        ];
-
         $usuario = $this->createMock(Usuario::class);
         $usuario->expects($this->once())
-            ->method('perfisVigentes')
-            ->willReturn(collect([$perfil]));
+            ->method('toSafeArray')
+            ->willReturn([
+                'perfis_vigentes' => [[
+                    'perfil_usuario_id' => 99,
+                    'perfil_id' => 2,
+                    'nome' => 'Gestor Estadual',
+                    'esfera' => 'Estadual',
+                    'uf' => 'GO',
+                    'municipio' => 'Goiânia',
+                    'orgao' => 'Secretaria Estadual',
+                    'ativo' => true,
+                ]],
+            ]);
 
         Auth::shouldReceive('user')
             ->once()

@@ -1,6 +1,7 @@
 <template>
   <DefaultLayout>
-    <HeaderPage title="Perfis de acesso do sistema" :subtitle="`Visualize os perfis pré-definidos do NVSL. Na versão MVP, os perfis são fixos e não podem ser criados, editados ou desativados.`" customClass="mb-3" />
+    <HeaderPage title=" Gerenciar perfis de acesso no sistema" :subtitle="`Visualize os perfis de acesso do NVSL. A vigência e a hierarquia (federal, estadual e
+              municipal) definem o contexto de atuação de cada perfil.`" customClass="mb-3" />
     <Contexto />
 
     <Card custom-class="mb-4">
@@ -27,10 +28,6 @@
               @click="abrirVisualizar(row)" title="Visualizar perfil">
               Visualizar
             </button>
-            <button class="br-button secondary small btn-acao btn-acao--historico" type="button"
-              @click="abrirHistorico(row)" title="Histórico do perfil">
-              Histórico
-            </button>
             </div> 
           </template>
         </Table>
@@ -40,18 +37,41 @@
     </Card>
 
     <Transition name="painel-fade">
-      <div v-if="painelAberto" class="painel-overlay" aria-hidden="true" @click="fecharPainel"></div>
+      <div v-if="painelAberto" class="painel-overlay" aria-hidden="true" @click="tentarFecharPainel"></div>
     </Transition>
 
     <Transition name="painel-slide">
       <aside v-if="painelAberto" class="painel-lateral" :aria-label="ariaPainel">
         <PainelFormularioPerfil
-          v-if="modoPainel === 'visualizar'" modo="visualizar"
-          :perfil="perfilSelecionado" @voltar="fecharPainel" @sucesso="fecharPainel" @dirty="() => {}" />
-        <PainelHistoricoPerfil v-else-if="modoPainel === 'historico' && perfilSelecionado" :perfil="perfilSelecionado"
-          @voltar="fecharPainel" />
+          v-if="modoPainel === 'editar' || modoPainel === 'visualizar'" :modo="modoPainel"
+          :perfil="perfilSelecionado" @voltar="tentarFecharPainel" @sucesso="onSucessoSalvar" @dirty="onDirtyChange" />
       </aside>
     </Transition>
+
+    <!-- Modal de confirmação: sair sem salvar -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="confirmarSairVisivel" class="modal-overlay" @click.self="cancelarSair">
+          <div class="modal-confirmacao" role="dialog" aria-modal="true" aria-labelledby="modal-sair-titulo">
+            <div class="modal-confirmacao__header">
+              <i class="fas fa-exclamation-triangle modal-confirmacao__icone" aria-hidden="true"></i>
+              <h3 id="modal-sair-titulo" class="modal-confirmacao__titulo">Deseja sair sem salvar?</h3>
+            </div>
+            <p class="modal-confirmacao__texto">
+              Existem alterações não salvas. Se você sair agora, todas as mudanças serão perdidas.
+            </p>
+            <div class="modal-confirmacao__acoes">
+              <button class="br-button secondary" type="button" @click="cancelarSair">
+                Continuar editando
+              </button>
+              <button class="br-button danger" type="button" @click="confirmarSair">
+                Sair sem salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
   </DefaultLayout>
 </template>
@@ -64,7 +84,6 @@ import Table from '@/core/components/Table/Table.vue'
 import Card from '@/core/components/Card/Card.vue'
 import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
 import PainelFormularioPerfil from '../components/PainelFormularioPerfil.vue'
-import PainelHistoricoPerfil from '../components/PainelHistoricoPerfil.vue'
 import FiltrosPerfis from '../components/FiltrosPerfis.vue'
 import { computed, onMounted, ref } from 'vue'
 import { listarPerfisGerenciar, type PerfilGerenciar } from '@/services/GerenciarPerfilService'
@@ -97,13 +116,16 @@ const carregando = ref(false)
 const paginaAtual = ref(1)
 const itensPorPagina = ref(10)
 
-type ModoPainel = 'visualizar' | 'historico'
+type ModoPainel = 'editar' | 'visualizar' | 'historico'
 const modoPainel = ref<ModoPainel>('visualizar')
 const perfilSelecionado = ref<PerfilGerenciar | null>(null)
 const painelAberto = ref(false)
+const formularioDirty = ref(false)
+const confirmarSairVisivel = ref(false)
 
 const ariaPainel = computed(() => {
   const map: Record<ModoPainel, string> = {
+    editar: 'Editar perfil',
     visualizar: 'Visualizar perfil',
     historico: 'Histórico do perfil',
   }
@@ -130,6 +152,13 @@ const perfisOrdenados = computed(() => {
     return asc ? cmp : -cmp
   })
   return lista
+
+})
+
+const perfisPaginados = computed(() => {
+  const inicio = (paginaAtual.value - 1) * itensPorPagina.value
+  const fim = inicio + itensPorPagina.value
+  return perfisOrdenados.value.slice(inicio, fim)
 })
 
 onMounted(() => carregarPerfis())
@@ -137,7 +166,7 @@ onMounted(() => carregarPerfis())
 async function carregarPerfis() {
   carregando.value = true
   try {
-    const listaPerfis = await listarPerfisGerenciar(filtrosAtivos.value)
+    const listaPerfis = await listarPerfisGerenciar()
     perfis.value = listaPerfis
     paginaAtual.value = 1
   } catch {
@@ -151,18 +180,41 @@ async function carregarPerfis() {
 function abrirVisualizar(p: PerfilGerenciar) {
   perfilSelecionado.value = p
   modoPainel.value = 'visualizar'
+  formularioDirty.value = false
   painelAberto.value = true
 }
 
-function abrirHistorico(p: PerfilGerenciar) {
-  perfilSelecionado.value = p
-  modoPainel.value = 'historico'
-  painelAberto.value = true
+function tentarFecharPainel() {
+  if (formularioDirty.value && modoPainel.value === 'editar') {
+    confirmarSairVisivel.value = true
+    return
+  }
+  fecharPainel()
+}
+
+function confirmarSair() {
+  confirmarSairVisivel.value = false
+  fecharPainel()
+}
+
+function cancelarSair() {
+  confirmarSairVisivel.value = false
 }
 
 function fecharPainel() {
   painelAberto.value = false
   perfilSelecionado.value = null
+  formularioDirty.value = false
+}
+
+function onSucessoSalvar() {
+  formularioDirty.value = false
+  fecharPainel()
+  carregarPerfis()
+}
+
+function onDirtyChange(dirty: boolean) {
+  formularioDirty.value = dirty
 }
 
 function labelSituacao(status: string): string {
@@ -172,6 +224,7 @@ function labelSituacao(status: string): string {
 function classeSituacao(status: string): string {
   return status === 'ativo' ? 'success' : 'danger'
 }
+
 
 function aplicarFiltros(filtros: any) {
   filtrosAtivos.value = filtros
@@ -184,6 +237,9 @@ function limparEpesquisar() {
   sorts.value = { column: null, asc: true }
   carregarPerfis()
 }
+
+
+
 </script>
 
 <style scoped>

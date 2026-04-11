@@ -10,8 +10,7 @@ class CadastrarPerfilRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // MVP: criação de perfis desabilitada
-        return false;
+        return true;
     }
 
     public function rules(): array

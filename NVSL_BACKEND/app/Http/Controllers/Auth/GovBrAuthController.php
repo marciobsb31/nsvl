@@ -26,7 +26,7 @@ class GovBrAuthController extends Controller
     ) {}
 
     #[OA\Get(
-        path: '/api/auth/redirect',
+        path: '/api/auth/url',
         summary: 'Inicia login GOV.BR',
         description: 'Retorna a URL de autorização do SSO (PKCE + state em cache).',
         tags: ['Autenticação'],
@@ -44,35 +44,20 @@ class GovBrAuthController extends Controller
             new OA\Response(response: 429, description: 'Limite de requisições'),
         ]
     )]
-    public function redirect(): JsonResponse
+    public function redirect(Request $request): JsonResponse
     {
-        $this->garantirConfiguracao();
+        $fluxo = (string) $request->query('flow', 'login');
+        if (!in_array($fluxo, ['login', 'solicitacao'], true)) {
+            $fluxo = 'login';
+        }
 
-        $state = $this->govBrService->gerarState();
-        $nonce = $this->govBrService->gerarNonce();
-        $codeVerifier = $this->govBrService->gerarCodeVerifier();
-        $codeChallenge = $this->govBrService->gerarCodeChallenge($codeVerifier);
-
-        Cache::put(
-            $this->oauthCacheKey($state),
-            [
-                'nonce' => $nonce,
-                'code_verifier' => $codeVerifier,
-            ],
-            now()->addSeconds((int) config('govbr.oauth_ttl_seconds', 600))
-        );
-
-        $url = $this->govBrService->montarUrlAutorizacao($state, $nonce, $codeChallenge);
-
-        $this->auditLogService->log('auth.redirect', null, ['state' => $state]);
-
-        return response()->json(['url' => $url]);
+        return response()->json(['url' => $this->gerarUrlDeAutorizacao($fluxo)]);
     }
 
     #[OA\Get(
-        path: '/api/auth/callback',
-        summary: 'Callback OAuth2 (alternativo ao /redirect-gov)',
-        description: 'Mesmo fluxo do callback web: valida state/code, cria token Sanctum e redireciona ao frontend com fragmento.',
+        path: '/api/auth/redirect',
+        summary: 'Callback OAuth2 do GOV.BR',
+        description: 'Processa o retorno do GOV.BR, valida state/code, cria token Sanctum e redireciona ao frontend com fragmento.',
         tags: ['Autenticação'],
         parameters: [
             new OA\Parameter(name: 'code', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
@@ -115,6 +100,8 @@ class GovBrAuthController extends Controller
                 ]);
             }
 
+            $fluxo = (string) ($oauthData['flow'] ?? 'login');
+
             $tokens = $this->govBrService->trocarCodePorToken($code, (string) $oauthData['code_verifier']);
 
             if (!$this->govBrService->validarNonce($tokens['id_token'] ?? null, (string) $oauthData['nonce'])) {
@@ -124,6 +111,11 @@ class GovBrAuthController extends Controller
             }
 
             $govBrUser = $this->govBrService->obterUsuario($tokens['access_token']);
+
+            if ($fluxo === 'solicitacao') {
+                $this->authValidationService->validarFluxoSolicitacaoOuFalhar($govBrUser);
+            }
+
             $user = $this->authValidationService->validarOuFalhar($govBrUser);
             $plainTextToken = $user->createToken('govbr-login')->plainTextToken;
 
@@ -277,6 +269,32 @@ class GovBrAuthController extends Controller
     private function oauthCacheKey(string $state): string
     {
         return 'govbr:oauth:' . $state;
+    }
+
+    private function gerarUrlDeAutorizacao(string $fluxo = 'login'): string
+    {
+        $this->garantirConfiguracao();
+
+        $state = $this->govBrService->gerarState();
+        $nonce = $this->govBrService->gerarNonce();
+        $codeVerifier = $this->govBrService->gerarCodeVerifier();
+        $codeChallenge = $this->govBrService->gerarCodeChallenge($codeVerifier);
+
+        Cache::put(
+            $this->oauthCacheKey($state),
+            [
+                'nonce' => $nonce,
+                'code_verifier' => $codeVerifier,
+                'flow' => $fluxo,
+            ],
+            now()->addSeconds((int) config('govbr.oauth_ttl_seconds', 600))
+        );
+
+        $url = $this->govBrService->montarUrlAutorizacao($state, $nonce, $codeChallenge);
+
+        $this->auditLogService->log('auth.redirect', null, ['state' => $state]);
+
+        return $url;
     }
 
     private function loginCodeCacheKey(string $code): string

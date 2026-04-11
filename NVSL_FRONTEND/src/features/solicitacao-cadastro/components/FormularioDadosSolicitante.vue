@@ -98,7 +98,6 @@ const cpfPreenchido = computed(() => {
 const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
 
 const MENSAGENS_CPF_EM_USO: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está vinculado a um cadastro ativo. Faça login com GOV.BR para acessar o sistema.',
   'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde a avaliação da equipe gestora.',
 }
 

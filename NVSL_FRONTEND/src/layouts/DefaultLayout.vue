@@ -17,16 +17,7 @@
               </span>
             </div>
           </div>
-           <button
-            v-if="exibirTrocaContexto && possuiMultiplosPerfis"
-            class="header-btn-contexto"
-            type="button"
-            aria-label="Trocar contexto de perfil"
-            @click="modalTrocaContexto = true"
-          >
-            <i class="fas fa-exchange-alt" aria-hidden="true"></i>
-            <span class="header-btn-contexto__texto">Troca de contexto</span>
-          </button>
+          <TrocaContexto @contexto-alterado="handleContextoAlterado" />
         </div>
       </template>
     </Header>
@@ -62,20 +53,12 @@
         @toggle-recolher="sidebarRecolhido = !sidebarRecolhido"
       />
       <main ref="mainRef" id="main-content" class="layout-default__main" tabindex="-1">
-        <div class="container main-content" >
+        <div class="container main-content" :key="contextKey">
           <Breadcrumb customClass="mb-3"></Breadcrumb>
-           <div class="container" :key="contextKey"></div>
           <slot />
         </div>
       </main>
     </div>
-
-     <TrocaContexto
-      v-if="exibirTrocaContexto"
-      :visivel="modalTrocaContexto"
-      @fechar="modalTrocaContexto = false"
-      @contexto-alterado="handleContextoAlterado"
-    />
 
     <Footer inverted>
       
@@ -110,12 +93,8 @@ const mainRef = ref<HTMLElement | null>(null)
 const sidebarAberto = ref(false)
 const sidebarRecolhido = ref(localStorage.getItem('nvsl_sidebar_recolhido') === 'true')
 const { mode } = useTheme()
-const modalTrocaContexto = ref(false)
-
-/** Exibir botão e modal de troca de perfil no cabeçalho */
-const exibirTrocaContexto = true
 const router = useRouter()
-const { isAuthenticated, userName, user, possuiMultiplosPerfis, perfilAtivo, contextKey } = useAuth()
+const { isAuthenticated, userName, user, perfilAtivo, contextKey } = useAuth()
 
 const esferaMap: Record<string, string> = {
   federal: 'Federal',
@@ -125,13 +104,12 @@ const esferaMap: Record<string, string> = {
 
 const perfilAtivoLabel = computed(() => {
   const perfil = perfilAtivo.value
+  const esfera = user.value?.esfera_atuacao
   if (perfil) {
     const partes = [perfil.nome]
-    const esfera = perfil.esfera ?? user.value?.esfera_atuacao
     if (esfera) partes.push(esferaMap[esfera] ?? esfera)
     return partes.join(' — ')
   }
-  const esfera = user.value?.esfera_atuacao
   return esfera ? (esferaMap[esfera] ?? esfera) : ''
 })
 
@@ -266,42 +244,7 @@ watch(sidebarRecolhido, (v) => {
   color: var(--color-secondary-06, #888);
 }
 
-.header-btn-contexto {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  white-space: nowrap;
-  padding: 0.2rem 0.55rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  font-family: inherit;
-  border: 1px solid var(--color-primary-default, #1351b4);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--color-primary-default, #1351b4);
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
-  flex-shrink: 0;
-}
 
-.header-btn-contexto:hover {
-  background: var(--color-primary-default, #1351b4);
-  color: #fff;
-}
-
-.header-btn-contexto i {
-  font-size: 0.65rem;
-}
-
-[data-theme="dark"] .header-btn-contexto {
-  border-color: var(--color-primary-lighten-01, #4d7fd6);
-  color: var(--color-primary-lighten-01, #4d7fd6);
-}
-
-[data-theme="dark"] .header-btn-contexto:hover {
-  background: var(--color-primary-lighten-01, #4d7fd6);
-  color: #fff;
-}
 
 [data-theme="dark"] .header-user {
   background: rgba(255, 255, 255, 0.08);
@@ -336,22 +279,7 @@ watch(sidebarRecolhido, (v) => {
     display: none;
   }
 
-  .header-btn-contexto__texto {
-    display: none;
-  }
-
-  .header-btn-contexto {
-    padding: 0.4rem 0.6rem;
-  }
 }
-
-  .header-btn-contexto__texto {
-    display: none;
-  }
-
-  .header-btn-contexto {
-    padding: 0.4rem 0.6rem;
-  }
 
 .footer {
   margin: 1rem;

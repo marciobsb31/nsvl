@@ -20,15 +20,15 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
     }
 
     #[Test]
-    public function verifica_cpf_indisponivel_quando_ja_existe_perfil_ativo(): void
+    public function verifica_cpf_disponivel_quando_nao_ha_solicitacao_em_analise_mesmo_com_perfil_ativo(): void
     {
         $response = $this->getJson('/api/solicitacoes-cadastro/verificar-cpf?cpf=11144477735');
 
         $response
             ->assertOk()
             ->assertJson([
-                'disponivel' => false,
-                'mensagem' => 'Este CPF já possui perfil ativo no sistema.',
+                'disponivel' => true,
+                'mensagem' => 'CPF disponível para cadastro.',
             ]);
     }
 
@@ -51,7 +51,7 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'disponivel' => false,
-                'mensagem' => 'Já existe uma solicitação em análise para este CPF.',
+                'mensagem' => 'JÃ¡ existe uma solicitaÃ§Ã£o em anÃ¡lise para este CPF.',
             ]);
     }
 
@@ -68,7 +68,7 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             'telefonePessoal' => '61988776655',
             'esferaAtuacao' => 'federal',
             'uf' => 'DF',
-            'municipio' => 'Brasília',
+            'municipio' => 'BrasÃ­lia',
             'orgao' => 'Ministerio de Testes',
             'cargo' => 'Analista',
         ]);
@@ -86,6 +86,51 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             'email_institucional' => 'solicitante.publico@teste.gov.br',
             'orgao' => 'Ministerio de Testes',
         ]);
+    }
+
+    #[Test]
+    public function cria_solicitacao_interna_com_cpf_do_formulario_sem_sobrescrever_com_usuario_logado(): void
+    {
+        $operador = $this->autenticarComoFederal();
+        $cpfFormulario = Usuario::factory()->make()->cpf;
+
+        $response = $this->postJson('/api/solicitacoes-cadastro', [
+            'nome' => 'Novo Cadastrado Interno',
+            'CPF' => $cpfFormulario,
+            'emailInstitucional' => 'novo.interno@teste.gov.br',
+            'telefoneInstitucional' => '61999887766',
+            'telefonePessoal' => '61988776655',
+            'esferaAtuacao' => 'federal',
+            'uf' => 'DF',
+            'municipio' => 'BrasÃ­lia',
+            'orgao' => 'Ministerio de Testes',
+            'cargo' => 'Analista',
+            'perfilId' => $this->perfilPorNome('Gestor Federal')->id,
+            'vigenciaInicio' => now()->toDateString(),
+        ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonStructure(['message', 'solicitacao_id']);
+
+        $this->assertNotSame($operador->cpf, $cpfFormulario);
+
+        $this->assertDatabaseHas('usuarios', [
+            'cpf' => $cpfFormulario,
+            'nome' => 'Novo Cadastrado Interno',
+        ]);
+
+        $this->assertDatabaseHas('solicitacoes_cadastro', [
+            'email_institucional' => 'novo.interno@teste.gov.br',
+            'orgao' => 'Ministerio de Testes',
+        ]);
+
+        $solicitacaoId = (int) $response->json('solicitacao_id');
+        $usuarioDaSolicitacao = SolicitacaoCadastro::query()->findOrFail($solicitacaoId)->user;
+
+        $this->assertNotNull($usuarioDaSolicitacao);
+        $this->assertSame($cpfFormulario, $usuarioDaSolicitacao->cpf);
+        $this->assertNotSame($operador->id, $usuarioDaSolicitacao->id);
     }
 
     #[Test]
@@ -207,27 +252,28 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
 
         $this->getJson('/api/solicitacoes-cadastro/999999')
             ->assertNotFound()
-            ->assertJsonPath('message', 'Solicitação não encontrada.');
+            ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $this->patchJson('/api/solicitacoes-cadastro/999999', [
             'status' => 'aprovado',
-            'perfil_id' => $this->perfilPorNome('Gestor Nacional')->id,
+            'perfil_id' => $this->perfilPorNome('Gestor Federal')->id,
             'vigencia_inicio' => now()->toDateString(),
         ])->assertNotFound()
-            ->assertJsonPath('message', 'Solicitação não encontrada.');
+            ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $this->patchJson('/api/solicitacoes-cadastro/999999/perfis/1/ativar')
             ->assertNotFound()
-            ->assertJsonPath('message', 'Solicitação não encontrada.');
+            ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $this->patchJson('/api/solicitacoes-cadastro/999999/perfis/1/desativar')
             ->assertNotFound()
-            ->assertJsonPath('message', 'Solicitação não encontrada.');
+            ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $this->postJson('/api/solicitacoes-cadastro/999999/perfis', [
             'perfil_id' => $this->perfilPorNome('Administrador Municipal')->id,
             'vigencia_inicio' => now()->toDateString(),
         ])->assertNotFound()
-            ->assertJsonPath('message', 'Solicitação não encontrada.');
+            ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
     }
 }
+

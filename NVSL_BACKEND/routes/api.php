@@ -22,15 +22,15 @@ Route::get('/localidades/municipios', [LocalidadeController::class, 'municipios'
 Route::get('/localidades/completo', [LocalidadeController::class, 'completo'])
     ->name('localidades.completo');
 
-Route::get('/auth/redirect', [GovBrAuthController::class, 'redirect'])
-    ->middleware('throttle:30,1')
-    ->name('auth.redirect');
 Route::get('/auth/url', [GovBrAuthController::class, 'redirect'])
     ->middleware('throttle:30,1')
     ->name('auth.url');
+Route::get('/auth/redirect', [GovBrAuthController::class, 'callback'])
+    ->middleware('throttle:30,1')
+    ->name('auth.redirect');
 Route::get('/auth/callback', [GovBrAuthController::class, 'callback'])
     ->middleware('throttle:30,1')
-    ->name('auth.callback');
+    ->name('auth.callback.legacy');
 Route::post('/auth/exchange', [GovBrAuthController::class, 'exchange'])
     ->middleware('throttle:30,1')
     ->name('auth.exchange');
@@ -77,8 +77,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/solicitacoes-cadastro', [SolicitacaoCadastroController::class, 'index'])
         ->name('solicitacoes-cadastro.index');
-    Route::post('/solicitacoes-cadastro/{id}/perfis', [SolicitacaoCadastroController::class, 'adicionarPerfilVinculado'])
-        ->name('solicitacoes-cadastro.perfis.store');
     Route::patch('/solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/ativar', [SolicitacaoCadastroController::class, 'ativarPerfilVinculado'])
         ->name('solicitacoes-cadastro.perfis.ativar');
     Route::patch('/solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/desativar', [SolicitacaoCadastroController::class, 'desativarPerfilVinculado'])

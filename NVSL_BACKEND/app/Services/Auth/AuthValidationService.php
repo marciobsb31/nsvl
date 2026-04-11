@@ -3,6 +3,8 @@
 namespace App\Services\Auth;
 
 use App\DTOs\Auth\GovBrUserDTO;
+use App\Models\Perfil;
+use App\Models\PerfilUsuario;
 use App\Models\SolicitacaoCadastro;
 use App\Models\StatusSolicitacao;
 use App\Models\Usuario;
@@ -10,6 +12,47 @@ use Illuminate\Validation\ValidationException;
 
 class AuthValidationService
 {
+    public function validarFluxoSolicitacaoOuFalhar(GovBrUserDTO $govBrUser): void
+    {
+        $cpf = preg_replace('/\D/', '', (string) ($govBrUser->cpf ?? $govBrUser->sub));
+        if (strlen($cpf) !== 11) {
+            throw ValidationException::withMessages([
+                'auth' => 'Não foi possível identificar o CPF retornado pelo GOV.BR.',
+            ]);
+        }
+
+        $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
+
+        $emAnalise = SolicitacaoCadastro::whereHas('usuario', fn ($q) => $q->where('cpf', $cpf))
+            ->where('status_id', $statusEmAnalise)
+            ->exists();
+
+        if ($emAnalise) {
+            throw ValidationException::withMessages([
+                'auth' => 'Solicitação de acesso em análise.',
+            ]);
+        }
+
+        $usuario = Usuario::where('cpf', $cpf)->first();
+        if ($usuario) {
+            $totalPerfisAtivos = PerfilUsuario::where('usuario_id', $usuario->id)
+                ->where('ativo', true)
+                ->count();
+
+            $totalPerfisDisponiveis = count(Perfil::CATALOGO_OFICIAL);
+
+            if ($totalPerfisAtivos >= $totalPerfisDisponiveis) {
+                throw ValidationException::withMessages([
+                    'auth' => 'Este CPF já possui todos os perfis ativos disponíveis.',
+                ]);
+            }
+        }
+
+        throw ValidationException::withMessages([
+            'auth' => 'Solicitar acesso e aguardar avaliação',
+        ]);
+    }
+
     public function validarOuFalhar(GovBrUserDTO $govBrUser): Usuario
     {
         $cpf = preg_replace('/\D/', '', (string) ($govBrUser->cpf ?? $govBrUser->sub));

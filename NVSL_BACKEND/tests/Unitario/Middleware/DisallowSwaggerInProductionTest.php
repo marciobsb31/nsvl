@@ -36,4 +36,17 @@ class DisallowSwaggerInProductionTest extends TestCase
 
         $middleware->handle($request, fn () => response('ok', 200));
     }
+
+    #[Test]
+    public function bloqueia_swagger_quando_o_ambiente_e_prod(): void
+    {
+        $this->app['env'] = 'prod';
+
+        $middleware = new DisallowSwaggerInProduction();
+        $request = Request::create('/api/docs');
+
+        $this->expectException(NotFoundHttpException::class);
+
+        $middleware->handle($request, fn () => response('ok', 200));
+    }
 }

@@ -24,7 +24,7 @@ return [
                 'annotations'         => [
                     base_path('app'),
                 ],
-                'base'                => null,
+                'base'                => env('L5_SWAGGER_CONST_HOST', env('APP_URL', 'http://localhost:8081')),
                 'swagger_ui_assets_path' => 'vendor/swagger-api/swagger-ui/dist/',
                 'excludes'            => [],
             ],
@@ -40,7 +40,7 @@ return [
 
             'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', true),
 
-            'proxy'           => false,
+            'proxy'           => env('L5_SWAGGER_PROXY', true),
             'additional_config_url' => null,
             'operations_sort' => null,
             'validator_url'   => null,
@@ -73,7 +73,7 @@ return [
             'format_to_use_for_docs' => env('L5_FORMAT_TO_USE_FOR_DOCS', 'json'),
             'annotations'         => base_path('app'),
             'views'               => base_path('resources/views/vendor/l5-swagger'),
-            'base'                => null,
+            'base'                => env('L5_SWAGGER_CONST_HOST', env('APP_URL', 'http://localhost:8081')),
             'swagger_ui_assets_path' => 'vendor/swagger-api/swagger-ui/dist/',
             'excludes'            => [],
         ],
@@ -103,7 +103,7 @@ return [
         'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', true),
         'generate_yaml_copy' => false,
         'swagger_version' => env('SWAGGER_VERSION', '3.0'),
-        'proxy' => false,
+        'proxy' => env('L5_SWAGGER_PROXY', true),
         'additional_config_url' => null,
         'operations_sort' => env('L5_SWAGGER_OPERATIONS_SORT', null),
         'validator_url' => null,

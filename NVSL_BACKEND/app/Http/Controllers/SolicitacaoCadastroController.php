@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\ApiException;
-use App\Http\Requests\AdicionarPerfilVinculadoRequest;
 use App\Http\Requests\AvaliarSolicitacaoRequest;
 use App\Http\Requests\ListarSolicitacoesRequest;
 use App\Http\Requests\SolicitacaoCadastroRequest;
@@ -212,44 +211,6 @@ class SolicitacaoCadastroController extends Controller
         Gate::authorize('update', $solicitacao);
 
         return response()->json($this->service->desativarPerfil($user, $id, $perfilUsuarioId));
-    }
-
-    #[OA\Post(
-        path: '/api/solicitacoes-cadastro/{id}/perfis',
-        summary: 'Adiciona perfil vinculado à solicitação aprovada',
-        tags: ['Solicitações de cadastro'],
-        security: [['BearerAuth' => []]],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        requestBody: new OA\RequestBody(
-            content: new OA\JsonContent(
-                type: 'object',
-                description: 'Ver AdicionarPerfilVinculadoRequest'
-            )
-        ),
-        responses: [
-            new OA\Response(response: 201, description: 'Criado'),
-            new OA\Response(response: 401, description: 'Não autenticado'),
-            new OA\Response(response: 403, description: 'Sem permissão'),
-            new OA\Response(response: 404, description: 'Não encontrado'),
-            new OA\Response(response: 422, description: 'Validação'),
-        ]
-    )]
-    public function adicionarPerfilVinculado(AdicionarPerfilVinculadoRequest $request, int $id): JsonResponse
-    {
-        $user = $this->usuarioAutenticado();
-        $solicitacao = SolicitacaoCadastro::find($id);
-        if (!$solicitacao) {
-            throw ApiException::notFound('Solicitação não encontrada.');
-        }
-
-        Gate::authorize('update', $solicitacao);
-
-        return response()->json(
-            $this->service->adicionarPerfil($user, $id, $request->validated()),
-            201
-        );
     }
 
     private function usuarioAutenticado(): Usuario

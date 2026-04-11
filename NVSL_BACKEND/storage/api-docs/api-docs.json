@@ -13,24 +13,18 @@
     },
     "servers": [
         {
-            "url": "{host}",
-            "description": "Servidor configurado por ambiente",
-            "variables": {
-                "host": {
-                    "default": "http://localhost:8081"
-                }
-            }
+            "url": "http://localhost:8081"
         }
     ],
     "paths": {
-        "/api/auth/redirect": {
+        "/api/auth/url": {
             "get": {
                 "tags": [
                     "Autenticação"
                 ],
                 "summary": "Inicia login GOV.BR",
                 "description": "Retorna a URL de autorização do SSO (PKCE + state em cache).",
-                "operationId": "e89c5e66848b282e97d6ab1f0a627a06",
+                "operationId": "8d276b2902c008903ff02395d66e699f",
                 "responses": {
                     "200": {
                         "description": "URL do SSO",
@@ -57,14 +51,14 @@
                 }
             }
         },
-        "/api/auth/callback": {
+        "/api/auth/redirect": {
             "get": {
                 "tags": [
                     "Autenticação"
                 ],
-                "summary": "Callback OAuth2 (alternativo ao /redirect-gov)",
-                "description": "Mesmo fluxo do callback web: valida state/code, cria token Sanctum e redireciona ao frontend com fragmento.",
-                "operationId": "4ba9ecb97f49f920628f8f07753eb9c1",
+                "summary": "Callback OAuth2 do GOV.BR",
+                "description": "Processa o retorno do GOV.BR, valida state/code, cria token Sanctum e redireciona ao frontend com fragmento.",
+                "operationId": "78106a62c2ae45d5f361785bfa1c0784",
                 "parameters": [
                     {
                         "name": "code",
@@ -1122,57 +1116,6 @@
                     },
                     "404": {
                         "description": "Não encontrado"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/solicitacoes-cadastro/{id}/perfis": {
-            "post": {
-                "tags": [
-                    "Solicitações de cadastro"
-                ],
-                "summary": "Adiciona perfil vinculado à solicitação aprovada",
-                "operationId": "5618a6c82df0d4d6b723fed762aecbf6",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "description": "Ver AdicionarPerfilVinculadoRequest",
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Criado"
-                    },
-                    "401": {
-                        "description": "Não autenticado"
-                    },
-                    "403": {
-                        "description": "Sem permissão"
-                    },
-                    "404": {
-                        "description": "Não encontrado"
-                    },
-                    "422": {
-                        "description": "Validação"
                     }
                 },
                 "security": [

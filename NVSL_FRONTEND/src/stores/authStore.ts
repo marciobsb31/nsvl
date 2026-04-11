@@ -23,6 +23,7 @@ export interface AuthUser {
     esfera_atuacao?: string
     uf_lotacao?: string
     municipio_lotacao?: string
+    orgao_lotacao?: string
     perfil_ativo_id?: number | null
     perfis_vigentes: PerfilVigente[]
 }
@@ -67,11 +68,16 @@ export const useAuthStore = defineStore('auth', () => {
             esfera_atuacao: data.esfera_atuacao ? String(data.esfera_atuacao) : undefined,
             uf_lotacao: data.uf_lotacao ? String(data.uf_lotacao) : undefined,
             municipio_lotacao: data.municipio_lotacao ? String(data.municipio_lotacao) : undefined,
+            orgao_lotacao: data.orgao_lotacao ? String(data.orgao_lotacao) : undefined,
             perfil_ativo_id: data.perfil_ativo_id ? Number(data.perfil_ativo_id) : null,
             perfis_vigentes: rawPerfis.map((p: Record<string, unknown>) => ({
                 perfil_usuario_id: Number(p.perfil_usuario_id),
                 perfil_id: Number(p.perfil_id),
                 nome: String(p.nome ?? ''),
+                esfera: p.esfera ? String(p.esfera) : null,
+                uf: p.uf ? String(p.uf) : null,
+                municipio: p.municipio ? String(p.municipio) : null,
+                orgao: p.orgao ? String(p.orgao) : null,
                 data_inicio_vigencia: p.data_inicio_vigencia ? String(p.data_inicio_vigencia) : null,
                 data_fim_vigencia: p.data_fim_vigencia ? String(p.data_fim_vigencia) : null,
                 ativo: p.ativo === true || p.ativo === 'true',
@@ -79,67 +85,11 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    /**
-     * MVP: Permissões por perfil ativo conforme regras de negócio (RN02).
-     *
-     * Módulos reconhecidos:
-     *  - 'Gerenciar Cadastros'   → Gestão de Solicitações de Cadastro
-     *  - 'Gerenciar Perfis'      → Tela de gerência de perfis (somente leitura no MVP)
-     *  - 'Plano de Ação'         → Gestão + Envio de plano de ação
-     *  - 'Enviar Plano de Ação'  → Envio de plano de ação
-     *  - 'Relatórios'            → Relatórios e exportações
-     */
-    function temPermissao(modulo: string, _acao?: string): boolean {
-        const nomePerfil = perfilAtivo.value?.nome ?? ''
-        if (!nomePerfil) return false
-
-        const n = nomePerfil.toLowerCase()
-
-        // Gestor Federal: acesso integral
-        if (n === 'gestor federal') return true
-
-        // Gestores Estadual/Municipal: acesso a tudo (dentro do seu escopo territorial)
-        if (n === 'gestor estadual' || n === 'gestor municipal') return true
-
-        // Administrador Estadual/Municipal:
-        //  - SEM acesso a Gerenciar Cadastros
-        //  - SEM acesso a Enviar plano de ação
-        //  - SEM acesso a Gerenciar Perfis
-        if (n === 'administrador estadual' || n === 'administrador municipal') {
-            const moduloLower = modulo.toLowerCase()
-            if (moduloLower === 'gerenciar cadastros') return false
-            if (moduloLower === 'enviar plano de ação' || moduloLower === 'enviar plano de acao') return false
-            if (moduloLower === 'gerenciar perfis') return false
-            return true
-        }
-
-        // Visitante Federal: acesso somente leitura a tudo
-        if (n === 'visitante federal') {
-            // Tem acesso de leitura a todas as funcionalidades
-            return true
-        }
-
-        // Visitante Estadual/Municipal:
-        //  - SEM acesso a Gerenciar Cadastros
-        //  - SEM acesso a Gerenciar Perfis
-        //  - Acesso somente consulta ao restante
-        if (n === 'visitante estadual' || n === 'visitante municipal') {
-            const moduloLower = modulo.toLowerCase()
-            if (moduloLower === 'gerenciar cadastros') return false
-            if (moduloLower === 'gerenciar perfis') return false
-            return true
-        }
-
-        return false
+    function temPermissao(_modulo: string, _acao?: string): boolean {
+        const esfera = user.value?.esfera_atuacao ?? 'federal'
+        if (esfera.toLowerCase() === 'federal') return true
+        return perfisAtivos.value.length > 0
     }
-
-    /**
-     * Verifica se o perfil ativo é do tipo Visitante (somente leitura).
-     */
-    const isVisitante = computed(() => {
-        const n = (perfilAtivo.value?.nome ?? '').toLowerCase()
-        return n.startsWith('visitante')
-    })
 
     async function trocarContexto(perfilUsuarioId: number): Promise<void> {
         trocandoContexto.value = true
@@ -189,7 +139,6 @@ export const useAuthStore = defineStore('auth', () => {
         perfisAtivos,
         possuiMultiplosPerfis,
         perfilAtivo,
-        isVisitante,
         setUser,
         temPermissao,
         trocarContexto,

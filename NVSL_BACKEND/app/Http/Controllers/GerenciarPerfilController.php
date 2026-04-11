@@ -122,8 +122,37 @@ class GerenciarPerfilController extends Controller
     )]
     public function store(CadastrarPerfilRequest $request): JsonResponse
     {
-        // MVP: criação de perfis desabilitada
-        throw ApiException::forbidden('Na versão MVP, não é possível criar novos perfis.');
+        $user = Auth::user();
+        if (!$user) {
+            throw ApiException::unauthenticated();
+        }
+
+        $perfil = DB::transaction(function () use ($request, $user) {
+            $perfil = Perfil::create([
+                'nome'      => $request->input('nome'),
+                'descricao' => $request->input('descricao'),
+                'ativo'     => $request->input('ativo', true),
+            ]);
+
+            $this->audit->log(
+                'gerenciar_perfis.cadastrar',
+                $user->id,
+                [
+                    'perfil_nome' => $perfil->nome,
+                    'ativo'       => $perfil->ativo,
+                ],
+                AuditLog::TIPO_INSERT,
+                'perfis',
+                $perfil->id
+            );
+
+            return $perfil;
+        });
+
+        return response()->json([
+            'message' => 'Perfil cadastrado com sucesso.',
+            'data'    => $this->formatarPerfil($perfil),
+        ], 201);
     }
 
     #[OA\Put(
@@ -154,8 +183,56 @@ class GerenciarPerfilController extends Controller
     )]
     public function update(int $id, Request $request): JsonResponse
     {
-        // MVP: edição de perfis desabilitada
-        throw ApiException::forbidden('Na versão MVP, não é possível editar perfis.');
+        $user = Auth::user();
+        if (!$user) {
+            throw ApiException::unauthenticated();
+        }
+        $perfil = Perfil::find($id);
+        if (!$perfil) {
+            throw ApiException::notFound('Perfil não encontrado.');
+        }
+
+        $validated = $request->validate([
+            'nome'      => ['required', 'string', 'max:100', Rule::in(Perfil::CATALOGO_OFICIAL), Rule::unique('perfis', 'nome')->ignore($perfil->id)],
+            'descricao' => ['nullable', 'string', 'max:255'],
+            'ativo'     => ['required', 'boolean'],
+        ], [
+            'nome.required' => 'Preencha os campos obrigatórios.',
+            'nome.in'       => 'O nome deve ser um dos perfis oficiais do sistema.',
+            'nome.unique'   => 'Já existe um perfil com este nome.',
+        ]);
+
+        $anterior = [
+            'nome'  => $perfil->nome,
+            'ativo' => $perfil->ativo,
+        ];
+
+        DB::transaction(function () use ($perfil, $validated, $user, $anterior) {
+            $perfil->update([
+                'nome'      => $validated['nome'],
+                'descricao' => $validated['descricao'] ?? null,
+                'ativo'     => $validated['ativo'],
+            ]);
+
+            $alteracoes = $this->descreverAlteracoes($anterior, $perfil);
+
+            $this->audit->log(
+                'gerenciar_perfis.editar',
+                $user->id,
+                [
+                    'perfil_nome'  => $perfil->nome,
+                    'alteracoes'   => $alteracoes,
+                ],
+                AuditLog::TIPO_UPDATE,
+                'perfis',
+                $perfil->id
+            );
+        });
+
+        return response()->json([
+            'message' => 'Perfil atualizado com sucesso.',
+            'data'    => $this->formatarPerfil($perfil),
+        ]);
     }
 
     #[OA\Get(
@@ -230,32 +307,9 @@ class GerenciarPerfilController extends Controller
 
         $esferaUsuario = $user->esfera_atuacao ?? 'federal';
 
-        // Determinar nome do perfil ativo para hierarquia de avaliação (RN01)
-        $perfilAtivo = $user->perfilUsuarioAtivo();
-        $nomePerfilAtivo = $perfilAtivo?->perfil?->nome ?? '';
-        if (!$nomePerfilAtivo) {
-            $primeiroVigente = $user->perfisVigentes()->first();
-            $nomePerfilAtivo = $primeiroVigente?->nome ?? '';
-        }
-
-        $perfisAprovaveisNomes = Perfil::HIERARQUIA_AVALIACAO[$nomePerfilAtivo] ?? [];
-
-        // Buscar IDs dos perfis que este avaliador pode aprovar
-        $perfisAprovaveis = [];
-        if (!empty($perfisAprovaveisNomes)) {
-            $perfisAprovaveis = Perfil::whereIn('nome', $perfisAprovaveisNomes)
-                ->where('ativo', true)
-                ->get(['id', 'nome'])
-                ->map(fn (Perfil $p) => ['id' => $p->id, 'nome' => $p->nome])
-                ->values()
-                ->toArray();
-        }
-
         return response()->json([
-            'esfera_usuario'      => $esferaUsuario,
-            'esferas_permitidas'  => $this->esferasPermitidas($esferaUsuario),
-            'perfil_ativo'        => $nomePerfilAtivo,
-            'perfis_aprovaveis'   => $perfisAprovaveis,
+            'esfera_usuario'     => $esferaUsuario,
+            'esferas_permitidas' => $this->esferasPermitidas($esferaUsuario),
         ]);
     }
 

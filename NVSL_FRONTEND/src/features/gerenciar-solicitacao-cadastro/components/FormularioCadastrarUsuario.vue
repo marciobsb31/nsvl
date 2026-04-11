@@ -197,7 +197,6 @@ const router = useRouter()
 const { success, error } = useNotification()
 
 const MENSAGENS_CPF: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está vinculado a um cadastro ativo no sistema.',
   'Já existe uma solicitação em análise para este CPF.': 'Já existe uma solicitação em análise para este CPF. Aguarde a avaliação da equipe gestora.',
   'O CPF informado é inválido.': 'CPF inválido. Confira os números digitados.',
 }
@@ -551,11 +550,13 @@ function fecharModalErro() {
 function montarPayload(): SolicitacaoCadastroPayload {
   const cpfVal = String(cpf.value ?? '').replace(/\D/g, '')
   const perfilNum = perfil.value != null && perfil.value !== '' ? Number(perfil.value) : NaN
+  const telPessoal = telefonePessoal.value ? String(telefonePessoal.value).replace(/\D/g, '') : undefined
   return {
     nome: String(nome.value ?? '').trim(),
     CPF: cpfVal || undefined,
     emailInstitucional: String(emailInstitucional.value ?? '').trim(),
     telefoneInstitucional: String(telefoneInstitucional.value ?? '').replace(/\D/g, ''),
+    telefonePessoal: telPessoal,
     esferaAtuacao: String(esferaAtuacao.value ?? '').toLowerCase(),
     uf: String(uf.value ?? '').toUpperCase(),
     municipio: String(municipio.value ?? '').trim(),
@@ -640,7 +641,7 @@ function validarHierarquiaNoFrontend(_values: Record<string, unknown>): string |
 
 function inferirTipoPerfilPorNome(nome: string): 'federal' | 'estadual' | 'municipal' | 'desconhecido' {
   const label = nome.toLowerCase()
-  if (label.includes('nacional')) return 'federal'
+  if (label.includes('federal') || label.includes('nacional')) return 'federal'
   if (label.includes('estadual')) return 'estadual'
   if (label.includes('municipal')) return 'municipal'
   return 'desconhecido'

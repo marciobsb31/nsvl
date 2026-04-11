@@ -34,7 +34,7 @@ services:
     container_name: nvsl-backend
     restart: unless-stopped
     ports:
-      - "8081:81"
+      - "8081:80"
     volumes:
       - ../NVSL_BACKEND:/var/www/html
       - nvsl-vendor:/var/www/html/vendor
@@ -82,7 +82,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-sf", "http://localhost:81/api/health" ]
+      test: [ "CMD", "curl", "-sf", "http://localhost:80/api/health" ]
       interval: 30s
       timeout: 10s
       retries: 5
