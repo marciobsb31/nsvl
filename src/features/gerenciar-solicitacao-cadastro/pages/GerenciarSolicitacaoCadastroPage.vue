@@ -193,7 +193,6 @@
             @aprovar="aprovarSolicitacao"
             @reprovar="reprovarSolicitacao"
             @toggle-perfil="onTogglePerfilVinculado"
-            @adicionar-perfil="onAdicionarPerfilVinculado"
           />
         </aside>
       </Transition>
@@ -214,7 +213,6 @@ import {
   reprovarSolicitacao as apiReprovar,
   ativarPerfilVinculado as apiAtivarPerfilVinculado,
   desativarPerfilVinculado as apiDesativarPerfilVinculado,
-  adicionarPerfilVinculado as apiAdicionarPerfilVinculado,
   type SolicitacaoGerenciarItem,
   type FiltrosGerenciarSolicitacao as FiltrosGerenciarSolicitacaoType,
 } from '@/services/GerenciarSolicitacaoCadastroService'
@@ -243,10 +241,24 @@ const itensPorPagina = ref(10)
 
 const solicitacoesOrdenadas = computed(() => {
   const lista = [...solicitacoes.value]
-  if (!ordenarColuna.value) return lista
+  const prioridadeStatus = (status?: string) => (status === 'em_analise' ? 0 : 1)
+
+  if (!ordenarColuna.value) {
+    return lista.sort((a, b) => {
+      const prioridade = prioridadeStatus(a.status) - prioridadeStatus(b.status)
+      if (prioridade !== 0) return prioridade
+
+      const dataA = new Date(a.created_at ?? '').getTime()
+      const dataB = new Date(b.created_at ?? '').getTime()
+      return dataB - dataA
+    })
+  }
   const col = ordenarColuna.value
   const asc = ordenarAsc.value
   lista.sort((a, b) => {
+    const prioridade = prioridadeStatus(a.status) - prioridadeStatus(b.status)
+    if (prioridade !== 0) return prioridade
+
     let va: string | number
     let vb: string | number
     if (col === 'cpf') {
@@ -520,32 +532,6 @@ async function onTogglePerfilVinculado(payload: { perfilUsuarioId: number; acao:
     const msg =
       (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
       'Erro ao atualizar status do cadastro.'
-    error(msg)
-  } finally {
-    avaliando.value = false
-  }
-}
-
-async function onAdicionarPerfilVinculado(payload: {
-  perfilId: number | string
-  vigenciaInicio?: string
-  vigenciaFim?: string
-}) {
-  if (!detalheSelecionado.value) return
-
-  avaliando.value = true
-  try {
-    await apiAdicionarPerfilVinculado(detalheSelecionado.value.id, {
-      perfilId: payload.perfilId,
-      vigenciaInicio: payload.vigenciaInicio,
-      vigenciaFim: payload.vigenciaFim,
-    })
-    success('Perfil vinculado adicionado com sucesso.')
-    detalheSelecionado.value = await obterSolicitacaoCadastro(detalheSelecionado.value.id)
-  } catch (e: unknown) {
-    const msg =
-      (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-      'Erro ao adicionar perfil vinculado.'
     error(msg)
   } finally {
     avaliando.value = false

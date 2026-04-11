@@ -1,15 +1,7 @@
 <template>
   <DefaultLayout>
-    <HeaderPage title=" Gerenciar perfis de acesso no sistema" :subtitle="`Visualize, cadastre e edite os perfis de acesso do NVSL. A vigência e a hierarquia (federal, estadual e
-              municipal) definem quem pode criar ou alterar cada perfil.`" customClass="mb-3">
-      <template v-slot:actions>
-        <br-button :color-mode="$appTheme === 'dark' ? $appTheme : undefined" emphasis="primary"
-          aria-label="Cadastrar novo perfil" @click="abrirCadastrar">
-          <i class="fas fa-plus-circle" aria-hidden="true"></i>
-          Novo Perfil
-        </br-button>
-      </template>
-    </HeaderPage>
+    <HeaderPage title=" Gerenciar perfis de acesso no sistema" :subtitle="`Visualize os perfis de acesso do NVSL. A vigência e a hierarquia (federal, estadual e
+              municipal) definem o contexto de atuação de cada perfil.`" customClass="mb-3" />
     <Contexto />
 
     <Card custom-class="mb-4">
@@ -51,7 +43,7 @@
     <Transition name="painel-slide">
       <aside v-if="painelAberto" class="painel-lateral" :aria-label="ariaPainel">
         <PainelFormularioPerfil
-          v-if="modoPainel === 'cadastrar' || modoPainel === 'editar' || modoPainel === 'visualizar'" :modo="modoPainel"
+          v-if="modoPainel === 'editar' || modoPainel === 'visualizar'" :modo="modoPainel"
           :perfil="perfilSelecionado" @voltar="tentarFecharPainel" @sucesso="onSucessoSalvar" @dirty="onDirtyChange" />
       </aside>
     </Transition>
@@ -124,8 +116,8 @@ const carregando = ref(false)
 const paginaAtual = ref(1)
 const itensPorPagina = ref(10)
 
-type ModoPainel = 'cadastrar' | 'editar' | 'visualizar' | 'historico'
-const modoPainel = ref<ModoPainel>('cadastrar')
+type ModoPainel = 'editar' | 'visualizar' | 'historico'
+const modoPainel = ref<ModoPainel>('visualizar')
 const perfilSelecionado = ref<PerfilGerenciar | null>(null)
 const painelAberto = ref(false)
 const formularioDirty = ref(false)
@@ -133,7 +125,6 @@ const confirmarSairVisivel = ref(false)
 
 const ariaPainel = computed(() => {
   const map: Record<ModoPainel, string> = {
-    cadastrar: 'Cadastrar novo perfil',
     editar: 'Editar perfil',
     visualizar: 'Visualizar perfil',
     historico: 'Histórico do perfil',
@@ -186,13 +177,6 @@ async function carregarPerfis() {
   }
 }
 
-function abrirCadastrar() {
-  perfilSelecionado.value = null
-  modoPainel.value = 'cadastrar'
-  formularioDirty.value = false
-  painelAberto.value = true
-}
-
 function abrirVisualizar(p: PerfilGerenciar) {
   perfilSelecionado.value = p
   modoPainel.value = 'visualizar'
@@ -201,7 +185,7 @@ function abrirVisualizar(p: PerfilGerenciar) {
 }
 
 function tentarFecharPainel() {
-  if (formularioDirty.value && (modoPainel.value === 'cadastrar' || modoPainel.value === 'editar')) {
+  if (formularioDirty.value && modoPainel.value === 'editar') {
     confirmarSairVisivel.value = true
     return
   }
