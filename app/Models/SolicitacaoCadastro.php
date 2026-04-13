@@ -25,28 +25,24 @@ class SolicitacaoCadastro extends Model
         'municipio_id',
         'orgao',
         'cargo',
-        'perfil_id_solicitado',
-        'vigencia_inicio_solicitada',
-        'vigencia_fim_solicitada',
+        'perfil_id',
+        'vigencia_inicio',
+        'vigencia_fim',
         'status_id',
         'aceite_termo_at',
         'justificativa_reprovacao',
     ];
 
     protected $casts = [
-        'aceite_termo_at'            => 'datetime',
-        'vigencia_inicio_solicitada' => 'date',
-        'vigencia_fim_solicitada'    => 'date',
-        'esfera_id'                  => 'integer',
-        'uf_id'                      => 'integer',
-        'municipio_id'               => 'integer',
-        'status_id'                  => 'integer',
-        'usuario_id'                 => 'integer',
+        'aceite_termo_at' => 'datetime',
+        'vigencia_inicio' => 'date',
+        'vigencia_fim'    => 'date',
+        'esfera_id'       => 'integer',
+        'uf_id'           => 'integer',
+        'municipio_id'    => 'integer',
+        'status_id'       => 'integer',
+        'usuario_id'      => 'integer',
     ];
-
-    // -------------------------------------------------------
-    // Relações
-    // -------------------------------------------------------
 
     public function usuario(): BelongsTo
     {

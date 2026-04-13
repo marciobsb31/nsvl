@@ -12,13 +12,18 @@ class SolicitacaoCadastroFilter extends Filters
 
     public function nome(string $param)
     {
-        $this->builder->where('nome', 'ILIKE', '%'.$param.'%');
+        $this->builder->whereHas('usuario', function ($query) use ($param) {
+            $query->where('nome', 'ILIKE', '%' . $param . '%');
+        });
     }
 
     public function cpf(string $param)
     {
         $param = Helpers::onlyDigits($param);
-        $this->builder->where('cpf', $param);
+
+        $this->builder->whereHas('usuario', function ($query) use ($param) {
+            $this->builder->where('cpf', $param);
+        });
     }
 
     public function esferaId(string $param)
@@ -41,12 +46,12 @@ class SolicitacaoCadastroFilter extends Filters
 
     public function cargo(string $param)
     {
-        $this->builder->where('cargo', 'ILIKE', '%'.$param.'%');
+        $this->builder->where('cargo', 'ILIKE', '%' . $param . '%');
     }
 
     public function orgao(string $param)
     {
-        $this->builder->where('orgao', 'ILIKE', '%'.$param.'%');
+        $this->builder->where('orgao', 'ILIKE', '%' . $param . '%');
     }
 
     public function statusSolicitacaoId(string $param)

@@ -12,10 +12,10 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('usuario_id')->constrained('usuarios');
-            $table->foreignId('perfil_id_solicitado')->nullable()->constrained('perfis');
-            $table->foreignId('esfera_id_solicitada')->constrained('esferas');
-            $table->foreignId('uf_id_solicitada')->nullable()->constrained('ufs');
-            $table->foreignId('municipio_id_solicitada')->nullable()->constrained('municipios');
+            $table->foreignId('perfil_id')->nullable()->constrained('perfis');
+            $table->foreignId('esfera_id')->constrained('esferas');
+            $table->foreignId('uf_id')->nullable()->constrained('ufs');
+            $table->foreignId('municipio_id')->nullable()->constrained('municipios');
 
             $table->foreignId('status_id')->constrained('status_solicitacao');
 
@@ -26,15 +26,15 @@ return new class extends Migration
             $table->string('orgao');
             $table->string('cargo')->nullable();
 
-            $table->date('vigencia_inicio_solicitada')->nullable();
-            $table->date('vigencia_fim_solicitada')->nullable();
+            $table->date('vigencia_inicio')->nullable();
+            $table->date('vigencia_fim')->nullable();
 
             $table->timestamp('aceite_termo_at')->nullable();
             $table->text('justificativa_reprovacao')->nullable();
 
             $table->timestamps();
 
-            $table->index(['esfera_id_solicitada', 'uf_id_solicitada', 'municipio_id_solicitada']);
+            $table->index(['esfera_id', 'uf_id', 'municipio_id']);
         });
     }
 

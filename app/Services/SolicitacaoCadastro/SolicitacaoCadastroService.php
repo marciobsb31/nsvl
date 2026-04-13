@@ -62,7 +62,7 @@ class SolicitacaoCadastroService
             'municipio'                  => $solicitacao->municipioRelacao?->nome ?? '',
             'orgao'                      => $solicitacao->orgao,
             'cargo'                      => $solicitacao->cargo,
-            'perfil_id_solicitado'       => $solicitacao->perfil_id_solicitado,
+            'perfil_id'                  => $solicitacao->perfil_id,
             'vigencia_inicio_solicitada' => $solicitacao->vigencia_inicio_solicitada?->format('Y-m-d'),
             'vigencia_fim_solicitada'    => $solicitacao->vigencia_fim_solicitada?->format('Y-m-d'),
             'perfis_vinculados'          => $perfisVinculados,
@@ -162,38 +162,33 @@ class SolicitacaoCadastroService
             $perfilIdSolicitado = null;
         }
 
-        $this->verificarDuplicidade($usuario->id, $perfilIdSolicitado);
-
-        $vigenciaInicioSol = $this->normalizarDataSolicitacaoOpcional($dados['vigenciaInicio'] ?? null);
-        $vigenciaFimSol = $this->normalizarDataSolicitacaoOpcional($dados['vigenciaFim'] ?? null);
-
         $solicitacao = SolicitacaoCadastro::create([
-            'usuario_id'                 => $usuario->id,
-            'email_institucional'        => $dados['emailInstitucional'],
-            'telefone_institucional'     => $dados['telefoneInstitucional'] ?? null,
-            'telefone_pessoal'           => $dados['telefonePessoal'] ?? null,
-            'esfera_id'                  => $dados['esfera_id'] ?? null,
-            'uf_id'                      => $dados['uf_id'] ?? null,
-            'municipio_id'               => $dados['municipio_id'] ?? null,
-            'orgao'                      => $dados['orgao'],
-            'cargo'                      => $dados['cargo'] ?? null,
-            'perfil_id_solicitado'       => $perfilIdSolicitado,
-            'vigencia_inicio_solicitada' => $vigenciaInicioSol,
-            'vigencia_fim_solicitada'    => $vigenciaFimSol,
-            'status_id'                  => StatusSolicitacaoEnum::EM_ANALISE->value,
-            'aceite_termo_at'            => Carbon::now(),
+            'usuario_id'             => $usuario->id,
+            'email_institucional'    => $dados['emailInstitucional'],
+            'telefone_institucional' => $dados['telefoneInstitucional'] ?? null,
+            'telefone_pessoal'       => $dados['telefonePessoal'] ?? null,
+            'esfera_id'              => $dados['esfera_id'] ?? null,
+            'uf_id'                  => $dados['uf_id'] ?? null,
+            'municipio_id'           => $dados['municipio_id'] ?? null,
+            'orgao'                  => $dados['orgao'],
+            'cargo'                  => $dados['cargo'] ?? null,
+            'perfil_id'              => $perfilIdSolicitado,
+            'vigencia_inicio'        => $dados['vigenciaInicio'],
+            'vigencia_fim'           => $dados['vigenciaFim'] ?? null,
+            'status_id'              => StatusSolicitacaoEnum::EM_ANALISE->value,
+            'aceite_termo_at'        => Carbon::now(),
         ]);
 
         $this->audit->log(
             $usuario ? 'gerenciar_cadastros.solicitacao_interna_criada' : 'solicitacao_cadastro.criada',
             $usuario?->id,
             [
-                'solicitacao_id'       => $solicitacao->id,
-                'perfil_id_solicitado' => $solicitacao->perfil_id_solicitado,
-                'esfera_id'            => $solicitacao->esfera_id,
-                'uf_id'                => $solicitacao->uf_id,
-                'municipio_id'         => $solicitacao->municipio_id,
-                'origem'               => $usuario ? 'painel_interno' : 'formulario_publico',
+                'solicitacao_id' => $solicitacao->id,
+                'perfil_id'      => $solicitacao->perfil_id,
+                'esfera_id'      => $solicitacao->esfera_id,
+                'uf_id'          => $solicitacao->uf_id,
+                'municipio_id'   => $solicitacao->municipio_id,
+                'origem'         => $usuario ? 'painel_interno' : 'formulario_publico',
             ],
             TipoAuditoria::INSERT->name,
             'solicitacoes_cadastro',
