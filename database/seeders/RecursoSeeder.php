@@ -11,42 +11,20 @@ class RecursoSeeder extends Seeder
     public function run(): void
     {
         $recursos = [
-            [
-                'codigo'    => 'usuarios',
-                'nome'      => 'Gestão de Usuários',
-                'descricao' => 'Controle de usuários do sistema e seus dados básicos.',
-                'ativo'     => true,
-            ],
-            [
-                'codigo'    => 'solicitacoes_cadastro',
-                'nome'      => 'Solicitações de Cadastro',
-                'descricao' => 'Fluxo de aprovação e análise de novos cadastros.',
-                'ativo'     => true,
-            ],
-            [
-                'codigo'    => 'perfis',
-                'nome'      => 'Perfis e Permissões',
-                'descricao' => 'Configuração de perfis de acesso e níveis de autorização.',
-                'ativo'     => true,
-            ],
-            [
-                'codigo'    => 'abrangencias',
-                'nome'      => 'Abrangências e Escopos',
-                'descricao' => 'Gestão de limites geográficos (Goiás, Brasília, etc).',
-                'ativo'     => true,
-            ],
-            [
-                'codigo'    => 'auditoria',
-                'nome'      => 'Logs de Auditoria',
-                'descricao' => 'Rastreabilidade de ações realizadas no sistema.',
-                'ativo'     => true,
-            ],
+            ['codigo' => 'usuarios', 'nome' => 'Gestão de Usuários', 'descricao' => 'Controle de usuários e dados básicos.'],
+            ['codigo' => 'solicitacoes_cadastro', 'nome' => 'Solicitações de Cadastro', 'descricao' => 'Análise de novos membros.'],
+            ['codigo' => 'perfis', 'nome' => 'Perfis e Permissões', 'descricao' => 'Níveis de autorização.'],
+            ['codigo' => 'abrangencias', 'nome' => 'Abrangências', 'descricao' => 'Limites geográficos.'],
+            ['codigo' => 'auditoria', 'nome' => 'Auditoria', 'descricao' => 'Logs do sistema.'],
+            ['codigo' => 'plano_acao', 'nome' => 'Plano de Ação', 'descricao' => 'Gestão e envio de planos de ação.'],
+            ['codigo' => 'relatorio_execucao', 'nome' => 'Relatório de Execução', 'descricao' => 'Relatórios de prestação de contas.'],
         ];
 
         foreach ($recursos as $recurso) {
             DB::table('recursos')->updateOrInsert(
                 ['codigo' => $recurso['codigo']],
                 array_merge($recurso, [
+                    'ativo'      => true,
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
                 ])

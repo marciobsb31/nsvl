@@ -36,9 +36,15 @@ class AcaoSeeder extends Seeder
                 'ativo'     => true,
             ],
             [
-                'codigo'    => 'exportar',
-                'nome'      => 'Exportar',
-                'descricao' => 'Permite a exportação de dados em formatos como PDF ou Excel.',
+                'codigo'    => 'analisar',
+                'nome'      => 'Analisar/Aprovar',
+                'descricao' => 'Permite a analisar e aprovar.',
+                'ativo'     => true,
+            ],
+            [
+                'codigo'    => 'enviar',
+                'nome'      => 'Enviar',
+                'descricao' => 'Permite eviar.',
                 'ativo'     => true,
             ],
         ];
