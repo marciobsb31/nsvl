@@ -34,7 +34,7 @@ class AuthValidationService
         if ($user) {
             $this->sincronizarIdentidade($user, $govBrUser, $cpf);
 
-            if (! $user->possuiPerfilVigente()) {
+            if (! $user->perfisVigentes()) {
                 // Verificar a última solicitação para dar resposta adequada
                 $ultimaSolicitacao = SolicitacaoCadastro::where('user_id', $user->id)
                     ->latest('id')

@@ -17,6 +17,10 @@ class UsuarioResource extends JsonResource
             'perfis' => PerfilResource::collection(
                 $this->whenLoaded('perfis')
             ),
+            'permissions' => $this->when(
+                $this->relationLoaded('perfis'),
+                fn () => $this->getAllPermissions()
+            ),
         ];
     }
 }

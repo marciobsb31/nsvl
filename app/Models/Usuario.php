@@ -22,6 +22,7 @@ class Usuario extends Authenticatable
         'telefone',
         'govbr_sub',
         'email',
+        'ativo',
     ];
 
     protected $hidden = [
@@ -31,6 +32,7 @@ class Usuario extends Authenticatable
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'ativo'      => 'boolean',
     ];
 
     public function auditLogs(): HasMany
@@ -40,7 +42,7 @@ class Usuario extends Authenticatable
 
     public function perfis(): BelongsToMany
     {
-        return $this->belongsToMany(Perfil::class, 'perfil_usuario', 'usuario_id', 'perfil_id')
+        return $this->belongsToMany(Perfil::class, 'perfil_usuario')
             ->withPivot(['id', 'data_inicio_vigencia', 'data_fim_vigencia', 'ativo'])
             ->withTimestamps();
     }
@@ -73,5 +75,28 @@ class Usuario extends Authenticatable
                     ->orWhere('perfil_usuario.data_fim_vigencia', '>=', $hoje);
             })
             ->get();
+    }
+
+    public function getAllPermissions(): array
+    {
+        return $this->perfisUsuario()
+            ->with('perfil.permissoes')
+            ->get()
+            ->pluck('perfil.permissoes')
+            ->flatten()
+            ->pluck('codigo')
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    public function hasPermissao(string $codigo):bool
+    {
+        return $this->perfisUsuario()
+            ->with('perfil.permissoes')
+            ->get()
+            ->flatMap(fn ($pu) => $pu->perfil?->permissoes ?? [])
+            ->pluck('codigo')
+            ->contains($codigo);
     }
 }

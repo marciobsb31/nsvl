@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\TipoAuditoria;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
-use App\Models\AuditLog;
+use App\Http\Resources\UsuarioResource;
 use App\Services\Audit\AuditLogService;
 use App\Services\Auth\AuthValidationService;
 use App\Services\Auth\GovBrService;
@@ -27,8 +28,8 @@ class GovBrAuthController extends Controller
 
     #[OA\Get(
         path: '/api/auth/url',
-        summary: 'Inicia login GOV.BR',
         description: 'Retorna a URL de autorização do SSO (PKCE + state em cache).',
+        summary: 'Inicia login GOV.BR',
         tags: ['Autenticação'],
         responses: [
             new OA\Response(
@@ -51,8 +52,8 @@ class GovBrAuthController extends Controller
 
     #[OA\Get(
         path: '/api/auth/redirect',
-        summary: 'Callback OAuth2 do GOV.BR',
         description: 'Processa o retorno do GOV.BR, valida state/code, cria token Sanctum e redireciona ao frontend com fragmento.',
+        summary: 'Callback OAuth2 do GOV.BR',
         tags: ['Autenticação'],
         parameters: [
             new OA\Parameter(name: 'code', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
@@ -112,7 +113,7 @@ class GovBrAuthController extends Controller
                 $this->loginCodeCacheKey($loginCode),
                 [
                     'token' => $plainTextToken,
-                    'user'  => $user->toSafeArray(),
+                    'user'  => UsuarioResource::make($user),
                 ],
                 now()->addSeconds((int) config('govbr.login_code_ttl_seconds', 120))
             );
@@ -123,7 +124,7 @@ class GovBrAuthController extends Controller
             ]);
             $this->auditLogService->log('auth.login', $user->id, [
                 'provider' => 'govbr',
-            ], AuditLog::TIPO_LOGIN);
+            ], TipoAuditoria::LOGIN->name);
 
             return $this->redirectToFrontend([
                 'govbr_login_code' => $loginCode,
@@ -158,9 +159,8 @@ class GovBrAuthController extends Controller
 
     #[OA\Post(
         path: '/api/auth/exchange',
-        summary: 'Troca código de login por token Sanctum',
         description: 'Envia o `govbr_login_code` recebido no fragmento da URL após o redirect do callback.',
-        tags: ['Autenticação'],
+        summary: 'Troca código de login por token Sanctum',
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -170,6 +170,7 @@ class GovBrAuthController extends Controller
                 ]
             )
         ),
+        tags: ['Autenticação'],
         responses: [
             new OA\Response(
                 response: 200,
@@ -205,8 +206,8 @@ class GovBrAuthController extends Controller
     #[OA\Post(
         path: '/api/auth/logout',
         summary: 'Encerra sessão Sanctum',
-        tags: ['Autenticação'],
         security: [['BearerAuth' => []]],
+        tags: ['Autenticação'],
         responses: [
             new OA\Response(
                 response: 200,
@@ -228,7 +229,7 @@ class GovBrAuthController extends Controller
 
         $this->auditLogService->log('auth.logout', $user?->id, [
             'provider' => 'sanctum',
-        ], AuditLog::TIPO_LOGOUT);
+        ], TipoAuditoria::LOGOUT);
 
         return response()->json([
             'message' => 'Logout realizado com sucesso.',

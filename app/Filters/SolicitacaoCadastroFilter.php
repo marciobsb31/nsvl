@@ -12,13 +12,18 @@ class SolicitacaoCadastroFilter extends Filters
 
     public function nome(string $param)
     {
-        $this->builder->where('nome', 'ILIKE', '%'.$param.'%');
+        $this->builder->whereHas('usuario', function ($query) use ($param) {
+            $query->where('nome', 'ILIKE', '%'.$param.'%');
+        });
     }
 
     public function cpf(string $param)
     {
         $param = Helpers::onlyDigits($param);
-        $this->builder->where('cpf', $param);
+
+        $this->builder->whereHas('usuario', function ($query) use ($param) {
+            $query->where('cpf', $param);
+        });
     }
 
     public function esferaId(string $param)

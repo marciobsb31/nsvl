@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TipoAuditoria;
 use App\Exceptions\ApiException;
 use App\Http\Requests\CadastrarPerfilRequest;
 use App\Models\AuditLog;
@@ -60,7 +61,7 @@ class GerenciarPerfilController extends Controller
             'gerenciar_perfis.listagem',
             $user->id,
             ['total' => $perfis->count()],
-            AuditLog::TIPO_VIEW,
+            TipoAuditoria::VIEW,
             'perfis'
         );
 
@@ -72,8 +73,8 @@ class GerenciarPerfilController extends Controller
     #[OA\Get(
         path: '/api/gerenciar-perfis/{id}',
         summary: 'Detalha um perfil',
-        tags: ['Gerenciar perfis'],
         security: [['BearerAuth' => []]],
+        tags: ['Gerenciar perfis'],
         parameters: [
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
@@ -141,7 +142,7 @@ class GerenciarPerfilController extends Controller
                     'perfil_nome' => $perfil->nome,
                     'ativo'       => $perfil->ativo,
                 ],
-                AuditLog::TIPO_INSERT,
+                TipoAuditoria::INSERT,
                 'perfis',
                 $perfil->id
             );
@@ -223,7 +224,7 @@ class GerenciarPerfilController extends Controller
                     'perfil_nome' => $perfil->nome,
                     'alteracoes'  => $alteracoes,
                 ],
-                AuditLog::TIPO_UPDATE,
+                TipoAuditoria::UPDATE->name,
                 'perfis',
                 $perfil->id
             );
@@ -238,8 +239,8 @@ class GerenciarPerfilController extends Controller
     #[OA\Get(
         path: '/api/gerenciar-perfis/{id}/historico',
         summary: 'Histórico de auditoria do perfil',
-        tags: ['Gerenciar perfis'],
         security: [['BearerAuth' => []]],
+        tags: ['Gerenciar perfis'],
         parameters: [
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],

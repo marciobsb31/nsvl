@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TipoAuditoria;
 use App\Exceptions\ApiException;
-use App\Models\AuditLog;
 use App\Models\PerfilUsuario;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\JsonResponse;
@@ -118,7 +118,7 @@ class TrocaContextoController extends Controller
                 'novo_perfil_id'       => $perfilUsuarioId,
                 'novo_perfil_nome'     => $novoPerfilPivot->nome,
             ],
-            AuditLog::TIPO_UPDATE,
+            TipoAuditoria::UPDATE,
             'perfil_usuario',
             $perfilUsuarioId
         );

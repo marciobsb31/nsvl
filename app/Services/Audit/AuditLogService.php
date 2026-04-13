@@ -2,6 +2,7 @@
 
 namespace App\Services\Audit;
 
+use App\Enums\TipoAuditoria;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 
@@ -28,7 +29,7 @@ class AuditLogService
         string $acao,
         ?int $userId = null,
         array $contexto = [],
-        string $tipoOperacao = AuditLog::TIPO_VIEW,
+        string $tipoOperacao = TipoAuditoria::VIEW->name,
         ?string $tabelaAfetada = null,
         ?int $registroId = null
     ): void {

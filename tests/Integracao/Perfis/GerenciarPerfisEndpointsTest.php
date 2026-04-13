@@ -2,6 +2,7 @@
 
 namespace Tests\Integracao\Perfis;
 
+use App\Enums\TipoAuditoria;
 use App\Models\AuditLog;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Integracao\TestCase;
@@ -177,7 +178,7 @@ class GerenciarPerfisEndpointsTest extends TestCase
         AuditLog::create([
             'user_id'        => $usuario->id,
             'acao'           => 'gerenciar_perfis.cadastrar',
-            'tipo_operacao'  => AuditLog::TIPO_INSERT,
+            'tipo_operacao'  => TipoAuditoria::INSERT,
             'tabela_afetada' => 'perfis',
             'registro_id'    => $perfil->id,
             'contexto'       => [],

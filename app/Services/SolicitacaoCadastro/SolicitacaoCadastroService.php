@@ -3,6 +3,7 @@
 namespace App\Services\SolicitacaoCadastro;
 
 use App\Enums\StatusSolicitacaoEnum;
+use App\Enums\TipoAuditoria;
 use App\Exceptions\ApiException;
 use App\Helpers\CpfHelper;
 use App\Mail\SolicitacaoCadastroAvaliada;
@@ -35,7 +36,7 @@ class SolicitacaoCadastroService
 
         $this->audit->log('gerenciar_cadastros.detalhamento', auth()->user()->id, [
             'solicitacao_id' => $solicitacao->id,
-        ], AuditLog::TIPO_VIEW, 'solicitacoes_cadastro', $solicitacao->id);
+        ], TipoAuditoria::VIEW->name, 'solicitacoes_cadastro', $solicitacao->id);
 
         try {
             $perfisVinculados = $this->obterPerfisVinculados($solicitacao);
@@ -61,7 +62,7 @@ class SolicitacaoCadastroService
             'municipio'                  => $solicitacao->municipioRelacao?->nome ?? '',
             'orgao'                      => $solicitacao->orgao,
             'cargo'                      => $solicitacao->cargo,
-            'perfil_id_solicitado'       => $solicitacao->perfil_id_solicitado,
+            'perfil_id'                  => $solicitacao->perfil_id,
             'vigencia_inicio_solicitada' => $solicitacao->vigencia_inicio_solicitada?->format('Y-m-d'),
             'vigencia_fim_solicitada'    => $solicitacao->vigencia_fim_solicitada?->format('Y-m-d'),
             'perfis_vinculados'          => $perfisVinculados,
@@ -129,6 +130,7 @@ class SolicitacaoCadastroService
                     'nome'      => $dados['nome'],
                     'email'     => $dados['emailInstitucional'],
                     'govbr_sub' => $dados['cpf'],
+                    'ativo'     => false,
                     'telefone'  => $dados['telefonePessoal'] ?? null,
                 ]);
             } catch (QueryException $e) {
@@ -148,7 +150,7 @@ class SolicitacaoCadastroService
         }
 
         $existente = SolicitacaoCadastro::where('usuario_id', $usuario->id)
-            ->where('status_id', StatusSolicitacaoEnum::EM_ANALISE->value)
+            ->where('status_id', StatusSolicitacaoEnum::EM_ANALISE)
             ->exists();
 
         if ($existente) {
@@ -160,40 +162,35 @@ class SolicitacaoCadastroService
             $perfilIdSolicitado = null;
         }
 
-        $this->verificarDuplicidade($usuario->id, $perfilIdSolicitado);
-
-        $vigenciaInicioSol = $this->normalizarDataSolicitacaoOpcional($dados['vigenciaInicio'] ?? null);
-        $vigenciaFimSol = $this->normalizarDataSolicitacaoOpcional($dados['vigenciaFim'] ?? null);
-
         $solicitacao = SolicitacaoCadastro::create([
-            'usuario_id'                 => $usuario->id,
-            'email_institucional'        => $dados['emailInstitucional'],
-            'telefone_institucional'     => $dados['telefoneInstitucional'] ?? null,
-            'telefone_pessoal'           => $dados['telefonePessoal'] ?? null,
-            'esfera_id'                  => $dados['esfera_id'] ?? null,
-            'uf_id'                      => $dados['uf_id'] ?? null,
-            'municipio_id'               => $dados['municipio_id'] ?? null,
-            'orgao'                      => $dados['orgao'],
-            'cargo'                      => $dados['cargo'] ?? null,
-            'perfil_id_solicitado'       => $perfilIdSolicitado,
-            'vigencia_inicio_solicitada' => $vigenciaInicioSol,
-            'vigencia_fim_solicitada'    => $vigenciaFimSol,
-            'status_id'                  => StatusSolicitacaoEnum::EM_ANALISE->value,
-            'aceite_termo_at'            => Carbon::now(),
+            'usuario_id'             => $usuario->id,
+            'email_institucional'    => $dados['emailInstitucional'],
+            'telefone_institucional' => $dados['telefoneInstitucional'] ?? null,
+            'telefone_pessoal'       => $dados['telefonePessoal'] ?? null,
+            'esfera_id'              => $dados['esfera_id'] ?? null,
+            'uf_id'                  => $dados['uf_id'] ?? null,
+            'municipio_id'           => $dados['municipio_id'] ?? null,
+            'orgao'                  => $dados['orgao'],
+            'cargo'                  => $dados['cargo'] ?? null,
+            'perfil_id'              => $perfilIdSolicitado,
+            'vigencia_inicio'        => $dados['vigenciaInicio'],
+            'vigencia_fim'           => $dados['vigenciaFim'] ?? null,
+            'status_id'              => StatusSolicitacaoEnum::EM_ANALISE->value,
+            'aceite_termo_at'        => Carbon::now(),
         ]);
 
         $this->audit->log(
             $usuario ? 'gerenciar_cadastros.solicitacao_interna_criada' : 'solicitacao_cadastro.criada',
             $usuario?->id,
             [
-                'solicitacao_id'       => $solicitacao->id,
-                'perfil_id_solicitado' => $solicitacao->perfil_id_solicitado,
-                'esfera_id'            => $solicitacao->esfera_id,
-                'uf_id'                => $solicitacao->uf_id,
-                'municipio_id'         => $solicitacao->municipio_id,
-                'origem'               => $usuario ? 'painel_interno' : 'formulario_publico',
+                'solicitacao_id' => $solicitacao->id,
+                'perfil_id'      => $solicitacao->perfil_id,
+                'esfera_id'      => $solicitacao->esfera_id,
+                'uf_id'          => $solicitacao->uf_id,
+                'municipio_id'   => $solicitacao->municipio_id,
+                'origem'         => $usuario ? 'painel_interno' : 'formulario_publico',
             ],
-            AuditLog::TIPO_INSERT,
+            TipoAuditoria::INSERT->name,
             'solicitacoes_cadastro',
             $solicitacao->id
         );
@@ -282,7 +279,7 @@ class SolicitacaoCadastroService
             'gerenciar_cadastros.avaliacao',
             $user->id,
             $contextoAudit,
-            AuditLog::TIPO_UPDATE,
+            TipoAuditoria::UPDATE->name,
             'solicitacoes_cadastro',
             $solicitacao->id
         );
@@ -351,7 +348,7 @@ class SolicitacaoCadastroService
 
         // Verificar se possui perfil vigente (ativo) — se sim, bloqueia
         $usuario = Usuario::where('cpf', $cpf)->first();
-        if ($usuario && $usuario->possuiPerfilVigente()) {
+        if ($usuario && $usuario->perfisVigentes()) {
             return ['disponivel' => false, 'mensagem' => 'Este CPF já possui perfil ativo no sistema.'];
         }
 
@@ -388,7 +385,7 @@ class SolicitacaoCadastroService
             'solicitacao_id'    => $solicitacao->id,
             'perfil_usuario_id' => $perfilUsuarioId,
             'usuario_id'        => $usuarioSolicitante->id,
-        ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $perfilUsuarioId);
+        ], TipoAuditoria::UPDATE->name, 'perfil_usuario', $perfilUsuarioId);
 
         return ['message' => 'Perfil vinculado ativado com sucesso.', 'data' => ['id' => $perfilUsuarioId]];
     }
@@ -429,7 +426,7 @@ class SolicitacaoCadastroService
             'solicitacao_id'    => $solicitacao->id,
             'perfil_usuario_id' => $vinculo->id,
             'usuario_id'        => $usuarioSolicitante->id,
-        ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $vinculo->id);
+        ], TipoAuditoria::UPDATE->name, 'perfil_usuario', $vinculo->id);
 
         return ['message' => 'Perfil vinculado desativado com sucesso.', 'data' => ['id' => $vinculo->id]];
     }
@@ -477,7 +474,7 @@ class SolicitacaoCadastroService
             'perfil_usuario_id' => $vinculo->id,
             'perfil_id'         => $vinculo->perfil_id,
             'usuario_id'        => $usuarioSolicitante->id,
-        ], AuditLog::TIPO_INSERT, 'perfil_usuario', $vinculo->id);
+        ], TipoAuditoria::INSERT->name, 'perfil_usuario', $vinculo->id);
 
         return ['message' => 'Perfil vinculado adicionado com sucesso.', 'data' => ['id' => $vinculo->id]];
     }
