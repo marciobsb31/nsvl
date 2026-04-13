@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('auditoria_log', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('usuarios')->nullOnDelete();
+            $table->unsignedBigInteger('usuario_id')->nullable();
             $table->string('acao', 150);
             $table->string('tipo_operacao', 30);
             $table->string('tabela_afetada', 100)->nullable();
@@ -18,11 +18,9 @@ return new class extends Migration
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->json('contexto')->nullable();
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('created_at');
 
-            $table->index(['tabela_afetada', 'registro_id'], 'auditoria_log_tabela_registro_idx');
-            $table->index(['user_id', 'created_at'], 'auditoria_log_user_created_idx');
-            $table->index(['tipo_operacao', 'created_at'], 'auditoria_log_tipo_created_idx');
+            $table->foreign('usuario_id')->references('id')->on('usuarios');
         });
     }
 
