@@ -89,4 +89,14 @@ class Usuario extends Authenticatable
             ->values()
             ->toArray();
     }
+
+    public function hasPermissao(string $codigo):bool
+    {
+        return $this->perfisUsuario()
+            ->with('perfil.permissoes')
+            ->get()
+            ->flatMap(fn ($pu) => $pu->perfil?->permissoes ?? [])
+            ->pluck('codigo')
+            ->contains($codigo);
+    }
 }

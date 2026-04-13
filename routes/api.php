@@ -55,7 +55,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::prefix('solicitacoes-cadastro')->group(function () {
-        Route::get('/', [SolicitacaoCadastroController::class, 'index']);
+        Route::get('/', [SolicitacaoCadastroController::class, 'index'])
+        ->middleware('permission:solicitacoes_cadastro.visualizar');
         Route::post('/{id}/perfis', [SolicitacaoCadastroController::class, 'adicionarPerfilVinculado']);
         Route::patch('/{id}/perfis/{perfilUsuarioId}/ativar', [SolicitacaoCadastroController::class, 'ativarPerfilVinculado']);
         Route::patch('/{id}/perfis/{perfilUsuarioId}/desativar', [SolicitacaoCadastroController::class, 'desativarPerfilVinculado']);
