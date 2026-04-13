@@ -76,4 +76,17 @@ class Usuario extends Authenticatable
             })
             ->get();
     }
+
+    public function getAllPermissions(): array
+    {
+        return $this->perfisUsuario()
+            ->with('perfil.permissoes')
+            ->get()
+            ->pluck('perfil.permissoes')
+            ->flatten()
+            ->pluck('codigo')
+            ->unique()
+            ->values()
+            ->toArray();
+    }
 }

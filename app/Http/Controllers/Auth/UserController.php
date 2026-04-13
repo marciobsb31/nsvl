@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UsuarioResource;
+use App\Models\Usuario;
 use OpenApi\Attributes as OA;
 
 /**
@@ -43,7 +44,7 @@ class UserController extends Controller
     public function me()
     {
         return UsuarioResource::make(
-            auth()->user()->load('perfis')
+            auth()->user()->load(['perfis', 'perfisUsuario.perfil.permissoes'])
         );
     }
 }
