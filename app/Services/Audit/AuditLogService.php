@@ -34,7 +34,7 @@ class AuditLogService
         ?int $registroId = null
     ): void {
         AuditLog::create([
-            'user_id'        => $userId,
+            'usuario_id'     => $userId,
             'acao'           => $acao,
             'tipo_operacao'  => $tipoOperacao,
             'tabela_afetada' => $tabelaAfetada,
