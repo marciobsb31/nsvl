@@ -5,11 +5,11 @@
             <div class="header-top">
                 <div class="header-info">
                      <button v-if="logo" class="logo-btn" type="button" aria-label="Ir para a página inicial" @click="goToHome">
-                        <img :src="logoAtual" alt="Logo novo viver sem limites" class="logo" />
+                        <img :src="logoAtual" alt="Logo NVSL - Novo Viver Sem Limites" class="logo" />
                     </button>
                     <template v-else>
                         <button class="header-title text-blue-warm-vivid-70 header-title-btn" type="button" aria-label="Ir para a página inicial" @click="goToHome">{{ title }}</button>
-                        <div class="header-subtitle text-gray-80">{{ subtitle }}</div>
+                        <p class="header-subtitle text-gray-80 m-0">{{ subtitle }}</p>
                     </template>
                 </div>
                 <div class="header-actions header-actions--center">
@@ -17,21 +17,6 @@
                 </div>
                 <div class="header-right">
                     <img v-if="logoGov && isDesktop" :src="logoGov" alt="Logo GOV" class="logo-gov" />
-                    <!-- <button
-                        class="br-button circle small ml-3"
-                        type="button"
-                        :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
-                        title="Alternar tema"
-                        @click="toggleTheme"
-                    >
-                        <i class="fas fa-adjust" aria-hidden="true"></i>
-                    </button>
-                     <button class="br-button circle small ml-3 font-acessibilidade" type="button" aria-label="Diminuir Fonte" title="Diminuir Fonte">
-                        A-
-                    </button>
-                    <button class="br-button circle small ml-3 font-acessibilidade" type="button" aria-label="Aumentar Fonte" title="Aumentar Fonte">
-                        A+
-                    </button> -->
                     <Accessibility />
                 </div>
             </div>
@@ -48,7 +33,7 @@ import { useTheme } from '@/core/composables/useTheme';
 import { computed } from 'vue';
 import Accessibility from '../Accessibility/Accessibility.vue';
 
-const { isMobile, isDesktop } = useBreakpoint()
+const { isDesktop } = useBreakpoint()
 const { setMode, mode } = useTheme()
 
 defineOptions({

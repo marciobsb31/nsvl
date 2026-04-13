@@ -1,6 +1,6 @@
 <template>
 
-    <footer class="br-footer pt-0" :class="{ 'inverted': inverted }">
+    <footer class="br-footer pt-0" :class="{ 'inverted': inverted }" :aria-label="ariaLabel">
         <div class="container-lg">
             <div class="info">
                 <slot name="info"></slot>
@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 defineOptions({
-    name: 'FooterComponent'
+    name: 'FooterComponent',
 });
 
 defineProps({
@@ -20,6 +20,11 @@ defineProps({
         type: Boolean,
         required: false,
         default: false
+    },
+    ariaLabel: {
+        type: String,
+        required: false,
+        default: 'Rodapé'
     }
 });
 

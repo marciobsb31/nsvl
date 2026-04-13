@@ -1,18 +1,26 @@
 <template>
   <PublicLayout>
-    <div class="login-page">
+    <div class="login-page" :aria-busy="carregandoGovBr ? 'true' : 'false'">
       <div class="login-card br-card">
         <div class="login-panel login-panel--actions">
           <div class="login-header">
             <h1 class="login-title text-center">Acesse o sistema</h1>
-            <p class="login-subtitle">
+            <p id="login-description" class="login-subtitle">
               Entre com sua conta GOV.BR para acessar o sistema.
             </p>
           </div>
 
-          <div v-if="erro" class="br-message danger mb-3" role="alert">
+          <div v-if="erro" ref="erroRef" class="br-message danger mb-3" role="alert" tabindex="-1">
             <div class="content">{{ erro }}</div>
           </div>
+
+          <div aria-live="polite" class="sr-only">
+            {{ carregandoGovBr ? 'Redirecionando para autenticação do GOV.BR.' : '' }}
+          </div>
+
+          <p v-if="!govBrDisponivel" id="govbr-status" class="sr-only">
+            Login GOV.BR indisponível neste ambiente no momento.
+          </p>
 
           <div class="login-govbr">
             <button
@@ -20,6 +28,7 @@
               class="br-button secondary block login-govbr__button"
               :disabled="carregandoGovBr || !govBrDisponivel"
               aria-label="Entrar com GOV.BR"
+              aria-describedby="login-description"
               @click="entrarComGovBr"
             >
               {{ carregandoGovBr ? 'Redirecionando...' : 'Entrar com GOV.BR' }}
@@ -32,8 +41,9 @@
             :disabled="carregandoGovBr || !govBrDisponivel"
             aria-label="Solicitar cadastro"
             @click="entrarComGovBr"
+            :aria-describedby="govBrDisponivel ? 'login-description' : 'govbr-status'"
           >
-            {{ carregandoGovBr ? 'Redirecionando...' : 'Solicitar cadastro' }}
+            {{ carregandoGovBr ? 'Redirecionando...' : 'Solicitar cadastro com GOV.BR' }}
           </button>
         </div>
       </div>
@@ -42,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import api from '@/services/ApiService'
@@ -54,9 +64,17 @@ defineOptions({ name: 'LoginPage' })
 const router = useRouter()
 const authStore = useAuthStore()
 
-const govBrDisponivel = String(import.meta.env.VITE_GOVBR_ENABLED ?? 'true').toLowerCase() === 'true'
+const govBrDisponivel =
+  String(import.meta.env.VITE_GOVBR_ENABLED ?? 'true').toLowerCase() === 'true'
 const carregandoGovBr = ref(false)
 const erro = ref('')
+const erroRef = ref<HTMLElement | null>(null)
+
+watch(erro, async (valor) => {
+  if (!valor) return
+  await nextTick()
+  erroRef.value?.focus()
+})
 
 onMounted(() => {
   if (!govBrDisponivel) {
@@ -100,11 +118,7 @@ async function processarRetornoGovBr() {
   if (govbrError) {
     const govbrNome = params.get('govbr_nome')
     const govbrCpf = params.get('govbr_cpf')
-    if (
-      govbrError === 'Solicitar acesso e aguardar avaliação' &&
-      govbrNome &&
-      govbrCpf
-    ) {
+    if (govbrError === 'Solicitar acesso e aguardar avaliação' && govbrNome && govbrCpf) {
       await router.replace({
         name: 'solicitacao-cadastro',
         query: { nome: govbrNome, cpf: govbrCpf },
@@ -120,7 +134,7 @@ async function processarRetornoGovBr() {
   try {
     const { data } = await api.post<{ token: string; user: Record<string, unknown> }>(
       '/auth/exchange',
-      { code: loginCode }
+      { code: loginCode },
     )
     sessionStorage.setItem('nvsl_token', data.token)
     authStore.setUser(data.user)
@@ -135,6 +149,18 @@ async function processarRetornoGovBr() {
 </script>
 
 <style scoped>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .login-page {
   width: 100%;
   display: flex;
