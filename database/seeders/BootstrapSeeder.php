@@ -18,6 +18,7 @@ class BootstrapSeeder extends Seeder
             PerfilSeeder::class,
             PerfilPermissaoSeeder::class,
             UsuarioAdminSeeder::class,
+            UsuarioEstadualSeeder::class
         ]);
     }
 }
