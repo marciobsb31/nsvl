@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
@@ -45,6 +46,11 @@ class Usuario extends Authenticatable
         return $this->belongsToMany(Perfil::class, 'perfil_usuario')
             ->withPivot(['id', 'data_inicio_vigencia', 'data_fim_vigencia', 'ativo'])
             ->withTimestamps();
+    }
+
+    public function contexto(): HasOne
+    {
+        return $this->hasOne(UsuarioContexto::class, 'usuario_id');
     }
 
     public function perfisUsuario(): HasMany

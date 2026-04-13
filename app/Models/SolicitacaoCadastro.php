@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\AbrangenciaScope;
 use App\Traits\FilterScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +15,11 @@ class SolicitacaoCadastro extends Model
     use HasFactory;
 
     protected $table = 'solicitacoes_cadastro';
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new AbrangenciaScope);
+    }
 
     protected $fillable = [
         'usuario_id',
