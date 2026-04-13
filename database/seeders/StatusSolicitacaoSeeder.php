@@ -11,11 +11,14 @@ class StatusSolicitacaoSeeder extends Seeder
     public function run(): void
     {
         foreach (StatusSolicitacaoEnum::cases() as $status) {
-            StatusSolicitacao::firstOrCreate([
-                'id' => $status->value,
-            ], [
-                'nome' => $status->label(),
-            ]);
+            StatusSolicitacao::firstOrCreate(
+                ['codigo' => $status->value],
+                [
+                    'nome'       => $status->label(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
         }
     }
 }

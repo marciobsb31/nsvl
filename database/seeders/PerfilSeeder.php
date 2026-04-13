@@ -2,94 +2,94 @@
 
 namespace Database\Seeders;
 
-use App\Models\Perfil;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
-/**
- * Catálogo oficial de perfis ({@see Perfil::CATALOGO_OFICIAL}),
- * alinhado a GET /api/perfis e GET /api/gerenciar-perfis.
- */
 class PerfilSeeder extends Seeder
 {
     public function run(): void
     {
-        $perfis = [
-            ['nome' => 'Gestor Federal', 'descricao' => 'Administrador Geral do Sistema', 'ativo' => true],
-            ['nome' => 'Gestor Estadual', 'descricao' => 'Gestão operacional no âmbito estadual', 'ativo' => true],
-            ['nome' => 'Gestor Municipal', 'descricao' => 'Gestão operacional no âmbito municipal', 'ativo' => true],
-            ['nome' => 'Administrador Estadual', 'descricao' => 'Administração e configuração no âmbito estadual', 'ativo' => true],
-            ['nome' => 'Administrador Municipal', 'descricao' => 'Administração e configuração no âmbito municipal', 'ativo' => true],
-            ['nome' => 'Visitante Federal', 'descricao' => 'Acesso somente leitura no âmbito federal', 'ativo' => true],
-            ['nome' => 'Visitante Estadual', 'descricao' => 'Acesso somente leitura no âmbito estadual', 'ativo' => true],
-            ['nome' => 'Visitante Municipal', 'descricao' => 'Acesso somente leitura no âmbito municipal', 'ativo' => true],
-        ];
+        $esferaFederal = DB::table('esferas')->where('codigo', 'federal')->first();
+        $esferaEstadual = DB::table('esferas')->where('codigo', 'estadual')->first();
 
-        foreach ($perfis as $p) {
-            Perfil::updateOrCreate(
-                ['nome' => $p['nome']],
-                ['descricao' => $p['descricao'], 'ativo' => $p['ativo']]
-            );
-        }
+        if (! $esferaFederal || ! $esferaEstadual) {
+            $this->command->error('Esferas não encontradas! Rode o EsferaSeeder primeiro.');
 
-        DB::transaction(function (): void {
-            $this->migrarPerfilLegadoParaNovo('Gestor Nacional', 'Gestor Federal');
-            $this->migrarPerfilLegadoParaNovo('Administrador Nacional', 'Visitante Federal');
-
-            Perfil::query()
-                ->whereNotIn('nome', Perfil::CATALOGO_OFICIAL)
-                ->delete();
-        });
-    }
-
-    private function migrarPerfilLegadoParaNovo(string $nomeLegado, string $nomeNovo): void
-    {
-        $perfilLegado = Perfil::query()->where('nome', $nomeLegado)->first();
-        $perfilNovo = Perfil::query()->where('nome', $nomeNovo)->first();
-
-        if (! $perfilLegado || ! $perfilNovo || $perfilLegado->id === $perfilNovo->id) {
             return;
         }
 
-        if (Schema::hasTable('perfil_usuario')) {
-            DB::table('perfil_usuario as pu_old')
-                ->where('pu_old.perfil_id', $perfilLegado->id)
-                ->whereExists(function ($query) use ($perfilNovo): void {
-                    $query->select(DB::raw(1))
-                        ->from('perfil_usuario as pu_new')
-                        ->whereColumn('pu_new.usuario_id', 'pu_old.usuario_id')
-                        ->where('pu_new.perfil_id', $perfilNovo->id);
-                })
-                ->delete();
+        $now = Carbon::now();
 
-            DB::table('perfil_usuario')
-                ->where('perfil_id', $perfilLegado->id)
-                ->update(['perfil_id' => $perfilNovo->id]);
+        $perfis = [
+
+            [
+                'esfera_id' => $esferaFederal->id,
+                'codigo'    => 'admin_federal',
+                'nome'      => 'Administrador Federal',
+                'descricao' => 'Gestão total do sistema em nível nacional.',
+                'ativo'     => true,
+            ],
+            [
+                'esfera_id' => $esferaFederal->id,
+                'codigo'    => 'gestor_federal',
+                'nome'      => 'Gestor Federal',
+                'descricao' => 'Acompanhamento e gestão de dados nacionais.',
+                'ativo'     => true,
+            ],
+            [
+                'esfera_id' => $esferaFederal->id,
+                'codigo'    => 'visualizador_federal',
+                'nome'      => 'Consultor Federal',
+                'descricao' => 'Acesso apenas para leitura de relatórios nacionais.',
+                'ativo'     => true,
+            ],
+
+            [
+                'esfera_id' => $esferaEstadual->id,
+                'codigo'    => 'admin_estadual',
+                'nome'      => 'Administrador Estadual',
+                'descricao' => 'Gestão total dentro da sua unidade federativa.',
+                'ativo'     => true,
+            ],
+            [
+                'esfera_id' => $esferaEstadual->id,
+                'codigo'    => 'gestor_estadual',
+                'nome'      => 'Gestor Estadual',
+                'descricao' => 'Gestão operacional de solicitações estaduais.',
+                'ativo'     => true,
+            ],
+            [
+                'esfera_id' => $esferaEstadual->id,
+                'codigo'    => 'tecnico_estadual',
+                'nome'      => 'Técnico Estadual',
+                'descricao' => 'Análise técnica de processos locais.',
+                'ativo'     => true,
+            ],
+            [
+                'esfera_id' => $esferaEstadual->id,
+                'codigo'    => 'operador_estadual',
+                'nome'      => 'Operador Estadual',
+                'descricao' => 'Entrada de dados e registros regionais.',
+                'ativo'     => true,
+            ],
+            [
+                'esfera_id' => $esferaEstadual->id,
+                'codigo'    => 'visitante_estadual',
+                'nome'      => 'Visitante Estadual',
+                'descricao' => 'Acesso restrito para visualização regional.',
+                'ativo'     => true,
+            ],
+        ];
+
+        foreach ($perfis as $perfil) {
+            DB::table('perfis')->updateOrInsert(
+                ['codigo' => $perfil['codigo'], 'esfera_id' => $perfil['esfera_id']],
+                array_merge($perfil, [
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])
+            );
         }
-
-        if (Schema::hasTable('solicitacoes_cadastro')) {
-            DB::table('solicitacoes_cadastro')
-                ->where('perfil_id_solicitado', $perfilLegado->id)
-                ->update(['perfil_id_solicitado' => $perfilNovo->id]);
-        }
-
-        if (Schema::hasTable('perfil_permissao')) {
-            DB::table('perfil_permissao as pp_old')
-                ->where('pp_old.perfil_id', $perfilLegado->id)
-                ->whereExists(function ($query) use ($perfilNovo): void {
-                    $query->select(DB::raw(1))
-                        ->from('perfil_permissao as pp_new')
-                        ->whereColumn('pp_new.permissao_id', 'pp_old.permissao_id')
-                        ->where('pp_new.perfil_id', $perfilNovo->id);
-                })
-                ->delete();
-
-            DB::table('perfil_permissao')
-                ->where('perfil_id', $perfilLegado->id)
-                ->update(['perfil_id' => $perfilNovo->id]);
-        }
-
-        $perfilLegado->delete();
     }
 }

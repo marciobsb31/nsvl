@@ -3,6 +3,7 @@
 namespace App\Services\SolicitacaoCadastro;
 
 use App\Enums\StatusSolicitacaoEnum;
+use App\Enums\TipoAuditoria;
 use App\Exceptions\ApiException;
 use App\Helpers\CpfHelper;
 use App\Mail\SolicitacaoCadastroAvaliada;
@@ -35,7 +36,7 @@ class SolicitacaoCadastroService
 
         $this->audit->log('gerenciar_cadastros.detalhamento', auth()->user()->id, [
             'solicitacao_id' => $solicitacao->id,
-        ], AuditLog::TIPO_VIEW, 'solicitacoes_cadastro', $solicitacao->id);
+        ], TipoAuditoria::VIEW->name, 'solicitacoes_cadastro', $solicitacao->id);
 
         try {
             $perfisVinculados = $this->obterPerfisVinculados($solicitacao);
@@ -193,7 +194,7 @@ class SolicitacaoCadastroService
                 'municipio_id'         => $solicitacao->municipio_id,
                 'origem'               => $usuario ? 'painel_interno' : 'formulario_publico',
             ],
-            AuditLog::TIPO_INSERT,
+            TipoAuditoria::INSERT->name,
             'solicitacoes_cadastro',
             $solicitacao->id
         );
@@ -282,7 +283,7 @@ class SolicitacaoCadastroService
             'gerenciar_cadastros.avaliacao',
             $user->id,
             $contextoAudit,
-            AuditLog::TIPO_UPDATE,
+            TipoAuditoria::UPDATE->name,
             'solicitacoes_cadastro',
             $solicitacao->id
         );
@@ -351,7 +352,7 @@ class SolicitacaoCadastroService
 
         // Verificar se possui perfil vigente (ativo) — se sim, bloqueia
         $usuario = Usuario::where('cpf', $cpf)->first();
-        if ($usuario && $usuario->possuiPerfilVigente()) {
+        if ($usuario && $usuario->perfisVigentes()) {
             return ['disponivel' => false, 'mensagem' => 'Este CPF já possui perfil ativo no sistema.'];
         }
 
@@ -388,7 +389,7 @@ class SolicitacaoCadastroService
             'solicitacao_id'    => $solicitacao->id,
             'perfil_usuario_id' => $perfilUsuarioId,
             'usuario_id'        => $usuarioSolicitante->id,
-        ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $perfilUsuarioId);
+        ], TipoAuditoria::UPDATE->name, 'perfil_usuario', $perfilUsuarioId);
 
         return ['message' => 'Perfil vinculado ativado com sucesso.', 'data' => ['id' => $perfilUsuarioId]];
     }
@@ -429,7 +430,7 @@ class SolicitacaoCadastroService
             'solicitacao_id'    => $solicitacao->id,
             'perfil_usuario_id' => $vinculo->id,
             'usuario_id'        => $usuarioSolicitante->id,
-        ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $vinculo->id);
+        ], TipoAuditoria::UPDATE->name, 'perfil_usuario', $vinculo->id);
 
         return ['message' => 'Perfil vinculado desativado com sucesso.', 'data' => ['id' => $vinculo->id]];
     }
@@ -477,7 +478,7 @@ class SolicitacaoCadastroService
             'perfil_usuario_id' => $vinculo->id,
             'perfil_id'         => $vinculo->perfil_id,
             'usuario_id'        => $usuarioSolicitante->id,
-        ], AuditLog::TIPO_INSERT, 'perfil_usuario', $vinculo->id);
+        ], TipoAuditoria::INSERT->name, 'perfil_usuario', $vinculo->id);
 
         return ['message' => 'Perfil vinculado adicionado com sucesso.', 'data' => ['id' => $vinculo->id]];
     }

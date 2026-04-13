@@ -13,7 +13,7 @@ class SolicitacaoCadastroRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'cpf'                    => Helpers::onlyDigits($this->cpf ?? ''),
+            'cpf'                   => Helpers::onlyDigits($this->cpf ?? ''),
             'telefoneInstitucional' => Helpers::onlyDigits($this->telefone_institucional ?? ''),
             'telefonePessoal'       => Helpers::onlyDigits($this->telefone_pessoal ?? ''),
         ]);

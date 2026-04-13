@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+
         $profile = self::resolverPerfilEfetivo(
             (string) config('app.env', 'production'),
             env('DB_SEED_PROFILE', self::PERFIL_BOOTSTRAP),

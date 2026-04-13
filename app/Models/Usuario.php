@@ -22,6 +22,7 @@ class Usuario extends Authenticatable
         'telefone',
         'govbr_sub',
         'email',
+        'ativo',
     ];
 
     protected $hidden = [
@@ -31,6 +32,7 @@ class Usuario extends Authenticatable
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'ativo'      => 'boolean',
     ];
 
     public function auditLogs(): HasMany
