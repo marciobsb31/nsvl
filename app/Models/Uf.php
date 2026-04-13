@@ -21,6 +21,8 @@ class Uf extends Model
     protected $fillable = [
         'sigla',
         'nome',
+        'sigla',
+        'codigo_ibge',
     ];
 
     public function municipios(): HasMany

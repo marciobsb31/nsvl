@@ -12,7 +12,7 @@ class CheckPermissionMiddleware
     {
         $usuario = auth()->user();
 
-        if (!$usuario || !$usuario->hasPermissao($permission)) {
+        if (! $usuario || ! $usuario->hasPermissao($permission)) {
             abort(Response::HTTP_FORBIDDEN, 'Sem permissão');
         }
 

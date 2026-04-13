@@ -90,7 +90,7 @@ class Usuario extends Authenticatable
             ->toArray();
     }
 
-    public function hasPermissao(string $codigo):bool
+    public function hasPermissao(string $codigo): bool
     {
         return $this->perfisUsuario()
             ->with('perfil.permissoes')
