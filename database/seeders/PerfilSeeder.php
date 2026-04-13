@@ -12,6 +12,7 @@ class PerfilSeeder extends Seeder
     {
         $esferaFederal = DB::table('esferas')->where('codigo', 'federal')->first();
         $esferaEstadual = DB::table('esferas')->where('codigo', 'estadual')->first();
+        $esferaMunicipal = DB::table('esferas')->where('codigo', 'municipal')->first();
 
         if (! $esferaFederal || ! $esferaEstadual) {
             $this->command->error('Esferas não encontradas! Rode o EsferaSeeder primeiro.');
@@ -25,23 +26,23 @@ class PerfilSeeder extends Seeder
 
             [
                 'esfera_id' => $esferaFederal->id,
-                'codigo'    => 'admin_federal',
-                'nome'      => 'Administrador Federal',
+                'codigo'    => 'gestor_federal',
+                'nome'      => 'Gestor Federal',
                 'descricao' => 'Gestão total do sistema em nível nacional.',
                 'ativo'     => true,
             ],
             [
-                'esfera_id' => $esferaFederal->id,
-                'codigo'    => 'gestor_federal',
-                'nome'      => 'Gestor Federal',
-                'descricao' => 'Acompanhamento e gestão de dados nacionais.',
+                'esfera_id' => $esferaEstadual->id,
+                'codigo'    => 'gestor_estadual',
+                'nome'      => 'Gestor Estadual',
+                'descricao' => 'Acompanhamento e gestão de dados do estado de vínculo.',
                 'ativo'     => true,
             ],
             [
-                'esfera_id' => $esferaFederal->id,
-                'codigo'    => 'visualizador_federal',
-                'nome'      => 'Consultor Federal',
-                'descricao' => 'Acesso apenas para leitura de relatórios nacionais.',
+                'esfera_id' => $esferaMunicipal->id,
+                'codigo'    => 'gestor_municipal',
+                'nome'      => 'Gestor Municipal',
+                'descricao' => 'Acompanhamento e gestão de dados do município de vínculo.',
                 'ativo'     => true,
             ],
 
@@ -49,28 +50,21 @@ class PerfilSeeder extends Seeder
                 'esfera_id' => $esferaEstadual->id,
                 'codigo'    => 'admin_estadual',
                 'nome'      => 'Administrador Estadual',
-                'descricao' => 'Gestão total dentro da sua unidade federativa.',
+                'descricao' => 'Acompanhamento e gestão de dados do estado de vínculo',
                 'ativo'     => true,
             ],
             [
-                'esfera_id' => $esferaEstadual->id,
-                'codigo'    => 'gestor_estadual',
-                'nome'      => 'Gestor Estadual',
-                'descricao' => 'Gestão operacional de solicitações estaduais.',
+                'esfera_id' => $esferaMunicipal->id,
+                'codigo'    => 'admin_municipal',
+                'nome'      => 'Administrador Municipal',
+                'descricao' => 'Acompanhamento e gestão de dados do município de vínculo.',
                 'ativo'     => true,
             ],
             [
-                'esfera_id' => $esferaEstadual->id,
-                'codigo'    => 'tecnico_estadual',
-                'nome'      => 'Técnico Estadual',
-                'descricao' => 'Análise técnica de processos locais.',
-                'ativo'     => true,
-            ],
-            [
-                'esfera_id' => $esferaEstadual->id,
-                'codigo'    => 'operador_estadual',
-                'nome'      => 'Operador Estadual',
-                'descricao' => 'Entrada de dados e registros regionais.',
+                'esfera_id' => $esferaFederal->id,
+                'codigo'    => 'visitante_federal',
+                'nome'      => 'Visitante Federal',
+                'descricao' => 'Acesso restrito para visualização federais.',
                 'ativo'     => true,
             ],
             [
@@ -78,6 +72,13 @@ class PerfilSeeder extends Seeder
                 'codigo'    => 'visitante_estadual',
                 'nome'      => 'Visitante Estadual',
                 'descricao' => 'Acesso restrito para visualização regional.',
+                'ativo'     => true,
+            ],
+            [
+                'esfera_id' => $esferaMunicipal->id,
+                'codigo'    => 'visitante_municipal',
+                'nome'      => 'Visitante Municipal',
+                'descricao' => 'Acesso restrito para visualização municipal.',
                 'ativo'     => true,
             ],
         ];

@@ -130,6 +130,7 @@ class SolicitacaoCadastroService
                     'nome'      => $dados['nome'],
                     'email'     => $dados['emailInstitucional'],
                     'govbr_sub' => $dados['cpf'],
+                    'ativo'     => false,
                     'telefone'  => $dados['telefonePessoal'] ?? null,
                 ]);
             } catch (QueryException $e) {
@@ -149,7 +150,7 @@ class SolicitacaoCadastroService
         }
 
         $existente = SolicitacaoCadastro::where('usuario_id', $usuario->id)
-            ->where('status_id', StatusSolicitacaoEnum::EM_ANALISE->value)
+            ->where('status_id', StatusSolicitacaoEnum::EM_ANALISE)
             ->exists();
 
         if ($existente) {

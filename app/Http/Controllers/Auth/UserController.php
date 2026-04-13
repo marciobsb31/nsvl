@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UsuarioResource;
-use App\Models\Usuario;
 use OpenApi\Attributes as OA;
 
 /**

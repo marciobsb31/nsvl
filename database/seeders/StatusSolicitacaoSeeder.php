@@ -12,8 +12,9 @@ class StatusSolicitacaoSeeder extends Seeder
     {
         foreach (StatusSolicitacaoEnum::cases() as $status) {
             StatusSolicitacao::firstOrCreate(
-                ['codigo' => $status->value],
+                ['id' => $status->value],
                 [
+                    'codigo'     => $status->name,
                     'nome'       => $status->label(),
                     'created_at' => now(),
                     'updated_at' => now(),

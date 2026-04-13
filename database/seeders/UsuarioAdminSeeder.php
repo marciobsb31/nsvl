@@ -31,7 +31,7 @@ class UsuarioAdminSeeder extends Seeder
             'updated_at'  => now(),
         ]);
 
-        $perfil = DB::table('perfis')->where('codigo', 'admin_federal')->first();
+        $perfil = DB::table('perfis')->where('codigo', 'gestor_federal')->first();
 
         $perfilUsuarioId = DB::table('perfil_usuario')->insert([
             'usuario_id'           => $usuario->id,

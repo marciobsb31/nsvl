@@ -19,7 +19,7 @@ class UsuarioResource extends JsonResource
             ),
             'permissions' => $this->when(
                 $this->relationLoaded('perfisUsuario'),
-                fn() => $this->getAllPermissions()
+                fn () => $this->getAllPermissions()
             ),
         ];
     }

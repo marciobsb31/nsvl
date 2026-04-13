@@ -2,12 +2,12 @@
 
 namespace App\Enums;
 
-enum StatusSolicitacaoEnum: string
+enum StatusSolicitacaoEnum: int
 {
-    case EM_ANALISE = 'em_analise';
-    case APROVADO = 'aprovado';
-    case REPROVADO = 'reprovado';
-    case PENDENTE = 'pendente';
+    case PENDENTE = 1;
+    case EM_ANALISE = 2;
+    case APROVADO = 3;
+    case REPROVADO = 4;
 
     public function label(): string
     {
