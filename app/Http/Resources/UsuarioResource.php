@@ -18,7 +18,7 @@ class UsuarioResource extends JsonResource
                 $this->whenLoaded('perfis')
             ),
             'permissions' => $this->when(
-                $this->relationLoaded('perfisUsuario'),
+                $this->relationLoaded('perfis'),
                 fn () => $this->getAllPermissions()
             ),
         ];

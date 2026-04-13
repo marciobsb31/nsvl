@@ -43,7 +43,7 @@ class UserController extends Controller
     public function me()
     {
         return UsuarioResource::make(
-            auth()->user()->load(['perfis', 'perfisUsuario.perfil.permissoes'])
+            auth()->user()->load('perfis.permissoes')
         );
     }
 }

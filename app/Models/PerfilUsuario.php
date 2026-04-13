@@ -2,21 +2,10 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-/**
- * Model PerfilUsuario — associação usuário-perfil com vigência
- *
- * @property int $id
- * @property int $usuario_id FK → usuarios.id
- * @property int $perfil_id FK → perfis.id
- * @property Carbon|null $data_inicio_vigencia
- * @property Carbon|null $data_fim_vigencia
- * @property bool $ativo
- */
 class PerfilUsuario extends Model
 {
     protected $table = 'perfil_usuario';
@@ -61,23 +50,5 @@ class PerfilUsuario extends Model
     public function contexto(): HasOne
     {
         return $this->hasOne(UsuarioContexto::class, 'perfil_usuario_id');
-    }
-
-    public function scopeAtivos($query)
-    {
-        return $query->where('ativo', true);
-    }
-
-    public function scopeVigentes($query)
-    {
-        return $query->where('ativo', true)
-            ->where(fn ($q) => $q
-                ->whereNull('data_inicio_vigencia')
-                ->orWhere('data_inicio_vigencia', '<=', now())
-            )
-            ->where(fn ($q) => $q
-                ->whereNull('data_fim_vigencia')
-                ->orWhere('data_fim_vigencia', '>=', now())
-            );
     }
 }

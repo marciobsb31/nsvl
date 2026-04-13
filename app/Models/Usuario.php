@@ -42,7 +42,7 @@ class Usuario extends Authenticatable
 
     public function perfis(): BelongsToMany
     {
-        return $this->belongsToMany(Perfil::class, 'perfil_usuario', 'usuario_id', 'perfil_id')
+        return $this->belongsToMany(Perfil::class, 'perfil_usuario')
             ->withPivot(['id', 'data_inicio_vigencia', 'data_fim_vigencia', 'ativo'])
             ->withTimestamps();
     }

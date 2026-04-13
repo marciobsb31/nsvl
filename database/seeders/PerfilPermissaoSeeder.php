@@ -12,36 +12,61 @@ class PerfilPermissaoSeeder extends Seeder
         $perfis = DB::table('perfis')->get()->keyBy('codigo');
         $permissoes = DB::table('permissoes')->get()->keyBy('codigo');
 
-        $vinculos = [];
-
-        if (isset($perfis['admin_federal'])) {
-            foreach ($permissoes as $permissao) {
-                $vinculos[] = [
-                    'perfil_id'    => $perfis['admin_federal']->id,
-                    'permissao_id' => $permissao->id,
-                ];
-            }
-        }
-
-        if (isset($perfis['gestor_estadual'])) {
-            $codigosPermissao = [
+        $map = [
+            'gestor_federal'  => $permissoes->keys()->toArray(),
+            'gestor_estadual' => [
                 'usuarios.visualizar',
                 'solicitacoes_cadastro.visualizar',
                 'solicitacoes_cadastro.editar',
-            ];
+            ],
+            'gestor_municipal' => [
+                'usuarios.visualizar',
+                'solicitacoes_cadastro.visualizar',
+            ],
+            'admin_estadual' => [
+                'usuarios.visualizar',
+                'usuarios.editar',
+            ],
+            'admin_municipal' => [
+                'usuarios.visualizar',
+            ],
+            'visitante_federal' => [
+                'usuarios.visualizar',
+            ],
+            'visitante_estadual' => [
+                'usuarios.visualizar',
+            ],
+            'visitante_municipal' => [
+                'usuarios.visualizar',
+            ],
+        ];
 
-            foreach ($codigosPermissao as $cod) {
-                if (isset($permissoes[$cod])) {
-                    $vinculos[] = [
-                        'perfil_id'    => $perfis['gestor_estadual']->id,
-                        'permissao_id' => $permissoes[$cod]->id,
-                    ];
-                }
+        foreach ($map as $codigoPerfil => $codigosPermissao) {
+
+            if (! isset($perfis[$codigoPerfil])) {
+                continue;
             }
-        }
 
-        foreach ($vinculos as $vinculo) {
-            DB::table('perfil_permissao')->updateOrInsert($vinculo);
+            $perfilId = $perfis[$codigoPerfil]->id;
+
+            foreach ($codigosPermissao as $codigoPermissao) {
+
+                if (! isset($permissoes[$codigoPermissao])) {
+                    continue;
+                }
+
+                DB::table('perfil_permissao')->updateOrInsert(
+                    [
+                        'perfil_id'    => $perfilId,
+                        'permissao_id' => $permissoes[$codigoPermissao]->id,
+                    ],
+                    [
+                        'ativo'      => true,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
         }
     }
 }
