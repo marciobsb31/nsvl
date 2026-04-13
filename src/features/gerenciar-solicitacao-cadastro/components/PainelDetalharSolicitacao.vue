@@ -84,11 +84,11 @@
             <select
               id="perfil-selecao"
               v-model="perfilSelecionado"
-              :disabled="opcoesPerfil.length === 0"
+              :disabled="opcoesPerfilPermitidasOperador.length === 0"
             >
               <option :value="null" disabled>Selecione o perfil</option>
               <option
-                v-for="opcao in opcoesPerfil"
+                v-for="opcao in opcoesPerfilPermitidasOperador"
                 :key="String(opcao.value)"
                 :value="opcao.value"
               >
@@ -291,6 +291,8 @@
                 <button
                   class="br-button secondary small"
                   type="button"
+                  :disabled="props.ehProprioCadastro && p.ativo"
+                  :title="props.ehProprioCadastro && p.ativo ? 'Você não pode desativar seu próprio cadastro' : undefined"
                   @click="$emit('toggle-perfil', { perfilUsuarioId: p.perfil_usuario_id, acao: p.ativo ? 'desativar' : 'ativar' })"
                 >
                   {{ p.ativo ? 'Desativar' : 'Ativar' }}
@@ -344,6 +346,8 @@
           <button
                   class="br-button secondary small block"
                   type="button"
+                  :disabled="props.ehProprioCadastro && p.ativo"
+                  :title="props.ehProprioCadastro && p.ativo ? 'Você não pode desativar seu próprio cadastro' : undefined"
                   @click="$emit('toggle-perfil', { perfilUsuarioId: p.perfil_usuario_id, acao: p.ativo ? 'desativar' : 'ativar' })"
                 >
                   {{ p.ativo ? 'Desativar' : 'Ativar' }}
@@ -360,82 +364,7 @@
         v-model:pageSize="itensPorPaginaPerfis"
         :total-items="perfisVinculadosOrdenados.length"
       />
-      <div v-if="detalhe?.status === 'aprovado'" class="perfis-vinculados-acoes">
-        <button
-          class="br-button primary small"
-          type="button"
-          @click="abrirModalAdicionarPerfil"
-          :disabled="opcoesPerfilDisponiveis.length === 0"
-          aria-label="Adicionar perfil"
-        >
-          Adicionar Perfil
-        </button>
-      </div>
     </div>
-
-    <!-- Modal Adicionar Perfil -->
-    <Modal
-      v-if="modalAdicionarPerfilVisivel && detalhe?.status === 'aprovado'"
-      title="Adicionar Perfil"
-      :show-actions="false"
-      @close="fecharModalAdicionarPerfil"
-    >
-      <form @submit.prevent="onSubmitAdicionarPerfil" class="form-modal-adicionar-perfil">
-        <div class="form-modal-linha">
-          <div class="br-select mb-3 form-modal-perfil">
-            <label for="modal-perfil">Perfil</label>
-            <select
-              id="modal-perfil"
-              v-model="formAdicionarPerfil.perfilId"
-              required
-            >
-              <option :value="null" disabled>Selecione o perfil</option>
-              <option
-                v-for="op in opcoesPerfilDisponiveis"
-                :key="String(op.value)"
-                :value="op.value"
-              >
-                {{ op.label }}
-              </option>
-            </select>
-          </div>
-        </div>
-        <div class="form-modal-linha form-modal-vigencias">
-          <div class="br-input mb-3">
-            <label for="modal-vigencia-inicio">Vigência (início)</label>
-            <input
-              id="modal-vigencia-inicio"
-              type="date"
-              v-model="formAdicionarPerfil.vigenciaInicio"
-            />
-          </div>
-          <div class="br-input mb-3">
-            <label for="modal-vigencia-fim">Vigência (fim)</label>
-            <input
-              id="modal-vigencia-fim"
-              type="date"
-              v-model="formAdicionarPerfil.vigenciaFim"
-              :min="formAdicionarPerfil.vigenciaInicio || undefined"
-            />
-          </div>
-        </div>
-        <div v-if="erroAdicionarPerfil" class="br-message danger mb-3" role="alert">
-          <div class="content">{{ erroAdicionarPerfil }}</div>
-        </div>
-        <div class="form-modal-acoes">
-          <button class="br-button secondary" type="button" @click="fecharModalAdicionarPerfil">
-            Cancelar
-          </button>
-          <button
-            class="br-button primary"
-            type="submit"
-            :disabled="!formAdicionarPerfil.perfilId"
-          >
-            Adicionar
-          </button>
-        </div>
-      </form>
-    </Modal>
 
     <!-- Modal Reprovar com Justificativa -->
     <Modal
@@ -480,6 +409,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, reactive } from 'vue'
 import { usePerfis } from '@/core/composables/usePerfis'
+import { useAuth } from '@/core/composables/useAuth'
 import Modal from '@/core/components/Modal/Modal.vue'
 import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
 import type {
@@ -491,11 +421,13 @@ import { useBreakpoint } from '@/core/composables/useBreakpoint'
 
 defineOptions({ name: 'PainelDetalharSolicitacao' })
 const { isMobile } = useBreakpoint()
+const { perfilAtivo } = useAuth()
 
 const props = withDefaults(
   defineProps<{
     detalhe: SolicitacaoCadastroDetalhe & { cpf?: string } | null
     avaliando?: boolean
+    ehProprioCadastro?: boolean
   }>(),
   {}
 )
@@ -505,7 +437,6 @@ const emit = defineEmits<{
   (e: 'aprovar', payload: { perfilId: string | number | null; vigenciaInicio: string; vigenciaFim: string }): void
   (e: 'reprovar', payload: { justificativa: string }): void
   (e: 'toggle-perfil', payload: { perfilUsuarioId: number; acao: 'ativar' | 'desativar' }): void
-  (e: 'adicionar-perfil', payload: { perfilId: number | string; vigenciaInicio?: string; vigenciaFim?: string }): void
 }>()
 
 const historicoReprovacoes = computed<HistoricoReprovacaoItem[]>(() => {
@@ -575,50 +506,57 @@ const perfisVinculadosPaginados = computed<PerfilVinculadoExibicao[]>(() => {
   return perfisVinculadosOrdenados.value.slice(inicio, fim)
 })
 
-const modalAdicionarPerfilVisivel = ref(false)
-const erroAdicionarPerfil = ref('')
-const formAdicionarPerfil = reactive<{
-  perfilId: string | number | null
-  vigenciaInicio: string
-  vigenciaFim: string
-}>({
-  perfilId: null,
-  vigenciaInicio: '',
-  vigenciaFim: '',
+function inferirNivelPerfil(nomePerfil: string): number {
+  const nome = nomePerfil.toLowerCase()
+
+  if (nome.includes('gestor')) return 3
+  if (nome.includes('administrador')) return 2
+  if (nome.includes('visitante')) return 1
+
+  return 0
+}
+
+function inferirEsferaPerfil(nomePerfil: string): string {
+  const nome = nomePerfil.toLowerCase()
+
+  if (nome.includes('municipal')) return 'municipal'
+  if (nome.includes('estadual')) return 'estadual'
+  if (nome.includes('federal') || nome.includes('nacional')) return 'federal'
+
+  return ''
+}
+
+function operadorPodeConcederPerfil(nomePerfilDestino: string): boolean {
+  const nomePerfilOperador = String(perfilAtivo.value?.nome ?? '')
+  if (!nomePerfilOperador) return false
+
+  const nivelOperador = inferirNivelPerfil(nomePerfilOperador)
+  const nivelDestino = inferirNivelPerfil(nomePerfilDestino)
+  if (nivelOperador === 0 || nivelDestino === 0) return false
+  if (nivelOperador < nivelDestino) return false
+
+  const esferaOperador = inferirEsferaPerfil(nomePerfilOperador)
+  const esferaDestino = inferirEsferaPerfil(nomePerfilDestino)
+
+  if (esferaOperador !== 'federal' && esferaDestino !== esferaOperador) {
+    return false
+  }
+
+  return true
+}
+
+const opcoesPerfilPermitidasOperador = computed(() => {
+  return opcoesPerfil.value.filter((op) => operadorPodeConcederPerfil(String(op.label ?? '')))
 })
 
 const opcoesPerfilDisponiveis = computed(() => {
   const perfisJaVinculados = new Set(
     perfisVinculadosLista.value.map((p) => String(p.perfil).toLowerCase())
   )
-  return opcoesPerfil.value.filter(
+  return opcoesPerfilPermitidasOperador.value.filter(
     (op) => !perfisJaVinculados.has(String(op.label).toLowerCase())
   )
 })
-
-function abrirModalAdicionarPerfil() {
-  const hoje = new Date().toISOString().slice(0, 10)
-  formAdicionarPerfil.perfilId = null
-  formAdicionarPerfil.vigenciaInicio = hoje
-  formAdicionarPerfil.vigenciaFim = ''
-  erroAdicionarPerfil.value = ''
-  modalAdicionarPerfilVisivel.value = true
-}
-
-function fecharModalAdicionarPerfil() {
-  modalAdicionarPerfilVisivel.value = false
-}
-
-function onSubmitAdicionarPerfil() {
-  if (!formAdicionarPerfil.perfilId) return
-  erroAdicionarPerfil.value = ''
-  emit('adicionar-perfil', {
-    perfilId: formAdicionarPerfil.perfilId,
-    vigenciaInicio: formAdicionarPerfil.vigenciaInicio || undefined,
-    vigenciaFim: formAdicionarPerfil.vigenciaFim || undefined,
-  })
-  fecharModalAdicionarPerfil()
-}
 
 const modalReprovarVisivel = ref(false)
 const justificativaReprovacao = ref('')
