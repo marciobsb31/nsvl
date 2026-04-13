@@ -14,30 +14,51 @@ class PerfilPermissaoSeeder extends Seeder
 
         $map = [
             'gestor_federal'  => $permissoes->keys()->toArray(),
+
+            // RN03: Acesso a todas as funcionalidades (com restrição de escopo no código)
             'gestor_estadual' => [
-                'usuarios.visualizar',
-                'solicitacoes_cadastro.visualizar',
-                'solicitacoes_cadastro.editar',
+                'usuarios.visualizar', 'usuarios.editar',
+                'solicitacoes_cadastro.visualizar', 'solicitacoes_cadastro.editar', 'solicitacoes_cadastro.analisar',
+                'plano_acao.visualizar', 'plano_acao.cadastrar', 'plano_acao.editar', 'plano_acao.enviar',
+                'relatorio_execucao.visualizar', 'relatorio_execucao.enviar',
             ],
+
             'gestor_municipal' => [
-                'usuarios.visualizar',
-                'solicitacoes_cadastro.visualizar',
+                'usuarios.visualizar', 'usuarios.editar',
+                'solicitacoes_cadastro.visualizar', 'solicitacoes_cadastro.editar', 'solicitacoes_cadastro.analisar',
+                'plano_acao.visualizar', 'plano_acao.cadastrar', 'plano_acao.editar', 'plano_acao.enviar',
+                'relatorio_execucao.visualizar', 'relatorio_execucao.enviar',
             ],
+
             'admin_estadual' => [
                 'usuarios.visualizar',
-                'usuarios.editar',
+                'plano_acao.visualizar', 'plano_acao.cadastrar', 'plano_acao.editar',
+                'relatorio_execucao.visualizar',
             ],
+
             'admin_municipal' => [
                 'usuarios.visualizar',
+                'plano_acao.visualizar', 'plano_acao.cadastrar', 'plano_acao.editar',
+                'relatorio_execucao.visualizar',
             ],
+
             'visitante_federal' => [
                 'usuarios.visualizar',
+                'solicitacoes_cadastro.visualizar',
+                'plano_acao.visualizar',
+                'relatorio_execucao.visualizar',
             ],
+
             'visitante_estadual' => [
                 'usuarios.visualizar',
+                'plano_acao.visualizar',
+                'relatorio_execucao.visualizar',
             ],
+
             'visitante_municipal' => [
                 'usuarios.visualizar',
+                'plano_acao.visualizar',
+                'relatorio_execucao.visualizar',
             ],
         ];
 
