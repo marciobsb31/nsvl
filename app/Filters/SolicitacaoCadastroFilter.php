@@ -22,7 +22,7 @@ class SolicitacaoCadastroFilter extends Filters
         $param = Helpers::onlyDigits($param);
 
         $this->builder->whereHas('usuario', function ($query) use ($param) {
-            $this->builder->where('cpf', $param);
+            $query->where('cpf', $param);
         });
     }
 

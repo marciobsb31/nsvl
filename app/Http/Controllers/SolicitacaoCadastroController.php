@@ -48,7 +48,7 @@ class SolicitacaoCadastroController extends Controller
         $solicitacoes = SolicitacaoCadastro::query()
             ->with(['ufRelacao', 'municipioRelacao', 'esfera', 'statusSolicitacao'])
             ->filters($filter)
-            ->paginate();
+            ->paginate($request->input('per_page', 10));
 
         return SolicitacaoCadastroResource::collection($solicitacoes);
     }

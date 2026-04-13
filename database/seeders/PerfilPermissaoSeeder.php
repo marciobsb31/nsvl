@@ -13,9 +13,8 @@ class PerfilPermissaoSeeder extends Seeder
         $permissoes = DB::table('permissoes')->get()->keyBy('codigo');
 
         $map = [
-            'gestor_federal'  => $permissoes->keys()->toArray(),
+            'gestor_federal' => $permissoes->keys()->toArray(),
 
-            // RN03: Acesso a todas as funcionalidades (com restrição de escopo no código)
             'gestor_estadual' => [
                 'usuarios.visualizar', 'usuarios.editar',
                 'solicitacoes_cadastro.visualizar', 'solicitacoes_cadastro.editar', 'solicitacoes_cadastro.analisar',

@@ -22,8 +22,9 @@ class UsuarioEstadualSeeder extends Seeder
         $esfera = DB::table('esferas')->where('codigo', 'estadual')->first();
         $uf = DB::table('ufs')->where('sigla', 'GO')->first();
 
-        if (!$esfera || !$uf) {
-            $this->command->error("Esfera estadual ou UF GO não encontrada. Verifique seus seeders base.");
+        if (! $esfera || ! $uf) {
+            $this->command->error('Esfera estadual ou UF GO não encontrada. Verifique seus seeders base.');
+
             return;
         }
 
@@ -31,7 +32,7 @@ class UsuarioEstadualSeeder extends Seeder
             'usuario_id'  => $usuario->id,
             'esfera_id'   => $esfera->id,
             'uf_id'       => $uf->id,
-            'nome'        => "Estado de " . $uf->nome,
+            'nome'        => 'Estado de '.$uf->nome,
             'origem_tipo' => 'seeder',
             'ativo'       => true,
             'created_at'  => now(),
@@ -58,6 +59,6 @@ class UsuarioEstadualSeeder extends Seeder
             'updated_at'             => now(),
         ]);
 
-        $this->command->info("Usuário Gestor Estadual (GO) criado com sucesso!");
+        $this->command->info('Usuário Gestor Estadual (GO) criado com sucesso!');
     }
 }
