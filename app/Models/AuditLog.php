@@ -2,22 +2,23 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Model AuditLog — registro imutável de ações do sistema (tabela auditoria_log)
  *
- * @property int         $id
- * @property int|null    $user_id          FK → usuarios.id
- * @property string      $acao
- * @property string      $tipo_operacao    login|logout|insert|update|delete|view
+ * @property int $id
+ * @property int|null $usuario_id FK → usuarios.id
+ * @property string $acao
+ * @property string $tipo_operacao login|logout|insert|update|delete|view
  * @property string|null $tabela_afetada
- * @property int|null    $registro_id
+ * @property int|null $registro_id
  * @property string|null $ip_address
  * @property string|null $user_agent
- * @property array|null  $contexto
- * @property \Carbon\Carbon $created_at
+ * @property array|null $contexto
+ * @property Carbon $created_at
  */
 class AuditLog extends Model
 {
@@ -26,14 +27,19 @@ class AuditLog extends Model
     const UPDATED_AT = null;
 
     const TIPO_LOGIN = 'login';
+
     const TIPO_LOGOUT = 'logout';
+
     const TIPO_INSERT = 'insert';
+
     const TIPO_UPDATE = 'update';
+
     const TIPO_DELETE = 'delete';
+
     const TIPO_VIEW = 'view';
 
     protected $fillable = [
-        'user_id',
+        'usuario_id',
         'acao',
         'tipo_operacao',
         'tabela_afetada',
@@ -54,6 +60,6 @@ class AuditLog extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'user_id');
+        return $this->belongsTo(Usuario::class, 'usuario_id');
     }
 }

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Catálogo oficial de perfis ({@see \App\Models\Perfil::CATALOGO_OFICIAL}),
+ * Catálogo oficial de perfis ({@see Perfil::CATALOGO_OFICIAL}),
  * alinhado a GET /api/perfis e GET /api/gerenciar-perfis.
  */
 class PerfilSeeder extends Seeder
@@ -48,7 +48,7 @@ class PerfilSeeder extends Seeder
         $perfilLegado = Perfil::query()->where('nome', $nomeLegado)->first();
         $perfilNovo = Perfil::query()->where('nome', $nomeNovo)->first();
 
-        if (!$perfilLegado || !$perfilNovo || $perfilLegado->id === $perfilNovo->id) {
+        if (! $perfilLegado || ! $perfilNovo || $perfilLegado->id === $perfilNovo->id) {
             return;
         }
 

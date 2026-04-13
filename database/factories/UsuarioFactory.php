@@ -2,6 +2,4 @@
 
 namespace Database\Factories;
 
-class UsuarioFactory extends UserFactory
-{
-}
+class UsuarioFactory extends UserFactory {}

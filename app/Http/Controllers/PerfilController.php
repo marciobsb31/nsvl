@@ -36,7 +36,7 @@ class PerfilController extends Controller
     public function index(): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             throw ApiException::unauthenticated();
         }
 

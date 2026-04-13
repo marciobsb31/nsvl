@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace Tests\Integracao\Solicitacoes;
 
@@ -44,12 +44,12 @@ class SolicitacaoCadastroServiceTest extends TestCase
     {
         $service = app(SolicitacaoCadastroService::class);
         $usuario = Usuario::factory()->create([
-            'cpf' => Usuario::factory()->make()->cpf,
+            'cpf'       => Usuario::factory()->make()->cpf,
             'govbr_sub' => 'teste-cpf-em-analise',
         ]);
 
         SolicitacaoCadastro::factory()->create([
-            'user_id' => $usuario->id,
+            'user_id'   => $usuario->id,
             'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE),
         ]);
 
@@ -64,12 +64,12 @@ class SolicitacaoCadastroServiceTest extends TestCase
     {
         $service = app(SolicitacaoCadastroService::class);
         $usuario = Usuario::factory()->create([
-            'cpf' => '40168299307',
+            'cpf'       => '40168299307',
             'govbr_sub' => 'usuario-em-analise',
         ]);
 
         SolicitacaoCadastro::factory()->create([
-            'user_id' => $usuario->id,
+            'user_id'   => $usuario->id,
             'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE),
         ]);
 
@@ -101,8 +101,8 @@ class SolicitacaoCadastroServiceTest extends TestCase
         $cpfExistente = Usuario::factory()->make()->cpf;
 
         Usuario::factory()->create([
-            'cpf' => $cpfExistente,
-            'govbr_sub' => 'pending-' . $cpfAlvo,
+            'cpf'       => $cpfExistente,
+            'govbr_sub' => 'pending-'.$cpfAlvo,
         ]);
 
         $resultado = $service->criar(null, $this->payloadSolicitacaoPublica(
@@ -117,7 +117,7 @@ class SolicitacaoCadastroServiceTest extends TestCase
         );
 
         $usuarioNovo = Usuario::query()->where('cpf', $cpfAlvo)->firstOrFail();
-        $this->assertStringStartsWith('pending-' . $cpfAlvo . '-', $usuarioNovo->govbr_sub);
+        $this->assertStringStartsWith('pending-'.$cpfAlvo.'-', $usuarioNovo->govbr_sub);
     }
 
     #[Test]
@@ -135,9 +135,9 @@ class SolicitacaoCadastroServiceTest extends TestCase
                 municipio: 'BrasÃ­lia',
                 perfilId: $this->perfilPorNome('Gestor Federal')->id,
             ),
-            'perfilId' => 0,
+            'perfilId'       => 0,
             'vigenciaInicio' => 'data-invalida',
-            'vigenciaFim' => 'outra-data-invalida',
+            'vigenciaFim'    => 'outra-data-invalida',
         ]);
 
         $this->assertSame(
@@ -146,10 +146,10 @@ class SolicitacaoCadastroServiceTest extends TestCase
         );
 
         $this->assertDatabaseHas('solicitacoes_cadastro', [
-            'id' => $resultado['solicitacao_id'],
-            'perfil_id_solicitado' => null,
+            'id'                         => $resultado['solicitacao_id'],
+            'perfil_id_solicitado'       => null,
             'vigencia_inicio_solicitada' => null,
-            'vigencia_fim_solicitada' => null,
+            'vigencia_fim_solicitada'    => null,
         ]);
     }
 
@@ -342,14 +342,14 @@ class SolicitacaoCadastroServiceTest extends TestCase
         $solicitacao = $this->solicitacaoPorCpfEStatus('55566677788', StatusSolicitacao::EM_ANALISE);
 
         $resultado = $service->avaliar($operador, $solicitacao->id, [
-            'status' => 'reprovado',
+            'status'        => 'reprovado',
             'justificativa' => 'DocumentaÃ§Ã£o enviada estÃ¡ incompleta.',
         ]);
 
         $this->assertSame('SolicitaÃ§Ã£o reprovada.', $resultado['message']);
         $this->assertDatabaseHas('solicitacoes_cadastro', [
-            'id' => $solicitacao->id,
-            'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::REPROVADO),
+            'id'                       => $solicitacao->id,
+            'status_id'                => StatusSolicitacao::idPorNome(StatusSolicitacao::REPROVADO),
             'justificativa_reprovacao' => 'DocumentaÃ§Ã£o enviada estÃ¡ incompleta.',
         ]);
 
@@ -372,18 +372,18 @@ class SolicitacaoCadastroServiceTest extends TestCase
         $perfilNovo = $this->perfilPorNome('Administrador Estadual');
 
         PerfilUsuario::create([
-            'usuario_id' => $solicitacao->user_id,
-            'perfil_id' => $perfilAntigo->id,
+            'usuario_id'           => $solicitacao->user_id,
+            'perfil_id'            => $perfilAntigo->id,
             'data_inicio_vigencia' => now()->subDay()->toDateString(),
-            'data_fim_vigencia' => null,
-            'ativo' => true,
+            'data_fim_vigencia'    => null,
+            'ativo'                => true,
         ]);
 
         $resultado = $service->avaliar($operador, $solicitacao->id, [
-            'status' => 'aprovado',
-            'perfil_id' => $perfilNovo->id,
+            'status'          => 'aprovado',
+            'perfil_id'       => $perfilNovo->id,
             'vigencia_inicio' => now()->toDateString(),
-            'vigencia_fim' => now()->addDays(30)->toDateString(),
+            'vigencia_fim'    => now()->addDays(30)->toDateString(),
         ]);
 
         $this->assertSame('SolicitaÃ§Ã£o aprovada.', $resultado['message']);
@@ -391,14 +391,14 @@ class SolicitacaoCadastroServiceTest extends TestCase
 
         $this->assertDatabaseHas('perfil_usuario', [
             'usuario_id' => $solicitacao->user_id,
-            'perfil_id' => $perfilAntigo->id,
-            'ativo' => false,
+            'perfil_id'  => $perfilAntigo->id,
+            'ativo'      => false,
         ]);
 
         $this->assertDatabaseHas('perfil_usuario', [
             'usuario_id' => $solicitacao->user_id,
-            'perfil_id' => $perfilNovo->id,
-            'ativo' => true,
+            'perfil_id'  => $perfilNovo->id,
+            'ativo'      => true,
         ]);
 
         Mail::assertSent(SolicitacaoCadastroAvaliada::class, function (SolicitacaoCadastroAvaliada $mail) use ($solicitacao) {
@@ -419,7 +419,7 @@ class SolicitacaoCadastroServiceTest extends TestCase
 
         try {
             $service->avaliar($operador, $solicitacao->id, [
-                'status' => 'reprovado',
+                'status'        => 'reprovado',
                 'justificativa' => 'Tentativa invÃ¡lida de reavaliar.',
             ]);
         } catch (ValidationException $exception) {
@@ -442,7 +442,7 @@ class SolicitacaoCadastroServiceTest extends TestCase
         $this->expectExceptionMessage('SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $service->avaliar($operador, 999999, [
-            'status' => 'aprovado',
+            'status'    => 'aprovado',
             'perfil_id' => $this->perfilPorNome('Gestor Federal')->id,
         ]);
     }
@@ -455,7 +455,7 @@ class SolicitacaoCadastroServiceTest extends TestCase
         $solicitacao = $this->solicitacaoPorCpfEStatus('55566677788', StatusSolicitacao::EM_ANALISE);
 
         $service->avaliar($operador, $solicitacao->id, [
-            'status' => 'reprovado',
+            'status'        => 'reprovado',
             'justificativa' => 'DocumentaÃ§Ã£o enviada estÃ¡ incompleta.',
         ]);
 
@@ -475,13 +475,13 @@ class SolicitacaoCadastroServiceTest extends TestCase
         $service = app(SolicitacaoCadastroService::class);
         $operador = $this->usuarioPorSub('teste-federal-001');
         $usuario = Usuario::factory()->create([
-            'cpf' => Usuario::factory()->make()->cpf,
+            'cpf'       => Usuario::factory()->make()->cpf,
             'govbr_sub' => 'sub-reprovacao-fallback',
         ]);
 
         $solicitacao = SolicitacaoCadastro::factory()->reprovado()->create([
-            'user_id' => $usuario->id,
-            'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::REPROVADO),
+            'user_id'                  => $usuario->id,
+            'status_id'                => StatusSolicitacao::idPorNome(StatusSolicitacao::REPROVADO),
             'justificativa_reprovacao' => 'PendÃªncia documental sem auditoria detalhada.',
         ]);
 
@@ -572,13 +572,13 @@ class SolicitacaoCadastroServiceTest extends TestCase
         $operador = $this->usuarioPorSub('teste-federal-001');
 
         $resultado = $service->listar($operador, [
-            'cpf' => '98765432100',
-            'nome' => 'Ana',
-            'uf' => 'GO',
+            'cpf'       => '98765432100',
+            'nome'      => 'Ana',
+            'uf'        => 'GO',
             'municipio' => 'Alex',
-            'orgao' => 'Prefeitura',
-            'esfera' => 'municipal',
-            'status' => 'aprovado',
+            'orgao'     => 'Prefeitura',
+            'esfera'    => 'municipal',
+            'status'    => 'aprovado',
         ]);
 
         $this->assertCount(1, $resultado);
@@ -663,7 +663,7 @@ class SolicitacaoCadastroServiceTest extends TestCase
 
         try {
             $service->adicionarPerfil($operador, $solicitacao->id, [
-                'perfil_id' => $this->perfilPorNome('Gestor Municipal')->id,
+                'perfil_id'       => $this->perfilPorNome('Gestor Municipal')->id,
                 'vigencia_inicio' => now()->toDateString(),
             ]);
         } catch (ValidationException $exception) {
@@ -685,22 +685,22 @@ class SolicitacaoCadastroServiceTest extends TestCase
         $perfil = $this->perfilPorNome('Administrador Municipal');
 
         $resultado = $service->adicionarPerfil($operador, $solicitacao->id, [
-            'perfil_id' => $perfil->id,
+            'perfil_id'       => $perfil->id,
             'vigencia_inicio' => now()->toDateString(),
-            'vigencia_fim' => now()->addDays(30)->toDateString(),
+            'vigencia_fim'    => now()->addDays(30)->toDateString(),
         ]);
 
         $this->assertSame('Perfil vinculado adicionado com sucesso.', $resultado['message']);
         $this->assertDatabaseHas('perfil_usuario', [
             'usuario_id' => $solicitacao->user_id,
-            'perfil_id' => $perfil->id,
-            'ativo' => true,
+            'perfil_id'  => $perfil->id,
+            'ativo'      => true,
         ]);
 
         $this->assertDatabaseMissing('perfil_usuario', [
             'usuario_id' => $solicitacao->user_id,
-            'perfil_id' => $this->perfilPorNome('Gestor Municipal')->id,
-            'ativo' => true,
+            'perfil_id'  => $this->perfilPorNome('Gestor Municipal')->id,
+            'ativo'      => true,
         ]);
     }
 
@@ -748,7 +748,7 @@ class SolicitacaoCadastroServiceTest extends TestCase
 
         try {
             $service->adicionarPerfil($operador, $solicitacao->id, [
-                'perfil_id' => $this->perfilPorNome('Administrador Municipal')->id,
+                'perfil_id'       => $this->perfilPorNome('Administrador Municipal')->id,
                 'vigencia_inicio' => now()->toDateString(),
             ]);
         } catch (ValidationException $exception) {
@@ -771,7 +771,7 @@ class SolicitacaoCadastroServiceTest extends TestCase
         $this->expectExceptionMessage('SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $service->adicionarPerfil($operador, 999999, [
-            'perfil_id' => $this->perfilPorNome('Administrador Municipal')->id,
+            'perfil_id'       => $this->perfilPorNome('Administrador Municipal')->id,
             'vigencia_inicio' => now()->toDateString(),
         ]);
     }
@@ -779,16 +779,16 @@ class SolicitacaoCadastroServiceTest extends TestCase
     private function payloadSolicitacaoPublica(string $cpf, string $uf = 'DF', string $municipio = 'BrasÃ­lia'): array
     {
         return [
-            'nome' => 'Solicitante Publico',
-            'CPF' => $cpf,
-            'emailInstitucional' => 'solicitante.publico@teste.gov.br',
+            'nome'                  => 'Solicitante Publico',
+            'CPF'                   => $cpf,
+            'emailInstitucional'    => 'solicitante.publico@teste.gov.br',
             'telefoneInstitucional' => '61999887766',
-            'telefonePessoal' => '61988776655',
-            'esferaAtuacao' => 'federal',
-            'uf' => $uf,
-            'municipio' => $municipio,
-            'orgao' => 'Ministerio de Testes',
-            'cargo' => 'Analista',
+            'telefonePessoal'       => '61988776655',
+            'esferaAtuacao'         => 'federal',
+            'uf'                    => $uf,
+            'municipio'             => $municipio,
+            'orgao'                 => 'Ministerio de Testes',
+            'cargo'                 => 'Analista',
         ];
     }
 
@@ -800,19 +800,18 @@ class SolicitacaoCadastroServiceTest extends TestCase
         int $perfilId,
     ): array {
         return [
-            'nome' => 'Solicitante Interno',
-            'CPF' => $cpf,
-            'emailInstitucional' => 'interno@teste.gov.br',
+            'nome'                  => 'Solicitante Interno',
+            'CPF'                   => $cpf,
+            'emailInstitucional'    => 'interno@teste.gov.br',
             'telefoneInstitucional' => '61999887766',
-            'telefonePessoal' => '61988776655',
-            'esferaAtuacao' => $esfera,
-            'uf' => $uf,
-            'municipio' => $municipio,
-            'orgao' => 'OrgÃ£o Interno',
-            'cargo' => 'Analista',
-            'perfilId' => $perfilId,
-            'vigenciaInicio' => now()->toDateString(),
+            'telefonePessoal'       => '61988776655',
+            'esferaAtuacao'         => $esfera,
+            'uf'                    => $uf,
+            'municipio'             => $municipio,
+            'orgao'                 => 'OrgÃ£o Interno',
+            'cargo'                 => 'Analista',
+            'perfilId'              => $perfilId,
+            'vigenciaInicio'        => now()->toDateString(),
         ];
     }
 }
-

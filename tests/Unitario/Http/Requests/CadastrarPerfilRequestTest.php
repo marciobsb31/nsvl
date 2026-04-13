@@ -11,7 +11,7 @@ class CadastrarPerfilRequestTest extends TestCase
     #[Test]
     public function define_regras_e_mensagens_do_request(): void
     {
-        $request = new CadastrarPerfilRequest();
+        $request = new CadastrarPerfilRequest;
         $rules = $request->rules();
         $messages = $request->messages();
 

@@ -31,7 +31,7 @@ class LocalidadeTesteSeeder extends Seeder
 
         foreach ($municipiosPorUf as $sigla => $municipios) {
             $uf = Uf::query()->where('sigla', $sigla)->first();
-            if (!$uf) {
+            if (! $uf) {
                 continue;
             }
 
@@ -39,7 +39,7 @@ class LocalidadeTesteSeeder extends Seeder
                 Municipio::query()->updateOrCreate(
                     [
                         'uf_id' => $uf->id,
-                        'nome' => $municipio,
+                        'nome'  => $municipio,
                     ],
                     []
                 );

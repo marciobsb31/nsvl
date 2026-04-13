@@ -38,14 +38,14 @@ class GerenciarPerfilController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             throw ApiException::unauthenticated();
         }
 
         $query = Perfil::query()->whereIn('nome', Perfil::CATALOGO_OFICIAL);
 
         if ($request->filled('nome')) {
-            $query->where('nome', 'ilike', '%' . $request->input('nome') . '%');
+            $query->where('nome', 'ilike', '%'.$request->input('nome').'%');
         }
         if ($request->filled('status')) {
             $ativo = $request->input('status') === 'ativo';
@@ -86,12 +86,12 @@ class GerenciarPerfilController extends Controller
     public function show(int $id): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             throw ApiException::unauthenticated();
         }
 
         $perfil = Perfil::find($id);
-        if (!$perfil) {
+        if (! $perfil) {
             throw ApiException::notFound('Perfil não encontrado.');
         }
 
@@ -123,7 +123,7 @@ class GerenciarPerfilController extends Controller
     public function store(CadastrarPerfilRequest $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             throw ApiException::unauthenticated();
         }
 
@@ -184,11 +184,11 @@ class GerenciarPerfilController extends Controller
     public function update(int $id, Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             throw ApiException::unauthenticated();
         }
         $perfil = Perfil::find($id);
-        if (!$perfil) {
+        if (! $perfil) {
             throw ApiException::notFound('Perfil não encontrado.');
         }
 
@@ -220,8 +220,8 @@ class GerenciarPerfilController extends Controller
                 'gerenciar_perfis.editar',
                 $user->id,
                 [
-                    'perfil_nome'  => $perfil->nome,
-                    'alteracoes'   => $alteracoes,
+                    'perfil_nome' => $perfil->nome,
+                    'alteracoes'  => $alteracoes,
                 ],
                 AuditLog::TIPO_UPDATE,
                 'perfis',
@@ -252,12 +252,12 @@ class GerenciarPerfilController extends Controller
     public function historico(int $id): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             throw ApiException::unauthenticated();
         }
 
         $perfil = Perfil::find($id);
-        if (!$perfil) {
+        if (! $perfil) {
             throw ApiException::notFound('Perfil não encontrado.');
         }
 
@@ -301,7 +301,7 @@ class GerenciarPerfilController extends Controller
     public function hierarquia(): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             throw ApiException::unauthenticated();
         }
 
@@ -336,7 +336,7 @@ class GerenciarPerfilController extends Controller
     public function permissoes(): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             throw ApiException::unauthenticated();
         }
 
@@ -366,7 +366,7 @@ class GerenciarPerfilController extends Controller
             $partes[] = "Alterando o Nome de Perfil para {$perfil->nome}";
         }
         if ($anterior['ativo'] !== $perfil->ativo) {
-            $partes[] = "Alterando Situação para " . ($perfil->ativo ? 'Vigente' : 'Não Vigente');
+            $partes[] = 'Alterando Situação para '.($perfil->ativo ? 'Vigente' : 'Não Vigente');
         }
 
         return implode('; ', $partes) ?: 'Atualização de dados do perfil';
@@ -376,7 +376,7 @@ class GerenciarPerfilController extends Controller
     {
         $contexto = $log->contexto ?? [];
 
-        if (!empty($contexto['alteracoes'])) {
+        if (! empty($contexto['alteracoes'])) {
             return $contexto['alteracoes'];
         }
 

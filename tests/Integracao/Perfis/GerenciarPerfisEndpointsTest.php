@@ -1,9 +1,8 @@
-﻿<?php
+<?php
 
 namespace Tests\Integracao\Perfis;
 
 use App\Models\AuditLog;
-use App\Models\Perfil;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Integracao\TestCase;
 
@@ -32,9 +31,9 @@ class GerenciarPerfisEndpointsTest extends TestCase
         $perfil->delete();
 
         $response = $this->postJson('/api/gerenciar-perfis', [
-            'nome' => 'Administrador Municipal',
+            'nome'      => 'Administrador Municipal',
             'descricao' => 'Perfil recriado em teste.',
-            'ativo' => false,
+            'ativo'     => false,
         ]);
 
         $response
@@ -95,9 +94,9 @@ class GerenciarPerfisEndpointsTest extends TestCase
             ->assertJsonPath('data.nome', 'Gestor Federal');
 
         $update = $this->putJson("/api/gerenciar-perfis/{$perfil->id}", [
-            'nome' => 'Gestor Federal',
+            'nome'      => 'Gestor Federal',
             'descricao' => 'Descricao atualizada em teste de integracao.',
-            'ativo' => true,
+            'ativo'     => true,
         ]);
 
         $update
@@ -127,9 +126,9 @@ class GerenciarPerfisEndpointsTest extends TestCase
 
         $perfil = $this->perfilPorNome('Gestor Federal');
         $update = $this->putJson("/api/gerenciar-perfis/{$perfil->id}", [
-            'nome' => 'Perfil Inventado',
+            'nome'      => 'Perfil Inventado',
             'descricao' => 'Descricao invalida.',
-            'ativo' => false,
+            'ativo'     => false,
         ]);
 
         $update
@@ -143,9 +142,9 @@ class GerenciarPerfisEndpointsTest extends TestCase
         $this->autenticarComoFederal();
 
         $response = $this->postJson('/api/gerenciar-perfis', [
-            'nome' => 'Gestor Federal',
+            'nome'      => 'Gestor Federal',
             'descricao' => 'Nao deve ser aceito em duplicidade.',
-            'ativo' => true,
+            'ativo'     => true,
         ]);
 
         $response
@@ -176,12 +175,12 @@ class GerenciarPerfisEndpointsTest extends TestCase
         $perfil = $this->perfilPorNome('Gestor Federal');
 
         AuditLog::create([
-            'user_id' => $usuario->id,
-            'acao' => 'gerenciar_perfis.cadastrar',
-            'tipo_operacao' => AuditLog::TIPO_INSERT,
+            'user_id'        => $usuario->id,
+            'acao'           => 'gerenciar_perfis.cadastrar',
+            'tipo_operacao'  => AuditLog::TIPO_INSERT,
             'tabela_afetada' => 'perfis',
-            'registro_id' => $perfil->id,
-            'contexto' => [],
+            'registro_id'    => $perfil->id,
+            'contexto'       => [],
         ]);
 
         $historico = $this->getJson("/api/gerenciar-perfis/{$perfil->id}/historico");
@@ -197,4 +196,3 @@ class GerenciarPerfisEndpointsTest extends TestCase
             ->assertJsonPath('message', 'Perfil nÃ£o encontrado.');
     }
 }
-

@@ -19,6 +19,4 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'perfis_vigentes', type: 'array', items: new OA\Items(type: 'object')),
     ]
 )]
-final class UserResourceSchema
-{
-}
+final class UserResourceSchema {}

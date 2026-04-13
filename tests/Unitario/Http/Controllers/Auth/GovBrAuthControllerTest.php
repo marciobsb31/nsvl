@@ -4,7 +4,6 @@ namespace Tests\Unitario\Http\Controllers\Auth;
 
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Auth\GovBrAuthController;
-use App\Models\Usuario;
 use App\Services\Audit\AuditLogService;
 use App\Services\Auth\AuthValidationService;
 use App\Services\Auth\GovBrService;
@@ -40,7 +39,7 @@ class GovBrAuthControllerTest extends TestCase
 
         $this->assertSame('https://sso.exemplo.gov.br/authorize?...', $response->getData(true)['url']);
         $this->assertSame([
-            'nonce' => 'nonce-unitario',
+            'nonce'         => 'nonce-unitario',
             'code_verifier' => 'verifier-unitario',
         ], Cache::get('govbr:oauth:estado-unitario'));
     }
@@ -75,7 +74,7 @@ class GovBrAuthControllerTest extends TestCase
     {
         Cache::put('govbr:login-code:codigo-unitario', [
             'token' => 'token-unitario',
-            'user' => ['sub' => '11144477735'],
+            'user'  => ['sub' => '11144477735'],
         ], now()->addMinute());
 
         $response = $this->controller()->exchange(Request::create('/api/auth/exchange', 'POST', [
@@ -129,7 +128,7 @@ class GovBrAuthControllerTest extends TestCase
         $loginKey = $this->invocarMetodoPrivado('loginCodeCacheKey', 'codigo-1');
         $redirect = $this->invocarMetodoPrivado('redirectToFrontend', [
             'govbr_error' => 'falha',
-            'govbr_nome' => 'Maria',
+            'govbr_nome'  => 'Maria',
         ]);
 
         $this->assertSame('govbr:oauth:estado-1', $oauthKey);
@@ -146,7 +145,7 @@ class GovBrAuthControllerTest extends TestCase
         $this->configurarGovbr();
 
         $response = $this->controller()->callback(Request::create('/api/auth/redirect', 'GET', [
-            'error' => 'access_denied',
+            'error'             => 'access_denied',
             'error_description' => 'Usuário cancelou o login',
         ]));
 
@@ -176,7 +175,7 @@ class GovBrAuthControllerTest extends TestCase
 
         $response = $this->controller()->callback(Request::create('/api/auth/redirect', 'GET', [
             'state' => 'estado-ausente',
-            'code' => 'codigo-ausente',
+            'code'  => 'codigo-ausente',
         ]));
 
         $this->assertStringContainsString(

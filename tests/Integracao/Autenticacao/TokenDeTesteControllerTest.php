@@ -3,6 +3,7 @@
 namespace Tests\Integracao\Autenticacao;
 
 use App\Models\Usuario;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Integracao\TestCase;
 
@@ -12,7 +13,7 @@ class TokenDeTesteControllerTest extends TestCase
     {
         parent::setUp();
 
-        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+        $this->withoutMiddleware(ThrottleRequests::class);
     }
 
     #[Test]

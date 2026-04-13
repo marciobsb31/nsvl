@@ -21,8 +21,8 @@ class TrocaContextoController extends Controller
     #[OA\Get(
         path: '/api/user/perfis-ativos',
         summary: 'Perfis vigentes do usuário',
-        tags: ['Contexto'],
         security: [['BearerAuth' => []]],
+        tags: ['Contexto'],
         responses: [
             new OA\Response(response: 200, description: 'Lista em data[]'),
             new OA\Response(response: 401, description: 'Não autenticado'),
@@ -31,7 +31,7 @@ class TrocaContextoController extends Controller
     public function listarPerfisAtivos(): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             throw ApiException::unauthenticated();
         }
 
@@ -39,12 +39,12 @@ class TrocaContextoController extends Controller
 
         return response()->json([
             'data' => $perfisVigentes->map(fn ($p) => [
-                'perfil_usuario_id'     => $p->pivot->id,
-                'perfil_id'             => $p->id,
-                'nome'                  => $p->nome,
-                'data_inicio_vigencia'  => $p->pivot->data_inicio_vigencia,
-                'data_fim_vigencia'     => $p->pivot->data_fim_vigencia,
-                'ativo'                 => (bool) $p->pivot->ativo,
+                'perfil_usuario_id'    => $p->pivot->id,
+                'perfil_id'            => $p->id,
+                'nome'                 => $p->nome,
+                'data_inicio_vigencia' => $p->pivot->data_inicio_vigencia,
+                'data_fim_vigencia'    => $p->pivot->data_fim_vigencia,
+                'ativo'                => (bool) $p->pivot->ativo,
             ])->values(),
         ]);
     }
@@ -52,7 +52,6 @@ class TrocaContextoController extends Controller
     #[OA\Post(
         path: '/api/user/trocar-contexto',
         summary: 'Define o perfil ativo (pivot perfil_usuario)',
-        tags: ['Contexto'],
         security: [['BearerAuth' => []]],
         requestBody: new OA\RequestBody(
             required: true,
@@ -63,6 +62,7 @@ class TrocaContextoController extends Controller
                 ]
             )
         ),
+        tags: ['Contexto'],
         responses: [
             new OA\Response(
                 response: 200,
@@ -82,7 +82,7 @@ class TrocaContextoController extends Controller
     public function trocarContexto(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             throw ApiException::unauthenticated();
         }
 
@@ -99,7 +99,7 @@ class TrocaContextoController extends Controller
             fn ($p) => $p->pivot->id == $perfilUsuarioId
         );
 
-        if (!$novoPerfilPivot) {
+        if (! $novoPerfilPivot) {
             throw ApiException::forbidden('O perfil selecionado não está ativo ou não pertence ao seu cadastro.');
         }
 
@@ -127,7 +127,7 @@ class TrocaContextoController extends Controller
 
         return response()->json([
             'message' => 'Contexto alterado com sucesso.',
-            'user'    => $user->toSafeArray(),
+            'user'    => $user,
         ]);
     }
 }

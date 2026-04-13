@@ -11,7 +11,7 @@ $baseUrl = rtrim(env('GOVBR_SSO_URL', 'https://sso.staging.acesso.gov.br'), '/')
 $redirectUri = env('GOVBR_REDIRECT_URI');
 if (empty($redirectUri)) {
     $appUrl = rtrim(env('APP_URL', ''), '/');
-    $redirectUri = $appUrl ? $appUrl . '/api/auth/redirect' : 'https://h-nvsl.dev.mdh.gov.br/api/auth/redirect';
+    $redirectUri = $appUrl ? $appUrl.'/api/auth/redirect' : 'https://h-nvsl.dev.mdh.gov.br/api/auth/redirect';
 }
 
 /*
@@ -25,16 +25,16 @@ if (empty($frontendUrl)) {
 }
 
 return [
-    'client_id' => env('GOVBR_CLIENT_ID'),
-    'client_secret' => env('GOVBR_CLIENT_SECRET'),
-    'redirect_uri' => $redirectUri,
-    'frontend_url' => rtrim((string) $frontendUrl, '/'),
-    'frontend_login_path' => env('GOVBR_FRONTEND_LOGIN_PATH', '/login'),
-    'sso_url' => $baseUrl,
-    'authorize_url' => env('GOVBR_AUTHORIZE_URL', $baseUrl . '/authorize'),
-    'token_url' => env('GOVBR_TOKEN_URL', $baseUrl . '/token'),
-    'userinfo_url' => env('GOVBR_USERINFO_URL', $baseUrl . '/userinfo'),
-    'scopes' => preg_split('/\s+/', trim((string) env('GOVBR_SCOPES', 'openid email profile govbr_confiabilidades govbr_confiabilidades_idtoken')), -1, PREG_SPLIT_NO_EMPTY),
-    'oauth_ttl_seconds' => (int) env('GOVBR_OAUTH_TTL_SECONDS', 600),
+    'client_id'              => env('GOVBR_CLIENT_ID'),
+    'client_secret'          => env('GOVBR_CLIENT_SECRET'),
+    'redirect_uri'           => $redirectUri,
+    'frontend_url'           => rtrim((string) $frontendUrl, '/'),
+    'frontend_login_path'    => env('GOVBR_FRONTEND_LOGIN_PATH', '/login'),
+    'sso_url'                => $baseUrl,
+    'authorize_url'          => env('GOVBR_AUTHORIZE_URL', $baseUrl.'/authorize'),
+    'token_url'              => env('GOVBR_TOKEN_URL', $baseUrl.'/token'),
+    'userinfo_url'           => env('GOVBR_USERINFO_URL', $baseUrl.'/userinfo'),
+    'scopes'                 => preg_split('/\s+/', trim((string) env('GOVBR_SCOPES', 'openid email profile govbr_confiabilidades govbr_confiabilidades_idtoken')), -1, PREG_SPLIT_NO_EMPTY),
+    'oauth_ttl_seconds'      => (int) env('GOVBR_OAUTH_TTL_SECONDS', 600),
     'login_code_ttl_seconds' => (int) env('GOVBR_LOGIN_CODE_TTL_SECONDS', 120),
 ];

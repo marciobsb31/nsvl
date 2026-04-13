@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace Tests\Integracao\Solicitacoes;
 
@@ -28,7 +28,7 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'disponivel' => false,
-                'mensagem' => 'Este CPF jÃ¡ possui perfil ativo no sistema.',
+                'mensagem'   => 'Este CPF jÃ¡ possui perfil ativo no sistema.',
             ]);
     }
 
@@ -36,22 +36,22 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
     public function verifica_cpf_indisponivel_quando_ja_existe_solicitacao_em_analise(): void
     {
         $usuario = Usuario::factory()->create([
-            'cpf' => Usuario::factory()->make()->cpf,
+            'cpf'       => Usuario::factory()->make()->cpf,
             'govbr_sub' => 'teste-endpoint-cpf-em-analise',
         ]);
 
         SolicitacaoCadastro::factory()->create([
-            'user_id' => $usuario->id,
+            'user_id'   => $usuario->id,
             'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE),
         ]);
 
-        $response = $this->getJson('/api/solicitacoes-cadastro/verificar-cpf?cpf=' . $usuario->cpf);
+        $response = $this->getJson('/api/solicitacoes-cadastro/verificar-cpf?cpf='.$usuario->cpf);
 
         $response
             ->assertOk()
             ->assertJson([
                 'disponivel' => false,
-                'mensagem' => 'JÃ¡ existe uma solicitaÃ§Ã£o em anÃ¡lise para este CPF.',
+                'mensagem'   => 'JÃ¡ existe uma solicitaÃ§Ã£o em anÃ¡lise para este CPF.',
             ]);
     }
 
@@ -61,16 +61,16 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
         $cpf = Usuario::factory()->make()->cpf;
 
         $response = $this->postJson('/api/solicitacoes-cadastro', [
-            'nome' => 'Solicitante Publico',
-            'CPF' => $cpf,
-            'emailInstitucional' => 'solicitante.publico@teste.gov.br',
+            'nome'                  => 'Solicitante Publico',
+            'CPF'                   => $cpf,
+            'emailInstitucional'    => 'solicitante.publico@teste.gov.br',
             'telefoneInstitucional' => '61999887766',
-            'telefonePessoal' => '61988776655',
-            'esferaAtuacao' => 'federal',
-            'uf' => 'DF',
-            'municipio' => 'BrasÃ­lia',
-            'orgao' => 'Ministerio de Testes',
-            'cargo' => 'Analista',
+            'telefonePessoal'       => '61988776655',
+            'esferaAtuacao'         => 'federal',
+            'uf'                    => 'DF',
+            'municipio'             => 'BrasÃ­lia',
+            'orgao'                 => 'Ministerio de Testes',
+            'cargo'                 => 'Analista',
         ]);
 
         $response
@@ -78,13 +78,13 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             ->assertJsonStructure(['message', 'solicitacao_id']);
 
         $this->assertDatabaseHas('usuarios', [
-            'cpf' => $cpf,
+            'cpf'  => $cpf,
             'nome' => 'Solicitante Publico',
         ]);
 
         $this->assertDatabaseHas('solicitacoes_cadastro', [
             'email_institucional' => 'solicitante.publico@teste.gov.br',
-            'orgao' => 'Ministerio de Testes',
+            'orgao'               => 'Ministerio de Testes',
         ]);
     }
 
@@ -95,18 +95,18 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
         $cpfFormulario = Usuario::factory()->make()->cpf;
 
         $response = $this->postJson('/api/solicitacoes-cadastro', [
-            'nome' => 'Novo Cadastrado Interno',
-            'CPF' => $cpfFormulario,
-            'emailInstitucional' => 'novo.interno@teste.gov.br',
+            'nome'                  => 'Novo Cadastrado Interno',
+            'CPF'                   => $cpfFormulario,
+            'emailInstitucional'    => 'novo.interno@teste.gov.br',
             'telefoneInstitucional' => '61999887766',
-            'telefonePessoal' => '61988776655',
-            'esferaAtuacao' => 'federal',
-            'uf' => 'DF',
-            'municipio' => 'BrasÃ­lia',
-            'orgao' => 'Ministerio de Testes',
-            'cargo' => 'Analista',
-            'perfilId' => $this->perfilPorNome('Gestor Federal')->id,
-            'vigenciaInicio' => now()->toDateString(),
+            'telefonePessoal'       => '61988776655',
+            'esferaAtuacao'         => 'federal',
+            'uf'                    => 'DF',
+            'municipio'             => 'BrasÃ­lia',
+            'orgao'                 => 'Ministerio de Testes',
+            'cargo'                 => 'Analista',
+            'perfilId'              => $this->perfilPorNome('Gestor Federal')->id,
+            'vigenciaInicio'        => now()->toDateString(),
         ]);
 
         $response
@@ -116,13 +116,13 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
         $this->assertNotSame($operador->cpf, $cpfFormulario);
 
         $this->assertDatabaseHas('usuarios', [
-            'cpf' => $cpfFormulario,
+            'cpf'  => $cpfFormulario,
             'nome' => 'Novo Cadastrado Interno',
         ]);
 
         $this->assertDatabaseHas('solicitacoes_cadastro', [
             'email_institucional' => 'novo.interno@teste.gov.br',
-            'orgao' => 'Ministerio de Testes',
+            'orgao'               => 'Ministerio de Testes',
         ]);
 
         $solicitacaoId = (int) $response->json('solicitacao_id');
@@ -168,15 +168,15 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
         $perfil = $this->perfilPorNome('Gestor Estadual');
 
         $response = $this->patchJson("/api/solicitacoes-cadastro/{$solicitacao->id}", [
-            'status' => 'aprovado',
-            'perfil_id' => $perfil->id,
+            'status'          => 'aprovado',
+            'perfil_id'       => $perfil->id,
             'vigencia_inicio' => now()->toDateString(),
         ]);
 
         $response->assertOk();
 
         $this->assertDatabaseHas('solicitacoes_cadastro', [
-            'id' => $solicitacao->id,
+            'id'        => $solicitacao->id,
             'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO),
         ]);
 
@@ -184,7 +184,7 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
 
         $this->assertDatabaseHas('perfil_usuario', [
             'usuario_id' => $usuarioId,
-            'perfil_id' => $perfil->id,
+            'perfil_id'  => $perfil->id,
         ]);
     }
 
@@ -202,7 +202,7 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             ->firstOrFail();
 
         $adicao = $this->postJson("/api/solicitacoes-cadastro/{$solicitacao->id}/perfis", [
-            'perfil_id' => $perfil->id,
+            'perfil_id'       => $perfil->id,
             'vigencia_inicio' => now()->toDateString(),
         ]);
 
@@ -222,12 +222,12 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             ->assertJsonPath('data.id', $perfilOriginal->id);
 
         $this->assertDatabaseHas('perfil_usuario', [
-            'id' => $perfilOriginal->id,
+            'id'    => $perfilOriginal->id,
             'ativo' => true,
         ]);
 
         $this->assertDatabaseHas('perfil_usuario', [
-            'id' => $perfilAdicionado->id,
+            'id'    => $perfilAdicionado->id,
             'ativo' => false,
         ]);
 
@@ -240,7 +240,7 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             ->assertJsonPath('data.id', $perfilOriginal->id);
 
         $this->assertDatabaseHas('perfil_usuario', [
-            'id' => $perfilOriginal->id,
+            'id'    => $perfilOriginal->id,
             'ativo' => false,
         ]);
     }
@@ -255,8 +255,8 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $this->patchJson('/api/solicitacoes-cadastro/999999', [
-            'status' => 'aprovado',
-            'perfil_id' => $this->perfilPorNome('Gestor Federal')->id,
+            'status'          => 'aprovado',
+            'perfil_id'       => $this->perfilPorNome('Gestor Federal')->id,
             'vigencia_inicio' => now()->toDateString(),
         ])->assertNotFound()
             ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
@@ -270,10 +270,9 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
             ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
 
         $this->postJson('/api/solicitacoes-cadastro/999999/perfis', [
-            'perfil_id' => $this->perfilPorNome('Administrador Municipal')->id,
+            'perfil_id'       => $this->perfilPorNome('Administrador Municipal')->id,
             'vigencia_inicio' => now()->toDateString(),
         ])->assertNotFound()
             ->assertJsonPath('message', 'SolicitaÃ§Ã£o nÃ£o encontrada.');
     }
 }
-

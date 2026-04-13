@@ -19,9 +19,9 @@ class AvaliarSolicitacaoRequest extends FormRequest
         ];
 
         if ($this->input('status') === StatusSolicitacao::APROVADO) {
-            $rules['perfil_id']       = ['required', 'integer', 'exists:perfis,id'];
+            $rules['perfil_id'] = ['required', 'integer', 'exists:perfis,id'];
             $rules['vigencia_inicio'] = ['nullable', 'date'];
-            $rules['vigencia_fim']    = ['nullable', 'date', 'after_or_equal:vigencia_inicio'];
+            $rules['vigencia_fim'] = ['nullable', 'date', 'after_or_equal:vigencia_inicio'];
         }
 
         if ($this->input('status') === StatusSolicitacao::REPROVADO) {
@@ -34,12 +34,12 @@ class AvaliarSolicitacaoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'status.required'          => 'Status inválido. Use: aprovado ou reprovado.',
-            'status.in'                => 'Status inválido. Use: aprovado ou reprovado.',
-            'perfil_id.required'       => 'Selecione o perfil para aprovação.',
-            'perfil_id.exists'         => 'Perfil informado é inválido.',
-            'justificativa.required'   => 'A justificativa é obrigatória para reprovação.',
-            'justificativa.min'        => 'A justificativa deve ter pelo menos 10 caracteres.',
+            'status.required'        => 'Status inválido. Use: aprovado ou reprovado.',
+            'status.in'              => 'Status inválido. Use: aprovado ou reprovado.',
+            'perfil_id.required'     => 'Selecione o perfil para aprovação.',
+            'perfil_id.exists'       => 'Perfil informado é inválido.',
+            'justificativa.required' => 'A justificativa é obrigatória para reprovação.',
+            'justificativa.min'      => 'A justificativa deve ter pelo menos 10 caracteres.',
         ];
     }
 }

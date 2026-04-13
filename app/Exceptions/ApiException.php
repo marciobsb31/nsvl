@@ -49,4 +49,3 @@ class ApiException extends RuntimeException
         return new self($message, 409, 'conflict');
     }
 }
-

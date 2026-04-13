@@ -2,18 +2,19 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Model PerfilUsuario — associação usuário-perfil com vigência
  *
- * @property int    $id
- * @property int    $usuario_id       FK → usuarios.id
- * @property int    $perfil_id        FK → perfis.id
- * @property \Carbon\Carbon|null $data_inicio_vigencia
- * @property \Carbon\Carbon|null $data_fim_vigencia
- * @property bool   $ativo
+ * @property int $id
+ * @property int $usuario_id FK → usuarios.id
+ * @property int $perfil_id FK → perfis.id
+ * @property Carbon|null $data_inicio_vigencia
+ * @property Carbon|null $data_fim_vigencia
+ * @property bool $ativo
  */
 class PerfilUsuario extends Model
 {

@@ -11,7 +11,7 @@ class AdicionarPerfilVinculadoRequestTest extends TestCase
     #[Test]
     public function define_regras_e_mensagens_do_request(): void
     {
-        $request = new AdicionarPerfilVinculadoRequest();
+        $request = new AdicionarPerfilVinculadoRequest;
         $rules = $request->rules();
         $messages = $request->messages();
 

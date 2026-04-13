@@ -48,7 +48,7 @@ class LocalidadeController extends Controller
             ->get()
             ->map(fn (Uf $e) => [
                 'value' => $e->sigla,
-                'label' => $e->sigla . ' - ' . $e->nome,
+                'label' => $e->sigla.' - '.$e->nome,
             ])
             ->values()
             ->all();
@@ -73,8 +73,8 @@ class LocalidadeController extends Controller
             ->get()
             ->map(fn (Uf $e) => [
                 'value' => $e->sigla,
-                'label' => $e->sigla . ' - ' . $e->nome,
-                'id' => $e->id,
+                'label' => $e->sigla.' - '.$e->nome,
+                'id'    => $e->id,
             ])
             ->values()
             ->all();
@@ -89,7 +89,7 @@ class LocalidadeController extends Controller
 
         return response()->json([
             'data' => [
-                'ufs' => $ufs,
+                'ufs'               => $ufs,
                 'municipios_por_uf' => $municipiosPorUf,
             ],
         ]);

@@ -25,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'message' => $e->getMessage(),
-                    'error' => $e->error(),
+                    'error'   => $e->error(),
                 ], $e->status());
             }
         });
@@ -34,7 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'message' => 'Não autenticado.',
-                    'error' => 'unauthenticated',
+                    'error'   => 'unauthenticated',
                 ], 401);
             }
         });
@@ -43,7 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'message' => $e->getMessage() ?: 'Acesso não permitido.',
-                    'error' => 'forbidden',
+                    'error'   => 'forbidden',
                 ], 403);
             }
         });

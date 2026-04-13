@@ -75,7 +75,7 @@ class GovBrAuthController extends Controller
             if ($request->filled('error')) {
                 $descricao = (string) ($request->input('error_description') ?: $request->input('error'));
                 throw ValidationException::withMessages([
-                    'auth' => 'Falha no retorno do GOV.BR: ' . $descricao,
+                    'auth' => 'Falha no retorno do GOV.BR: '.$descricao,
                 ]);
             }
 
@@ -89,7 +89,7 @@ class GovBrAuthController extends Controller
             }
 
             $oauthData = Cache::pull($this->oauthCacheKey($state));
-            if (!is_array($oauthData)) {
+            if (! is_array($oauthData)) {
                 throw ValidationException::withMessages([
                     'auth' => 'O estado da autenticação GOV.BR expirou ou é inválido.',
                 ]);
@@ -97,7 +97,7 @@ class GovBrAuthController extends Controller
 
             $tokens = $this->govBrService->trocarCodePorToken($code, (string) $oauthData['code_verifier']);
 
-            if (!$this->govBrService->validarNonce($tokens['id_token'] ?? null, (string) $oauthData['nonce'])) {
+            if (! $this->govBrService->validarNonce($tokens['id_token'] ?? null, (string) $oauthData['nonce'])) {
                 throw ValidationException::withMessages([
                     'auth' => 'Falha na validação de segurança da resposta do GOV.BR.',
                 ]);
@@ -112,13 +112,13 @@ class GovBrAuthController extends Controller
                 $this->loginCodeCacheKey($loginCode),
                 [
                     'token' => $plainTextToken,
-                    'user' => $user->toSafeArray(),
+                    'user'  => $user->toSafeArray(),
                 ],
                 now()->addSeconds((int) config('govbr.login_code_ttl_seconds', 120))
             );
 
             $this->auditLogService->log('auth.callback', $user->id, [
-                'sub' => $govBrUser->sub,
+                'sub'        => $govBrUser->sub,
                 'login_code' => $loginCode,
             ]);
             $this->auditLogService->log('auth.login', $user->id, [
@@ -192,13 +192,13 @@ class GovBrAuthController extends Controller
         ]);
 
         $data = Cache::pull($this->loginCodeCacheKey($payload['code']));
-        if (!is_array($data) || empty($data['token']) || empty($data['user'])) {
+        if (! is_array($data) || empty($data['token']) || empty($data['user'])) {
             throw ApiException::unprocessable('Código de autenticação GOV.BR inválido ou expirado.');
         }
 
         return response()->json([
             'token' => $data['token'],
-            'user' => $data['user'],
+            'user'  => $data['user'],
         ]);
     }
 
@@ -238,7 +238,7 @@ class GovBrAuthController extends Controller
     private function garantirConfiguracao(): void
     {
         foreach (['client_id', 'client_secret', 'redirect_uri', 'authorize_url', 'token_url', 'userinfo_url'] as $campo) {
-            if (!config('govbr.' . $campo)) {
+            if (! config('govbr.'.$campo)) {
                 throw ValidationException::withMessages([
                     'auth' => 'Configuração GOV.BR incompleta no ambiente.',
                 ]);
@@ -249,14 +249,14 @@ class GovBrAuthController extends Controller
     private function redirectToFrontend(array $fragmentParams): RedirectResponse
     {
         $base = rtrim((string) config('govbr.frontend_url'), '/')
-            . (string) config('govbr.frontend_login_path', '/login');
+            .(string) config('govbr.frontend_login_path', '/login');
 
-        return redirect()->away($base . '#' . http_build_query($fragmentParams));
+        return redirect()->away($base.'#'.http_build_query($fragmentParams));
     }
 
     private function oauthCacheKey(string $state): string
     {
-        return 'govbr:oauth:' . $state;
+        return 'govbr:oauth:'.$state;
     }
 
     private function gerarUrlDeAutorizacao(): string
@@ -271,7 +271,7 @@ class GovBrAuthController extends Controller
         Cache::put(
             $this->oauthCacheKey($state),
             [
-                'nonce' => $nonce,
+                'nonce'         => $nonce,
                 'code_verifier' => $codeVerifier,
             ],
             now()->addSeconds((int) config('govbr.oauth_ttl_seconds', 600))
@@ -286,6 +286,6 @@ class GovBrAuthController extends Controller
 
     private function loginCodeCacheKey(string $code): string
     {
-        return 'govbr:login-code:' . $code;
+        return 'govbr:login-code:'.$code;
     }
 }
