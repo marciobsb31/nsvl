@@ -13,12 +13,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', [HealthController::class, 'check']);
 
-Route::get('/esferas', [EsferaController::class, 'index'])
-    ->name('esferas.index');
+Route::get('/esferas', [EsferaController::class, 'index']);
 
 Route::prefix('localidades')->group(function () {
     Route::get('/ufs', [LocalidadeController::class, 'ufs']);
-    Route::get('/municipios', [LocalidadeController::class, 'municipios']);
+    Route::get('/municipios/{uf}', [LocalidadeController::class, 'municipios']);
     Route::get('/completo', [LocalidadeController::class, 'completo']);
 });
 
@@ -56,11 +55,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('solicitacoes-cadastro')->group(function () {
         Route::get('/', [SolicitacaoCadastroController::class, 'index'])
-        ->middleware('permission:solicitacoes_cadastro.visualizar');
+            ->middleware('permission:solicitacoes_cadastro.visualizar');
         Route::post('/{id}/perfis', [SolicitacaoCadastroController::class, 'adicionarPerfilVinculado']);
-        Route::patch('/{id}/perfis/{perfilUsuarioId}/ativar', [SolicitacaoCadastroController::class, 'ativarPerfilVinculado']);
-        Route::patch('/{id}/perfis/{perfilUsuarioId}/desativar', [SolicitacaoCadastroController::class, 'desativarPerfilVinculado']);
-        Route::get('/{solicitacao_cadastro}', [SolicitacaoCadastroController::class, 'show']);
+        Route::patch('/{id}/perfis/{perfilUsuarioId}/ativar', [SolicitacaoCadastroController::class, 'ativarPerfilVinculado'])
+            ->middleware('permission:solicitacoes_cadastro.analisar');
+        Route::patch('/{id}/perfis/{perfilUsuarioId}/desativar', [SolicitacaoCadastroController::class, 'desativarPerfilVinculado'])
+            ->middleware('permission:solicitacoes_cadastro.analisar');
+        Route::get('/{solicitacao_cadastro}', [SolicitacaoCadastroController::class, 'show'])
+            ->middleware('permission:solicitacoes_cadastro.visualizar');
         Route::patch('/{id}', [SolicitacaoCadastroController::class, 'update']);
     });
 

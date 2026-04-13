@@ -10,9 +10,10 @@ class MunicipioResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'     => $this->id,
-            'nome'   => $this->nome,
-            'estado' => new EstadoResource($this->whenLoaded('estadoRelacao')),
+            'id'          => $this->id,
+            'nome'        => $this->nome,
+            'codigo_ibge' => $this->codigo_ibge,
+            // 'estado' => new EstadoResource($this->whenLoaded('estadoRelacao')),
         ];
     }
 }
