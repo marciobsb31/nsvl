@@ -3,7 +3,6 @@
 use App\Http\Controllers\Auth\GovBrAuthController;
 use App\Http\Controllers\Auth\UsuarioController;
 use App\Http\Controllers\EsferaController;
-use App\Http\Controllers\GerenciarPerfilController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\LocalidadeController;
 use App\Http\Controllers\PerfilController;
@@ -56,7 +55,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('permission:solicitacoes_cadastro.analisar');
         Route::get('/{solicitacao_cadastro}', [SolicitacaoCadastroController::class, 'show'])
             ->middleware('permission:solicitacoes_cadastro.visualizar');
-        Route::patch('/{id}', [SolicitacaoCadastroController::class, 'update']);
+        Route::patch('/{id}', [SolicitacaoCadastroController::class, 'update'])
+            ->middleware('permission:solicitacoes_cadastro.editar');
     });
 
 });

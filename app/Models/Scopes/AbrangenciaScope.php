@@ -20,7 +20,7 @@ class AbrangenciaScope implements Scope
 
         $contexto = $this->getContexto($usuario);
 
-        if (! $contexto || ! $contexto->abrangencia || $contexto->abrangencia->esfera?->codigo === EsferaEnum::FEDERAL) {
+        if (! $contexto || ! $contexto->abrangencia || $contexto->abrangencia->esfera?->id === EsferaEnum::FEDERAL->value) {
             return;
         }
 
