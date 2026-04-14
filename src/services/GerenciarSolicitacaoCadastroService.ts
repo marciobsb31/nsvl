@@ -73,23 +73,3 @@ export async function ativarPerfilVinculado(solicitacaoId: number, perfilUsuario
 export async function desativarPerfilVinculado(solicitacaoId: number, perfilUsuarioId: number): Promise<void> {
   await api.patch(`/solicitacoes-cadastro/${solicitacaoId}/perfis/${perfilUsuarioId}/desativar`)
 }
-
-export interface AdicionarPerfilPayload {
-  perfilId: number | string
-  vigenciaInicio?: string
-  vigenciaFim?: string
-}
-
-export async function adicionarPerfilVinculado(
-  solicitacaoId: number,
-  payload: AdicionarPerfilPayload
-): Promise<void> {
-  await api.post(
-    `/solicitacoes-cadastro/${solicitacaoId}/perfis`,
-    {
-      perfil_id: payload.perfilId,
-      vigencia_inicio: payload.vigenciaInicio || null,
-      vigencia_fim: payload.vigenciaFim || null,
-    }
-  )
-}

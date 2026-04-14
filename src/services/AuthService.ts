@@ -20,8 +20,10 @@ const AuthService = {
      * Solicita ao backend a URL de autenticação do GOV.BR.
      * O backend gera state/nonce/PKCE, armazena em cache e retorna a URL completa.
      */
-    async getRedirectUrl(): Promise<string> {
-        const { data } = await api.get<{ url?: string } | string>('/auth/url')
+    async getRedirectUrl(flow: 'login' | 'solicitacao' = 'login'): Promise<string> {
+        const { data } = await api.get<{ url?: string } | string>('/auth/url', {
+            params: { flow },
+        })
         const url = typeof data === 'string' ? data : data?.url
         if (!url) {
             throw new Error('URL de autenticação GOV.BR não disponível.')

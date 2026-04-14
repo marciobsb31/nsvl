@@ -28,8 +28,8 @@
               class="br-button secondary block login-govbr__button"
               :disabled="carregandoGovBr || !govBrDisponivel"
               aria-label="Entrar com GOV.BR"
+              @click="entrarComGovBr('login')"
               aria-describedby="login-description"
-              @click="entrarComGovBr"
             >
               {{ carregandoGovBr ? 'Redirecionando...' : 'Entrar com GOV.BR' }}
             </button>
@@ -40,7 +40,7 @@
             class="br-button success block mt-3 login-register-button"
             :disabled="carregandoGovBr || !govBrDisponivel"
             aria-label="Solicitar cadastro"
-            @click="entrarComGovBr"
+            @click="entrarComGovBr('solicitacao')"
             :aria-describedby="govBrDisponivel ? 'login-description' : 'govbr-status'"
           >
             {{ carregandoGovBr ? 'Redirecionando...' : 'Solicitar cadastro com GOV.BR' }}
@@ -85,7 +85,7 @@ onMounted(() => {
   processarRetornoGovBr()
 })
 
-async function entrarComGovBr() {
+async function entrarComGovBr(flow: 'login' | 'solicitacao' = 'login') {
   if (!govBrDisponivel) {
     erro.value = 'Login GOV.BR indisponível neste ambiente no momento.'
     return
@@ -94,7 +94,7 @@ async function entrarComGovBr() {
   carregandoGovBr.value = true
   erro.value = ''
   try {
-    const url = await AuthService.getRedirectUrl()
+    const url = await AuthService.getRedirectUrl(flow)
     window.location.href = url
   } catch {
     erro.value = 'Login GOV.BR indisponível neste ambiente no momento.'

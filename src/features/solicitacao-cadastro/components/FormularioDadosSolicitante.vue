@@ -8,10 +8,13 @@
           type="text"
           placeholder="Nome completo (somente letras)"
           v-model="nome"
+          required
+          :aria-invalid="!!errorsNome"
+          :aria-describedby="errorsNome ? 'err-nome' : undefined"
           :disabled="modoGovBr"
           @input="filtrarSomenteLetras"
         />
-        <Feedback v-if="errorsNome" :message="errorsNome" type="danger" />
+        <Feedback v-if="errorsNome" id="err-nome" :message="errorsNome" type="danger" />
       </div>
     </div>
     <div class="col-12 col-md-6">
@@ -34,16 +37,41 @@
           "
           v-model="CPF"
           v-maska="modoGovBr ? undefined : '###.###.###-##'"
+          :required="!modoEdicao && !modoGovBr"
+          :aria-required="!modoEdicao && !modoGovBr"
+          :aria-invalid="!!errorsCPF"
+          :aria-describedby="
+            [
+              verificandoCpf || (cpfDisponivel && cpfPreenchido) ? 'cpf-status' : null,
+              errorsCPF ? 'err-cpf' : null,
+            ]
+              .filter(Boolean)
+              .join(' ') || undefined
+          "
           :disabled="verificandoCpf || modoGovBr"
           @blur="onCpfBlur"
         />
-        <span v-if="verificandoCpf" class="input-hint input-hint--loading">
+        <span
+          v-if="verificandoCpf"
+          id="cpf-status"
+          class="input-hint input-hint--loading"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Verificando CPF...
         </span>
-        <span v-else-if="cpfDisponivel && cpfPreenchido" class="input-hint input-hint--success">
+        <span
+          v-else-if="cpfDisponivel && cpfPreenchido"
+          id="cpf-status"
+          class="input-hint input-hint--success"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <i class="fas fa-check-circle" aria-hidden="true"></i> CPF disponível
         </span>
-        <Feedback v-if="errorsCPF" :message="errorsCPF" type="danger" />
+        <Feedback v-if="errorsCPF" id="err-cpf" :message="errorsCPF" type="danger" />
       </div>
     </div>
     <div class="col-12 col-md-6">
@@ -55,10 +83,23 @@
           placeholder="(00) 00000-0000"
           v-model="telefonePessoal"
           v-maska="telefoneMask"
+          :aria-invalid="!!errorsTelPessoal"
+          :aria-describedby="
+            ['hint-tel-pessoal', errorsTelPessoal ? 'err-tel-pessoal' : null]
+              .filter(Boolean)
+              .join(' ') || undefined
+          "
           autocomplete="tel-national"
         />
-        <span class="solicitacao-field-hint">Opcional — para contato alternativo.</span>
-        <Feedback v-if="errorsTelPessoal" :message="errorsTelPessoal" type="danger" />
+        <span id="hint-tel-pessoal" class="solicitacao-field-hint"
+          >Opcional — para contato alternativo.</span
+        >
+        <Feedback
+          v-if="errorsTelPessoal"
+          id="err-tel-pessoal"
+          :message="errorsTelPessoal"
+          type="danger"
+        />
       </div>
     </div>
   </section>
@@ -71,19 +112,22 @@ import { verificarCpfDisponivel } from '@/services/SolicitacaoCadastroService'
 import { validarCpf } from '@/core/utils/validarCpf'
 
 defineOptions({
-  name: 'FormularioDadosSolicitante'
+  name: 'FormularioDadosSolicitante',
 })
 
-const props = withDefaults(defineProps<{
-  modoEdicao?: boolean
-  modoGovBr?: boolean
-  verificarCpfEmUso?: boolean
-}>(), { modoEdicao: false, modoGovBr: false, verificarCpfEmUso: true })
+const props = withDefaults(
+  defineProps<{
+    modoEdicao?: boolean
+    modoGovBr?: boolean
+    verificarCpfEmUso?: boolean
+  }>(),
+  { modoEdicao: false, modoGovBr: false, verificarCpfEmUso: true },
+)
 
 const { value: nome, errorMessage: errorsNome } = useField<string>('nome')
 const { value: CPF, errorMessage: errorsCPF } = useField<string>('CPF')
-const { value: telefonePessoal, errorMessage: errorsTelPessoal } = useField<string>('telefonePessoal')
-
+const { value: telefonePessoal, errorMessage: errorsTelPessoal } =
+  useField<string>('telefonePessoal')
 
 const { setFieldError } = useForm()
 const verificandoCpf = ref(false)
@@ -98,8 +142,8 @@ const cpfPreenchido = computed(() => {
 const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
 
 const MENSAGENS_CPF_EM_USO: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está vinculado a um cadastro ativo. Faça login com GOV.BR para acessar o sistema.',
-  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde a avaliação da equipe gestora.',
+  'Já existe uma solicitação em análise para este CPF.':
+    'Este CPF já possui uma solicitação em análise. Aguarde a avaliação da equipe gestora.',
 }
 
 function mensagemCriativa(original: string): string {
