@@ -121,10 +121,9 @@ import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutoc
 import { onMounted, watch, computed } from 'vue'
 import { useField } from 'vee-validate'
 import Feedback from '@/core/components/Feedback/Feedback.vue'
-import { useEsferas } from '@/core/composables/useEsferas'
-import { useLocalidades } from '@/core/composables/useLocalidades'
 import { useUfStore } from '@/stores/ufStore'
 import { useMunicipioStore } from '@/stores/municipioStore'
+import { useEsferasStore } from '@/stores/esferasStore'
 
 defineOptions({
   name: 'FormularioInformacaoSolicitante',
@@ -133,25 +132,22 @@ defineOptions({
 // Máscara dinâmica: fixo (##) ####-#### ou celular (##) #####-####
 const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
 
-const { opcoesEsfera, carregarEsferas } = useEsferas()
 const ufStore = useUfStore()
 const municipioStore = useMunicipioStore()
+const esferasStore = useEsferasStore()
 
 const { value: esferaAtuacao, errorMessage: errorsEsfera } = useField<string>('esferaAtuacao')
 const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
 const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
 
-const esferaAtuacaoOptions = computed(() =>
-  (opcoesEsfera.value ?? []).map((o) => ({
-    label: (o as any)?.nome ?? String((o as any)?.nome ?? ''),
-    value: String((o as any)?.id ?? ''),
-  })),
-)
+//Lista de esferas
+const esferaAtuacaoOptions = computed(() => {
+  return esferasStore.esferasOptions
+})
 //Lista de estado
 const opcoesUf = computed(() => {
   return ufStore.ufsOptions
 })
-
 //Lista Municipios
 const opcoesMunicipio = computed(() => {
   return municipioStore.municipiosOptions
@@ -165,7 +161,7 @@ watch(uf, async (newUf) => {
 })
 
 onMounted(async () => {
-  await carregarEsferas()
+  await esferasStore.carregarEsferas()
   await ufStore.carregarUfs()
 })
 
