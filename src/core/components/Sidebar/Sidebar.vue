@@ -15,7 +15,11 @@
           :aria-label="recolhido ? 'Expandir menu' : 'Recolher menu'"
           @click="$emit('toggle-recolher')"
         >
-          <i class="fas" :class="recolhido ? 'fa-chevron-right' : 'fa-chevron-left'" aria-hidden="true"></i>
+          <i
+            class="fas"
+            :class="recolhido ? 'fa-chevron-right' : 'fa-chevron-left'"
+            aria-hidden="true"
+          ></i>
         </button>
       </div>
       <nav class="sidebar__nav">
@@ -41,7 +45,9 @@
           aria-label="Sair"
         >
           <i class="fas fa-sign-out-alt sidebar__icon" aria-hidden="true"></i>
-          <span v-if="!recolhido || aberto" class="sidebar__texto">{{ saindo ? 'Saindo...' : 'Sair' }}</span>
+          <span v-if="!recolhido || aberto" class="sidebar__texto">{{
+            saindo ? 'Saindo...' : 'Sair'
+          }}</span>
         </button>
       </nav>
     </div>
@@ -82,16 +88,30 @@ interface MenuItem {
 }
 
 const todosMenus: MenuItem[] = [
-  { to: '/gerenciar-cadastros', titulo: 'Gestão de Solicitações', icone: 'fa-users', modulo: 'Gerenciar Cadastros' },
+  {
+    to: '/gerenciar-cadastros',
+    titulo: 'Gestão de Solicitações',
+    icone: 'fa-users',
+    modulo: 'Gerenciar Cadastros',
+  },
   { to: '/relatorios', titulo: 'Relatórios', icone: 'fa-chart-bar', modulo: 'Relatórios' },
-  { to: '/gestao-planos-acao', titulo: 'Gestão de Planos de Ação', icone: 'fa-clipboard-list', modulo: 'Plano de Ação' },
-  { to: '/enviar-plano-acao', titulo: 'Enviar plano de ação', icone: 'fa-paper-plane', modulo: 'Plano de Ação' },
-  { to: '/gerenciar-perfis', titulo: 'Gestão de Perfis', icone: 'fa-user-shield', modulo: 'Gerenciar Perfis' },
+  {
+    to: '/gestao-planos-acao',
+    titulo: 'Gestão de Planos de Ação',
+    icone: 'fa-clipboard-list',
+    modulo: 'Plano de Ação',
+  },
+  {
+    to: '/enviar-plano-acao',
+    titulo: 'Enviar plano de ação',
+    icone: 'fa-paper-plane',
+    modulo: 'Plano de Ação',
+  },
 ]
 
 const menusVisiveis = computed(() => {
   if (!user.value) return []
-  return todosMenus.filter(item => {
+  return todosMenus.filter((item) => {
     if (item.to === '/gerenciar-perfis' && !exibirGerenciarPerfis) return false
     if (!item.modulo) return true
     return temPermissao(item.modulo)
@@ -117,7 +137,9 @@ async function handleSair() {
   border-right: 1px solid var(--color-secondary-04, #ddd);
   padding: 1.5rem 0;
   flex-shrink: 0;
-  transition: width 0.25s ease, min-width 0.25s ease;
+  transition:
+    width 0.25s ease,
+    min-width 0.25s ease;
 }
 
 /* Desktop: recolhido */
@@ -210,7 +232,9 @@ async function handleSair() {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 .sidebar__toggle:hover {
@@ -230,7 +254,9 @@ async function handleSair() {
   color: var(--primary-text-color);
   text-decoration: none;
   font-weight: 500;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 .sidebar__item:hover {
