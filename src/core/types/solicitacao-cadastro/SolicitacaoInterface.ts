@@ -33,8 +33,8 @@ export interface SolicitacaoCadastroDetalhe extends SolicitacaoCadastroItem {
   telefone_institucional: string
   telefone_pessoal?: string | null
   esfera_id: number
-  uf_id: string
-  municipio_id: string
+  uf_id: string | number
+  municipio_id: string | number
   orgao: string
   cargo: string
   perfil_id_solicitado?: number | null
@@ -53,8 +53,8 @@ export interface SolicitacaoCadastroPayload {
   telefone_institucional: string
   telefone_pessoal?: string | null
   esfera_id: number
-  uf_id: string
-  municipio_id: string
+  uf_id: string | number
+  municipio_id: string | number
   orgao: string
   cargo: string
   aceiteTermo?: boolean

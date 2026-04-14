@@ -4,7 +4,7 @@ import SolicitacaoCadastroIndex from '../pages/SolicitacaoCadastroIndex.vue'
 import type {
   SolicitacaoCadastroDetalhe,
   SolicitacaoCadastroItem,
-} from '@/services/SolicitacaoCadastroService'
+} from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
 
 const routeQuery = vi.hoisted(() => ({ nome: 'Nome Gov', cpf: '12345678909' }))
 const pushMock = vi.hoisted(() => vi.fn())
@@ -47,9 +47,9 @@ function detalheBase(over: Partial<SolicitacaoCadastroDetalhe> = {}): Solicitaca
     email_institucional: 'm@org.gov.br',
     telefone_institucional: '61999998888',
     telefone_pessoal: null,
-    esfera_atuacao: 'federal',
-    uf: 'GO',
-    municipio: 'Goiânia',
+    esfera_id: 1,
+    uf_id: 12,
+    municipio_id: 1,
     orgao: 'Órgão X',
     cargo: 'Analista',
     status: 'em_analise',
