@@ -1,16 +1,17 @@
 <template>
   <div class="layout-public">
+    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
     <Header
       title="NVSL"
       subtitle="Sistema de Gestão"
       :logoGov="logoGov"
     />
 
-    <main id="main-content" class="layout-public__main" :class="{ 'layout-public__main--full': fullWidth }" role="main" tabindex="-1">
+    <main id="main-content" class="layout-public__main" :class="{ 'layout-public__main--full': fullWidth }" tabindex="-1">
       <slot />
     </main>
 
-    <Footer inverted>
+    <Footer inverted aria-label="Rodapé">
       <template #info>
         <div class="footer">
           © {{ currentYear }} NVSL — Todos os direitos reservados
