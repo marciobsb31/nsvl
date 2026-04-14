@@ -51,4 +51,9 @@ class PerfilUsuario extends Model
     {
         return $this->hasOne(UsuarioContexto::class, 'perfil_usuario_id');
     }
+
+    public function abrangencia()
+    {
+        return $this->belongsTo(UsuarioAbrangencia::class, 'usuario_abrangencia_id');
+    }
 }

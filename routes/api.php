@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\GovBrAuthController;
-use App\Http\Controllers\Auth\UserController;
+use App\Http\Controllers\Auth\UsuarioController;
 use App\Http\Controllers\EsferaController;
 use App\Http\Controllers\GerenciarPerfilController;
 use App\Http\Controllers\HealthController;
@@ -36,9 +36,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [GovBrAuthController::class, 'logout'])->name('auth.logout');
 
     Route::prefix('user')->group(function () {
-        Route::get('/', [UserController::class, 'me']);
-        Route::get('/perfis-ativos', [TrocaContextoController::class, 'listarPerfisAtivos']);
-        Route::post('/trocar-contexto', [TrocaContextoController::class, 'trocarContexto']);
+        Route::get('/', [UsuarioController::class, 'me']);
+    });
+
+    Route::prefix('contextos')->group(function () {
+        Route::get('/', [TrocaContextoController::class, 'index']);
+        Route::post('selecionar', [TrocaContextoController::class, 'selecionar']);
     });
 
     Route::get('/perfis', [PerfilController::class, 'index'])->name('perfis.index');
