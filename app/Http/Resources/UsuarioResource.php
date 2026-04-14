@@ -15,8 +15,8 @@ class UsuarioResource extends JsonResource
             'name'   => $this->nome,
             'email'  => $this->email,
             'sub'    => $this->govbr_sub,
-            'perfis' => PerfilResource::collection(
-                $this->whenLoaded('perfis')
+            'perfis' => PerfilUsuarioResource::collection(
+                $this->whenLoaded('perfisUsuario')
             ),
 
             'contexto' => $this->when(

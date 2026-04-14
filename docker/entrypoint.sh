@@ -30,7 +30,7 @@ chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 # echo "[entrypoint] Banco disponível!"
 
 echo "[entrypoint] Executando migrations..."
-php artisan migrate --force
+php artisan migrate:fresh --seed
 
 echo "[entrypoint] Gerando documentações Swagger..."
 php artisan l5-swagger:generate || echo "[entrypoint] Aviso: falha ao gerar Swagger (ignorando)"

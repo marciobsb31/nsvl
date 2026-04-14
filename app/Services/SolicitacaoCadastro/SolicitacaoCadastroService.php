@@ -173,7 +173,7 @@ class SolicitacaoCadastroService
             'orgao'                  => $dados['orgao'],
             'cargo'                  => $dados['cargo'] ?? null,
             'perfil_id'              => $perfilIdSolicitado,
-            'vigencia_inicio'        => $dados['vigencia_inicio']?? null,
+            'vigencia_inicio'        => $dados['vigencia_inicio'] ?? null,
             'vigencia_fim'           => $dados['vigencia_fim'] ?? null,
             'status_id'              => StatusSolicitacaoEnum::EM_ANALISE->value,
             'aceite_termo_at'        => Carbon::now(),

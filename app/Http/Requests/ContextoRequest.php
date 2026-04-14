@@ -9,7 +9,7 @@ class ContextoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'contexto_id' => 'required|integer',
+            'contexto_id' => 'required|exists:perfil_usuario,id',
         ];
     }
 
