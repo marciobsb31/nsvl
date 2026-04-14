@@ -45,7 +45,8 @@ class UsuarioController extends Controller
 
         return UsuarioResource::make(
             auth()->user()->load([
-                'perfis',
+                'perfisUsuario.perfil',
+                'perfisUsuario.abrangencia.esfera',
                 'contextoAtivo.perfilUsuario.perfil.permissoes',
                 'contextoAtivo.abrangencia.esfera',
             ])

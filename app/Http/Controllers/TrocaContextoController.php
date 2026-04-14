@@ -36,23 +36,25 @@ class TrocaContextoController extends Controller
     {
         $usuario = auth()->user();
 
-        $perfil = $usuario->perfisUsuario()
+        $perfilUsuario = $usuario->perfisUsuario()
             ->where('id', $request->contexto_id)
             ->first();
 
-        if (! $perfil) {
-            return response()->json(['message' => 'Perfil não encontrado ou não pertence ao usuário.'],
+        if (! $perfilUsuario) {
+            return response()->json(['message' => 'Contexto inválido ou não pertence ao usuário.'],
                 Response::HTTP_FORBIDDEN);
         }
 
         $usuario->contextoAtivo()->updateOrCreate(
             ['usuario_id' => $usuario->id],
             [
-                'perfil_usuario_id'      => $perfil->id,
-                'usuario_abrangencia_id' => $perfil->usuario_abrangencia_id,
+                'perfil_usuario_id'      => $perfilUsuario->id,
+                'usuario_abrangencia_id' => $perfilUsuario->usuario_abrangencia_id,
             ]
         );
 
-        return response()->json(['message' => 'Contexto alterado com sucesso!']);
+        return response()->json([
+            'message' => 'Contexto alterado com sucesso!',
+        ]);
     }
 }
