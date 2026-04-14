@@ -1,23 +1,39 @@
 <template>
   <section class="row g-3 solicitacao-form-grid">
-        <div class="col-12 col-md-6">
+    <div class="col-12 col-md-6">
       <div class="br-input">
-        <label for="input-email">E-mail institucional<span class="text-red-50 text-up-01"> *</span></label>
-        <input id="input-email" type="email" placeholder="seu.nome@email.com" v-model="emailInstitucional" maxlength="60"/>
-        <Feedback v-if="errorsEmail" :message="errorsEmail" type="danger" />
+        <label for="input-email"
+          >E-mail institucional<span class="text-red-50 text-up-01"> *</span></label
+        >
+        <input
+          id="input-email"
+          type="email"
+          placeholder="seu.nome@email.com"
+          v-model="emailInstitucional"
+          maxlength="60"
+          required
+          :aria-invalid="!!errorsEmail"
+          :aria-describedby="errorsEmail ? 'err-email-inst' : undefined"
+        />
+        <Feedback v-if="errorsEmail" id="err-email-inst" :message="errorsEmail" type="danger" />
       </div>
     </div>
     <div class="col-12 col-md-6">
       <div class="br-input">
-        <label for="input-tel-inst">Telefone institucional<span class="text-red-50 text-up-01"> *</span></label>
+        <label for="input-tel-inst"
+          >Telefone institucional<span class="text-red-50 text-up-01"> *</span></label
+        >
         <input
           id="input-tel-inst"
           type="tel"
           placeholder="(00) 00000-0000"
           v-model="telefoneInstitucional"
           v-maska="telefoneMask"
+          required
+          :aria-invalid="!!errorsTelInst"
+          :aria-describedby="errorsTelInst ? 'err-tel-inst' : undefined"
         />
-        <Feedback v-if="errorsTelInst" :message="errorsTelInst" type="danger" />
+        <Feedback v-if="errorsTelInst" id="err-tel-inst" :message="errorsTelInst" type="danger" />
       </div>
     </div>
     <div class="col-12 col-md-4">
@@ -25,11 +41,13 @@
         v-model="esferaAtuacao"
         label="Esfera de atuação"
         placeholder="Esfera de atuação"
-        :options="opcoesEsferaFiltradas"
+        :options="esferaAtuacaoOptions"
         :disabled="esferaBloqueada"
         required
+        :aria-invalid="!!errorsEsfera"
+        :aria-described-by="errorsEsfera ? 'err-esfera' : undefined"
       />
-      <Feedback v-if="errorsEsfera" :message="errorsEsfera" type="danger" />
+      <Feedback v-if="errorsEsfera" id="err-esfera" :message="errorsEsfera" type="danger" />
     </div>
     <div class="col-12 col-md-3">
       <SelectAutocomplete
@@ -39,8 +57,10 @@
         :options="opcoesUfFiltradas"
         :disabled="ufBloqueada"
         required
+        :aria-invalid="!!errorsUf"
+        :aria-described-by="errorsUf ? 'err-uf' : undefined"
       />
-      <Feedback v-if="errorsUf" :message="errorsUf" type="danger" />
+      <Feedback v-if="errorsUf" id="err-uf" :message="errorsUf" type="danger" />
     </div>
     <div class="col-12 col-md-5">
       <SelectAutocomplete
@@ -50,27 +70,50 @@
         :options="opcoesMunicipioFiltradas"
         :disabled="!uf || municipioBloqueado"
         required
+        :aria-invalid="!!errorsMunicipio"
+        :aria-described-by="errorsMunicipio ? 'err-municipio' : undefined"
       />
-      <Feedback v-if="errorsMunicipio" :message="errorsMunicipio" type="danger" />
+      <Feedback
+        v-if="errorsMunicipio"
+        id="err-municipio"
+        :message="errorsMunicipio"
+        type="danger"
+      />
     </div>
     <div class="col-12 col-md-7">
       <div class="br-input">
-        <label for="input-orgao">Órgão de atuação<span class="text-red-50 text-up-01"> *</span></label>
+        <label for="input-orgao"
+          >Órgão de atuação<span class="text-red-50 text-up-01"> *</span></label
+        >
         <input
           id="input-orgao"
           type="text"
           placeholder="Órgão ou secretaria responsável pela atuação no NVSL"
           v-model="orgao"
           maxlength="60"
+          required
+          :aria-invalid="!!errorsOrgao"
+          :aria-describedby="errorsOrgao ? 'err-orgao' : undefined"
         />
-        <Feedback v-if="errorsOrgao" :message="errorsOrgao" type="danger" />
+        <Feedback v-if="errorsOrgao" id="err-orgao" :message="errorsOrgao" type="danger" />
       </div>
     </div>
     <div class="col-12 col-md-5">
       <div class="br-input">
-        <label for="input-cargo">Cargo / função<span class="text-red-50 text-up-01"> *</span></label>
-        <input id="input-cargo" type="text" placeholder="Cargo ou função exercida" v-model="cargo" maxlength="60" />
-        <Feedback v-if="errorsCargo" :message="errorsCargo" type="danger" />
+        <label for="input-cargo"
+          >Cargo / função<span class="text-red-50 text-up-01"> *</span></label
+        >
+        <input
+          id="input-cargo"
+          type="text"
+          placeholder="Cargo ou função exercida"
+          v-model="cargo"
+          maxlength="60"
+          required
+          :aria-invalid="!!errorsCargo"
+          :aria-describedby="errorsCargo ? 'err-cargo' : undefined"
+        />
+        <Feedback v-if="errorsCargo" id="err-cargo" :message="errorsCargo" type="danger" />
       </div>
     </div>
   </section>
@@ -84,7 +127,7 @@ import { useEsferas } from '@/core/composables/useEsferas'
 import { useLocalidades } from '@/core/composables/useLocalidades'
 
 defineOptions({
-  name: 'FormularioInformacaoSolicitante'
+  name: 'FormularioInformacaoSolicitante',
 })
 
 const props = withDefaults(
@@ -96,7 +139,7 @@ const props = withDefaults(
       municipio_lotacao?: string
     } | null
   }>(),
-  { aplicarRegrasHierarquia: false, usuarioLogado: null }
+  { aplicarRegrasHierarquia: false, usuarioLogado: null },
 )
 // Máscara dinâmica: fixo (##) ####-#### ou celular (##) #####-####
 const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
@@ -110,19 +153,29 @@ const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('mu
 const { opcoesUf, opcoesMunicipio, carregarUfs } = useLocalidades(uf)
 
 const esferaUsuarioLogado = computed(() =>
-  String(props.usuarioLogado?.esfera_atuacao ?? '').toLowerCase()
+  String(props.usuarioLogado?.esfera_atuacao ?? '').toLowerCase(),
 )
 
 const aplicarHierarquia = computed(() => !!props.aplicarRegrasHierarquia)
 
 const esferaBloqueada = computed(
-  () => aplicarHierarquia.value && (esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal')
+  () =>
+    aplicarHierarquia.value &&
+    (esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal'),
 )
 const ufBloqueada = computed(
-  () => aplicarHierarquia.value && (esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal')
+  () =>
+    aplicarHierarquia.value &&
+    (esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal'),
 )
 const municipioBloqueado = computed(
-  () => aplicarHierarquia.value && esferaUsuarioLogado.value === 'municipal'
+  () => aplicarHierarquia.value && esferaUsuarioLogado.value === 'municipal',
+)
+const esferaAtuacaoOptions = computed(() =>
+  (opcoesEsfera.value ?? []).map((o) => ({
+    label: (o as any)?.nome ?? String((o as any)?.nome ?? ''),
+    value: String((o as any)?.id ?? ''),
+  })),
 )
 
 const opcoesEsferaFiltradas = computed(() => {
@@ -143,7 +196,8 @@ const opcoesUfFiltradas = computed(() => {
 })
 
 const opcoesMunicipioFiltradas = computed(() => {
-  if (!municipioBloqueado.value || !props.usuarioLogado?.municipio_lotacao) return opcoesMunicipio.value
+  if (!municipioBloqueado.value || !props.usuarioLogado?.municipio_lotacao)
+    return opcoesMunicipio.value
   const municipioLotacao = String(props.usuarioLogado.municipio_lotacao).toLowerCase()
   return opcoesMunicipio.value.filter((o) => String(o.label).toLowerCase() === municipioLotacao)
 })
@@ -151,6 +205,7 @@ const opcoesMunicipioFiltradas = computed(() => {
 onMounted(() => {
   carregarUfs()
   carregarEsferas()
+  console.log('esferaAtuacaoOptions', esferaAtuacaoOptions.value)
 })
 
 watch(uf, () => {
@@ -178,7 +233,7 @@ watch(
       if (usuario.municipio_lotacao) municipio.value = String(usuario.municipio_lotacao)
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 watch(opcoesMunicipioFiltradas, (opcoes) => {
@@ -193,11 +248,10 @@ watch(opcoesMunicipioFiltradas, (opcoes) => {
 })
 const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
 const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
-const { value: emailInstitucional, errorMessage: errorsEmail } = useField<string>('emailInstitucional')
-const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<string>('telefoneInstitucional')
-
-
-
+const { value: emailInstitucional, errorMessage: errorsEmail } =
+  useField<string>('emailInstitucional')
+const { value: telefoneInstitucional, errorMessage: errorsTelInst } =
+  useField<string>('telefoneInstitucional')
 </script>
 
 <style scoped>

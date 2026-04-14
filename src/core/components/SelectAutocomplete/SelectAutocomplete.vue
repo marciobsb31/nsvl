@@ -12,6 +12,10 @@
         :placeholder="placeholder"
         :value="displayValue"
         :disabled="disabled"
+        :required="required"
+        :aria-required="required"
+        :aria-invalid="ariaInvalid"
+        :aria-describedby="ariaDescribedBy"
         role="combobox"
         aria-autocomplete="list"
         :aria-expanded="isOpen"
@@ -52,7 +56,7 @@
         role="option"
         :id="optionId(option)"
         :aria-selected="index === highlightedIndex"
-        :class="{ 'highlighted': index === highlightedIndex }"
+        :class="{ highlighted: index === highlightedIndex }"
         @mousedown.prevent="selectOption(option)"
       >
         <div class="br-radio">
@@ -93,15 +97,26 @@ const props = withDefaults(
     disabled?: boolean
     /** ID do input para foco e acessibilidade (ex: cad-esfera) */
     inputId?: string
+    ariaInvalid?: boolean
+    ariaDescribedBy?: string
   }>(),
-  { required: false, modelValue: null, disabled: false, inputId: undefined }
+  {
+    required: false,
+    modelValue: null,
+    disabled: false,
+    inputId: undefined,
+    ariaInvalid: false,
+    ariaDescribedBy: undefined,
+  },
 )
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string | number | null): void
 }>()
 
-const inputId = props.inputId ?? `select-ac-${props.label.replace(/\s/g, '-')}-${Math.random().toString(36).slice(2, 8)}`
+const inputId =
+  props.inputId ??
+  `select-ac-${props.label.replace(/\s/g, '-')}-${Math.random().toString(36).slice(2, 8)}`
 const inputRef = ref<HTMLInputElement | null>(null)
 const isOpen = ref(false)
 const searchText = ref('')
@@ -122,9 +137,7 @@ const filteredOptions = computed(() => {
   if (!props.options.length) return []
   const term = searchText.value.toLowerCase().trim()
   if (!term) return props.options
-  return props.options.filter((opt) =>
-    String(opt.label).toLowerCase().includes(term)
-  )
+  return props.options.filter((opt) => String(opt.label).toLowerCase().includes(term))
 })
 
 const displayValue = computed(() => {
@@ -137,7 +150,7 @@ watch(
   () => props.modelValue,
   (val) => {
     if (val == null) searchText.value = ''
-  }
+  },
 )
 
 function onInput(e: Event) {
@@ -182,10 +195,7 @@ function navigateDown() {
     isOpen.value = true
     return
   }
-  highlightedIndex.value = Math.min(
-    highlightedIndex.value + 1,
-    filteredOptions.value.length - 1
-  )
+  highlightedIndex.value = Math.min(highlightedIndex.value + 1, filteredOptions.value.length - 1)
 }
 
 function navigateUp() {

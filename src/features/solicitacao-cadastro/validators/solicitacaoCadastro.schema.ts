@@ -2,8 +2,10 @@ import * as yup from 'yup'
 import { verificarCpfDisponivel } from '@/services/SolicitacaoCadastroService'
 
 const MENSAGENS_CPF_EM_USO: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.': 'Este CPF já está vinculado a um cadastro ativo. Faça login com GOV.BR para acessar o sistema.',
-  'Já existe uma solicitação em análise para este CPF.': 'Este CPF já possui uma solicitação em análise. Aguarde a avaliação da equipe gestora.',
+  'Este CPF já possui cadastro ativo no sistema.':
+    'Este CPF já está vinculado a um cadastro ativo. Faça login com GOV.BR para acessar o sistema.',
+  'Já existe uma solicitação em análise para este CPF.':
+    'Este CPF já possui uma solicitação em análise. Aguarde a avaliação da equipe gestora.',
 }
 
 /**
@@ -94,26 +96,11 @@ export const SolicitacaoCadastroSchema = yup.object({
       const digitos = value.replace(/\D/g, '')
       return digitos.length === 10 || digitos.length === 11
     }),
-  esferaAtuacao: yup
-    .string()
-    .required('Esfera de atuação é obrigatória')
-    .trim(),
-  uf: yup
-    .string()
-    .required('UF é obrigatória')
-    .trim(),
-  municipio: yup
-    .string()
-    .required('Município é obrigatório')
-    .trim(),
-  orgao: yup
-    .string()
-    .required('Organização é obrigatória')
-    .trim(),
-  cargo: yup
-    .string()
-    .required('Cargo é obrigatório')
-    .trim(),
+  esferaAtuacao: yup.string().required('Esfera de atuação é obrigatória').trim(),
+  uf: yup.string().required('UF é obrigatória').trim(),
+  municipio: yup.string().required('Município é obrigatório').trim(),
+  orgao: yup.string().required('Organização é obrigatória').trim(),
+  cargo: yup.string().required('Cargo é obrigatório').trim(),
 })
 
 export const SolicitacaoCadastroSchemaGovBr = yup.object({
@@ -152,26 +139,11 @@ export const SolicitacaoCadastroSchemaGovBr = yup.object({
       const digitos = value.replace(/\D/g, '')
       return digitos.length === 10 || digitos.length === 11
     }),
-  esferaAtuacao: yup
-    .string()
-    .required('Esfera de atuação é obrigatória')
-    .trim(),
-  uf: yup
-    .string()
-    .required('UF é obrigatória')
-    .trim(),
-  municipio: yup
-    .string()
-    .required('Município é obrigatório')
-    .trim(),
-  orgao: yup
-    .string()
-    .required('Organização é obrigatória')
-    .trim(),
-  cargo: yup
-    .string()
-    .required('Cargo é obrigatório')
-    .trim(),
+  esferaAtuacao: yup.string().required('Esfera de atuação é obrigatória').trim(),
+  uf: yup.string().required('UF é obrigatória').trim(),
+  municipio: yup.string().required('Município é obrigatório').trim(),
+  orgao: yup.string().required('Organização é obrigatória').trim(),
+  cargo: yup.string().required('Cargo é obrigatório').trim(),
 })
 
 export const DadosSolicitanteSchema = yup.object({
@@ -251,49 +223,19 @@ export const SolicitacaoCadastroSchemaEdicao = yup.object({
       const digitos = value.replace(/\D/g, '')
       return digitos.length === 10 || digitos.length === 11
     }),
-  esferaAtuacao: yup
-    .string()
-    .required('Esfera de atuação é obrigatória')
-    .trim(),
-  uf: yup
-    .string()
-    .required('UF é obrigatória')
-    .trim(),
-  municipio: yup
-    .string()
-    .required('Município é obrigatório')
-    .trim(),
-  orgao: yup
-    .string()
-    .required('Organização é obrigatória')
-    .trim(),
-  cargo: yup
-    .string()
-    .required('Cargo é obrigatório')
-    .trim(),
+  esferaAtuacao: yup.string().required('Esfera de atuação é obrigatória').trim(),
+  uf: yup.string().required('UF é obrigatória').trim(),
+  municipio: yup.string().required('Município é obrigatório').trim(),
+  orgao: yup.string().required('Organização é obrigatória').trim(),
+  cargo: yup.string().required('Cargo é obrigatório').trim(),
 })
 
 export const InformacaoSolicitanteSchema = yup.object({
-  esferaAtuacao: yup
-    .string()
-    .required('Esfera de atuação é obrigatória')
-    .trim(),
-  uf: yup
-    .string()
-    .required('UF é obrigatória')
-    .trim(),
-  municipio: yup
-    .string()
-    .required('Município é obrigatório')
-    .trim(),
-  orgao: yup
-    .string()
-    .required('Organização é obrigatória')
-    .trim(),
-  cargo: yup
-    .string()
-    .required('Cargo é obrigatório')
-    .trim(),
+  esferaAtuacao: yup.string().required('Esfera de atuação é obrigatória').trim(),
+  uf: yup.string().required('UF é obrigatória').trim(),
+  municipio: yup.string().required('Município é obrigatório').trim(),
+  orgao: yup.string().required('Organização é obrigatória').trim(),
+  cargo: yup.string().required('Cargo é obrigatório').trim(),
 })
 
 /**
@@ -309,10 +251,14 @@ export const SolicitacaoCadastroSchemaGerenciar = SolicitacaoCadastroSchema.shap
   vigenciaFim: yup
     .string()
     .trim()
-    .test('vigencia-fim', 'A data de fim deve ser igual ou posterior à data de início.', (value, ctx) => {
-      if (!value) return true
-      const inicio = ctx.parent.vigenciaInicio as string
-      if (!inicio) return true
-      return value >= inicio
-    }),
+    .test(
+      'vigencia-fim',
+      'A data de fim deve ser igual ou posterior à data de início.',
+      (value, ctx) => {
+        if (!value) return true
+        const inicio = ctx.parent.vigenciaInicio as string
+        if (!inicio) return true
+        return value >= inicio
+      },
+    ),
 })
