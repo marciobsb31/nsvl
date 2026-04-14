@@ -46,16 +46,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/perfis', [PerfilController::class, 'index'])->name('perfis.index');
 
-    Route::prefix('gerenciar-perfis')->group(function () {
-        Route::get('/', [GerenciarPerfilController::class, 'index']);
-        Route::post('/', [GerenciarPerfilController::class, 'store']);
-        Route::get('/permissoes', [GerenciarPerfilController::class, 'permissoes']);
-        Route::get('/hierarquia', [GerenciarPerfilController::class, 'hierarquia']);
-        Route::get('/{id}', [GerenciarPerfilController::class, 'show']);
-        Route::put('/{id}', [GerenciarPerfilController::class, 'update']);
-        Route::get('/{id}/historico', [GerenciarPerfilController::class, 'historico']);
-    });
-
     Route::prefix('solicitacoes-cadastro')->group(function () {
         Route::get('/', [SolicitacaoCadastroController::class, 'index'])
             ->middleware('permission:solicitacoes_cadastro.visualizar');
