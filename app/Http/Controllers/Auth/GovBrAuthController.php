@@ -229,7 +229,7 @@ class GovBrAuthController extends Controller
 
         $this->auditLogService->log('auth.logout', $user?->id, [
             'provider' => 'sanctum',
-        ], TipoAuditoria::LOGOUT);
+        ], TipoAuditoria::LOGOUT->name);
 
         return response()->json([
             'message' => 'Logout realizado com sucesso.',
