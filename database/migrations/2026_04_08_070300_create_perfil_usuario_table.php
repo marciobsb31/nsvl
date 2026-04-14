@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('usuario_id')->constrained('usuarios');
             $table->foreignId('perfil_id')->index()->constrained('perfis');
+            $table->foreignId('usuario_abrangencia_id')->nullable();
             $table->date('data_inicio_vigencia')->nullable();
             $table->date('data_fim_vigencia')->nullable();
             $table->string('origem_tipo', 30);

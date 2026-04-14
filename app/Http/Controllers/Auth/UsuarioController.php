@@ -42,8 +42,13 @@ class UsuarioController extends Controller
     )]
     public function me()
     {
+
         return UsuarioResource::make(
-            auth()->user()->load('perfis.permissoes')
+            auth()->user()->load([
+                'perfis',
+                'contextoAtivo.perfilUsuario.perfil.permissoes',
+                'contextoAtivo.abrangencia.esfera',
+            ])
         );
     }
 }

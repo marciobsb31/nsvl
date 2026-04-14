@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ContextoRequest;
+use Illuminate\Http\Response;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: 'Contexto', description: 'Perfil ativo do usuário')]
@@ -35,20 +36,20 @@ class TrocaContextoController extends Controller
     {
         $usuario = auth()->user();
 
-        $contexto = $usuario->perfisUsuario()
+        $perfil = $usuario->perfisUsuario()
             ->where('id', $request->contexto_id)
-            ->where('ativo', true)
             ->first();
 
-        if (! $contexto) {
-            return response()->json(['message' => 'Contexto inválido.'], 403);
+        if (! $perfil) {
+            return response()->json(['message' => 'Perfil não encontrado ou não pertence ao usuário.'],
+                Response::HTTP_FORBIDDEN);
         }
 
         $usuario->contextoAtivo()->updateOrCreate(
             ['usuario_id' => $usuario->id],
             [
-                'perfil_usuario_id'      => $contexto->id,
-                'usuario_abrangencia_id' => $contexto->usuario_abrangencia_id,
+                'perfil_usuario_id'      => $perfil->id,
+                'usuario_abrangencia_id' => $perfil->usuario_abrangencia_id,
             ]
         );
 
