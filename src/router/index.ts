@@ -52,7 +52,6 @@ const router = createRouter({
       component: () => import('@/features/plano-acao/pages/PlanoAcaoPage.vue'),
       meta: { title: 'Enviar plano de ação — NVSL' },
     },
-    ...gerenciarPerfisRoutes,
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
@@ -60,7 +59,7 @@ const router = createRouter({
       meta: {
         title: 'Página não encontrada — NVSL',
       },
-    }
+    },
   ],
 })
 
