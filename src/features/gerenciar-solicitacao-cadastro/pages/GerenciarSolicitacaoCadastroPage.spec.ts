@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import GerenciarSolicitacaoCadastroPage from './GerenciarSolicitacaoCadastroPage.vue'
 import type { SolicitacaoGerenciarItem } from '@/services/GerenciarSolicitacaoCadastroService'
-import type { SolicitacaoCadastroDetalhe } from '@/services/SolicitacaoCadastroService'
+import type { SolicitacaoCadastroDetalhe } from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
 
 const mockUser = ref<Record<string, unknown> | null>(null)
 const mockContextKey = ref(0)
@@ -75,9 +75,9 @@ function detalheBase(over: Partial<SolicitacaoCadastroDetalhe> = {}): Solicitaca
     created_at: '2026-01-01T10:00:00Z',
     email_institucional: 'm@org.gov.br',
     telefone_institucional: '6133334444',
-    esfera_atuacao: 'federal',
-    uf: 'GO',
-    municipio: 'Goiânia',
+    esfera_id: 1,
+    uf_id: 12,
+    municipio_id: 123,
     orgao: 'Órgão X',
     cargo: 'Analista',
     perfis_vinculados: [],
@@ -196,7 +196,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
     await w.find('[data-testid="btn-pesquisar"]').trigger('click')
     await flushPromises()
     expect(listarSolicitacoesGerenciar).toHaveBeenCalledWith(
-      expect.objectContaining({ nome: 'FiltroNome' })
+      expect.objectContaining({ nome: 'FiltroNome' }),
     )
   })
 
@@ -231,7 +231,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
 
   it('pagina resultados (máx. 10 linhas por página com 11 itens)', async () => {
     const onze = Array.from({ length: 11 }, (_, i) =>
-      itemBase({ id: i + 1, nome: `User ${i + 1}` })
+      itemBase({ id: i + 1, nome: `User ${i + 1}` }),
     )
     listarSolicitacoesGerenciar.mockResolvedValue(onze)
     const w = mountPage()
@@ -384,7 +384,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
     mountPage()
     await flushPromises()
     expect(errorMock).toHaveBeenCalledWith(
-      'Não foi possível carregar as solicitações. Verifique se o backend está em execução.'
+      'Não foi possível carregar as solicitações. Verifique se o backend está em execução.',
     )
   })
 })

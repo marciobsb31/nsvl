@@ -24,16 +24,26 @@
         </div>
         <div class="painel-info-item">
           <span class="painel-info-label">Perfis Vinculados</span>
-          <span class="painel-perfis-badge" :class="temPerfisVinculados ? 'com-perfis' : 'sem-perfis'">
+          <span
+            class="painel-perfis-badge"
+            :class="temPerfisVinculados ? 'com-perfis' : 'sem-perfis'"
+          >
             <span class="perfis-indicador" :class="temPerfisVinculados ? 'com' : 'sem'"></span>
-            {{ temPerfisVinculados ? `${perfisVinculadosCount} PERFIL(IS) VINCULADO(S)` : 'SEM PERFIS VINCULADOS' }}
+            {{
+              temPerfisVinculados
+                ? `${perfisVinculadosCount} PERFIL(IS) VINCULADO(S)`
+                : 'SEM PERFIS VINCULADOS'
+            }}
           </span>
         </div>
       </div>
     </div>
 
     <!-- Bloco: Aguardando Avaliação (somente quando em_analise e usuário tem privilégio) -->
-    <div v-if="detalhe?.status === 'em_analise' && detalhe?.pode_avaliar !== false" class="painel-secao">
+    <div
+      v-if="detalhe?.status === 'em_analise' && detalhe?.pode_avaliar !== false"
+      class="painel-secao"
+    >
       <h3 class="secao-titulo">Aguardando Avaliação</h3>
       <div class="secao-aguardando-avaliacao">
         <div class="secao-linha-3cols">
@@ -60,12 +70,19 @@
             <input type="text" :value="detalhe.cargo" readonly />
           </div>
         </div>
-        <div v-if="detalhe.vigencia_inicio_solicitada || detalhe.vigencia_fim_solicitada" class="secao-linha-3cols">
+        <div
+          v-if="detalhe.vigencia_inicio_solicitada || detalhe.vigencia_fim_solicitada"
+          class="secao-linha-3cols"
+        >
           <div class="br-input">
             <label>Vigência informada na solicitação (início)</label>
             <input
               type="text"
-              :value="detalhe.vigencia_inicio_solicitada ? formatarDataExibicao(detalhe.vigencia_inicio_solicitada) : '—'"
+              :value="
+                detalhe.vigencia_inicio_solicitada
+                  ? formatarDataExibicao(detalhe.vigencia_inicio_solicitada)
+                  : '—'
+              "
               readonly
             />
           </div>
@@ -73,7 +90,11 @@
             <label>Vigência informada na solicitação (fim)</label>
             <input
               type="text"
-              :value="detalhe.vigencia_fim_solicitada ? formatarDataExibicao(detalhe.vigencia_fim_solicitada) : '—'"
+              :value="
+                detalhe.vigencia_fim_solicitada
+                  ? formatarDataExibicao(detalhe.vigencia_fim_solicitada)
+                  : '—'
+              "
               readonly
             />
           </div>
@@ -98,19 +119,11 @@
           </div>
           <div class="br-input">
             <label for="vigencia-inicio">Vigência (inicial)</label>
-            <input
-              id="vigencia-inicio"
-              type="date"
-              v-model="vigenciaInicio"
-            />
+            <input id="vigencia-inicio" type="date" v-model="vigenciaInicio" />
           </div>
           <div class="br-input">
             <label for="vigencia-fim">Vigência (fim)</label>
-            <input
-              id="vigencia-fim"
-              type="date"
-              v-model="vigenciaFim"
-            />
+            <input id="vigencia-fim" type="date" v-model="vigenciaFim" />
           </div>
         </div>
       </div>
@@ -155,7 +168,11 @@
         <div class="secao-linha-2cols">
           <div class="br-input">
             <label>Telefone Institucional</label>
-            <input type="text" :value="formatarTelefone(detalhe?.telefone_institucional)" readonly />
+            <input
+              type="text"
+              :value="formatarTelefone(detalhe?.telefone_institucional)"
+              readonly
+            />
           </div>
           <div class="br-input">
             <label>Telefone pessoal</label>
@@ -170,7 +187,10 @@
     </div>
 
     <!-- Histórico de reprovação (status reprovado) — abaixo dos dados do solicitante -->
-    <div v-if="detalhe?.status === 'reprovado'" class="painel-secao painel-secao--historico-reprovacao">
+    <div
+      v-if="detalhe?.status === 'reprovado'"
+      class="painel-secao painel-secao--historico-reprovacao"
+    >
       <h3 class="secao-titulo">Histórico de reprovação</h3>
       <p class="secao-descricao">
         Registro das decisões de reprovação com data e motivo informado pelo avaliador.
@@ -208,16 +228,19 @@
         <div>
           <h3 class="perfis-vinculados-titulo">Perfis vinculados</h3>
           <p class="perfis-vinculados-subtitulo">
-            Um usuário pode ter vários perfis. Cada vínculo possui vigência, status e contexto de atuação.
+            Um usuário pode ter vários perfis. Cada vínculo possui vigência, status e contexto de
+            atuação.
           </p>
         </div>
       </div>
       <div v-if="!temPerfisVinculados" class="perfis-vinculados-vazio">
         <i class="fas fa-users fa-2x mb-2" aria-hidden="true"></i>
         <p>
-          {{ detalhe?.status === 'aprovado'
-            ? 'Nenhum perfil vinculado. Clique em Adicionar Perfil para vincular um novo perfil ao usuário.'
-            : 'Nenhum perfil vinculado para este solicitante.' }}
+          {{
+            detalhe?.status === 'aprovado'
+              ? 'Nenhum perfil vinculado. Clique em Adicionar Perfil para vincular um novo perfil ao usuário.'
+              : 'Nenhum perfil vinculado para este solicitante.'
+          }}
         </p>
       </div>
       <div v-else-if="!isMobile" class="table-responsive">
@@ -230,13 +253,23 @@
                 </button>
               </th>
               <th scope="col" class="th-bold" :aria-sort="obterAriaSort('vigencia_inicio')">
-                <button class="th-sort-btn" type="button" @click="alternarOrdenacao('vigencia_inicio')">
-                  Vig. início <span class="th-sort-icon">{{ obterIndicadorSort('vigencia_inicio') }}</span>
+                <button
+                  class="th-sort-btn"
+                  type="button"
+                  @click="alternarOrdenacao('vigencia_inicio')"
+                >
+                  Vig. início
+                  <span class="th-sort-icon">{{ obterIndicadorSort('vigencia_inicio') }}</span>
                 </button>
               </th>
               <th scope="col" class="th-bold" :aria-sort="obterAriaSort('vigencia_fim')">
-                <button class="th-sort-btn" type="button" @click="alternarOrdenacao('vigencia_fim')">
-                  Vig. fim <span class="th-sort-icon">{{ obterIndicadorSort('vigencia_fim') }}</span>
+                <button
+                  class="th-sort-btn"
+                  type="button"
+                  @click="alternarOrdenacao('vigencia_fim')"
+                >
+                  Vig. fim
+                  <span class="th-sort-icon">{{ obterIndicadorSort('vigencia_fim') }}</span>
                 </button>
               </th>
               <th scope="col" class="th-bold" :aria-sort="obterAriaSort('vigente')">
@@ -292,8 +325,17 @@
                   class="br-button secondary small"
                   type="button"
                   :disabled="props.ehProprioCadastro && p.ativo"
-                  :title="props.ehProprioCadastro && p.ativo ? 'Você não pode desativar seu próprio cadastro' : undefined"
-                  @click="$emit('toggle-perfil', { perfilUsuarioId: p.perfil_usuario_id, acao: p.ativo ? 'desativar' : 'ativar' })"
+                  :title="
+                    props.ehProprioCadastro && p.ativo
+                      ? 'Você não pode desativar seu próprio cadastro'
+                      : undefined
+                  "
+                  @click="
+                    $emit('toggle-perfil', {
+                      perfilUsuarioId: p.perfil_usuario_id,
+                      acao: p.ativo ? 'desativar' : 'ativar',
+                    })
+                  "
                 >
                   {{ p.ativo ? 'Desativar' : 'Ativar' }}
                 </button>
@@ -303,62 +345,75 @@
         </table>
       </div>
       <div v-if="isMobile && temPerfisVinculados">
-      <div class="row" v-for="(p, idx) in perfisVinculadosOrdenados" :key="`perfil-${idx}-${p.id ?? idx}`">
-        <div class="col-8 mb-1">
-          <label for="perfil">Perfil</label>
-          <p class="m-0">{{ p.perfil }}</p>
-        </div>
-        <div class="col-4 mb-1">
-          <label for="vigente">Status</label><br>
-          <span class="br-tag" :class="p.ativo ? 'success' : 'danger'">
-            {{ p.ativo ? 'Ativo' : 'Inativo' }}
-          </span>
-        </div>
-        <div class="col-4 mb-1">
-          <label for="vigencia_inicio">Vig. início</label>
-          <p class="m-0">{{ formatarDataExibicao(p.vigencia_inicio) }}</p>
-        </div>
-        <div class="col-4 mb-1">
-          <label for="vigencia_fim">Vig. fim</label>
-          <p class="m-0">{{ formatarDataExibicao(p.vigencia_fim) }}</p>
-        </div>
-        <div class="col-4 mb-1">
-          <label for="esfera">Esfera</label>
-          <p class="m-0">{{ p.esfera }}</p>
-        </div>
-        <div class="col-4 mb-1">
-          <label for="uf">UF</label>
-          <p class="m-0">{{ p.uf }}</p>
-        </div>
-        <div class="col-4 mb-1">
-          <label for="municipio">Município</label>
-          <p class="m-0">{{ p.municipio }}</p>
-        </div>
-        <div class="col-4 mb-1">
-          <label for="orgao">Órgão</label>
-          <p class="m-0">{{ p.orgao }}</p>
-        </div>
-        <div class="col-4 mb-1">
-          <label for="cargo">Cargo</label>
-          <p class="m-0">{{ p.cargo }}</p>
-        </div>
-        <div class="col-12">
-          <button
-                  class="br-button secondary small block"
-                  type="button"
-                  :disabled="props.ehProprioCadastro && p.ativo"
-                  :title="props.ehProprioCadastro && p.ativo ? 'Você não pode desativar seu próprio cadastro' : undefined"
-                  @click="$emit('toggle-perfil', { perfilUsuarioId: p.perfil_usuario_id, acao: p.ativo ? 'desativar' : 'ativar' })"
-                >
-                  {{ p.ativo ? 'Desativar' : 'Ativar' }}
-                </button>
-        </div>
-        <div class="col-12">
-          <span class="br-divider my-3"></span>
+        <div
+          class="row"
+          v-for="(p, idx) in perfisVinculadosOrdenados"
+          :key="`perfil-${idx}-${p.id ?? idx}`"
+        >
+          <div class="col-8 mb-1">
+            <label for="perfil">Perfil</label>
+            <p class="m-0">{{ p.perfil }}</p>
+          </div>
+          <div class="col-4 mb-1">
+            <label for="vigente">Status</label><br />
+            <span class="br-tag" :class="p.ativo ? 'success' : 'danger'">
+              {{ p.ativo ? 'Ativo' : 'Inativo' }}
+            </span>
+          </div>
+          <div class="col-4 mb-1">
+            <label for="vigencia_inicio">Vig. início</label>
+            <p class="m-0">{{ formatarDataExibicao(p.vigencia_inicio) }}</p>
+          </div>
+          <div class="col-4 mb-1">
+            <label for="vigencia_fim">Vig. fim</label>
+            <p class="m-0">{{ formatarDataExibicao(p.vigencia_fim) }}</p>
+          </div>
+          <div class="col-4 mb-1">
+            <label for="esfera">Esfera</label>
+            <p class="m-0">{{ p.esfera }}</p>
+          </div>
+          <div class="col-4 mb-1">
+            <label for="uf">UF</label>
+            <p class="m-0">{{ p.uf }}</p>
+          </div>
+          <div class="col-4 mb-1">
+            <label for="municipio">Município</label>
+            <p class="m-0">{{ p.municipio }}</p>
+          </div>
+          <div class="col-4 mb-1">
+            <label for="orgao">Órgão</label>
+            <p class="m-0">{{ p.orgao }}</p>
+          </div>
+          <div class="col-4 mb-1">
+            <label for="cargo">Cargo</label>
+            <p class="m-0">{{ p.cargo }}</p>
+          </div>
+          <div class="col-12">
+            <button
+              class="br-button secondary small block"
+              type="button"
+              :disabled="props.ehProprioCadastro && p.ativo"
+              :title="
+                props.ehProprioCadastro && p.ativo
+                  ? 'Você não pode desativar seu próprio cadastro'
+                  : undefined
+              "
+              @click="
+                $emit('toggle-perfil', {
+                  perfilUsuarioId: p.perfil_usuario_id,
+                  acao: p.ativo ? 'desativar' : 'ativar',
+                })
+              "
+            >
+              {{ p.ativo ? 'Desativar' : 'Ativar' }}
+            </button>
+          </div>
+          <div class="col-12">
+            <span class="br-divider my-3"></span>
+          </div>
         </div>
       </div>
-      </div>
-        <PaginationControls
+      <PaginationControls
         v-if="perfisVinculadosOrdenados.length > 0"
         v-model:currentPage="paginaAtualPerfis"
         v-model:pageSize="itensPorPaginaPerfis"
@@ -374,9 +429,13 @@
       @close="fecharModalReprovar"
     >
       <form @submit.prevent="onSubmitReprovar" class="form-modal-reprovar">
-        <p class="mb-3">Informe o motivo da reprovação. Esta informação ficará registrada no sistema.</p>
+        <p class="mb-3">
+          Informe o motivo da reprovação. Esta informação ficará registrada no sistema.
+        </p>
         <div class="br-textarea mb-3">
-          <label for="justificativa-reprovacao">Justificativa <span class="text-red-50">*</span></label>
+          <label for="justificativa-reprovacao"
+            >Justificativa <span class="text-red-50">*</span></label
+          >
           <textarea
             id="justificativa-reprovacao"
             v-model="justificativaReprovacao"
@@ -392,7 +451,9 @@
           <div class="content">{{ erroReprovar }}</div>
         </div>
         <div class="form-modal-acoes">
-          <button class="br-button secondary" type="button" @click="fecharModalReprovar">Cancelar</button>
+          <button class="br-button secondary" type="button" @click="fecharModalReprovar">
+            Cancelar
+          </button>
           <button
             class="br-button danger"
             type="submit"
@@ -412,12 +473,12 @@ import { usePerfis } from '@/core/composables/usePerfis'
 import { useAuth } from '@/core/composables/useAuth'
 import Modal from '@/core/components/Modal/Modal.vue'
 import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
-import type {
-  SolicitacaoCadastroDetalhe,
-  PerfilVinculado,
-  HistoricoReprovacaoItem,
-} from '@/services/SolicitacaoCadastroService'
 import { useBreakpoint } from '@/core/composables/useBreakpoint'
+import type {
+  HistoricoReprovacaoItem,
+  PerfilVinculado,
+  SolicitacaoCadastroDetalhe,
+} from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
 
 defineOptions({ name: 'PainelDetalharSolicitacao' })
 const { isMobile } = useBreakpoint()
@@ -425,16 +486,19 @@ const { perfilAtivo } = useAuth()
 
 const props = withDefaults(
   defineProps<{
-    detalhe: SolicitacaoCadastroDetalhe & { cpf?: string } | null
+    detalhe: (any & { cpf?: string }) | null
     avaliando?: boolean
     ehProprioCadastro?: boolean
   }>(),
-  {}
+  {},
 )
 
 const emit = defineEmits<{
   (e: 'voltar'): void
-  (e: 'aprovar', payload: { perfilId: string | number | null; vigenciaInicio: string; vigenciaFim: string }): void
+  (
+    e: 'aprovar',
+    payload: { perfilId: string | number | null; vigenciaInicio: string; vigenciaFim: string },
+  ): void
   (e: 'reprovar', payload: { justificativa: string }): void
   (e: 'toggle-perfil', payload: { perfilUsuarioId: number; acao: 'ativar' | 'desativar' }): void
 }>()
@@ -551,10 +615,10 @@ const opcoesPerfilPermitidasOperador = computed(() => {
 
 const opcoesPerfilDisponiveis = computed(() => {
   const perfisJaVinculados = new Set(
-    perfisVinculadosLista.value.map((p) => String(p.perfil).toLowerCase())
+    perfisVinculadosLista.value.map((p) => String(p.perfil).toLowerCase()),
   )
   return opcoesPerfilPermitidasOperador.value.filter(
-    (op) => !perfisJaVinculados.has(String(op.label).toLowerCase())
+    (op) => !perfisJaVinculados.has(String(op.label).toLowerCase()),
   )
 })
 
@@ -601,11 +665,13 @@ watch(
       vigenciaInicio.value = toInputDate(novo.vigencia_inicio_solicitada) || hoje
       vigenciaFim.value = toInputDate(novo.vigencia_fim_solicitada) || ''
       perfilSelecionado.value =
-        novo.perfil_id_solicitado != null && novo.perfil_id_solicitado > 0 ? novo.perfil_id_solicitado : null
+        novo.perfil_id_solicitado != null && novo.perfil_id_solicitado > 0
+          ? novo.perfil_id_solicitado
+          : null
       paginaAtualPerfis.value = 1
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 function formatarDataExibicao(val: string) {
@@ -711,7 +777,11 @@ function compararTexto(a: unknown, b: unknown): number {
   return normalizarTexto(a).localeCompare(normalizarTexto(b), 'pt-BR', { sensitivity: 'base' })
 }
 
-function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao, coluna: ColunaOrdenacao): number {
+function compararValores(
+  a: PerfilVinculadoExibicao,
+  b: PerfilVinculadoExibicao,
+  coluna: ColunaOrdenacao,
+): number {
   switch (coluna) {
     case 'vigencia_inicio':
       return normalizarData(a.vigencia_inicio) - normalizarData(b.vigencia_inicio)
@@ -944,7 +1014,9 @@ function compararValores(a: PerfilVinculadoExibicao, b: PerfilVinculadoExibicao,
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .perfil-select::after {

@@ -216,13 +216,15 @@ import {
   type SolicitacaoGerenciarItem,
   type FiltrosGerenciarSolicitacao as FiltrosGerenciarSolicitacaoType,
 } from '@/services/GerenciarSolicitacaoCadastroService'
-import { obterSolicitacaoCadastro, type SolicitacaoCadastroDetalhe } from '@/services/SolicitacaoCadastroService'
+import { obterSolicitacaoCadastro } from '@/services/SolicitacaoCadastroService'
 import { useNotification } from '@/core/composables/useNotification'
 import { useAuth } from '@/core/composables/useAuth'
 import HeaderPage from '@/core/components/HeaderPage/HeaderPage.vue'
 import { BrButton } from '@govbr-ds/webcomponents-vue'
 import { useBreakpoint } from '@/core/composables/useBreakpoint'
 import Contexto from '@/core/components/Contexto/Contexto.vue'
+import type { SolicitacaoCadastroDetalhe } from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
+
 
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
