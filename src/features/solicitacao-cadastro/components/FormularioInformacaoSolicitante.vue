@@ -42,7 +42,6 @@
         label="Esfera de atuação"
         placeholder="Esfera de atuação"
         :options="esferaAtuacaoOptions"
-        :disabled="esferaBloqueada"
         required
         :aria-invalid="!!errorsEsfera"
         :aria-described-by="errorsEsfera ? 'err-esfera' : undefined"
@@ -54,8 +53,7 @@
         v-model="uf"
         label="Estado (UF)"
         placeholder="Selecione"
-        :options="opcoesUfFiltradas"
-        :disabled="ufBloqueada"
+        :options="opcoesUf"
         required
         :aria-invalid="!!errorsUf"
         :aria-described-by="errorsUf ? 'err-uf' : undefined"
@@ -67,8 +65,8 @@
         v-model="municipio"
         label="Município"
         placeholder="Município"
-        :options="opcoesMunicipioFiltradas"
-        :disabled="!uf || municipioBloqueado"
+        :options="opcoesMunicipio"
+        :disabled="!uf"
         required
         :aria-invalid="!!errorsMunicipio"
         :aria-described-by="errorsMunicipio ? 'err-municipio' : undefined"
@@ -125,127 +123,52 @@ import { useField } from 'vee-validate'
 import Feedback from '@/core/components/Feedback/Feedback.vue'
 import { useEsferas } from '@/core/composables/useEsferas'
 import { useLocalidades } from '@/core/composables/useLocalidades'
+import { useUfStore } from '@/stores/ufStore'
+import { useMunicipioStore } from '@/stores/municipioStore'
 
 defineOptions({
   name: 'FormularioInformacaoSolicitante',
 })
 
-const props = withDefaults(
-  defineProps<{
-    aplicarRegrasHierarquia?: boolean
-    usuarioLogado?: {
-      esfera_atuacao?: string
-      uf_lotacao?: string
-      municipio_lotacao?: string
-    } | null
-  }>(),
-  { aplicarRegrasHierarquia: false, usuarioLogado: null },
-)
 // Máscara dinâmica: fixo (##) ####-#### ou celular (##) #####-####
 const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
 
 const { opcoesEsfera, carregarEsferas } = useEsferas()
+const ufStore = useUfStore()
+const municipioStore = useMunicipioStore()
 
 const { value: esferaAtuacao, errorMessage: errorsEsfera } = useField<string>('esferaAtuacao')
 const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
 const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
 
-const { opcoesUf, opcoesMunicipio, carregarUfs } = useLocalidades(uf)
-
-const esferaUsuarioLogado = computed(() =>
-  String(props.usuarioLogado?.esfera_atuacao ?? '').toLowerCase(),
-)
-
-const aplicarHierarquia = computed(() => !!props.aplicarRegrasHierarquia)
-
-const esferaBloqueada = computed(
-  () =>
-    aplicarHierarquia.value &&
-    (esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal'),
-)
-const ufBloqueada = computed(
-  () =>
-    aplicarHierarquia.value &&
-    (esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal'),
-)
-const municipioBloqueado = computed(
-  () => aplicarHierarquia.value && esferaUsuarioLogado.value === 'municipal',
-)
 const esferaAtuacaoOptions = computed(() =>
   (opcoesEsfera.value ?? []).map((o) => ({
     label: (o as any)?.nome ?? String((o as any)?.nome ?? ''),
     value: String((o as any)?.id ?? ''),
   })),
 )
-
-const opcoesEsferaFiltradas = computed(() => {
-  if (!aplicarHierarquia.value) return opcoesEsfera.value
-  if (esferaUsuarioLogado.value === 'estadual') {
-    return opcoesEsfera.value.filter((o) => String(o.value).toLowerCase() === 'estadual')
-  }
-  if (esferaUsuarioLogado.value === 'municipal') {
-    return opcoesEsfera.value.filter((o) => String(o.value).toLowerCase() === 'municipal')
-  }
-  return opcoesEsfera.value
+//Lista de estado
+const opcoesUf = computed(() => {
+  return ufStore.ufsOptions
 })
 
-const opcoesUfFiltradas = computed(() => {
-  if (!ufBloqueada.value || !props.usuarioLogado?.uf_lotacao) return opcoesUf.value
-  const ufLotacao = String(props.usuarioLogado.uf_lotacao).toUpperCase()
-  return opcoesUf.value.filter((o) => String(o.value).toUpperCase() === ufLotacao)
+//Lista Municipios
+const opcoesMunicipio = computed(() => {
+  return municipioStore.municipiosOptions
 })
 
-const opcoesMunicipioFiltradas = computed(() => {
-  if (!municipioBloqueado.value || !props.usuarioLogado?.municipio_lotacao)
-    return opcoesMunicipio.value
-  const municipioLotacao = String(props.usuarioLogado.municipio_lotacao).toLowerCase()
-  return opcoesMunicipio.value.filter((o) => String(o.label).toLowerCase() === municipioLotacao)
-})
-
-onMounted(() => {
-  carregarUfs()
-  carregarEsferas()
-  console.log('esferaAtuacaoOptions', esferaAtuacaoOptions.value)
-})
-
-watch(uf, () => {
-  if (municipioBloqueado.value && props.usuarioLogado?.municipio_lotacao) {
-    municipio.value = String(props.usuarioLogado.municipio_lotacao)
-    return
-  }
-  municipio.value = ''
-})
-
-watch(
-  () => props.usuarioLogado,
-  (usuario) => {
-    if (!aplicarHierarquia.value || !usuario) return
-
-    const esfera = String(usuario.esfera_atuacao ?? '').toLowerCase()
-    if (esfera === 'estadual') {
-      esferaAtuacao.value = 'estadual'
-      if (usuario.uf_lotacao) uf.value = String(usuario.uf_lotacao).toUpperCase()
-      return
-    }
-    if (esfera === 'municipal') {
-      esferaAtuacao.value = 'municipal'
-      if (usuario.uf_lotacao) uf.value = String(usuario.uf_lotacao).toUpperCase()
-      if (usuario.municipio_lotacao) municipio.value = String(usuario.municipio_lotacao)
-    }
-  },
-  { immediate: true, deep: true },
-)
-
-watch(opcoesMunicipioFiltradas, (opcoes) => {
-  if (!municipioBloqueado.value || !props.usuarioLogado?.municipio_lotacao) return
-  const municipioLotacao = String(props.usuarioLogado.municipio_lotacao).toLowerCase()
-  const opcao = opcoes.find((o) => String(o.label).toLowerCase() === municipioLotacao)
-  if (opcao) {
-    municipio.value = String(opcao.value ?? opcao.label)
-  } else {
-    municipio.value = String(props.usuarioLogado.municipio_lotacao)
+//Watcher para carregar municípios quando UF muda
+watch(uf, async (newUf) => {
+  if (newUf) {
+    await municipioStore.carregarMunicipios(newUf)
   }
 })
+
+onMounted(async () => {
+  await carregarEsferas()
+  await ufStore.carregarUfs()
+})
+
 const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
 const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
 const { value: emailInstitucional, errorMessage: errorsEmail } =

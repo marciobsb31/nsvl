@@ -2,18 +2,15 @@
   <PublicLayout full-width>
     <section class="solicitacao-page" aria-labelledby="solicitacao-titulo">
       <div class="solicitacao-page__inner">
-         <Breadcrumb customClass="mb-3"></Breadcrumb>
+        <Breadcrumb customClass="mb-3"></Breadcrumb>
 
         <header class="solicitacao-hero">
-          <h1 id="solicitacao-titulo" class="solicitacao-hero__title">
-            Solicitação de cadastro
-          </h1>
+          <h1 id="solicitacao-titulo" class="solicitacao-hero__title">Solicitação de cadastro</h1>
           <p class="solicitacao-hero__lead">
-            Preencha os dados abaixo para solicitar acesso ao <strong>NVSL</strong>. Campos marcados com
-            <span class="solicitacao-hero__req">*</span> são obrigatórios.
+            Preencha os dados abaixo para solicitar acesso ao <strong>NVSL</strong>. Campos marcados
+            com <span class="solicitacao-hero__req">*</span> são obrigatórios.
           </p>
         </header>
-
 
         <Form
           v-slot="{ values: formValues, meta: formMeta }"
@@ -42,10 +39,10 @@
 
           <Card
             title="Aceite do Termo de Uso e Privacidade"
-           subtitle="O aceite ocorre no ato da confirmação e envio da solicitação."
+            subtitle="O aceite ocorre no ato da confirmação e envio da solicitação."
             custom-class="solicitacao-card solicitacao-card--termo"
           >
-             <TermoUsoPrivacidade />
+            <TermoUsoPrivacidade />
           </Card>
 
           <div class="solicitacao-acoes">
@@ -68,21 +65,21 @@
         </Form>
       </div>
 
-      <Modal
-        v-if="modalVisualizar"
-        title="Visualizar solicitação"
-        @close="fecharModalVisualizar"
-      >
+      <Modal v-if="modalVisualizar" title="Visualizar solicitação" @close="fecharModalVisualizar">
         <div v-if="detalheVisualizar" class="detalhe-solicitacao">
           <p><strong>Nome:</strong> {{ detalheVisualizar.nome }}</p>
-          <p><strong>E-mail:</strong> {{ detalheVisualizar.email_institucional }}</p>
-          <p><strong>Telefone institucional:</strong> {{ formatarTelefoneExibicao(detalheVisualizar.telefone_institucional) }}</p>
-          <p v-if="detalheVisualizar.telefone_pessoal">
-            <strong>Telefone pessoal:</strong> {{ formatarTelefoneExibicao(detalheVisualizar.telefone_pessoal) }}
+          <p><strong>E-mail:</strong> {{ detalheVisualizar.emailInstitucional }}</p>
+          <p>
+            <strong>Telefone institucional:</strong>
+            {{ formatarTelefoneExibicao(detalheVisualizar.telefone_institucional) }}
           </p>
-          <p><strong>Esfera:</strong> {{ detalheVisualizar.esfera_atuacao }}</p>
-          <p><strong>UF:</strong> {{ detalheVisualizar.uf }}</p>
-          <p><strong>Município:</strong> {{ detalheVisualizar.municipio }}</p>
+          <p v-if="detalheVisualizar.telefone_pessoal">
+            <strong>Telefone pessoal:</strong>
+            {{ formatarTelefoneExibicao(detalheVisualizar.telefone_pessoal) }}
+          </p>
+          <p><strong>Esfera:</strong> {{ detalheVisualizar.esfera_id }}</p>
+          <p><strong>UF:</strong> {{ detalheVisualizar.uf_id }}</p>
+          <p><strong>Município:</strong> {{ detalheVisualizar.municipio_id }}</p>
           <p><strong>Órgão:</strong> {{ detalheVisualizar.orgao }}</p>
           <p><strong>Cargo:</strong> {{ detalheVisualizar.cargo }}</p>
           <p><strong>Status:</strong> {{ statusLabel(detalheVisualizar.status) }}</p>
@@ -90,12 +87,10 @@
         </div>
       </Modal>
 
-      <Modal
-        v-if="modalEditar"
-        title="Editar solicitação"
-        @close="fecharModalEditar"
-      >
-        <p class="text-muted mb-2"><small>CPF não é exibido por segurança. Informe apenas se desejar alterar.</small></p>
+      <Modal v-if="modalEditar" title="Editar solicitação" @close="fecharModalEditar">
+        <p class="text-muted mb-2">
+          <small>CPF não é exibido por segurança. Informe apenas se desejar alterar.</small>
+        </p>
         <Form
           v-if="detalheEditar"
           :key="'edit-' + modalEditar"
@@ -106,23 +101,37 @@
           <FormularioDadosSolicitante :modo-edicao="true" />
           <FormularioInformacaoSolicitante />
           <div class="modal-actions mt-3">
-            <button class="br-button secondary" type="button" @click="fecharModalEditar">Cancelar</button>
-            <button class="br-button primary ml-2" type="submit" :disabled="editando" :aria-busy="editando">Salvar</button>
+            <button class="br-button secondary" type="button" @click="fecharModalEditar">
+              Cancelar
+            </button>
+            <button
+              class="br-button primary ml-2"
+              type="submit"
+              :disabled="editando"
+              :aria-busy="editando"
+            >
+              Salvar
+            </button>
           </div>
         </Form>
       </Modal>
 
-      <Modal
-        v-if="modalExcluir"
-        title="Excluir solicitação"
-        @close="fecharModalExcluir"
-      >
+      <Modal v-if="modalExcluir" title="Excluir solicitação" @close="fecharModalExcluir">
         <p v-if="solicitacaoExcluir">
-          Deseja realmente excluir a solicitação de <strong>{{ solicitacaoExcluir.nome }}</strong>? Esta ação não pode ser desfeita.
+          Deseja realmente excluir a solicitação de <strong>{{ solicitacaoExcluir.nome }}</strong
+          >? Esta ação não pode ser desfeita.
         </p>
         <div class="modal-actions mt-3">
-          <button class="br-button secondary" type="button" @click="fecharModalExcluir">Cancelar</button>
-          <button class="br-button danger ml-2" type="button" :disabled="excluindo" :aria-busy="excluindo" @click="executarExcluir">
+          <button class="br-button secondary" type="button" @click="fecharModalExcluir">
+            Cancelar
+          </button>
+          <button
+            class="br-button danger ml-2"
+            type="button"
+            :disabled="excluindo"
+            :aria-busy="excluindo"
+            @click="executarExcluir"
+          >
             {{ excluindo ? 'Excluindo...' : 'Excluir' }}
           </button>
         </div>
@@ -131,64 +140,70 @@
   </PublicLayout>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { Form } from 'vee-validate';
-import Card from '@/core/components/Card/Card.vue';
-import FormularioDadosSolicitante from '../components/FormularioDadosSolicitante.vue';
-import FormularioInformacaoSolicitante from '../components/FormularioInformacaoSolicitante.vue';
-import PublicLayout from '@/layouts/PublicLayout.vue';
-import { initializeSelect } from '@/core/composables/useGov';
-import { SolicitacaoCadastroSchema, SolicitacaoCadastroSchemaGovBr, SolicitacaoCadastroSchemaEdicao } from '../validators/solicitacaoCadastro.schema';
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { Form } from 'vee-validate'
+import Card from '@/core/components/Card/Card.vue'
+import FormularioDadosSolicitante from '../components/FormularioDadosSolicitante.vue'
+import FormularioInformacaoSolicitante from '../components/FormularioInformacaoSolicitante.vue'
+import PublicLayout from '@/layouts/PublicLayout.vue'
+import { initializeSelect } from '@/core/composables/useGov'
+import {
+  SolicitacaoCadastroSchema,
+  SolicitacaoCadastroSchemaGovBr,
+  SolicitacaoCadastroSchemaEdicao,
+} from '../validators/solicitacaoCadastro.schema'
 import {
   enviarSolicitacaoCadastro,
   obterSolicitacaoCadastro,
   atualizarSolicitacaoCadastro,
   excluirSolicitacaoCadastro,
-  type SolicitacaoCadastroItem,
-  type SolicitacaoCadastroDetalhe,
-  type SolicitacaoCadastroUpdatePayload,
-  type SolicitacaoCadastroPayload,
-} from '@/services/SolicitacaoCadastroService';
-import { useNotification } from '@/core/composables/useNotification';
-import { useRouter } from 'vue-router';
-import Modal from '@/core/components/Modal/Modal.vue';
-import TermoUsoPrivacidade from '@/core/components/TermoUsoPrivacidade/TermoUsoPrivacidade.vue';
-import Breadcrumb from '@/core/components/Breadcrumb/Breadcrumb.vue';
+} from '@/services/SolicitacaoCadastroService'
 
+import { useNotification } from '@/core/composables/useNotification'
+import { useRouter } from 'vue-router'
+import Modal from '@/core/components/Modal/Modal.vue'
+import TermoUsoPrivacidade from '@/core/components/TermoUsoPrivacidade/TermoUsoPrivacidade.vue'
+import Breadcrumb from '@/core/components/Breadcrumb/Breadcrumb.vue'
+import type {
+  SolicitacaoCadastroItem,
+  SolicitacaoCadastroDetalhe,
+  SolicitacaoCadastroUpdatePayload,
+  SolicitacaoCadastroPayload,
+} from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
 
 defineOptions({
-  name: 'SolicitacaoCadastroIndex'
+  name: 'SolicitacaoCadastroIndex',
 })
 
-const router = useRouter();
-const route = useRoute();
-const { success, error } = useNotification();
+const router = useRouter()
+const route = useRoute()
+const { success, error } = useNotification()
 
-const govbrNome = (route.query.nome as string) ?? '';
-const govbrCpf = (route.query.cpf as string) ?? '';
-const modoGovBr = !!(govbrNome && govbrCpf);
+const govbrNome = (route.query.nome as string) ?? ''
+const govbrCpf = (route.query.cpf as string) ?? ''
+const modoGovBr = !!(govbrNome && govbrCpf)
 
 function formatarCpf(cpf: string): string {
-  const d = String(cpf).replace(/\D/g, '');
-  if (d.length !== 11) return cpf;
-  return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  const d = String(cpf).replace(/\D/g, '')
+  if (d.length !== 11) return cpf
+  return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
 }
 
 function formatarTelefoneParaCampo(tel: string | null | undefined): string {
-  const d = String(tel ?? '').replace(/\D/g, '');
-  if (d.length === 11) return d.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-  if (d.length === 10) return d.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-  return '';
+  const d = String(tel ?? '').replace(/\D/g, '')
+  if (d.length === 11) return d.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
+  if (d.length === 10) return d.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3')
+  return ''
 }
 
 function formatarTelefoneExibicao(tel: string | null | undefined): string {
-  return formatarTelefoneParaCampo(tel) || String(tel ?? '');
+  return formatarTelefoneParaCampo(tel) || String(tel ?? '')
 }
 
 const schemaSolicitacao = computed(() =>
-  modoGovBr ? SolicitacaoCadastroSchemaGovBr : SolicitacaoCadastroSchema
-);
+  modoGovBr ? SolicitacaoCadastroSchemaGovBr : SolicitacaoCadastroSchema,
+)
 
 const initialValues = computed(() => ({
   nome: modoGovBr ? govbrNome : '',
@@ -201,23 +216,23 @@ const initialValues = computed(() => ({
   municipio: '',
   orgao: '',
   cargo: '',
-}));
+}))
 
-const isSubmitting = ref(false);
-const formKey = ref(0);
+const isSubmitting = ref(false)
+const formKey = ref(0)
 
-const solicitacoes = ref<SolicitacaoCadastroItem[]>([]);
-const modalVisualizar = ref<number | null>(null);
-const detalheVisualizar = ref<SolicitacaoCadastroDetalhe | null>(null);
-const modalEditar = ref<number | null>(null);
-const detalheEditar = ref<Record<string, unknown> | null>(null);
-const editando = ref(false);
-const modalExcluir = ref<boolean>(false);
-const solicitacaoExcluir = ref<SolicitacaoCadastroItem | null>(null);
-const excluindo = ref(false);
+const solicitacoes = ref<SolicitacaoCadastroItem[]>([])
+const modalVisualizar = ref<number | null>(null)
+const detalheVisualizar = ref<SolicitacaoCadastroDetalhe | null>(null)
+const modalEditar = ref<number | null>(null)
+const detalheEditar = ref<Record<string, unknown> | null>(null)
+const editando = ref(false)
+const modalExcluir = ref<boolean>(false)
+const solicitacaoExcluir = ref<SolicitacaoCadastroItem | null>(null)
+const excluindo = ref(false)
 
 function formatarData(data: string | undefined) {
-  if (!data) return '-';
+  if (!data) return '-'
   try {
     return new Date(data).toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -225,9 +240,9 @@ function formatarData(data: string | undefined) {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    });
+    })
   } catch {
-    return data;
+    return data
   }
 }
 
@@ -236,8 +251,8 @@ function statusLabel(status: string) {
     em_analise: 'Em análise',
     aprovado: 'Aprovado',
     reprovado: 'Reprovado',
-  };
-  return map[status] || status;
+  }
+  return map[status] || status
 }
 
 function statusClass(status: string) {
@@ -245,175 +260,168 @@ function statusClass(status: string) {
     em_analise: 'warning',
     aprovado: 'success',
     reprovado: 'danger',
-  };
-  return map[status] || '';
+  }
+  return map[status] || ''
 }
 
 async function visualizar(id: number) {
   try {
-    detalheVisualizar.value = await obterSolicitacaoCadastro(id);
-    modalVisualizar.value = id;
+    detalheVisualizar.value = await obterSolicitacaoCadastro(id)
+    modalVisualizar.value = id
   } catch {
-    error('Não foi possível carregar os detalhes da solicitação. Tente novamente.');
+    error('Não foi possível carregar os detalhes da solicitação. Tente novamente.')
   }
 }
 
 async function editar(id: number) {
   try {
-    const det = await obterSolicitacaoCadastro(id);
+    const det = await obterSolicitacaoCadastro(id)
     detalheEditar.value = {
       nome: det.nome,
       CPF: '',
-      emailInstitucional: det.email_institucional,
+      emailInstitucional: det.emailInstitucional,
       telefoneInstitucional: det.telefone_institucional,
       telefonePessoal: formatarTelefoneParaCampo(det.telefone_pessoal),
-      esferaAtuacao: det.esfera_atuacao,
-      uf: det.uf,
-      municipio: det.municipio,
+      esferaAtuacao: det.esfera_id,
+      uf: det.uf_id,
+      municipio: det.municipio_id,
       orgao: det.orgao,
       cargo: det.cargo,
-    };
-    modalEditar.value = id;
+    }
+    modalEditar.value = id
   } catch {
-     error('Não foi possível carregar a solicitação para edição. Tente novamente.');
+    error('Não foi possível carregar a solicitação para edição. Tente novamente.')
   }
 }
 
 function fecharModalVisualizar() {
-  modalVisualizar.value = null;
-  detalheVisualizar.value = null;
+  modalVisualizar.value = null
+  detalheVisualizar.value = null
 }
 
 function fecharModalEditar() {
-  modalEditar.value = null;
-  detalheEditar.value = null;
+  modalEditar.value = null
+  detalheEditar.value = null
 }
 
 function confirmarExcluir(s: SolicitacaoCadastroItem) {
-  solicitacaoExcluir.value = s;
-  modalExcluir.value = true;
+  solicitacaoExcluir.value = s
+  modalExcluir.value = true
 }
 
 function fecharModalExcluir() {
-  modalExcluir.value = false;
-  solicitacaoExcluir.value = null;
+  modalExcluir.value = false
+  solicitacaoExcluir.value = null
 }
 
 async function executarExcluir() {
-  if (!solicitacaoExcluir.value) return;
-  excluindo.value = true;
+  if (!solicitacaoExcluir.value) return
+  excluindo.value = true
   try {
-    await excluirSolicitacaoCadastro(solicitacaoExcluir.value.id);
-    success('Solicitação excluída com sucesso.');
-    fecharModalExcluir();
+    await excluirSolicitacaoCadastro(solicitacaoExcluir.value.id)
+    success('Solicitação excluída com sucesso.')
+    fecharModalExcluir()
   } catch (err: unknown) {
-    const msg = err && typeof err === 'object' && 'response' in err
-      ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-      : 'Não foi possível excluir a solicitação. Tente novamente.';
-    error(msg ?? 'Não foi possível excluir a solicitação. Tente novamente.');
+    const msg =
+      err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Não foi possível excluir a solicitação. Tente novamente.'
+    error(msg ?? 'Não foi possível excluir a solicitação. Tente novamente.')
   } finally {
-    excluindo.value = false;
+    excluindo.value = false
   }
 }
 
 async function onSubmitEditar(values: Record<string, unknown>) {
-  if (!modalEditar.value) return;
-  editando.value = true;
+  if (!modalEditar.value) return
+  editando.value = true
   try {
-    const tpEd = String(values.telefonePessoal ?? '').replace(/\D/g, '');
+    const tpEd = String(values.telefonePessoal ?? '').replace(/\D/g, '')
     const payload: SolicitacaoCadastroUpdatePayload = {
       nome: values.nome as string,
       emailInstitucional: values.emailInstitucional as string,
-      telefoneInstitucional: values.telefoneInstitucional as string,
-      telefonePessoal: tpEd.length >= 10 && tpEd.length <= 11 ? tpEd : null,
-      esferaAtuacao: values.esferaAtuacao as string,
-      uf: values.uf as string,
-      municipio: values.municipio as string,
+      telefone_institucional: values.telefoneInstitucional as string,
+      telefone_pessoal: tpEd.length >= 10 && tpEd.length <= 11 ? tpEd : null,
+      esfera_id: Number(values.esferaAtuacao ?? 0),
+      uf_id: values.uf as string,
+      municipio_id: values.municipio as string,
       orgao: values.orgao as string,
       cargo: values.cargo as string,
-    };
-    if (values.CPF && String(values.CPF).trim()) {
-      payload.CPF = values.CPF as string;
     }
-    await atualizarSolicitacaoCadastro(modalEditar.value, payload);
-    success('Solicitação atualizada com sucesso.');
-    fecharModalEditar();
+    if (values.CPF && String(values.CPF).trim()) {
+      payload.cpf = values.CPF as string
+    }
+    await atualizarSolicitacaoCadastro(modalEditar.value, payload)
+    success('Solicitação atualizada com sucesso.')
+    fecharModalEditar()
   } catch (err: unknown) {
-    const msg = err && typeof err === 'object' && 'response' in err
-      ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-      : 'Não foi possível atualizar a solicitação. Verifique os dados e tente novamente.';
-    error(msg ?? 'Não foi possível atualizar a solicitação. Verifique os dados e tente novamente.');
+    const msg =
+      err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Não foi possível atualizar a solicitação. Verifique os dados e tente novamente.'
+    error(msg ?? 'Não foi possível atualizar a solicitação. Verifique os dados e tente novamente.')
   } finally {
-    editando.value = false;
+    editando.value = false
   }
 }
 
 async function onSubmit(values: Record<string, unknown>) {
-  isSubmitting.value = true;
+  isSubmitting.value = true
   try {
-    const tp = String(values.telefonePessoal ?? '').replace(/\D/g, '');
-    const telInst = String(values.telefoneInstitucional ?? '').replace(/\D/g, '');
+    const tp = String(values.telefonePessoal ?? '').replace(/\D/g, '')
+    const telInst = String(values.telefoneInstitucional ?? '').replace(/\D/g, '')
     const payload: SolicitacaoCadastroPayload = {
       nome: String(values.nome ?? '').trim(),
       emailInstitucional: String(values.emailInstitucional ?? '').trim(),
-      telefoneInstitucional: telInst,
-      telefonePessoal: tp.length >= 10 && tp.length <= 11 ? tp : null,
-      esferaAtuacao: String(values.esferaAtuacao ?? '').trim(),
-      uf: String(values.uf ?? '').trim().toUpperCase(),
-      municipio: String(values.municipio ?? '').trim(),
+      telefone_institucional: telInst,
+      telefone_pessoal: tp.length >= 10 && tp.length <= 11 ? tp : null,
+      esfera_id: Number(values.esferaAtuacao ?? 0),
+      uf_id: String(values.uf ?? '')
+        .trim()
+        .toUpperCase(),
+      municipio_id: String(values.municipio ?? '').trim(),
       orgao: String(values.orgao ?? '').trim(),
       cargo: String(values.cargo ?? '').trim(),
-    };
-    const cpfVal = values.CPF as string;
+    }
+    const cpfVal = values.CPF as string
     if (cpfVal && !cpfVal.includes('*')) {
-      payload.CPF = cpfVal.replace(/\D/g, '');
+      payload.cpf = cpfVal.replace(/\D/g, '')
     }
-    await enviarSolicitacaoCadastro(payload);
-   success('Solicitação enviada com sucesso! Sua solicitação está com o status "Em Análise" e será avaliada pela equipe gestora. Você será redirecionado para a tela de login.');
+    await enviarSolicitacaoCadastro(payload)
+    success(
+      'Solicitação enviada com sucesso! Sua solicitação está com o status "Em Análise" e será avaliada pela equipe gestora. Você será redirecionado para a tela de login.',
+    )
     setTimeout(() => {
-      router.push({ name: 'login' });
-    }, 4000);
+      router.push({ name: 'login' })
+    }, 4000)
   } catch (err: unknown) {
-   const axErr = err as { response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } } };
-    let msg = '';
-    if (axErr?.response?.data?.message) {
-      msg = axErr.response.data.message;
-    } else if (axErr?.response?.status === 422) {
-      msg = 'Alguns campos possuem dados inválidos. Revise o formulário e tente novamente.';
-    } else if (axErr?.response?.status === 429) {
-      msg = 'Muitas tentativas em pouco tempo. Aguarde alguns instantes e tente novamente.';
-    } else if (axErr?.response?.status && axErr.response.status >= 500) {
-      msg = 'O servidor encontrou um erro inesperado. Tente novamente em alguns minutos.';
-    } else {
-      msg = 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
+    const axErr = err as {
+      response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } }
     }
-    error(msg);
-    isSubmitting.value = false;
+    let msg = ''
+    if (axErr?.response?.data?.message) {
+      msg = axErr.response.data.message
+    } else if (axErr?.response?.status === 422) {
+      msg = 'Alguns campos possuem dados inválidos. Revise o formulário e tente novamente.'
+    } else if (axErr?.response?.status === 429) {
+      msg = 'Muitas tentativas em pouco tempo. Aguarde alguns instantes e tente novamente.'
+    } else if (axErr?.response?.status && axErr.response.status >= 500) {
+      msg = 'O servidor encontrou um erro inesperado. Tente novamente em alguns minutos.'
+    } else {
+      msg = 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.'
+    }
+    error(msg)
+    isSubmitting.value = false
   }
 }
 
-function camposObrigatoriosPreenchidos(values: Record<string, unknown>) {
-  const obrigatorios = [
-    'nome',
-    'CPF',
-    'emailInstitucional',
-    'telefoneInstitucional',
-    'esferaAtuacao',
-    'uf',
-    'municipio',
-    'orgao',
-    'cargo',
-  ]
-  return obrigatorios.every((campo) => String(values[campo] ?? '').trim() !== '')
-}
-
 function onCancel() {
-  router.push({ name: 'home' });
+  router.push({ name: 'home' })
 }
 
 onMounted(() => {
-  initializeSelect();
-});
+  initializeSelect()
+})
 </script>
 
 <style scoped>
@@ -574,6 +582,5 @@ onMounted(() => {
   .solicitacao-acoes__btn--principal {
     min-width: 14rem;
   }
-
 }
 </style>
