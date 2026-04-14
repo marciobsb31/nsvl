@@ -128,10 +128,10 @@ class SolicitacaoCadastroService
                 $usuario = Usuario::create([
                     'cpf'       => $dados['cpf'],
                     'nome'      => $dados['nome'],
-                    'email'     => $dados['emailInstitucional'],
+                    'email'     => $dados['email_institucional'],
                     'govbr_sub' => $dados['cpf'],
                     'ativo'     => false,
-                    'telefone'  => $dados['telefonePessoal'] ?? null,
+                    'telefone'  => $dados['telefone_pessoal'] ?? null,
                 ]);
             } catch (QueryException $e) {
                 $msg = $e->getMessage();
@@ -145,7 +145,7 @@ class SolicitacaoCadastroService
         } else {
             $usuario->update([
                 'nome'  => $dados['nome'],
-                'email' => $dados['emailInstitucional'],
+                'email' => $dados['email_institucional'],
             ]);
         }
 
@@ -164,17 +164,17 @@ class SolicitacaoCadastroService
 
         $solicitacao = SolicitacaoCadastro::create([
             'usuario_id'             => $usuario->id,
-            'email_institucional'    => $dados['emailInstitucional'],
-            'telefone_institucional' => $dados['telefoneInstitucional'] ?? null,
-            'telefone_pessoal'       => $dados['telefonePessoal'] ?? null,
+            'email_institucional'    => $dados['email_institucional'],
+            'telefone_institucional' => $dados['telefone_institucional'] ?? null,
+            'telefone_pessoal'       => $dados['telefone_pessoal'] ?? null,
             'esfera_id'              => $dados['esfera_id'] ?? null,
             'uf_id'                  => $dados['uf_id'] ?? null,
             'municipio_id'           => $dados['municipio_id'] ?? null,
             'orgao'                  => $dados['orgao'],
             'cargo'                  => $dados['cargo'] ?? null,
             'perfil_id'              => $perfilIdSolicitado,
-            'vigencia_inicio'        => $dados['vigenciaInicio'],
-            'vigencia_fim'           => $dados['vigenciaFim'] ?? null,
+            'vigencia_inicio'        => $dados['vigencia_inicio']?? null,
+            'vigencia_fim'           => $dados['vigencia_fim'] ?? null,
             'status_id'              => StatusSolicitacaoEnum::EM_ANALISE->value,
             'aceite_termo_at'        => Carbon::now(),
         ]);
@@ -198,7 +198,7 @@ class SolicitacaoCadastroService
         $solicitacao->load(['usuario', 'esfera', 'ufRelacao', 'municipioRelacao']);
 
         try {
-            $destinatario = $dados['emailInstitucional'];
+            $destinatario = $dados['email_institucional'];
             Mail::to($destinatario)->send(new SolicitacaoCadastroEnviada($solicitacao));
         } catch (\Throwable $e) {
             logger()->error('Falha ao enviar e-mail de confirmação da solicitação.', [
