@@ -29,7 +29,7 @@ export interface HistoricoReprovacaoItem {
 export interface SolicitacaoCadastroDetalhe extends SolicitacaoCadastroItem {
   cpf?: string
   usuario_id?: number
-  emailInstitucional: string
+  email_institucional: string
   telefone_institucional: string
   telefone_pessoal?: string | null
   esfera_id: number
@@ -49,7 +49,7 @@ export interface SolicitacaoCadastroDetalhe extends SolicitacaoCadastroItem {
 export interface SolicitacaoCadastroPayload {
   nome: string
   cpf?: string
-  emailInstitucional: string
+  email_institucional: string
   telefone_institucional: string
   telefone_pessoal?: string | null
   esfera_id: number

@@ -68,7 +68,7 @@
       <Modal v-if="modalVisualizar" title="Visualizar solicitação" @close="fecharModalVisualizar">
         <div v-if="detalheVisualizar" class="detalhe-solicitacao">
           <p><strong>Nome:</strong> {{ detalheVisualizar.nome }}</p>
-          <p><strong>E-mail:</strong> {{ detalheVisualizar.emailInstitucional }}</p>
+          <p><strong>E-mail:</strong> {{ detalheVisualizar.email_institucional }}</p>
           <p>
             <strong>Telefone institucional:</strong>
             {{ formatarTelefoneExibicao(detalheVisualizar.telefone_institucional) }}
@@ -279,7 +279,7 @@ async function editar(id: number) {
     detalheEditar.value = {
       nome: det.nome,
       CPF: '',
-      emailInstitucional: det.emailInstitucional,
+      emailInstitucional: det.email_institucional,
       telefoneInstitucional: det.telefone_institucional,
       telefonePessoal: formatarTelefoneParaCampo(det.telefone_pessoal),
       esferaAtuacao: det.esfera_id,
@@ -339,7 +339,7 @@ async function onSubmitEditar(values: Record<string, unknown>) {
     const tpEd = String(values.telefonePessoal ?? '').replace(/\D/g, '')
     const payload: SolicitacaoCadastroUpdatePayload = {
       nome: values.nome as string,
-      emailInstitucional: values.emailInstitucional as string,
+      email_institucional: values.emailInstitucional as string,
       telefone_institucional: values.telefoneInstitucional as string,
       telefone_pessoal: tpEd.length >= 10 && tpEd.length <= 11 ? tpEd : null,
       esfera_id: Number(values.esferaAtuacao ?? 0),
@@ -372,7 +372,7 @@ async function onSubmit(values: Record<string, unknown>) {
     const telInst = String(values.telefoneInstitucional ?? '').replace(/\D/g, '')
     const payload: SolicitacaoCadastroPayload = {
       nome: String(values.nome ?? '').trim(),
-      emailInstitucional: String(values.emailInstitucional ?? '').trim(),
+      email_institucional: String(values.emailInstitucional ?? '').trim(),
       telefone_institucional: telInst,
       telefone_pessoal: tp.length >= 10 && tp.length <= 11 ? tp : null,
       esfera_id: Number(values.esferaAtuacao ?? 0),
