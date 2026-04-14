@@ -48,7 +48,7 @@ class Usuario extends Authenticatable
             ->withTimestamps();
     }
 
-    public function contexto(): HasOne
+    public function contextoAtivo(): HasOne
     {
         return $this->hasOne(UsuarioContexto::class, 'usuario_id');
     }

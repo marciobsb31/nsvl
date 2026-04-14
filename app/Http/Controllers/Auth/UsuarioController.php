@@ -23,7 +23,7 @@ use OpenApi\Attributes as OA;
  * )
  */
 #[OA\Tag(name: 'Usuário')]
-class UserController extends Controller
+class UsuarioController extends Controller
 {
     #[OA\Get(
         path: '/api/user',

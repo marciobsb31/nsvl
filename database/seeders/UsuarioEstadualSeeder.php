@@ -10,55 +10,130 @@ class UsuarioEstadualSeeder extends Seeder
 {
     public function run(): void
     {
+        $now = now();
+
         $usuario = Usuario::firstOrCreate(
             ['email' => 'gestor.goias@nvsl.gov.br'],
             [
-                'nome'  => 'Gestor Estadual GO',
-                'cpf'   => '89444432033',
-                'ativo' => true,
+                'nome'       => 'Gestor Multiesferas GO',
+                'cpf'        => '89444432033',
+                'ativo'      => true,
+                'created_at' => $now,
+                'updated_at' => $now,
             ]
         );
 
-        $esfera = DB::table('esferas')->where('codigo', 'estadual')->first();
-        $uf = DB::table('ufs')->where('sigla', 'GO')->first();
+        $esferaEstadual = DB::table('esferas')->where('codigo', 'estadual')->first();
+        $ufGO = DB::table('ufs')->where('sigla', 'GO')->first();
 
-        if (! $esfera || ! $uf) {
-            $this->command->error('Esfera estadual ou UF GO não encontrada. Verifique seus seeders base.');
+        $abrangenciaEstadualId = DB::table('usuario_abrangencia')->updateOrInsert(
+            [
+                'usuario_id'   => $usuario->id,
+                'esfera_id'    => $esferaEstadual->id,
+                'uf_id'        => $ufGO->id,
+                'municipio_id' => null,
+            ],
+            [
+                'nome'        => 'Estado de '.$ufGO->nome,
+                'origem_tipo' => 'seeder',
+                'ativo'       => true,
+                'created_at'  => $now,
+                'updated_at'  => $now,
+            ]
+        );
 
-            return;
-        }
+        $abrangenciaEstadualId = DB::table('usuario_abrangencia')
+            ->where('usuario_id', $usuario->id)
+            ->where('esfera_id', $esferaEstadual->id)
+            ->where('uf_id', $ufGO->id)
+            ->whereNull('municipio_id')
+            ->value('id');
 
-        $abrangenciaId = DB::table('usuario_abrangencia')->insertGetId([
-            'usuario_id'  => $usuario->id,
-            'esfera_id'   => $esfera->id,
-            'uf_id'       => $uf->id,
-            'nome'        => 'Estado de '.$uf->nome,
-            'origem_tipo' => 'seeder',
-            'ativo'       => true,
-            'created_at'  => now(),
-            'updated_at'  => now(),
-        ]);
+        $perfilGestorEstadual = DB::table('perfis')
+            ->where('codigo', 'gestor_estadual')
+            ->first();
 
-        $perfil = DB::table('perfis')->where('codigo', 'gestor_estadual')->first();
+        DB::table('perfil_usuario')->updateOrInsert(
+            [
+                'usuario_id' => $usuario->id,
+                'perfil_id'  => $perfilGestorEstadual->id,
+            ],
+            [
+                'ativo'                => true,
+                'origem_tipo'          => 'seeder',
+                'data_inicio_vigencia' => $now,
+                'created_at'           => $now,
+                'updated_at'           => $now,
+            ]
+        );
 
-        $perfilUsuarioId = DB::table('perfil_usuario')->insertGetId([
-            'usuario_id'           => $usuario->id,
-            'perfil_id'            => $perfil->id,
-            'ativo'                => true,
-            'origem_tipo'          => 'seeder',
-            'data_inicio_vigencia' => now(),
-            'created_at'           => now(),
-            'updated_at'           => now(),
-        ]);
+        $perfilUsuarioEstadualId = DB::table('perfil_usuario')
+            ->where('usuario_id', $usuario->id)
+            ->where('perfil_id', $perfilGestorEstadual->id)
+            ->value('id');
 
-        DB::table('usuario_contexto')->insert([
-            'usuario_id'             => $usuario->id,
-            'perfil_usuario_id'      => $perfilUsuarioId,
-            'usuario_abrangencia_id' => $abrangenciaId,
-            'created_at'             => now(),
-            'updated_at'             => now(),
-        ]);
+        $esferaMunicipal = DB::table('esferas')->where('codigo', 'municipal')->first();
 
-        $this->command->info('Usuário Gestor Estadual (GO) criado com sucesso!');
+        $municipio = DB::table('municipios')
+            ->where('nome', 'ILIKE', 'Goiânia')
+            ->where('uf_id', $ufGO->id)
+            ->first();
+
+        DB::table('usuario_abrangencia')->updateOrInsert(
+            [
+                'usuario_id'   => $usuario->id,
+                'esfera_id'    => $esferaMunicipal->id,
+                'uf_id'        => $ufGO->id,
+                'municipio_id' => $municipio->id,
+            ],
+            [
+                'nome'        => 'Município de '.$municipio->nome,
+                'origem_tipo' => 'seeder',
+                'ativo'       => true,
+                'created_at'  => $now,
+                'updated_at'  => $now,
+            ]
+        );
+
+        DB::table('usuario_abrangencia')
+            ->where('usuario_id', $usuario->id)
+            ->where('esfera_id', $esferaMunicipal->id)
+            ->where('municipio_id', $municipio->id)
+            ->value('id');
+
+        $perfilGestorMunicipal = DB::table('perfis')
+            ->where('codigo', 'gestor_municipal')
+            ->first();
+
+        DB::table('perfil_usuario')->updateOrInsert(
+            [
+                'usuario_id' => $usuario->id,
+                'perfil_id'  => $perfilGestorMunicipal->id,
+            ],
+            [
+                'ativo'                => true,
+                'origem_tipo'          => 'seeder',
+                'data_inicio_vigencia' => $now,
+                'created_at'           => $now,
+                'updated_at'           => $now,
+            ]
+        );
+
+        DB::table('perfil_usuario')
+            ->where('usuario_id', $usuario->id)
+            ->where('perfil_id', $perfilGestorMunicipal->id)
+            ->value('id');
+
+        DB::table('usuario_contexto')->updateOrInsert(
+            ['usuario_id' => $usuario->id],
+            [
+                'perfil_usuario_id'      => $perfilUsuarioEstadualId,
+                'usuario_abrangencia_id' => $abrangenciaEstadualId,
+                'created_at'             => $now,
+                'updated_at'             => $now,
+            ]
+        );
+
+        $this->command->info('Usuário multicontexto criado com sucesso (1 contexto ativo).');
     }
 }

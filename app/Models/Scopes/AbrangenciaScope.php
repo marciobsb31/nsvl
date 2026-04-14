@@ -2,57 +2,45 @@
 
 namespace App\Models\Scopes;
 
+use App\Enums\EsferaEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
+use Illuminate\Support\Facades\Auth;
 
 class AbrangenciaScope implements Scope
 {
-    public function apply(Builder $builder, Model $model)
+    public function apply(Builder $builder, Model $model): void
     {
-        $usuario = auth()->user();
+        $usuario = Auth::user();
 
         if (! $usuario) {
             return;
         }
 
-        $contexto = $this->getContexto();
+        $contexto = $this->getContexto($usuario);
 
-        if (! $contexto?->abrangencia) {
+        if (! $contexto || ! $contexto->abrangencia || $contexto->abrangencia->esfera?->codigo === EsferaEnum::FEDERAL) {
             return;
         }
 
         $abrangencia = $contexto->abrangencia;
-        $esfera = $abrangencia->esfera?->codigo;
-
+        $esfera = $abrangencia->esfera->codigo;
         $tabela = $model->getTable();
-        if ($esfera === 'estadual') {
-            $builder->where("{$tabela}.uf_id", $abrangencia->uf_id);
-
-            return;
-        }
 
         match ($esfera) {
-            'federal'  => null,
-            'estadual' => $builder->where(
-                $model->getTable().'.uf_id',
-                $abrangencia->uf_id
-            ),
-            'municipal' => $builder->where(
-                $model->getTable().'.uf_id',
-                $abrangencia->uf_id
-            )->where(
-                $model->getTable().'.municipio_id',
-                $abrangencia->municipio_id
-            ),
+            'estadual'  => $builder->where("{$tabela}.uf_id", $abrangencia->uf_id),
+            'municipal' => $builder->where("{$tabela}.uf_id", $abrangencia->uf_id)
+                ->where("{$tabela}.municipio_id", $abrangencia->municipio_id),
+
             default => $builder->whereRaw('1 = 0'),
         };
     }
 
-    private function getContexto(): ?object
+    private function getContexto($usuario): ?object
     {
-        return once(function () {
-            return auth()->user()?->contexto()
+        return once(function () use ($usuario) {
+            return $usuario->contextoAtivo()
                 ->with(['abrangencia.esfera'])
                 ->first();
         });
