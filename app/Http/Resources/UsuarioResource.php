@@ -2,13 +2,14 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class UsuarioResource extends JsonResource
 {
-    public function toArray(Request $request): array
+    public function toArray($request)
     {
+        $contexto = $this->contextoAtivo;
+
         return [
             'id'     => $this->id,
             'name'   => $this->nome,
@@ -17,9 +18,24 @@ class UsuarioResource extends JsonResource
             'perfis' => PerfilResource::collection(
                 $this->whenLoaded('perfis')
             ),
+
+            'contexto' => $this->when(
+                $contexto,
+                function () use ($contexto) {
+                    return [
+                        'perfil'     => $contexto->perfilUsuario?->perfil?->nome,
+                        'esfera'     => $contexto->abrangencia?->esfera?->nome,
+                        'localidade' => $contexto->abrangencia?->nome,
+                    ];
+                }
+            ),
+
             'permissions' => $this->when(
-                $this->relationLoaded('perfis'),
-                fn () => $this->getAllPermissions()
+                $contexto,
+                fn () => $contexto->perfilUsuario
+                    ->perfil
+                    ->permissoes
+                    ->pluck('codigo')
             ),
         ];
     }

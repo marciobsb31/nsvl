@@ -98,10 +98,17 @@ class Usuario extends Authenticatable
 
     public function hasPermissao(string $codigo): bool
     {
-        return $this->perfisUsuario()
-            ->with('perfil.permissoes')
-            ->get()
-            ->flatMap(fn ($pu) => $pu->perfil?->permissoes ?? [])
+        $contexto = $this->loadMissing(
+            'contextoAtivo.perfilUsuario.perfil.permissoes'
+        )->contextoAtivo;
+
+        if (! $contexto) {
+            return false;
+        }
+
+        return $contexto->perfilUsuario
+            ->perfil
+            ->permissoes
             ->pluck('codigo')
             ->contains($codigo);
     }
