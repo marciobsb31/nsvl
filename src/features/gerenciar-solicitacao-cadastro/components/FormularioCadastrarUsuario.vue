@@ -299,9 +299,7 @@ import { useRouter } from 'vue-router'
 import { useForm, useField } from 'vee-validate'
 import * as yup from 'yup'
 import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
-import Card from '@/core/components/Card/Card.vue'
 import Modal from '@/core/components/Modal/Modal.vue'
-import TermoUsoPrivacidade from '@/core/components/TermoUsoPrivacidade/TermoUsoPrivacidade.vue'
 import Feedback from '@/core/components/Feedback/Feedback.vue'
 import { useEsferas } from '@/core/composables/useEsferas'
 import { useLocalidades } from '@/core/composables/useLocalidades'
@@ -314,6 +312,9 @@ import {
 } from '@/services/SolicitacaoCadastroService'
 import type { PerfilOption } from '@/services/PerfilService'
 import type { SolicitacaoCadastroPayload } from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
+import { useEsferasStore } from '@/stores/esferasStore'
+import { useUfStore } from '@/stores/ufStore'
+import { useMunicipioStore } from '@/stores/municipioStore'
 
 const regexSomenteLetras = /^[a-zA-ZáàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\s]+$/
 
@@ -507,7 +508,8 @@ async function onCpfBlur() {
 }
 
 const { opcoesUf, opcoesMunicipio, carregarUfs } = useLocalidades(uf)
-const { opcoesEsfera, carregarEsferas } = useEsferas()
+const esferasStore = useEsferasStore()
+const opcoesEsfera = computed(() => esferasStore.esferasOptions)
 const { opcoesPerfil, carregarPerfis } = usePerfis()
 const esferaUsuarioLogado = computed(() =>
   String(props.usuarioLogado?.esfera_atuacao ?? '').toLowerCase(),
@@ -557,9 +559,9 @@ const opcoesPerfilFiltradas = computed(() => {
   return opcoesPerfil.value
 })
 
-onMounted(() => {
+onMounted(async () => {
   carregarUfs()
-  carregarEsferas()
+  await esferasStore.carregarEsferas()
   carregarPerfis()
 })
 

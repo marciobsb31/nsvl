@@ -94,7 +94,7 @@ const todosMenus: MenuItem[] = [
     icone: 'fa-users',
     modulo: 'Gerenciar Cadastros',
   },
-  { to: '/relatorios', titulo: 'Relatórios', icone: 'fa-chart-bar', modulo: 'Relatórios' },
+  // { to: '/relatorios', titulo: 'Relatórios', icone: 'fa-chart-bar', modulo: 'Relatórios' },
   {
     to: '/gestao-planos-acao',
     titulo: 'Gestão de Planos de Ação',

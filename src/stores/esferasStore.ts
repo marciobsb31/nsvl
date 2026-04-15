@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { listarEsferas, type EsferaOption } from '@/services/EsferaService'
+import { listarEsferas } from '@/services/EsferaService'
 
 export const useEsferasStore = defineStore('useEsferasStore', () => {
   //state

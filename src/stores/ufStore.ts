@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { listarUfs } from '@/services/LocalidadeService'
-import type { LocalidadeOption, uf } from '@/core/types/localidades/LocalidadeInterface'
+import type { uf } from '@/core/types/localidades/LocalidadeInterface'
 
 export const useUfStore = defineStore('useUfStore', () => {
   //state
@@ -10,7 +10,6 @@ export const useUfStore = defineStore('useUfStore', () => {
 
   //getters
   const ufsOptions = computed(() => {
-    console.log('ufsLista', ufsLista.value)
     return (ufsLista.value ?? []).map((uf) => ({
       label: uf.sigla + ' - ' + uf.nome,
       value: String(uf.id ?? ''),
