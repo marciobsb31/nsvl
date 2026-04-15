@@ -330,6 +330,8 @@ const props = withDefaults(
         esfera: string
         localidade: string
         perfil: string
+        uf_id?: string | number
+        municipio_id?: string | number
       }
       uf_lotacao?: string
       municipio_lotacao?: string
@@ -416,6 +418,7 @@ const schema = yup.object({
     .trim()
     .when('uf', {
       is: (uf: string) => !!uf?.trim(),
+      // oxlint-disable-next-line unicorn/no-thenable
       then: (s) => s.required('Selecione o município.'),
       otherwise: (s) => s,
     }),
@@ -541,20 +544,15 @@ const opcoesEsferaFiltradas = computed(() => {
   return opcoesEsfera.value
 })
 const opcoesUfFiltradas = computed(() => {
-  if (isUfBloqueada.value && props.usuarioLogado?.uf_lotacao) {
-    return opcoesUf.value.filter(
-      (o) =>
-        String(o.value).toUpperCase() === String(props.usuarioLogado?.uf_lotacao).toUpperCase(),
-    )
+  if (isUfBloqueada.value && props.usuarioLogado?.contexto?.uf_id) {
+    return opcoesUf.value.filter((o) => o.value === props.usuarioLogado?.contexto?.uf_id)
   }
   return opcoesUf.value
 })
 const opcoesMunicipioFiltradas = computed(() => {
-  if (isMunicipioBloqueado.value && props.usuarioLogado?.municipio_lotacao) {
+  if (isMunicipioBloqueado.value && props.usuarioLogado?.contexto?.municipio_id) {
     return opcoesMunicipio.value.filter(
-      (o) =>
-        String(o.label).toLowerCase() ===
-        String(props.usuarioLogado?.municipio_lotacao).toLowerCase(),
+      (o) => o.value === props.usuarioLogado?.contexto?.municipio_id,
     )
   }
   return opcoesMunicipio.value
@@ -818,6 +816,7 @@ async function onSubmit(values: Record<string, unknown>) {
       msg = (e as Error).message
     }
     const isCpfError =
+      // oxlint-disable-next-line no-unsafe-optional-chaining
       msg.toLowerCase().includes('cpf') || (data?.errors && 'CPF' in (data?.errors as object))
     if (isCpfError) {
       const cpfMsg =

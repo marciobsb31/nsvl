@@ -83,7 +83,7 @@ router.beforeEach(async (to) => {
   if (!authStore.user && to.name !== 'login') {
     try {
       const api = (await import('@/services/ApiService')).default
-      const { data } = await api.get<Record<string, unknown>>('/user')
+      const { data } = await api.get<Record<string, unknown>>('/usuario')
       authStore.setUser(data)
     } catch {
       sessionStorage.removeItem('nvsl_token')
