@@ -20,22 +20,16 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
     }
 
     #[Test]
-    public function verifica_cpf_disponivel_quando_ainda_existem_perfis_para_o_usuario(): void
+    public function verifica_cpf_indisponivel_quando_ja_existe_perfil_ativo(): void
     {
         $response = $this->getJson('/api/solicitacoes-cadastro/verificar-cpf?cpf=11144477735');
 
         $response
             ->assertOk()
             ->assertJson([
-                'disponivel' => true,
-                'mensagem' => 'CPF disponível para cadastro.',
+                'disponivel' => false,
+                'mensagem'   => 'Este CPF jÃ¡ possui perfil ativo no sistema.',
             ]);
-
-        $response->assertJsonStructure([
-            'perfis_disponiveis' => [
-                ['value', 'label'],
-            ],
-        ]);
     }
 
     #[Test]

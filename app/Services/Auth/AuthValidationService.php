@@ -36,7 +36,7 @@ class AuthValidationService
 
             if (! $user->perfisVigentes()) {
                 // Verificar a última solicitação para dar resposta adequada
-                $ultimaSolicitacao = SolicitacaoCadastro::where('usuario_id', $user->id)
+                $ultimaSolicitacao = SolicitacaoCadastro::where('user_id', $user->id)
                     ->latest('id')
                     ->first();
 
