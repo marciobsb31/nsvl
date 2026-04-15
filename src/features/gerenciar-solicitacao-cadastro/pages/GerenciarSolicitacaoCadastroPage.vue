@@ -94,7 +94,7 @@
                     class="br-button secondary small"
                     type="button"
                     @click="detalhar(s.id)"
-                    :disabled="carregandoDetalhe"
+                    :disabled="carregandoDetalhe || !permiteAnalisarVisualizar(s.status.nome)"
                     :aria-label="rotuloBotaoDetalhar(s.status.nome)"
                   >
                     {{ rotuloBotaoDetalhar(s.status.nome) }}
@@ -224,6 +224,8 @@ import { BrButton } from '@govbr-ds/webcomponents-vue'
 import { useBreakpoint } from '@/core/composables/useBreakpoint'
 import Contexto from '@/core/components/Contexto/Contexto.vue'
 import type { SolicitacaoCadastroDetalhe } from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
+import { usePermissoes } from '@/core/composables/usePermissoes'
+import { StatusEnum } from '@/core/enums/StatusEmun'
 
 
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
@@ -231,7 +233,16 @@ defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 const { error, success } = useNotification()
 const { isMobile } = useBreakpoint()
 
-const { user, contextKey, perfilAtivo } = useAuth()
+const { user, contextKey } = useAuth()
+const { hasPermissao } = usePermissoes()
+
+const permiteAnalisarVisualizar = (status?: string) => {
+  if( status === StatusEnum.EM_ANALISE ) {
+    return hasPermissao('solicitacoes_cadastro.analisar')
+  }
+  return hasPermissao('solicitacoes_cadastro.visualizar')
+}
+
 
 const solicitacoes = ref<SolicitacaoGerenciarItem[]>([])
 const carregando = ref(false)
