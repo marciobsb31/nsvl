@@ -109,11 +109,15 @@ class GovBrAuthController extends Controller
             $plainTextToken = $user->createToken('govbr-login')->plainTextToken;
 
             $loginCode = $this->govBrService->gerarState();
+
+            $userResource = UsuarioResource::make($user);
+            $userData = json_decode($userResource->toJson(), true);
+
             Cache::put(
                 $this->loginCodeCacheKey($loginCode),
                 [
                     'token' => $plainTextToken,
-                    'user'  => UsuarioResource::make($user),
+                    'user'  => $userData,
                 ],
                 now()->addSeconds((int) config('govbr.login_code_ttl_seconds', 120))
             );
