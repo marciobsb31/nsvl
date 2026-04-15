@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $telefone        Telefone pessoal
  * @property string      $govbr_sub       Identificador único do SSO GOV.BR
  * @property string|null $email           E-mail
+ * @property bool        $ativo
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  */
@@ -33,6 +34,11 @@ class Usuario extends Authenticatable
         'telefone',
         'govbr_sub',
         'email',
+        'ativo',
+    ];
+
+    protected $attributes = [
+        'ativo' => true,
     ];
 
     protected $hidden = [
@@ -40,9 +46,19 @@ class Usuario extends Authenticatable
     ];
 
     protected $casts = [
+        'ativo' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $usuario): void {
+            if ($usuario->ativo === null) {
+                $usuario->ativo = true;
+            }
+        });
+    }
 
     // -------------------------------------------------------
     // Relações
@@ -50,7 +66,7 @@ class Usuario extends Authenticatable
 
     public function auditLogs(): HasMany
     {
-        return $this->hasMany(AuditLog::class, 'user_id');
+        return $this->hasMany(AuditLog::class, 'usuario_id');
     }
 
     public function perfis(): BelongsToMany
@@ -67,7 +83,7 @@ class Usuario extends Authenticatable
 
     public function solicitacoesCadastro(): HasMany
     {
-        return $this->hasMany(SolicitacaoCadastro::class, 'user_id');
+        return $this->hasMany(SolicitacaoCadastro::class, 'usuario_id');
     }
 
     /**
@@ -173,6 +189,8 @@ class Usuario extends Authenticatable
         return [
             'id'                => $this->id,
             'name'              => $this->nome,
+            'nome'              => $this->nome,
+            'cpf'               => $this->cpf,
             'email'             => $this->email,
             'sub'               => $this->govbr_sub,
             'esfera_atuacao'    => $this->esfera_atuacao,
@@ -181,5 +199,72 @@ class Usuario extends Authenticatable
             'perfis_vigentes'   => $perfisArray,
             'perfil_ativo_id'   => $perfilAtivoPivot['perfil_usuario_id'] ?? null,
         ];
+    }
+
+    // -------------------------------------------------------
+    // Helpers para permissões
+    // -------------------------------------------------------
+
+    /**
+     * Verifica se o usuário tem um perfil de visitante ativo
+     */
+    public function isVisitante(): bool
+    {
+        $perfilAtivo = $this->perfilAtivo();
+        if (!$perfilAtivo) {
+            return false;
+        }
+
+        return str_starts_with(strtolower($perfilAtivo->nome), 'visitante');
+    }
+
+    /**
+     * Verifica se o usuário tem um perfil de gestor ativo
+     * Gestores: Gestor Federal, Gestor Estadual, Gestor Municipal
+     */
+    public function isGestor(): bool
+    {
+        $perfilAtivo = $this->perfilAtivo();
+        if (!$perfilAtivo) {
+            return false;
+        }
+
+        return str_starts_with(strtolower($perfilAtivo->nome), 'gestor');
+    }
+
+    /**
+     * Verifica se o usuário tem perfil ativo de Gestor Nacional.
+     */
+    public function isGestorNacional(): bool
+    {
+        $perfilAtivo = $this->perfilAtivo();
+        if (!$perfilAtivo) {
+            return false;
+        }
+
+        return mb_strtolower(trim($perfilAtivo->nome), 'UTF-8') === 'gestor nacional';
+    }
+
+    /**
+     * Verifica se o perfil ativo pertence a esfera federal.
+     */
+    public function isPerfilFederalAtivo(): bool
+    {
+        $perfilAtivo = $this->perfilAtivo();
+        if (!$perfilAtivo) {
+            return false;
+        }
+
+        $nomePerfil = mb_strtolower(trim((string) $perfilAtivo->nome), 'UTF-8');
+
+        return str_contains($nomePerfil, 'federal');
+    }
+
+    /**
+     * Retorna o perfil ativo do usuário
+     */
+    public function perfilAtivo(): ?Perfil
+    {
+        return $this->perfisVigentes()->firstWhere('pivot.ativo', true);
     }
 }

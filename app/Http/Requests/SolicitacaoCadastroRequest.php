@@ -38,18 +38,27 @@ class SolicitacaoCadastroRequest extends FormRequest
 
     public function rules(): array
     {
-        $autenticado = Auth::guard('sanctum')->check();
+        $user = Auth::guard('sanctum')->user();
+
+        // Auto-cadastro: usuário autenticado via GOV.BR submetendo para si mesmo.
+        // Nesse fluxo perfil e vigência são opcionais (atribuídos pelo gestor na avaliação).
+        $cpfInput = preg_replace('/\D/', '', $this->input('CPF', ''));
+        $ehAutoCadastro = $user !== null && $user->cpf === $cpfInput;
+
+        // Cadastro interno via painel (Gestor criando para outro) requer perfil e vigência.
+        $ehCadastroInterno = $user !== null && !$ehAutoCadastro;
+
         $cpfRules = ['required', 'string', 'regex:/^\d{11}$/', function ($attr, $value, $fail) {
             if (!CpfHelper::validar($value)) {
                 $fail('O CPF informado é inválido.');
             }
         }];
 
-        $perfilRules = $autenticado
+        $perfilRules = $ehCadastroInterno
             ? ['required', 'integer', 'exists:perfis,id']
             : ['nullable', 'integer', 'exists:perfis,id'];
 
-        $vigenciaInicioRules = $autenticado
+        $vigenciaInicioRules = $ehCadastroInterno
             ? ['required', 'date']
             : ['nullable', 'date'];
 
@@ -72,14 +81,6 @@ class SolicitacaoCadastroRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $usuarioAutenticado = Auth::guard('sanctum')->user();
-        if ($usuarioAutenticado) {
-            $this->merge([
-                'CPF' => $usuarioAutenticado->cpf,
-                'nome' => $usuarioAutenticado->nome,
-            ]);
-        }
-
         $cpf = $this->input('CPF');
         if (is_string($cpf)) {
             $this->merge(['CPF' => preg_replace('/\D/', '', $cpf)]);

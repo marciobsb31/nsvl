@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Model AuditLog — registro imutável de ações do sistema (tabela auditoria_log)
  *
  * @property int         $id
- * @property int|null    $user_id          FK → usuarios.id
+ * @property int|null    $usuario_id       FK → usuarios.id
  * @property string      $acao
  * @property string      $tipo_operacao    login|logout|insert|update|delete|view
  * @property string|null $tabela_afetada
@@ -33,7 +33,7 @@ class AuditLog extends Model
     const TIPO_VIEW = 'view';
 
     protected $fillable = [
-        'user_id',
+        'usuario_id',
         'acao',
         'tipo_operacao',
         'tabela_afetada',
@@ -54,6 +54,6 @@ class AuditLog extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'user_id');
+        return $this->belongsTo(Usuario::class, 'usuario_id');
     }
 }

@@ -22,8 +22,12 @@ class PerfilUsuario extends Model
     protected $fillable = [
         'usuario_id',
         'perfil_id',
+        'usuario_abrangencia_id',
         'data_inicio_vigencia',
         'data_fim_vigencia',
+        'origem_tipo',
+        'solicitacao_cadastro_origem_id',
+        'atribuido_por_usuario_id',
         'ativo',
     ];
 
@@ -41,5 +45,10 @@ class PerfilUsuario extends Model
     public function perfil(): BelongsTo
     {
         return $this->belongsTo(Perfil::class);
+    }
+
+    public function usuarioAbrangencia(): BelongsTo
+    {
+        return $this->belongsTo(UsuarioAbrangencia::class, 'usuario_abrangencia_id');
     }
 }

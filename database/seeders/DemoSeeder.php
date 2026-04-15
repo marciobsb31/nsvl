@@ -10,7 +10,6 @@ class DemoSeeder extends Seeder
     {
         $this->call([
             BootstrapSeeder::class,
-            UsuarioExemploSeeder::class,
         ]);
     }
 }

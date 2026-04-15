@@ -40,12 +40,7 @@ class PerfilController extends Controller
             throw ApiException::unauthenticated();
         }
 
-        $perfis = Perfil::query()
-            ->whereIn('nome', Perfil::CATALOGO_OFICIAL)
-            ->where('ativo', true)
-            ->get(['id', 'nome', 'descricao'])
-            ->sortBy(fn (Perfil $perfil): int => Perfil::indiceNoCatalogo($perfil->nome))
-            ->values();
+        $perfis = Perfil::listarCatalogoPermitidoParaUsuario($user);
 
         return response()->json([
             'data' => $perfis->map(fn (Perfil $p) => [

@@ -13,6 +13,8 @@ use App\Models\SolicitacaoCadastro;
 use App\Models\StatusSolicitacao;
 use App\Models\Uf;
 use App\Models\Usuario;
+use App\Models\UsuarioAbrangencia;
+use App\Models\UsuarioContexto;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\QueryException;
@@ -120,6 +122,7 @@ class SolicitacaoCadastroService
             'id'                         => $solicitacao->id,
             'nome'                       => $solicitacao->usuario?->nome ?? '',
             'cpf'                        => CpfHelper::mascarar($solicitacao->usuario?->cpf ?? ''),
+            'cpf_digitos'                => $solicitacao->usuario?->cpf ?? '',
             'status'                     => $solicitacao->statusSolicitacao?->nome ?? '',
             'created_at'                 => $solicitacao->created_at?->toIso8601String(),
             'updated_at'                 => $solicitacao->updated_at?->toIso8601String(),
@@ -131,11 +134,11 @@ class SolicitacaoCadastroService
             'municipio'                  => $solicitacao->municipioRelacao?->nome ?? '',
             'orgao'                      => $solicitacao->orgao,
             'cargo'                      => $solicitacao->cargo,
-            'perfil_id_solicitado'       => $solicitacao->perfil_id_solicitado,
-            'vigencia_inicio_solicitada' => $solicitacao->vigencia_inicio_solicitada?->format('Y-m-d'),
-            'vigencia_fim_solicitada'    => $solicitacao->vigencia_fim_solicitada?->format('Y-m-d'),
+            'perfil_id_solicitado'       => $solicitacao->perfil_id,
+            'vigencia_inicio_solicitada' => $solicitacao->vigencia_inicio?->format('Y-m-d'),
+            'vigencia_fim_solicitada'    => $solicitacao->vigencia_fim?->format('Y-m-d'),
             'perfis_vinculados'          => $perfisVinculados,
-            'pode_avaliar'               => $solicitacao->status_id === $statusEmAnalise,
+            'pode_avaliar'               => $solicitacao->status_id === $statusEmAnalise && $user->isGestor(),
             'historico_reprovacoes'      => $this->montarHistoricoReprovacoes($solicitacao),
         ];
     }
@@ -201,6 +204,14 @@ class SolicitacaoCadastroService
 
         $cpf = strlen($cpfDigits) === 11 ? $cpfDigits : ($user?->cpf ?? null);
 
+        // Auto-cadastro: usuário autenticado submetendo solicitação para si mesmo (fluxo GOV.BR).
+        // Cadastro interno via painel (Gestor criando para outro usuário) requer perfil de Gestor.
+        $ehAutoCadastro = $user !== null && $user->cpf === $cpf;
+
+        if ($user && !$ehAutoCadastro && !$user->isGestor()) {
+            throw ApiException::forbidden('Apenas usuários com perfil de Gestor podem criar cadastros. Visitantes e Administradores não têm acesso.');
+        }
+
         if (!$cpf) {
             throw ApiException::unprocessable('CPF é obrigatório.');
         }
@@ -218,6 +229,7 @@ class SolicitacaoCadastroService
                     'email'     => $dados['emailInstitucional'],
                     'govbr_sub' => $govbrSub,
                     'telefone'  => $dados['telefoneInstitucional'] ?? null,
+                    'ativo'     => true,
                 ]);
             } catch (QueryException $e) {
                 $msg = $e->getMessage();
@@ -230,12 +242,17 @@ class SolicitacaoCadastroService
             }
         }
 
-        $existente = SolicitacaoCadastro::where('user_id', $usuario->id)
+        $existente = SolicitacaoCadastro::where('usuario_id', $usuario->id)
             ->where('status_id', $statusEmAnalise)
             ->exists();
 
         if ($existente) {
             throw ApiException::unprocessable('Já existe uma solicitação em análise para este CPF. Aguarde a avaliação da equipe gestora antes de enviar uma nova solicitação.');
+        }
+
+        $perfisDisponiveis = $this->obterPerfisDisponiveisParaUsuario($usuario->id);
+        if ($perfisDisponiveis === []) {
+            throw ApiException::unprocessable('Este CPF já atingiu o máximo de perfis disponíveis no sistema.');
         }
 
         $esferaNome = strtolower((string) ($dados['esferaAtuacao'] ?? ''));
@@ -253,13 +270,28 @@ class SolicitacaoCadastroService
             $perfilIdSolicitado = null;
         }
 
-        $this->assertOperadorPodeRegistrarSolicitacao(
-            $user,
-            $esferaNome,
-            $ufSigla,
-            $municipioId,
-            $perfilIdSolicitado
-        );
+        if ($perfilIdSolicitado) {
+            $idsDisponiveis = array_map(
+                static fn (array $opcao): int => (int) ($opcao['value'] ?? 0),
+                $perfisDisponiveis
+            );
+            if (!in_array($perfilIdSolicitado, $idsDisponiveis, true)) {
+                throw ApiException::unprocessable('O perfil selecionado já está vinculado ao usuário ou não está disponível para solicitação.');
+            }
+        }
+
+        // Restrições de operador (esfera/UF/município e coerência de perfil) aplicam-se apenas
+        // ao cadastro interno via painel. No auto-cadastro (fluxo GOV.BR) o perfil será
+        // atribuído pelo gestor na avaliação da solicitação.
+        if (!$ehAutoCadastro) {
+            $this->assertOperadorPodeRegistrarSolicitacao(
+                $user,
+                $esferaNome,
+                $ufSigla,
+                $municipioId,
+                $perfilIdSolicitado
+            );
+        }
 
         $this->verificarDuplicidade($usuario->id, $perfilIdSolicitado);
 
@@ -267,7 +299,7 @@ class SolicitacaoCadastroService
         $vigenciaFimSol    = $this->normalizarDataSolicitacaoOpcional($dados['vigenciaFim'] ?? null);
 
         $solicitacao = SolicitacaoCadastro::create([
-            'user_id'                    => $usuario->id,
+            'usuario_id'                 => $usuario->id,
             'email_institucional'        => $dados['emailInstitucional'],
             'telefone_institucional'     => $dados['telefoneInstitucional'] ?? null,
             'telefone_pessoal'           => $dados['telefonePessoal'] ?? null,
@@ -276,23 +308,23 @@ class SolicitacaoCadastroService
             'municipio_id'               => $municipioId,
             'orgao'                      => $dados['orgao'],
             'cargo'                      => $dados['cargo'] ?? null,
-            'perfil_id_solicitado'       => $perfilIdSolicitado,
-            'vigencia_inicio_solicitada' => $vigenciaInicioSol,
-            'vigencia_fim_solicitada'    => $vigenciaFimSol,
+            'perfil_id'                  => $perfilIdSolicitado,
+            'vigencia_inicio'            => $vigenciaInicioSol,
+            'vigencia_fim'               => $vigenciaFimSol,
             'status_id'                  => $statusEmAnalise,
             'aceite_termo_at'            => Carbon::now(),
         ]);
 
         $this->audit->log(
-            $user ? 'gerenciar_cadastros.solicitacao_interna_criada' : 'solicitacao_cadastro.criada',
+            $ehAutoCadastro ? 'solicitacao_cadastro.criada' : ($user ? 'gerenciar_cadastros.solicitacao_interna_criada' : 'solicitacao_cadastro.criada'),
             $user?->id,
             [
                 'solicitacao_id'       => $solicitacao->id,
-                'perfil_id_solicitado' => $solicitacao->perfil_id_solicitado,
+                'perfil_id_solicitado' => $solicitacao->perfil_id,
                 'esfera_id'            => $solicitacao->esfera_id,
                 'uf_id'                => $solicitacao->uf_id,
                 'municipio_id'         => $solicitacao->municipio_id,
-                'origem'               => $user ? 'painel_interno' : 'formulario_publico',
+                'origem'               => $ehAutoCadastro ? 'govbr' : ($user ? 'painel_interno' : 'formulario_publico'),
             ],
             AuditLog::TIPO_INSERT,
             'solicitacoes_cadastro',
@@ -320,6 +352,11 @@ class SolicitacaoCadastroService
 
     public function avaliar(Usuario $user, int $id, array $dados): array
     {
+        // Verificar se usuário tem permissão para avaliar
+        if ($user->isVisitante()) {
+            throw ApiException::forbidden('Usuários com perfil visitante não podem avaliar solicitações.');
+        }
+
         $solicitacao = SolicitacaoCadastro::with(['usuario', 'esfera', 'ufRelacao', 'municipioRelacao'])->find($id);
         if (!$solicitacao) {
             throw ApiException::notFound('Solicitação não encontrada.');
@@ -338,7 +375,12 @@ class SolicitacaoCadastroService
         $statusNome = $dados['status'];
         $novoStatusId = $statusNome === 'aprovado' ? $statusAprovado : $statusReprovado;
 
-        DB::transaction(function () use ($solicitacao, $novoStatusId, $statusAprovado, $dados): void {
+        if ($novoStatusId === $statusAprovado) {
+            $perfilIdAprovado = (int) ($dados['perfil_id'] ?? 0);
+            $this->assertPerfilPermitidoParaOperador($user, $perfilIdAprovado);
+        }
+
+        DB::transaction(function () use ($solicitacao, $novoStatusId, $statusAprovado, $dados, $user): void {
             $updateData = ['status_id' => $novoStatusId];
             if ($novoStatusId !== $statusAprovado) {
                 $updateData['justificativa_reprovacao'] = $dados['justificativa'] ?? null;
@@ -346,18 +388,50 @@ class SolicitacaoCadastroService
             $solicitacao->update($updateData);
 
             if ($novoStatusId === $statusAprovado) {
-                PerfilUsuario::where('usuario_id', $solicitacao->user_id)
+                // Criar ou obter usuario_abrangencia da solicitação
+                $usuarioAbrangencia = UsuarioAbrangencia::updateOrCreate(
+                    [
+                        'usuario_id'     => $solicitacao->usuario_id,
+                        'esfera_id'      => $solicitacao->esfera_id,
+                        'uf_id'          => $solicitacao->uf_id,
+                        'municipio_id'   => $solicitacao->municipio_id,
+                    ],
+                    [
+                        'nome'                         => $this->gerarNomeAbrangencia($solicitacao),
+                        'origem_tipo'                  => 'solicitacao',
+                        'solicitacao_cadastro_origem_id' => $solicitacao->id,
+                        'criado_por_usuario_id'        => $user->id,
+                        'ativo'                        => true,
+                    ]
+                );
+
+                // Desativar outras abrangências do usuário
+                UsuarioAbrangencia::where('usuario_id', $solicitacao->usuario_id)
+                    ->where('id', '!=', $usuarioAbrangencia->id)
                     ->update(['ativo' => false]);
 
-                PerfilUsuario::updateOrCreate(
+                $perfilUsuario = PerfilUsuario::updateOrCreate(
                     [
-                        'usuario_id' => $solicitacao->user_id,
+                        'usuario_id' => $solicitacao->usuario_id,
                         'perfil_id'  => (int) $dados['perfil_id'],
                     ],
                     [
-                        'data_inicio_vigencia' => $dados['vigencia_inicio'] ?? null,
-                        'data_fim_vigencia'    => $dados['vigencia_fim'] ?? null,
-                        'ativo'                => true,
+                        'usuario_abrangencia_id'        => $usuarioAbrangencia->id,
+                        'data_inicio_vigencia'          => $dados['vigencia_inicio'] ?? null,
+                        'data_fim_vigencia'             => $dados['vigencia_fim'] ?? null,
+                        'origem_tipo'                   => 'solicitacao',
+                        'solicitacao_cadastro_origem_id' => $solicitacao->id,
+                        'atribuido_por_usuario_id'       => $user->id,
+                        'ativo'                         => true,
+                    ]
+                );
+
+                // Atualizar usuario_contexto com o novo perfil e abrangência
+                UsuarioContexto::updateOrCreate(
+                    ['usuario_id' => $solicitacao->usuario_id],
+                    [
+                        'perfil_usuario_id'      => $perfilUsuario->id,
+                        'usuario_abrangencia_id' => $usuarioAbrangencia->id,
                     ]
                 );
             }
@@ -414,16 +488,29 @@ class SolicitacaoCadastroService
             ->exists();
 
         if ($emAnalise) {
-            return ['disponivel' => false, 'mensagem' => 'Já existe uma solicitação em análise para este CPF.'];
+            return [
+                'disponivel' => false,
+                'mensagem' => 'Já existe uma solicitação em análise para este CPF.',
+                'perfis_disponiveis' => [],
+            ];
         }
 
-        // Verificar se possui perfil vigente (ativo) — se sim, bloqueia
         $usuario = Usuario::where('cpf', $cpf)->first();
-        if ($usuario && $usuario->possuiPerfilVigente()) {
-            return ['disponivel' => false, 'mensagem' => 'Este CPF já possui perfil ativo no sistema.'];
+        $perfisDisponiveis = $this->obterPerfisDisponiveisParaUsuario($usuario?->id);
+
+        if ($usuario && $perfisDisponiveis === []) {
+            return [
+                'disponivel' => false,
+                'mensagem' => 'Este CPF já atingiu o máximo de perfis disponíveis no sistema.',
+                'perfis_disponiveis' => [],
+            ];
         }
 
-        return ['disponivel' => true, 'mensagem' => 'CPF disponível para cadastro.'];
+        return [
+            'disponivel' => true,
+            'mensagem' => 'CPF disponível para cadastro.',
+            'perfis_disponiveis' => $perfisDisponiveis,
+        ];
     }
 
     // ------------------------------------------------------------------
@@ -438,6 +525,8 @@ class SolicitacaoCadastroService
             throw ApiException::notFound('Usuário da solicitação não encontrado.');
         }
 
+        $this->assertUsuarioPodeGerenciarPerfisVinculados($user, $usuarioSolicitante);
+
         $vinculo = PerfilUsuario::where('id', $perfilUsuarioId)
             ->where('usuario_id', $usuarioSolicitante->id)
             ->first();
@@ -446,18 +535,33 @@ class SolicitacaoCadastroService
             throw ApiException::notFound('Vínculo de perfil não encontrado.');
         }
 
-        PerfilUsuario::where('usuario_id', $usuarioSolicitante->id)->update(['ativo' => false]);
+        $hoje = now()->toDateString();
+        $inicioAtual = $vinculo->data_inicio_vigencia?->toDateString();
+        // Garantir vigência corrente ao ativar (evita perfil "inativo" na grade por início futuro).
+        $dataInicio = (!$inicioAtual || $inicioAtual > $hoje) ? $hoje : $inicioAtual;
 
         $vinculo->update([
-            'data_inicio_vigencia' => $vinculo->data_inicio_vigencia ?: now()->toDateString(),
+            'data_inicio_vigencia' => $dataInicio,
             'data_fim_vigencia'    => null,
             'ativo'                => true,
         ]);
 
+        $vinculo->refresh();
+
+        // Sincronizar usuario_contexto com o perfil agora ativo
+        UsuarioContexto::updateOrCreate(
+            ['usuario_id' => $usuarioSolicitante->id],
+            [
+                'perfil_usuario_id'      => $vinculo->id,
+                'usuario_abrangencia_id' => $vinculo->usuario_abrangencia_id,
+            ]
+        );
+
         $this->audit->log('gerenciar_cadastros.perfil_ativado', $user->id, [
-            'solicitacao_id'    => $solicitacao->id,
-            'perfil_usuario_id' => $vinculo->id,
-            'usuario_id'        => $usuarioSolicitante->id,
+            'solicitacao_id'         => $solicitacao->id,
+            'perfil_usuario_id'      => $vinculo->id,
+            'usuario_id'             => $usuarioSolicitante->id,
+            'usuario_abrangencia_id' => $vinculo->usuario_abrangencia_id,
         ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $vinculo->id);
 
         return ['message' => 'Perfil vinculado ativado com sucesso.', 'data' => ['id' => $vinculo->id]];
@@ -474,6 +578,8 @@ class SolicitacaoCadastroService
         if (!$usuarioSolicitante) {
             throw ApiException::notFound('Usuário da solicitação não encontrado.');
         }
+
+        $this->assertUsuarioPodeGerenciarPerfisVinculados($user, $usuarioSolicitante);
 
         $vinculo = PerfilUsuario::where('id', $perfilUsuarioId)
             ->where('usuario_id', $usuarioSolicitante->id)
@@ -494,6 +600,14 @@ class SolicitacaoCadastroService
             'data_fim_vigencia' => $dataFim,
             'ativo'             => false,
         ]);
+
+        // Limpar usuario_contexto se o perfil desativado era o contexto ativo
+        UsuarioContexto::where('usuario_id', $usuarioSolicitante->id)
+            ->where('perfil_usuario_id', $vinculo->id)
+            ->update([
+                'perfil_usuario_id'      => null,
+                'usuario_abrangencia_id' => null,
+            ]);
 
         $this->audit->log('gerenciar_cadastros.perfil_desativado', $user->id, [
             'solicitacao_id'    => $solicitacao->id,
@@ -524,6 +638,8 @@ class SolicitacaoCadastroService
             throw ApiException::notFound('Usuário da solicitação não encontrado.');
         }
 
+        $this->assertUsuarioPodeGerenciarPerfisVinculados($user, $usuarioSolicitante);
+
         $vinculoExistente = PerfilUsuario::where('usuario_id', $usuarioSolicitante->id)
             ->where('perfil_id', (int) $dados['perfil_id'])
             ->first();
@@ -534,14 +650,15 @@ class SolicitacaoCadastroService
             ]);
         }
 
-        PerfilUsuario::where('usuario_id', $usuarioSolicitante->id)->update(['ativo' => false]);
-
         $vinculo = PerfilUsuario::create([
-            'usuario_id'           => $usuarioSolicitante->id,
-            'perfil_id'            => (int) $dados['perfil_id'],
-            'data_inicio_vigencia' => $dados['vigencia_inicio'] ?? null,
-            'data_fim_vigencia'    => $dados['vigencia_fim'] ?? null,
-            'ativo'                => true,
+            'usuario_id'                    => $usuarioSolicitante->id,
+            'perfil_id'                     => (int) $dados['perfil_id'],
+            'data_inicio_vigencia'          => $dados['vigencia_inicio'] ?? null,
+            'data_fim_vigencia'             => $dados['vigencia_fim'] ?? null,
+            'origem_tipo'                   => 'painel',
+            'solicitacao_cadastro_origem_id' => $solicitacao->id,
+            'atribuido_por_usuario_id'      => $user->id,
+            'ativo'                         => true,
         ]);
 
         $this->audit->log('gerenciar_cadastros.perfil_adicionado', $user->id, [
@@ -567,6 +684,17 @@ class SolicitacaoCadastroService
         return $solicitacao;
     }
 
+            private function assertUsuarioPodeGerenciarPerfisVinculados(Usuario $user, Usuario $usuarioSolicitante): void
+            {
+                if (!$user->isGestor()) {
+                    throw ApiException::forbidden('Apenas usuários com perfil de Gestor podem ativar, desativar ou adicionar perfis vinculados.');
+                }
+
+                if ($user->id === $usuarioSolicitante->id) {
+                    throw ApiException::forbidden('Você não pode ativar, desativar ou adicionar perfis ao próprio usuário. Esta ação deve ser realizada por outro gestor.');
+                }
+            }
+
     private function obterPerfisVinculados(SolicitacaoCadastro $solicitacao): array
     {
         $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
@@ -580,25 +708,38 @@ class SolicitacaoCadastroService
         }
 
         $hoje = now()->toDateString();
-        $vinculos = $usuario->perfis()
-            ->withPivot(['id', 'data_inicio_vigencia', 'data_fim_vigencia', 'ativo'])
+
+        // Usar o model PerfilUsuario (não o pivot via belongsToMany) para o `id` ser sempre o da tabela perfil_usuario.
+        $vinculos = PerfilUsuario::query()
+            ->where('usuario_id', $usuario->id)
+            ->with([
+                'perfil',
+                'usuarioAbrangencia.esfera',
+                'usuarioAbrangencia.uf',
+                'usuarioAbrangencia.municipio',
+            ])
             ->get();
 
-        $perfis = $vinculos->map(function ($perfil, $index) use ($hoje, $solicitacao): array {
-            $inicio  = $this->normalizarDataPivot($perfil->pivot->data_inicio_vigencia);
-            $fim     = $this->normalizarDataPivot($perfil->pivot->data_fim_vigencia);
-            $vigente = (!$inicio || $inicio <= $hoje) && (!$fim || $fim >= $hoje);
-            $id      = (int) ($perfil->pivot->id ?? (($solicitacao->id * 1000) + $perfil->id + $index));
+        $perfis = $vinculos->map(function (PerfilUsuario $vinculo) use ($hoje, $solicitacao): array {
+            $inicio = $this->normalizarDataPivot($vinculo->data_inicio_vigencia);
+            $fim    = $this->normalizarDataPivot($vinculo->data_fim_vigencia);
+            $ativo  = (bool) $vinculo->ativo;
+            $vigente = $ativo
+                && (!$inicio || $inicio <= $hoje)
+                && (!$fim || $fim >= $hoje);
+
+            $abr = $vinculo->usuarioAbrangencia;
 
             return [
-                'id'              => $id,
-                'perfil'          => $perfil->nome,
+                'id'              => $vinculo->id,
+                'perfil'          => $vinculo->perfil?->nome ?? '—',
                 'vigencia_inicio' => $inicio ?? '—',
                 'vigencia_fim'    => $fim ?? '—',
                 'vigente'         => $vigente,
-                'esfera'          => $solicitacao->esfera?->nome ?? '—',
-                'uf'              => $solicitacao->ufRelacao?->sigla ?? '—',
-                'municipio'       => $solicitacao->municipioRelacao?->nome ?? '—',
+                'ativo'           => $ativo,
+                'esfera'          => $abr?->esfera?->nome ?? $solicitacao->esfera?->nome ?? '—',
+                'uf'              => $abr?->uf?->sigla ?? $solicitacao->ufRelacao?->sigla ?? '—',
+                'municipio'       => $abr?->municipio?->nome ?? $solicitacao->municipioRelacao?->nome ?? '—',
                 'orgao'           => $solicitacao->orgao ?? '—',
                 'cargo'           => $solicitacao->cargo ?? '—',
             ];
@@ -685,23 +826,32 @@ class SolicitacaoCadastroService
             throw ApiException::unprocessable('Selecione o perfil solicitado.');
         }
 
-        $nome = Perfil::where('id', $perfilId)->value('nome');
-        if (!$nome) {
+        $perfil = Perfil::find($perfilId);
+        if (!$perfil) {
             throw ApiException::unprocessable('Perfil informado é inválido.');
         }
 
-        $n = mb_strtolower($nome);
+        $permitidos = $tipo === 'estadual'
+            ? ['Gestor Estadual', 'Gestor Municipal']
+            : ['Gestor Municipal'];
 
-        if ($tipo === 'estadual' && !str_contains($n, 'estadual')) {
+        if (!in_array($perfil->nome, $permitidos, true)) {
             throw ApiException::unprocessable(
-                'Seu nível de acesso só permite solicitar perfis do tipo estadual.'
+                $tipo === 'estadual'
+                    ? 'Seu nível de acesso só permite solicitar perfis Gestor Estadual ou Gestor Municipal.'
+                    : 'Seu nível de acesso só permite solicitar perfis Gestor Municipal.'
             );
         }
+    }
 
-        if ($tipo === 'municipal' && !str_contains($n, 'municipal')) {
-            throw ApiException::unprocessable(
-                'Seu nível de acesso só permite solicitar perfis do tipo municipal.'
-            );
+    private function assertPerfilPermitidoParaOperador(Usuario $user, int $perfilId): void
+    {
+        if ($perfilId <= 0) {
+            throw ApiException::unprocessable('Selecione o perfil para aprovação.');
+        }
+
+        if (!Perfil::perfilPermitidoParaUsuario($user, $perfilId)) {
+            throw ApiException::forbidden('O perfil selecionado não é permitido para o gestor logado.');
         }
     }
 
@@ -780,5 +930,64 @@ class SolicitacaoCadastroService
         }
 
         return Carbon::parse((string) $valor)->format('Y-m-d');
+    }
+
+    /**
+     * Gera nome descritivo para uma abrangência baseado na solicitação
+     */
+    private function gerarNomeAbrangencia(SolicitacaoCadastro $solicitacao): string
+    {
+        $esfera = $solicitacao->esfera?->nome ?? 'Federal';
+        $uf = $solicitacao->ufRelacao?->sigla ?? '';
+        $municipio = $solicitacao->municipioRelacao?->nome ?? '';
+
+        if ($esfera === 'Federal') {
+            return 'Federal';
+        } elseif ($esfera === 'Estadual') {
+            return "Estadual - {$uf}";
+        } elseif ($esfera === 'Municipal') {
+            return "Municipal - {$uf} / {$municipio}";
+        }
+
+        return $esfera;
+    }
+
+    /**
+     * Lista de perfis ainda não vinculados ao usuário.
+     * Se não houver usuário para o CPF, retorna todo o catálogo oficial ativo.
+     *
+     * @return array<int, array{value:int,label:string}>
+     */
+    private function obterPerfisDisponiveisParaUsuario(?int $usuarioId): array
+    {
+        $query = Perfil::query()
+            ->whereIn('nome', Perfil::CATALOGO_OFICIAL)
+            ->where('ativo', true);
+
+        if ($usuarioId) {
+            // Exclui apenas perfis que estão ATIVOS no momento.
+            // Perfis inativados (reprovados, expirados, desvinculados) ficam disponíveis para nova solicitação.
+            $idsAtivos = PerfilUsuario::query()
+                ->where('usuario_id', $usuarioId)
+                ->where('ativo', true)
+                ->pluck('perfil_id')
+                ->map(static fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+            if ($idsAtivos !== []) {
+                $query->whereNotIn('id', $idsAtivos);
+            }
+        }
+
+        return $query->get(['id', 'nome'])
+            ->sortBy(static fn (Perfil $perfil): int => Perfil::indiceNoCatalogo($perfil->nome))
+            ->values()
+            ->map(static fn (Perfil $perfil): array => [
+                'value' => (int) $perfil->id,
+                'label' => $perfil->nome,
+            ])
+            ->all();
     }
 }

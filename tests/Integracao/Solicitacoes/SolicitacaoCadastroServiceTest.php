@@ -31,10 +31,10 @@ class SolicitacaoCadastroServiceTest extends TestCase
             $service->verificarCpf('12345678901'),
         );
 
-        $this->assertSame(
-            ['disponivel' => true, 'mensagem' => 'CPF disponível para cadastro.'],
-            $service->verificarCpf($cpfDisponivel),
-        );
+        $res = $service->verificarCpf($cpfDisponivel);
+        $this->assertSame(true, $res['disponivel']);
+        $this->assertSame('CPF disponível para cadastro.', $res['mensagem']);
+        $this->assertIsArray($res['perfis_disponiveis'] ?? null);
     }
 
     #[Test]
@@ -51,10 +51,10 @@ class SolicitacaoCadastroServiceTest extends TestCase
             'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE),
         ]);
 
-        $this->assertSame(
-            ['disponivel' => false, 'mensagem' => 'Já existe uma solicitação em análise para este CPF.'],
-            $service->verificarCpf($usuario->cpf),
-        );
+        $res = $service->verificarCpf($usuario->cpf);
+        $this->assertSame(false, $res['disponivel']);
+        $this->assertSame('Já existe uma solicitação em análise para este CPF.', $res['mensagem']);
+        $this->assertSame([], $res['perfis_disponiveis'] ?? []);
     }
 
     #[Test]
@@ -225,7 +225,7 @@ class SolicitacaoCadastroServiceTest extends TestCase
         $operador = $this->usuarioPorSub('teste-federal-001');
 
         $this->expectException(ApiException::class);
-        $this->expectExceptionMessage('Você já possui o perfil ativo: Gestor Nacional.');
+        $this->expectExceptionMessage('O perfil selecionado já está vinculado ao usuário ou não está disponível para solicitação.');
 
         $service->criar($operador, $this->payloadSolicitacaoInterna(
             cpf: '11144477735',
@@ -513,6 +513,52 @@ class SolicitacaoCadastroServiceTest extends TestCase
             $perfil->data_inicio_vigencia?->toDateString(),
             $perfil->data_fim_vigencia?->toDateString(),
         );
+    }
+
+    #[Test]
+    public function bloqueia_autodesativacao_para_usuario_que_nao_e_gestor_nacional(): void
+    {
+        $service = app(SolicitacaoCadastroService::class);
+        $operador = $this->usuarioPorSub('teste-estadual-go-002');
+
+        $solicitacao = SolicitacaoCadastro::factory()->create([
+            'user_id' => $operador->id,
+            'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO),
+        ]);
+
+        $perfil = PerfilUsuario::query()
+            ->where('usuario_id', $operador->id)
+            ->where('ativo', true)
+            ->firstOrFail();
+
+        $this->expectException(ApiException::class);
+        $this->expectExceptionMessage('Você não pode desativar o próprio cadastro. Apenas Gestor Nacional pode executar essa ação no próprio usuário.');
+
+        $service->desativarPerfil($operador, $solicitacao->id, $perfil->id);
+    }
+
+    #[Test]
+    public function permite_autodesativacao_quando_operador_e_gestor_nacional(): void
+    {
+        $service = app(SolicitacaoCadastroService::class);
+        $operador = $this->usuarioPorSub('teste-federal-001');
+
+        $solicitacao = SolicitacaoCadastro::factory()->create([
+            'user_id' => $operador->id,
+            'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO),
+        ]);
+
+        $perfil = PerfilUsuario::query()
+            ->where('usuario_id', $operador->id)
+            ->where('ativo', true)
+            ->firstOrFail();
+
+        $resultado = $service->desativarPerfil($operador, $solicitacao->id, $perfil->id);
+
+        $this->assertSame('Perfil vinculado desativado com sucesso.', $resultado['message']);
+
+        $perfil->refresh();
+        $this->assertFalse((bool) $perfil->ativo);
     }
 
     #[Test]

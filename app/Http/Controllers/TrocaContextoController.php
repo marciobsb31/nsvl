@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\ApiException;
 use App\Models\AuditLog;
 use App\Models\PerfilUsuario;
+use App\Models\UsuarioContexto;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -109,14 +110,25 @@ class TrocaContextoController extends Controller
         PerfilUsuario::where('usuario_id', $user->id)->update(['ativo' => false]);
         PerfilUsuario::where('id', $perfilUsuarioId)->update(['ativo' => true]);
 
+        // Atualizar usuario_contexto com o novo perfil e sua abrangência associada
+        $perfilUsuarioAtivo = PerfilUsuario::find($perfilUsuarioId);
+        UsuarioContexto::updateOrCreate(
+            ['usuario_id' => $user->id],
+            [
+                'perfil_usuario_id'      => $perfilUsuarioId,
+                'usuario_abrangencia_id' => $perfilUsuarioAtivo?->usuario_abrangencia_id,
+            ]
+        );
+
         $this->audit->log(
             'contexto.troca',
             $user->id,
             [
-                'perfil_anterior_id'   => $perfilAnterior?->pivot->id,
-                'perfil_anterior_nome' => $perfilAnterior?->nome,
-                'novo_perfil_id'       => $perfilUsuarioId,
-                'novo_perfil_nome'     => $novoPerfilPivot->nome,
+                'perfil_anterior_id'       => $perfilAnterior?->pivot->id,
+                'perfil_anterior_nome'     => $perfilAnterior?->nome,
+                'novo_perfil_id'           => $perfilUsuarioId,
+                'novo_perfil_nome'         => $novoPerfilPivot->nome,
+                'usuario_abrangencia_id'   => $perfilUsuarioAtivo?->usuario_abrangencia_id,
             ],
             AuditLog::TIPO_UPDATE,
             'perfil_usuario',

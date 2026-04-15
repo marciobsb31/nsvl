@@ -11,7 +11,6 @@ class TestSeeder extends Seeder
         $this->call([
             BootstrapSeeder::class,
             LocalidadeTesteSeeder::class,
-            UsuarioExemploSeeder::class,
         ]);
     }
 }
