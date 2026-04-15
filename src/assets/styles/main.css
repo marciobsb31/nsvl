@@ -61,13 +61,15 @@ p {
 }
 
 /* Suporte a text-spacing do usuário — não cortar conteúdo */
-p, li, div {
+p,
+li,
+div {
   max-width: 100%;
 }
 
 /* Elementos interativos — área mínima de toque 24×24px (WCAG 2.5.8 AA) */
 button.br-button.circle,
-[role="button"].br-button.circle {
+[role='button'].br-button.circle {
   min-height: 24px;
   min-width: 24px;
 }
@@ -85,7 +87,7 @@ textarea {
 /* Botões circulares em mobile — área 44×44px (WCAG 2.5.5) */
 @media (max-width: 991px) {
   button.br-button.circle,
-  [role="button"].br-button.circle {
+  [role='button'].br-button.circle {
     min-height: 44px;
     min-width: 44px;
   }
@@ -157,22 +159,25 @@ textarea:focus-visible {
 /* VLibras — posicionamento no canto inferior */
 [vw] {
   position: fixed !important;
-  bottom: 0 !important;
+  bottom: 14rem !important;
   right: 0 !important;
-  z-index: 9998;
+  z-index: 9998 !important;
+}
+
+div[vw] {
+  z-index: 9998 !important;
 }
 
 [vw-access-button] {
-  bottom: 0.25rem !important;
+  bottom: 16rem !important;
   right: 0.75rem !important;
   position: fixed !important;
 }
 
 @media (max-width: 991px) {
   [vw-access-button] {
-    bottom: 0.25rem !important;
-    left: 1.25rem !important;
-    right: auto !important;
+    bottom: 16rem !important;
+    right: 0.5rem !important;
   }
 }
 
@@ -225,5 +230,3 @@ textarea:focus-visible {
 input::placeholder {
   font-style: normal;
 }
-
-

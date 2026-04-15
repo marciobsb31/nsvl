@@ -135,7 +135,7 @@ const toggleAcessibilidade = () => {
 .menu {
   position: fixed;
   z-index: 9999 !important;
-  bottom: 9rem;
+  bottom: 19rem;
   right: 5rem;
   width: 300px;
 }
@@ -164,7 +164,7 @@ const toggleAcessibilidade = () => {
 .fixed {
   position: fixed;
   z-index: 9999 !important;
-  bottom: 8rem;
+  bottom: 33rem;
   right: 1.5rem;
 }
 
@@ -194,6 +194,9 @@ const toggleAcessibilidade = () => {
 @media (max-width: 768px) {
   .menu {
     right: 5rem;
+  }
+  .fixed {
+    right: 1rem;
   }
 }
 
