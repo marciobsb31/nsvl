@@ -12,10 +12,10 @@ class GovBrUserDTOTest extends TestCase
     public function monta_o_dto_a_partir_de_array_do_userinfo(): void
     {
         $dto = GovBrUserDTO::fromArray([
-            'sub' => '12345678901',
-            'name' => 'Maria da Silva',
+            'sub'   => '12345678901',
+            'name'  => 'Maria da Silva',
             'email' => 'maria@exemplo.gov.br',
-            'amr' => ['pwd'],
+            'amr'   => ['pwd'],
         ]);
 
         $this->assertSame('12345678901', $dto->sub);

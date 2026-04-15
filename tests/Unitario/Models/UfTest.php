@@ -12,7 +12,7 @@ class UfTest extends TestCase
     #[Test]
     public function expoe_relacoes_has_many_esperadas(): void
     {
-        $uf = new Uf();
+        $uf = new Uf;
 
         $this->assertInstanceOf(HasMany::class, $uf->municipios());
         $this->assertInstanceOf(HasMany::class, $uf->solicitacoesCadastro());

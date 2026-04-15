@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * Model Usuario — representa o cidadão autenticado via GOV.BR
@@ -49,6 +51,7 @@ class Usuario extends Authenticatable
         'ativo' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'ativo'      => 'boolean',
     ];
 
     protected static function booted(): void
@@ -71,9 +74,14 @@ class Usuario extends Authenticatable
 
     public function perfis(): BelongsToMany
     {
-        return $this->belongsToMany(Perfil::class, 'perfil_usuario', 'usuario_id', 'perfil_id')
+        return $this->belongsToMany(Perfil::class, 'perfil_usuario')
             ->withPivot(['id', 'data_inicio_vigencia', 'data_fim_vigencia', 'ativo'])
             ->withTimestamps();
+    }
+
+    public function contextoAtivo(): HasOne
+    {
+        return $this->hasOne(UsuarioContexto::class, 'usuario_id');
     }
 
     public function perfisUsuario(): HasMany
@@ -107,7 +115,7 @@ class Usuario extends Authenticatable
     /**
      * Retorna os perfis vigentes (com data de vigência válida e ativo = true no perfil).
      */
-    public function perfisVigentes(): \Illuminate\Support\Collection
+    public function perfisVigentes(): Collection
     {
         $hoje = now()->toDateString();
 
@@ -124,33 +132,28 @@ class Usuario extends Authenticatable
             ->get();
     }
 
-    /**
-     * Deriva a esfera de atuação a partir da solicitação aprovada mais recente.
-     */
-    public function getEsferaAtuacaoAttribute(): string
+    public function getAllPermissions(): array
     {
-        $solicitacao = $this->solicitacoesCadastro()
-            ->whereHas('statusSolicitacao', fn ($q) => $q->where('nome', 'aprovado'))
-            ->latest('id')
-            ->with('esfera')
-            ->first();
-
-        return $solicitacao?->esfera?->nome ?? 'federal';
+        return $this->perfisUsuario()
+            ->with('perfil.permissoes')
+            ->get()
+            ->pluck('perfil.permissoes')
+            ->flatten()
+            ->pluck('codigo')
+            ->unique()
+            ->values()
+            ->toArray();
     }
 
-    /**
-     * Deriva a UF de lotação a partir da solicitação aprovada mais recente.
-     */
-    public function getUfLotacaoAttribute(): ?string
+    public function hasPermissao(string $codigo): bool
     {
-        $solicitacao = $this->solicitacoesCadastro()
-            ->whereHas('statusSolicitacao', fn ($q) => $q->where('nome', 'aprovado'))
-            ->latest('id')
-            ->with('ufRelacao')
-            ->first();
+        $contexto = $this->loadMissing(
+            'contextoAtivo.perfilUsuario.perfil.permissoes'
+        )->contextoAtivo;
 
-        return $solicitacao?->ufRelacao?->sigla;
-    }
+        if (! $contexto) {
+            return false;
+        }
 
     /**
      * Deriva o município de lotação a partir da solicitação aprovada mais recente.

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\TipoAuditoria;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
-use App\Models\AuditLog;
+use App\Http\Resources\UsuarioResource;
 use App\Services\Audit\AuditLogService;
 use App\Services\Auth\AuthValidationService;
 use App\Services\Auth\GovBrService;
@@ -27,8 +28,8 @@ class GovBrAuthController extends Controller
 
     #[OA\Get(
         path: '/api/auth/url',
-        summary: 'Inicia login GOV.BR',
         description: 'Retorna a URL de autorização do SSO (PKCE + state em cache).',
+        summary: 'Inicia login GOV.BR',
         tags: ['Autenticação'],
         responses: [
             new OA\Response(
@@ -51,8 +52,8 @@ class GovBrAuthController extends Controller
 
     #[OA\Get(
         path: '/api/auth/redirect',
-        summary: 'Callback OAuth2 do GOV.BR',
         description: 'Processa o retorno do GOV.BR, valida state/code, cria token Sanctum e redireciona ao frontend com fragmento.',
+        summary: 'Callback OAuth2 do GOV.BR',
         tags: ['Autenticação'],
         parameters: [
             new OA\Parameter(name: 'code', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
@@ -75,7 +76,7 @@ class GovBrAuthController extends Controller
             if ($request->filled('error')) {
                 $descricao = (string) ($request->input('error_description') ?: $request->input('error'));
                 throw ValidationException::withMessages([
-                    'auth' => 'Falha no retorno do GOV.BR: ' . $descricao,
+                    'auth' => 'Falha no retorno do GOV.BR: '.$descricao,
                 ]);
             }
 
@@ -89,7 +90,7 @@ class GovBrAuthController extends Controller
             }
 
             $oauthData = Cache::pull($this->oauthCacheKey($state));
-            if (!is_array($oauthData)) {
+            if (! is_array($oauthData)) {
                 throw ValidationException::withMessages([
                     'auth' => 'O estado da autenticação GOV.BR expirou ou é inválido.',
                 ]);
@@ -97,7 +98,7 @@ class GovBrAuthController extends Controller
 
             $tokens = $this->govBrService->trocarCodePorToken($code, (string) $oauthData['code_verifier']);
 
-            if (!$this->govBrService->validarNonce($tokens['id_token'] ?? null, (string) $oauthData['nonce'])) {
+            if (! $this->govBrService->validarNonce($tokens['id_token'] ?? null, (string) $oauthData['nonce'])) {
                 throw ValidationException::withMessages([
                     'auth' => 'Falha na validação de segurança da resposta do GOV.BR.',
                 ]);
@@ -108,22 +109,26 @@ class GovBrAuthController extends Controller
             $plainTextToken = $user->createToken('govbr-login')->plainTextToken;
 
             $loginCode = $this->govBrService->gerarState();
+
+            $userResource = UsuarioResource::make($user);
+            $userData = json_decode($userResource->toJson(), true);
+
             Cache::put(
                 $this->loginCodeCacheKey($loginCode),
                 [
                     'token' => $plainTextToken,
-                    'user' => $user->toSafeArray(),
+                    'user'  => $userData,
                 ],
                 now()->addSeconds((int) config('govbr.login_code_ttl_seconds', 120))
             );
 
             $this->auditLogService->log('auth.callback', $user->id, [
-                'sub' => $govBrUser->sub,
+                'sub'        => $govBrUser->sub,
                 'login_code' => $loginCode,
             ]);
             $this->auditLogService->log('auth.login', $user->id, [
                 'provider' => 'govbr',
-            ], AuditLog::TIPO_LOGIN);
+            ], TipoAuditoria::LOGIN->name);
 
             return $this->redirectToFrontend([
                 'govbr_login_code' => $loginCode,
@@ -158,9 +163,8 @@ class GovBrAuthController extends Controller
 
     #[OA\Post(
         path: '/api/auth/exchange',
-        summary: 'Troca código de login por token Sanctum',
         description: 'Envia o `govbr_login_code` recebido no fragmento da URL após o redirect do callback.',
-        tags: ['Autenticação'],
+        summary: 'Troca código de login por token Sanctum',
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -170,6 +174,7 @@ class GovBrAuthController extends Controller
                 ]
             )
         ),
+        tags: ['Autenticação'],
         responses: [
             new OA\Response(
                 response: 200,
@@ -192,21 +197,21 @@ class GovBrAuthController extends Controller
         ]);
 
         $data = Cache::pull($this->loginCodeCacheKey($payload['code']));
-        if (!is_array($data) || empty($data['token']) || empty($data['user'])) {
+        if (! is_array($data) || empty($data['token']) || empty($data['user'])) {
             throw ApiException::unprocessable('Código de autenticação GOV.BR inválido ou expirado.');
         }
 
         return response()->json([
             'token' => $data['token'],
-            'user' => $data['user'],
+            'user'  => $data['user'],
         ]);
     }
 
     #[OA\Post(
         path: '/api/auth/logout',
         summary: 'Encerra sessão Sanctum',
-        tags: ['Autenticação'],
         security: [['BearerAuth' => []]],
+        tags: ['Autenticação'],
         responses: [
             new OA\Response(
                 response: 200,
@@ -228,7 +233,7 @@ class GovBrAuthController extends Controller
 
         $this->auditLogService->log('auth.logout', $user?->id, [
             'provider' => 'sanctum',
-        ], AuditLog::TIPO_LOGOUT);
+        ], TipoAuditoria::LOGOUT->name);
 
         return response()->json([
             'message' => 'Logout realizado com sucesso.',
@@ -238,7 +243,7 @@ class GovBrAuthController extends Controller
     private function garantirConfiguracao(): void
     {
         foreach (['client_id', 'client_secret', 'redirect_uri', 'authorize_url', 'token_url', 'userinfo_url'] as $campo) {
-            if (!config('govbr.' . $campo)) {
+            if (! config('govbr.'.$campo)) {
                 throw ValidationException::withMessages([
                     'auth' => 'Configuração GOV.BR incompleta no ambiente.',
                 ]);
@@ -249,14 +254,14 @@ class GovBrAuthController extends Controller
     private function redirectToFrontend(array $fragmentParams): RedirectResponse
     {
         $base = rtrim((string) config('govbr.frontend_url'), '/')
-            . (string) config('govbr.frontend_login_path', '/login');
+            .(string) config('govbr.frontend_login_path', '/login');
 
-        return redirect()->away($base . '#' . http_build_query($fragmentParams));
+        return redirect()->away($base.'#'.http_build_query($fragmentParams));
     }
 
     private function oauthCacheKey(string $state): string
     {
-        return 'govbr:oauth:' . $state;
+        return 'govbr:oauth:'.$state;
     }
 
     private function gerarUrlDeAutorizacao(): string
@@ -271,7 +276,7 @@ class GovBrAuthController extends Controller
         Cache::put(
             $this->oauthCacheKey($state),
             [
-                'nonce' => $nonce,
+                'nonce'         => $nonce,
                 'code_verifier' => $codeVerifier,
             ],
             now()->addSeconds((int) config('govbr.oauth_ttl_seconds', 600))
@@ -286,6 +291,6 @@ class GovBrAuthController extends Controller
 
     private function loginCodeCacheKey(string $code): string
     {
-        return 'govbr:login-code:' . $code;
+        return 'govbr:login-code:'.$code;
     }
 }

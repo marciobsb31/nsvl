@@ -23,22 +23,14 @@ chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 #         exit(1);
 #     }
 # "; do
-#   echo "[entrypoint] Banco nÃ£o disponÃ­vel ainda, aguardando 2s..."
+#   echo "[entrypoint] Banco nÃ£o disponível ainda, aguardando 2s..."
 #   sleep 2
 # done
 
-# echo "[entrypoint] Banco disponÃ­vel!"
-
-
+# echo "[entrypoint] Banco disponível!"
 
 echo "[entrypoint] Executando migrations..."
 php artisan migrate --force
-
-echo "[entrypoint] Importando UFs e municípios (IBGE)..."
-php artisan localidades:importar-ibge || echo "[entrypoint] Aviso: importação IBGE falhou (rede?). Execute: php artisan localidades:importar-ibge"
-
-echo "[entrypoint] Executando seeders controlados..."
-php artisan db:seed --force || true
 
 echo "[entrypoint] Gerando documentações Swagger..."
 php artisan l5-swagger:generate || echo "[entrypoint] Aviso: falha ao gerar Swagger (ignorando)"

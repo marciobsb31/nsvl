@@ -2,10 +2,10 @@
 
 namespace Tests\Integracao\Autenticacao;
 
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Integracao\TestCase;
-use Illuminate\Routing\Middleware\ThrottleRequests;
 
 class AutenticacaoEndpointsTest extends TestCase
 {
@@ -123,10 +123,10 @@ class AutenticacaoEndpointsTest extends TestCase
     {
         Cache::put('govbr:login-code:codigo-valido', [
             'token' => 'token-sanctum-teste',
-            'user' => [
-                'id' => 1,
+            'user'  => [
+                'id'   => 1,
                 'name' => 'Maria Silva Federal',
-                'sub' => self::SUB_FEDERAL,
+                'sub'  => self::SUB_FEDERAL,
             ],
         ], now()->addMinute());
 

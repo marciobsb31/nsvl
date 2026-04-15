@@ -6,7 +6,6 @@ use App\Models\SolicitacaoCadastro;
 use App\Policies\SolicitacaoCadastroPolicy;
 use App\Providers\AppServiceProvider;
 use App\Services\Audit\AuditLogService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use PHPUnit\Framework\Attributes\Test;

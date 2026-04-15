@@ -18,7 +18,7 @@ class GovBrServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new GovBrService();
+        $this->service = new GovBrService;
 
         config()->set('govbr.client_id', 'cliente-teste');
         config()->set('govbr.client_secret', 'segredo-teste');
@@ -68,9 +68,9 @@ class GovBrServiceTest extends TestCase
         Http::fake([
             'https://sso.exemplo.gov.br/token' => Http::response([
                 'access_token' => 'token-de-acesso',
-                'id_token' => 'id-token',
-                'token_type' => 'Bearer',
-                'expires_in' => 300,
+                'id_token'     => 'id-token',
+                'token_type'   => 'Bearer',
+                'expires_in'   => 300,
             ], 200),
         ]);
 
@@ -114,8 +114,8 @@ class GovBrServiceTest extends TestCase
     {
         Http::fake([
             'https://sso.exemplo.gov.br/userinfo' => Http::response([
-                'sub' => '12345678901',
-                'name' => 'Maria da Silva',
+                'sub'   => '12345678901',
+                'name'  => 'Maria da Silva',
                 'email' => 'maria@exemplo.gov.br',
             ], 200),
         ]);
@@ -180,6 +180,6 @@ class GovBrServiceTest extends TestCase
         $header = rtrim(strtr(base64_encode(json_encode(['alg' => 'none'], JSON_THROW_ON_ERROR)), '+/', '-_'), '=');
         $body = rtrim(strtr(base64_encode(json_encode($payload, JSON_THROW_ON_ERROR)), '+/', '-_'), '=');
 
-        return $header . '.' . $body . '.assinatura';
+        return $header.'.'.$body.'.assinatura';
     }
 }

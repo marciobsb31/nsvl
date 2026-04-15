@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use App\Http\Resources\UsuarioResource;
 use OpenApi\Attributes as OA;
 
 /**
  * @OA\Schema(
  *     schema="UserResource",
  *     type="object",
+ *
  *     @OA\Property(property="id", type="integer"),
  *     @OA\Property(property="name", type="string"),
  *     @OA\Property(property="email", type="string", nullable=true),
@@ -23,14 +23,14 @@ use OpenApi\Attributes as OA;
  * )
  */
 #[OA\Tag(name: 'Usuário')]
-class UserController extends Controller
+class UsuarioController extends Controller
 {
     #[OA\Get(
         path: '/api/user',
-        summary: 'Retorna os dados do usuário autenticado',
         description: 'Campos sensíveis são omitidos da resposta.',
-        tags: ['Usuário'],
+        summary: 'Retorna os dados do usuário autenticado',
         security: [['BearerAuth' => []]],
+        tags: ['Usuário'],
         responses: [
             new OA\Response(
                 response: 200,
@@ -40,8 +40,16 @@ class UserController extends Controller
             new OA\Response(response: 401, description: 'Não autenticado'),
         ]
     )]
-    public function me(Request $request): JsonResponse
+    public function me()
     {
-        return response()->json($request->user()->toSafeArray());
+
+        return UsuarioResource::make(
+            auth()->user()->load([
+                'perfisUsuario.perfil',
+                'perfisUsuario.abrangencia.esfera',
+                'contextoAtivo.perfilUsuario.perfil.permissoes',
+                'contextoAtivo.abrangencia.esfera',
+            ])
+        );
     }
 }

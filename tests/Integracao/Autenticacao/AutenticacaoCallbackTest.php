@@ -22,7 +22,7 @@ class AutenticacaoCallbackTest extends TestCase
         $usuario = Usuario::query()->where('govbr_sub', self::SUB_FEDERAL)->firstOrFail();
 
         Cache::put('govbr:oauth:estado-ok', [
-            'nonce' => 'nonce-ok',
+            'nonce'         => 'nonce-ok',
             'code_verifier' => 'verifier-ok',
         ], now()->addMinute());
 
@@ -32,7 +32,7 @@ class AutenticacaoCallbackTest extends TestCase
             ->with('codigo-ok', 'verifier-ok')
             ->andReturn([
                 'access_token' => 'token-govbr',
-                'id_token' => 'id-token',
+                'id_token'     => 'id-token',
             ]);
         $govBrService->shouldReceive('validarNonce')
             ->once()
@@ -72,7 +72,7 @@ class AutenticacaoCallbackTest extends TestCase
         $this->configurarGovbr();
 
         Cache::put('govbr:oauth:estado-pendente', [
-            'nonce' => 'nonce-pendente',
+            'nonce'         => 'nonce-pendente',
             'code_verifier' => 'verifier-pendente',
         ], now()->addMinute());
 
@@ -81,7 +81,7 @@ class AutenticacaoCallbackTest extends TestCase
             ->once()
             ->andReturn([
                 'access_token' => 'token-govbr',
-                'id_token' => 'id-token',
+                'id_token'     => 'id-token',
             ]);
         $govBrService->shouldReceive('validarNonce')
             ->once()
@@ -138,7 +138,7 @@ class AutenticacaoCallbackTest extends TestCase
         $this->configurarGovbr();
 
         Cache::put('govbr:oauth:estado-nonce', [
-            'nonce' => 'nonce-esperado',
+            'nonce'         => 'nonce-esperado',
             'code_verifier' => 'verifier-nonce',
         ], now()->addMinute());
 
@@ -147,7 +147,7 @@ class AutenticacaoCallbackTest extends TestCase
             ->once()
             ->andReturn([
                 'access_token' => 'token-govbr',
-                'id_token' => 'id-token',
+                'id_token'     => 'id-token',
             ]);
         $govBrService->shouldReceive('validarNonce')
             ->once()
@@ -171,7 +171,7 @@ class AutenticacaoCallbackTest extends TestCase
         $this->configurarGovbr();
 
         Cache::put('govbr:oauth:estado-interno', [
-            'nonce' => 'nonce-interno',
+            'nonce'         => 'nonce-interno',
             'code_verifier' => 'verifier-interno',
         ], now()->addMinute());
 

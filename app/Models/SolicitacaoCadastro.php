@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\AbrangenciaScope;
+use App\Traits\FilterScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,8 +31,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class SolicitacaoCadastro extends Model
 {
+    use FilterScope;
     use HasFactory;
+
     protected $table = 'solicitacoes_cadastro';
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new AbrangenciaScope);
+    }
 
     protected $fillable = [
         'usuario_id',
@@ -60,10 +69,6 @@ class SolicitacaoCadastro extends Model
         'status_id'       => 'integer',
         'usuario_id'      => 'integer',
     ];
-
-    // -------------------------------------------------------
-    // Relações
-    // -------------------------------------------------------
 
     public function usuario(): BelongsTo
     {
@@ -180,7 +185,7 @@ class SolicitacaoCadastro extends Model
      *  - Estadual: apenas mesma esfera + mesma UF
      *  - Municipal: apenas mesma esfera + mesma UF + mesmo município
      *
-     * @param Builder<self> $query
+     * @param  Builder<self>  $query
      */
     public function scopeVisivelPara(Builder $query, Usuario $user): void
     {
@@ -199,6 +204,7 @@ class SolicitacaoCadastro extends Model
             $ufId = Uf::where('sigla', $ufSigla)->value('id');
             $query->where('esfera_id', $esferaId)
                 ->where('uf_id', $ufId);
+
             return;
         }
 

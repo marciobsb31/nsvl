@@ -37,7 +37,7 @@ class ContextoUsuarioTest extends TestCase
         $response
             ->assertOk()
             ->assertJsonCount(6, 'data')
-            ->assertJsonFragment(['nome' => 'Gestor Nacional']);
+            ->assertJsonFragment(['nome' => 'Gestor Federal']);
     }
 
     #[Test]
@@ -73,7 +73,7 @@ class ContextoUsuarioTest extends TestCase
             ->assertJsonPath('user.perfil_ativo_id', $novoPerfil->id);
 
         $this->assertDatabaseHas('perfil_usuario', [
-            'id' => $novoPerfil->id,
+            'id'    => $novoPerfil->id,
             'ativo' => true,
         ]);
     }

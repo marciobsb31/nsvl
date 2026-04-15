@@ -26,7 +26,7 @@ class GerenciarPerfilControllerTest extends TestCase
     public function descreve_alteracoes_de_nome_e_status_ou_retorna_texto_padrao(): void
     {
         $perfil = new Perfil([
-            'nome' => 'Administrador Estadual',
+            'nome'  => 'Administrador Estadual',
             'ativo' => false,
         ]);
 
@@ -51,17 +51,17 @@ class GerenciarPerfilControllerTest extends TestCase
     public function descreve_acao_do_log_priorizando_contexto_mapa_ou_fallback(): void
     {
         $comContexto = new AuditLog([
-            'acao' => 'qualquer.acao',
+            'acao'     => 'qualquer.acao',
             'contexto' => ['alteracoes' => 'Mudança detalhada'],
         ]);
 
         $mapeado = new AuditLog([
-            'acao' => 'gerenciar_perfis.cadastrar',
+            'acao'     => 'gerenciar_perfis.cadastrar',
             'contexto' => [],
         ]);
 
         $desconhecido = new AuditLog([
-            'acao' => 'acao.desconhecida',
+            'acao'     => 'acao.desconhecida',
             'contexto' => [],
         ]);
 
@@ -104,9 +104,9 @@ class GerenciarPerfilControllerTest extends TestCase
     public function formata_o_payload_de_resposta_do_perfil(): void
     {
         $perfil = new Perfil([
-            'nome' => 'Gestor Estadual',
+            'nome'      => 'Gestor Estadual',
             'descricao' => 'Perfil de teste',
-            'ativo' => true,
+            'ativo'     => true,
         ]);
         $perfil->setAttribute('id', 10);
         $perfil->created_at = now();

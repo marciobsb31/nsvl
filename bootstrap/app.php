@@ -2,6 +2,7 @@
 
 use App\Exceptions\ApiException;
 use App\Http\Middleware\AnonymizeResponseMiddleware;
+use App\Http\Middleware\CheckPermissionMiddleware;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -19,13 +20,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
         $middleware->appendToGroup('api', AnonymizeResponseMiddleware::class);
+        $middleware->alias([
+            'permission' => CheckPermissionMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (ApiException $e, Request $request) {
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'message' => $e->getMessage(),
-                    'error' => $e->error(),
+                    'error'   => $e->error(),
                 ], $e->status());
             }
         });
@@ -34,7 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'message' => 'Não autenticado.',
-                    'error' => 'unauthenticated',
+                    'error'   => 'unauthenticated',
                 ], 401);
             }
         });
@@ -43,7 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'message' => $e->getMessage() ?: 'Acesso não permitido.',
-                    'error' => 'forbidden',
+                    'error'   => 'forbidden',
                 ], 403);
             }
         });

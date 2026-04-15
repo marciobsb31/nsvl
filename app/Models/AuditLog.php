@@ -23,15 +23,6 @@ class AuditLog extends Model
 {
     protected $table = 'auditoria_log';
 
-    const UPDATED_AT = null;
-
-    const TIPO_LOGIN = 'login';
-    const TIPO_LOGOUT = 'logout';
-    const TIPO_INSERT = 'insert';
-    const TIPO_UPDATE = 'update';
-    const TIPO_DELETE = 'delete';
-    const TIPO_VIEW = 'view';
-
     protected $fillable = [
         'usuario_id',
         'acao',
@@ -43,16 +34,14 @@ class AuditLog extends Model
         'contexto',
     ];
 
+    const UPDATED_AT = null;
+
     protected $casts = [
         'contexto'   => 'array',
         'created_at' => 'datetime',
     ];
 
-    // -------------------------------------------------------
-    // Relações
-    // -------------------------------------------------------
-
-    public function user(): BelongsTo
+    public function usuario(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'usuario_id');
     }

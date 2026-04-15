@@ -34,7 +34,7 @@ class SwaggerDisponivelTest extends TestCase
         $pathsDaAplicacao = collect(Route::getRoutes()->getRoutes())
             ->filter(fn ($route) => str_starts_with($route->uri(), 'api/'))
             ->reject(fn ($route) => in_array($route->uri(), ['api/docs', 'api/oauth2-callback'], true))
-            ->map(fn ($route) => '/' . $route->uri())
+            ->map(fn ($route) => '/'.$route->uri())
             ->unique()
             ->values()
             ->all();

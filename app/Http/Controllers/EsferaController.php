@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\EsferaResource;
 use App\Models\Esfera;
-use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: 'Cadastro', description: 'Dados auxiliares de formulário')]
@@ -35,17 +35,8 @@ class EsferaController extends Controller
             ),
         ]
     )]
-    public function index(): JsonResponse
+    public function index()
     {
-        $data = Esfera::query()
-            ->orderBy('nome')
-            ->get()
-            ->map(fn (Esfera $e) => [
-                'value' => strtolower($e->nome),
-                'label' => $e->nome,
-            ])
-            ->all();
-
-        return response()->json(['data' => $data]);
+        return EsferaResource::collection(Esfera::all());
     }
 }

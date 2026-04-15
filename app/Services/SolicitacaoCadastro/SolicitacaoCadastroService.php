@@ -2,112 +2,43 @@
 
 namespace App\Services\SolicitacaoCadastro;
 
+use App\Enums\StatusSolicitacaoEnum;
+use App\Enums\TipoAuditoria;
 use App\Exceptions\ApiException;
 use App\Helpers\CpfHelper;
+use App\Mail\SolicitacaoCadastroAvaliada;
+use App\Mail\SolicitacaoCadastroEnviada;
 use App\Models\AuditLog;
-use App\Models\Esfera;
-use App\Models\Municipio;
-use App\Models\Perfil;
 use App\Models\PerfilUsuario;
 use App\Models\SolicitacaoCadastro;
 use App\Models\StatusSolicitacao;
-use App\Models\Uf;
 use App\Models\Usuario;
 use App\Models\UsuarioAbrangencia;
 use App\Models\UsuarioContexto;
 use App\Services\Audit\AuditLogService;
-use Illuminate\Support\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use App\Mail\SolicitacaoCadastroEnviada;
 
 class SolicitacaoCadastroService
 {
-    public function __construct(
-        private readonly AuditLogService $audit
-    ) {}
+    public function __construct(private readonly AuditLogService $audit) {}
 
-    // ------------------------------------------------------------------
-    // Listar
-    // ------------------------------------------------------------------
-
-    public function listar(Usuario $user, array $filtros): array
-    {
-        $query = SolicitacaoCadastro::query()
-            ->with(['usuario', 'esfera', 'ufRelacao', 'municipioRelacao', 'statusSolicitacao'])
-            ->visivelPara($user);
-
-        if (!empty($filtros['cpf'])) {
-            $cpfDigits = preg_replace('/\D/', '', $filtros['cpf']);
-            $query->whereHas('usuario', fn ($q) => $q->where('cpf', $cpfDigits));
-        }
-        if (!empty($filtros['nome'])) {
-            $term = mb_strtolower(trim($filtros['nome']), 'UTF-8');
-            $query->whereHas('usuario', fn ($q) => $q->whereRaw('LOWER(nome) LIKE ?', ['%' . $term . '%']));
-        }
-        if (!empty($filtros['uf'])) {
-            $ufId = Uf::where('sigla', strtoupper($filtros['uf']))->value('id');
-            $query->where('uf_id', $ufId);
-        }
-        if (!empty($filtros['municipio'])) {
-            $term = mb_strtolower(trim($filtros['municipio']), 'UTF-8');
-            $query->whereHas('municipioRelacao', fn ($q) => $q->whereRaw('LOWER(nome) LIKE ?', ['%' . $term . '%']));
-        }
-        if (!empty($filtros['orgao'])) {
-            $term = mb_strtolower(trim($filtros['orgao']), 'UTF-8');
-            $query->whereRaw('LOWER(orgao) LIKE ?', ['%' . $term . '%']);
-        }
-        if (!empty($filtros['esfera'])) {
-            $esferaId = Esfera::whereRaw('LOWER(nome) = ?', [strtolower($filtros['esfera'])])->value('id');
-            $query->where('esfera_id', $esferaId);
-        }
-        if (!empty($filtros['status'])) {
-            $statusId = StatusSolicitacao::where('nome', $filtros['status'])->value('id');
-            $query->where('status_id', $statusId);
-        }
-
-        $solicitacoes = $query->orderBy('created_at', 'desc')->get();
-
-        $itens = $solicitacoes->map(fn (SolicitacaoCadastro $s) => [
-            'id'             => $s->id,
-            'nome'           => $s->usuario?->nome ?? '',
-            'status'         => $s->statusSolicitacao?->nome ?? '',
-            'created_at'     => $s->created_at?->toIso8601String(),
-            'cpf'            => CpfHelper::mascarar($s->usuario?->cpf ?? ''),
-            'esfera_atuacao' => $s->esfera?->nome ?? '',
-            'uf'             => $s->ufRelacao?->sigla ?? '',
-            'municipio'      => $s->municipioRelacao?->nome ?? '',
-            'orgao'          => $s->orgao,
-        ])->values()->all();
-
-        $this->audit->log('gerenciar_cadastros.listagem', $user->id, [
-            'total_registros' => count($itens),
-            'filtros'         => array_filter($filtros),
-        ], AuditLog::TIPO_VIEW);
-
-        return $itens;
-    }
-
-    // ------------------------------------------------------------------
-    // Detalhar
-    // ------------------------------------------------------------------
-
-    public function detalhar(Usuario $user, int $id): array
+    public function detalhar(int $id): array
     {
         $solicitacao = SolicitacaoCadastro::with([
             'usuario', 'esfera', 'ufRelacao', 'municipioRelacao', 'statusSolicitacao',
         ])->find($id);
 
-        if (!$solicitacao) {
+        if (! $solicitacao) {
             throw ApiException::notFound('Solicitação não encontrada.');
         }
 
-        $this->audit->log('gerenciar_cadastros.detalhamento', $user->id, [
+        $this->audit->log('gerenciar_cadastros.detalhamento', auth()->user()->id, [
             'solicitacao_id' => $solicitacao->id,
-        ], AuditLog::TIPO_VIEW, 'solicitacoes_cadastro', $solicitacao->id);
+        ], TipoAuditoria::VIEW->name, 'solicitacoes_cadastro', $solicitacao->id);
 
         try {
             $perfisVinculados = $this->obterPerfisVinculados($solicitacao);
@@ -190,17 +121,10 @@ class SolicitacaoCadastroService
         return $itens;
     }
 
-    // ------------------------------------------------------------------
-    // Criar (store)
-    // ------------------------------------------------------------------
-
-    public function criar(?Usuario $user, array $dados): array
+    public function criar(array $dados): array
     {
-        $cpfDigits = preg_replace('/\D/', '', $dados['CPF'] ?? '');
 
-        if (strlen($cpfDigits) !== 11 && !$user) {
-            throw ApiException::unprocessable('CPF é obrigatório para solicitação sem autenticação.');
-        }
+        $usuario = Usuario::where('cpf', $dados['cpf'])->first();
 
         $cpf = strlen($cpfDigits) === 11 ? $cpfDigits : ($user?->cpf ?? null);
 
@@ -224,7 +148,7 @@ class SolicitacaoCadastroService
             $govbrSub = $this->govbrSubProvisorioParaCpf($cpf);
             try {
                 $usuario = Usuario::create([
-                    'cpf'       => $cpf,
+                    'cpf'       => $dados['cpf'],
                     'nome'      => $dados['nome'],
                     'email'     => $dados['emailInstitucional'],
                     'govbr_sub' => $govbrSub,
@@ -240,6 +164,11 @@ class SolicitacaoCadastroService
                 }
                 throw $e;
             }
+        } else {
+            $usuario->update([
+                'nome'  => $dados['nome'],
+                'email' => $dados['email_institucional'],
+            ]);
         }
 
         $existente = SolicitacaoCadastro::where('usuario_id', $usuario->id)
@@ -326,7 +255,7 @@ class SolicitacaoCadastroService
                 'municipio_id'         => $solicitacao->municipio_id,
                 'origem'               => $ehAutoCadastro ? 'govbr' : ($user ? 'painel_interno' : 'formulario_publico'),
             ],
-            AuditLog::TIPO_INSERT,
+            TipoAuditoria::INSERT->name,
             'solicitacoes_cadastro',
             $solicitacao->id
         );
@@ -334,9 +263,20 @@ class SolicitacaoCadastroService
         $solicitacao->load(['usuario', 'esfera', 'ufRelacao', 'municipioRelacao']);
 
         try {
-            $destinatario = $dados['emailInstitucional'];
+            $destinatario = $dados['email_institucional'];
             Mail::to($destinatario)->send(new SolicitacaoCadastroEnviada($solicitacao));
         } catch (\Throwable $e) {
+            logger()->error('Falha ao enviar e-mail de confirmação da solicitação.', [
+                'solicitacao_id'   => $solicitacao->id,
+                'destinatario'     => $destinatario ?? null,
+                'mailer'           => config('mail.default'),
+                'host'             => config('mail.mailers.smtp.host'),
+                'port'             => config('mail.mailers.smtp.port'),
+                'scheme'           => config('mail.mailers.smtp.scheme'),
+                'from'             => config('mail.from.address'),
+                'auth_configurada' => ! empty(config('mail.mailers.smtp.username')),
+                'erro'             => $e->getMessage(),
+            ]);
             report($e);
         }
 
@@ -358,12 +298,12 @@ class SolicitacaoCadastroService
         }
 
         $solicitacao = SolicitacaoCadastro::with(['usuario', 'esfera', 'ufRelacao', 'municipioRelacao'])->find($id);
-        if (!$solicitacao) {
+        if (! $solicitacao) {
             throw ApiException::notFound('Solicitação não encontrada.');
         }
 
         $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
-        $statusAprovado  = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
+        $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
         $statusReprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::REPROVADO);
 
         if ($solicitacao->status_id !== $statusEmAnalise) {
@@ -449,10 +389,35 @@ class SolicitacaoCadastroService
             'gerenciar_cadastros.avaliacao',
             $user->id,
             $contextoAudit,
-            AuditLog::TIPO_UPDATE,
+            TipoAuditoria::UPDATE->name,
             'solicitacoes_cadastro',
             $solicitacao->id
         );
+
+        try {
+            $destinatario = $solicitacao->email_institucional ?: $solicitacao->usuario?->email;
+            if (! empty($destinatario)) {
+                Mail::to($destinatario)->send(new SolicitacaoCadastroAvaliada(
+                    $solicitacao,
+                    $statusNome,
+                    $dados['justificativa'] ?? null
+                ));
+            }
+        } catch (\Throwable $e) {
+            logger()->error('Falha ao enviar e-mail de avaliacao da solicitacao.', [
+                'solicitacao_id'   => $solicitacao->id,
+                'status'           => $statusNome,
+                'destinatario'     => $destinatario ?? null,
+                'mailer'           => config('mail.default'),
+                'host'             => config('mail.mailers.smtp.host'),
+                'port'             => config('mail.mailers.smtp.port'),
+                'scheme'           => config('mail.mailers.smtp.scheme'),
+                'from'             => config('mail.from.address'),
+                'auth_configurada' => ! empty(config('mail.mailers.smtp.username')),
+                'erro'             => $e->getMessage(),
+            ]);
+            report($e);
+        }
 
         return [
             'message' => $statusNome === 'aprovado'
@@ -477,7 +442,7 @@ class SolicitacaoCadastroService
             return ['disponivel' => false, 'mensagem' => 'Informe um CPF com 11 dígitos.'];
         }
 
-        if (!CpfHelper::validar($cpf)) {
+        if (! CpfHelper::validar($cpf)) {
             return ['disponivel' => false, 'mensagem' => 'CPF inválido. Verifique os dígitos informados.'];
         }
 
@@ -521,7 +486,7 @@ class SolicitacaoCadastroService
     {
         $solicitacao = $this->buscarSolicitacao($solicitacaoId);
         $usuarioSolicitante = $solicitacao->usuario;
-        if (!$usuarioSolicitante) {
+        if (! $usuarioSolicitante) {
             throw ApiException::notFound('Usuário da solicitação não encontrado.');
         }
 
@@ -531,7 +496,7 @@ class SolicitacaoCadastroService
             ->where('usuario_id', $usuarioSolicitante->id)
             ->first();
 
-        if (!$vinculo) {
+        if (! $vinculo) {
             throw ApiException::notFound('Vínculo de perfil não encontrado.');
         }
 
@@ -564,7 +529,7 @@ class SolicitacaoCadastroService
             'usuario_abrangencia_id' => $vinculo->usuario_abrangencia_id,
         ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $vinculo->id);
 
-        return ['message' => 'Perfil vinculado ativado com sucesso.', 'data' => ['id' => $vinculo->id]];
+        return ['message' => 'Perfil vinculado ativado com sucesso.', 'data' => ['id' => $perfilUsuarioId]];
     }
 
     // ------------------------------------------------------------------
@@ -575,7 +540,7 @@ class SolicitacaoCadastroService
     {
         $solicitacao = $this->buscarSolicitacao($solicitacaoId);
         $usuarioSolicitante = $solicitacao->usuario;
-        if (!$usuarioSolicitante) {
+        if (! $usuarioSolicitante) {
             throw ApiException::notFound('Usuário da solicitação não encontrado.');
         }
 
@@ -585,7 +550,7 @@ class SolicitacaoCadastroService
             ->where('usuario_id', $usuarioSolicitante->id)
             ->first();
 
-        if (!$vinculo) {
+        if (! $vinculo) {
             throw ApiException::notFound('Vínculo de perfil não encontrado.');
         }
 
@@ -613,7 +578,7 @@ class SolicitacaoCadastroService
             'solicitacao_id'    => $solicitacao->id,
             'perfil_usuario_id' => $vinculo->id,
             'usuario_id'        => $usuarioSolicitante->id,
-        ], AuditLog::TIPO_UPDATE, 'perfil_usuario', $vinculo->id);
+        ], TipoAuditoria::UPDATE->name, 'perfil_usuario', $vinculo->id);
 
         return ['message' => 'Perfil vinculado desativado com sucesso.', 'data' => ['id' => $vinculo->id]];
     }
@@ -622,7 +587,7 @@ class SolicitacaoCadastroService
     // Adicionar perfil vinculado
     // ------------------------------------------------------------------
 
-    public function adicionarPerfil(Usuario $user, int $solicitacaoId, array $dados): array
+    public function adicionarPerfil(int $solicitacaoId, array $dados): array
     {
         $solicitacao = $this->buscarSolicitacao($solicitacaoId);
         $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
@@ -634,7 +599,7 @@ class SolicitacaoCadastroService
         }
 
         $usuarioSolicitante = $solicitacao->usuario;
-        if (!$usuarioSolicitante) {
+        if (! $usuarioSolicitante) {
             throw ApiException::notFound('Usuário da solicitação não encontrado.');
         }
 
@@ -661,12 +626,12 @@ class SolicitacaoCadastroService
             'ativo'                         => true,
         ]);
 
-        $this->audit->log('gerenciar_cadastros.perfil_adicionado', $user->id, [
+        $this->audit->log('gerenciar_cadastros.perfil_adicionado', auth()->user()->id, [
             'solicitacao_id'    => $solicitacao->id,
             'perfil_usuario_id' => $vinculo->id,
             'perfil_id'         => $vinculo->perfil_id,
             'usuario_id'        => $usuarioSolicitante->id,
-        ], AuditLog::TIPO_INSERT, 'perfil_usuario', $vinculo->id);
+        ], TipoAuditoria::INSERT->name, 'perfil_usuario', $vinculo->id);
 
         return ['message' => 'Perfil vinculado adicionado com sucesso.', 'data' => ['id' => $vinculo->id]];
     }
@@ -678,9 +643,10 @@ class SolicitacaoCadastroService
     private function buscarSolicitacao(int $id): SolicitacaoCadastro
     {
         $solicitacao = SolicitacaoCadastro::with('usuario')->find($id);
-        if (!$solicitacao) {
+        if (! $solicitacao) {
             throw ApiException::notFound('Solicitação não encontrada.');
         }
+
         return $solicitacao;
     }
 
@@ -697,13 +663,8 @@ class SolicitacaoCadastroService
 
     private function obterPerfisVinculados(SolicitacaoCadastro $solicitacao): array
     {
-        $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
-        if ($solicitacao->status_id !== $statusAprovado) {
-            return [];
-        }
-
         $usuario = $solicitacao->usuario;
-        if (!$usuario) {
+        if (! $usuario) {
             return [];
         }
 
@@ -745,7 +706,16 @@ class SolicitacaoCadastroService
             ];
         })->all();
 
-        usort($perfis, fn ($a, $b) => ($b['vigente'] ? 1 : 0) - ($a['vigente'] ? 1 : 0));
+        usort($perfis, function (array $a, array $b): int {
+            $ativoA = (int) (($a['ativo'] ?? false) ? 1 : 0);
+            $ativoB = (int) (($b['ativo'] ?? false) ? 1 : 0);
+
+            if ($ativoA !== $ativoB) {
+                return $ativoB <=> $ativoA;
+            }
+
+            return strcmp((string) ($a['perfil'] ?? ''), (string) ($b['perfil'] ?? ''));
+        });
 
         return $perfis;
     }

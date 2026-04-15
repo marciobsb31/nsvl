@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\StatusSolicitacaoEnum;
 use App\Models\StatusSolicitacao;
 use Illuminate\Database\Seeder;
 

@@ -22,7 +22,7 @@ class AuthValidationServiceTest extends TestCase
         $service = app(AuthValidationService::class);
 
         $this->assertAuthValidationMessage(
-            'Não foi possível identificar o CPF retornado pelo GOV.BR.',
+            'NÃ£o foi possÃ­vel identificar o CPF retornado pelo GOV.BR.',
             fn () => $service->validarOuFalhar(new GovBrUserDTO(sub: 'abc', name: 'Sem CPF')),
         );
     }
@@ -34,11 +34,11 @@ class AuthValidationServiceTest extends TestCase
 
         Usuario::factory()->create([
             'govbr_sub' => 'sub-existente',
-            'cpf' => '40168299307',
+            'cpf'       => '40168299307',
         ]);
 
         $this->assertAuthValidationMessage(
-            'Os dados do GOV.BR não correspondem ao cadastro existente no sistema.',
+            'Os dados do GOV.BR nÃ£o correspondem ao cadastro existente no sistema.',
             fn () => $service->validarOuFalhar(new GovBrUserDTO(
                 sub: 'sub-existente',
                 name: 'Maria divergente',
@@ -53,19 +53,19 @@ class AuthValidationServiceTest extends TestCase
         $service = app(AuthValidationService::class);
 
         $usuario = Usuario::factory()->create([
-            'cpf' => '22233344405',
-            'nome' => 'Nome Antigo',
-            'email' => 'antigo@teste.gov.br',
+            'cpf'       => '22233344405',
+            'nome'      => 'Nome Antigo',
+            'email'     => 'antigo@teste.gov.br',
             'govbr_sub' => 'sub-antigo',
         ]);
 
-        $perfil = Perfil::query()->where('nome', 'Gestor Nacional')->firstOrFail();
+        $perfil = Perfil::query()->where('nome', 'Gestor Federal')->firstOrFail();
 
         PerfilUsuario::create([
-            'usuario_id' => $usuario->id,
-            'perfil_id' => $perfil->id,
+            'usuario_id'           => $usuario->id,
+            'perfil_id'            => $perfil->id,
             'data_inicio_vigencia' => now()->subDay()->toDateString(),
-            'ativo' => true,
+            'ativo'                => true,
         ]);
 
         $retornado = $service->validarOuFalhar(new GovBrUserDTO(
@@ -77,10 +77,10 @@ class AuthValidationServiceTest extends TestCase
 
         $this->assertSame($usuario->id, $retornado->id);
         $this->assertDatabaseHas('usuarios', [
-            'id' => $usuario->id,
+            'id'        => $usuario->id,
             'govbr_sub' => 'sub-novo',
-            'nome' => 'Nome Atualizado',
-            'email' => 'novo@teste.gov.br',
+            'nome'      => 'Nome Atualizado',
+            'email'     => 'novo@teste.gov.br',
         ]);
     }
 
@@ -91,34 +91,34 @@ class AuthValidationServiceTest extends TestCase
 
         Usuario::factory()->create([
             'govbr_sub' => 'sub-ja-em-uso',
-            'cpf' => '40168299307',
+            'cpf'       => '40168299307',
         ]);
 
         $usuario = Usuario::factory()->create([
             'govbr_sub' => 'sub-antigo',
-            'cpf' => '22233344405',
+            'cpf'       => '22233344405',
         ]);
 
-        $perfil = Perfil::query()->where('nome', 'Gestor Nacional')->firstOrFail();
+        $perfil = Perfil::query()->where('nome', 'Gestor Federal')->firstOrFail();
 
         PerfilUsuario::create([
-            'usuario_id' => $usuario->id,
-            'perfil_id' => $perfil->id,
+            'usuario_id'           => $usuario->id,
+            'perfil_id'            => $perfil->id,
             'data_inicio_vigencia' => now()->subDay()->toDateString(),
-            'ativo' => true,
+            'ativo'                => true,
         ]);
 
         $reflection = new ReflectionMethod($service, 'sincronizarIdentidade');
         $reflection->setAccessible(true);
 
         $this->assertAuthValidationMessage(
-            'Já existe outro usuário vinculado a esta conta GOV.BR.',
+            'JÃ¡ existe outro usuÃ¡rio vinculado a esta conta GOV.BR.',
             fn () => $reflection->invoke(
                 $service,
                 $usuario,
                 new GovBrUserDTO(
                     sub: 'sub-ja-em-uso',
-                    name: 'Usuário de Teste',
+                    name: 'UsuÃ¡rio de Teste',
                     cpf: '22233344405',
                 ),
                 '22233344405',
@@ -132,20 +132,20 @@ class AuthValidationServiceTest extends TestCase
         $service = app(AuthValidationService::class);
 
         $usuario = Usuario::factory()->create([
-            'cpf' => '22233344405',
+            'cpf'       => '22233344405',
             'govbr_sub' => 'sub-analise',
         ]);
 
         SolicitacaoCadastro::factory()->create([
-            'user_id' => $usuario->id,
+            'user_id'   => $usuario->id,
             'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE),
         ]);
 
         $this->assertAuthValidationMessage(
-            'Solicitação de acesso em análise.',
+            'SolicitaÃ§Ã£o de acesso em anÃ¡lise.',
             fn () => $service->validarOuFalhar(new GovBrUserDTO(
                 sub: 'sub-analise',
-                name: 'Usuário em análise',
+                name: 'UsuÃ¡rio em anÃ¡lise',
                 cpf: '22233344405',
             )),
         );
@@ -157,22 +157,22 @@ class AuthValidationServiceTest extends TestCase
         $service = app(AuthValidationService::class);
 
         $usuario = Usuario::factory()->create([
-            'cpf' => '33344455576',
+            'cpf'       => '33344455576',
             'govbr_sub' => 'sub-reprovado-antigo',
         ]);
 
         SolicitacaoCadastro::factory()->reprovado()->create([
-            'user_id' => $usuario->id,
+            'user_id'   => $usuario->id,
             'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::REPROVADO),
         ]);
 
         $usuario->perfisUsuario()->delete();
 
         $this->assertAuthValidationMessage(
-            'Solicitar acesso e aguardar avaliação',
+            'Solicitar acesso e aguardar avaliaÃ§Ã£o',
             fn () => $service->validarOuFalhar(new GovBrUserDTO(
                 sub: 'sub-novo-sem-acesso',
-                name: 'Usuário Reprovado',
+                name: 'UsuÃ¡rio Reprovado',
                 cpf: '33344455576',
             )),
         );
@@ -184,12 +184,12 @@ class AuthValidationServiceTest extends TestCase
         $service = app(AuthValidationService::class);
 
         $usuario = Usuario::factory()->create([
-            'cpf' => '40168299307',
+            'cpf'       => '40168299307',
             'govbr_sub' => 'sub-aprovado-sem-perfil',
         ]);
 
         SolicitacaoCadastro::factory()->aprovado()->create([
-            'user_id' => $usuario->id,
+            'user_id'   => $usuario->id,
             'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO),
         ]);
 
@@ -197,7 +197,7 @@ class AuthValidationServiceTest extends TestCase
             'Seu cadastro foi aprovado, mas nenhum perfil de acesso foi configurado. Procure o administrador do sistema.',
             fn () => $service->validarOuFalhar(new GovBrUserDTO(
                 sub: 'sub-aprovado-sem-perfil',
-                name: 'Usuário sem perfil',
+                name: 'UsuÃ¡rio sem perfil',
                 cpf: '40168299307',
             )),
         );
@@ -210,15 +210,15 @@ class AuthValidationServiceTest extends TestCase
         $cpf = Usuario::factory()->make()->cpf;
 
         Usuario::factory()->create([
-            'cpf' => $cpf,
+            'cpf'       => $cpf,
             'govbr_sub' => 'sub-aprovado-sem-vinculo',
         ]);
 
         $this->assertAuthValidationMessage(
-            'Solicitar acesso e aguardar avaliação',
+            'Solicitar acesso e aguardar avaliaÃ§Ã£o',
             fn () => $service->validarOuFalhar(new GovBrUserDTO(
                 sub: 'sub-aprovado-sem-vinculo',
-                name: 'Usuário sem solicitação',
+                name: 'UsuÃ¡rio sem solicitaÃ§Ã£o',
                 cpf: $cpf,
             )),
         );
@@ -230,7 +230,7 @@ class AuthValidationServiceTest extends TestCase
         $service = app(AuthValidationService::class);
         $cpf = Usuario::factory()->make()->cpf;
         $usuario = Usuario::factory()->create([
-            'cpf' => $cpf,
+            'cpf'       => $cpf,
             'govbr_sub' => 'sub-status-desconhecido',
         ]);
 
@@ -239,7 +239,7 @@ class AuthValidationServiceTest extends TestCase
         ]);
 
         SolicitacaoCadastro::factory()->create([
-            'user_id' => $usuario->id,
+            'user_id'   => $usuario->id,
             'status_id' => $statusCustom->id,
         ]);
 
@@ -247,7 +247,7 @@ class AuthValidationServiceTest extends TestCase
             'Seu cadastro foi aprovado, mas nenhum perfil de acesso foi configurado. Procure o administrador do sistema.',
             fn () => $service->validarOuFalhar(new GovBrUserDTO(
                 sub: 'sub-status-desconhecido',
-                name: 'Usuário com pendência',
+                name: 'UsuÃ¡rio com pendÃªncia',
                 cpf: $cpf,
             )),
         );
@@ -260,10 +260,10 @@ class AuthValidationServiceTest extends TestCase
         $cpf = Usuario::factory()->make()->cpf;
 
         $this->assertAuthValidationMessage(
-            'Solicitar acesso e aguardar avaliação',
+            'Solicitar acesso e aguardar avaliaÃ§Ã£o',
             fn () => $service->validarOuFalhar(new GovBrUserDTO(
                 sub: $cpf,
-                name: 'Novo usuário',
+                name: 'Novo usuÃ¡rio',
                 cpf: $cpf,
             )),
         );

@@ -20,6 +20,6 @@ class PerfilControllerTest extends TestCase
         $this->expectException(ApiException::class);
         $this->expectExceptionMessage('Não autenticado.');
 
-        (new PerfilController())->index();
+        (new PerfilController)->index();
     }
 }

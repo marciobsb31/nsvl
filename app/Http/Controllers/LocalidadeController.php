@@ -2,17 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\EstadoResource;
+use App\Http\Resources\MunicipioResource;
 use App\Models\Municipio;
 use App\Models\Uf;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
-/**
- * Controller para dados de localidade (UF e Municípios).
- * Lê do banco de dados (tabelas ufs e municipios).
- * Dados replicados do IBGE; não consumimos o serviço em tempo de execução.
- */
 #[OA\Tag(name: 'Localidades', description: 'UFs e municípios (replica IBGE)')]
 class LocalidadeController extends Controller
 {
@@ -42,18 +38,9 @@ class LocalidadeController extends Controller
             ),
         ]
     )]
-    public function ufs(): JsonResponse
+    public function ufs()
     {
-        $data = Uf::orderBy('nome')
-            ->get()
-            ->map(fn (Uf $e) => [
-                'value' => $e->sigla,
-                'label' => $e->sigla . ' - ' . $e->nome,
-            ])
-            ->values()
-            ->all();
-
-        return response()->json(['data' => $data]);
+        return EstadoResource::collection(Uf::all());
     }
 
     #[OA\Get(
@@ -73,8 +60,8 @@ class LocalidadeController extends Controller
             ->get()
             ->map(fn (Uf $e) => [
                 'value' => $e->sigla,
-                'label' => $e->sigla . ' - ' . $e->nome,
-                'id' => $e->id,
+                'label' => $e->sigla.' - '.$e->nome,
+                'id'    => $e->id,
             ])
             ->values()
             ->all();
@@ -89,7 +76,7 @@ class LocalidadeController extends Controller
 
         return response()->json([
             'data' => [
-                'ufs' => $ufs,
+                'ufs'               => $ufs,
                 'municipios_por_uf' => $municipiosPorUf,
             ],
         ]);
@@ -125,25 +112,10 @@ class LocalidadeController extends Controller
             new OA\Response(response: 422, description: 'Parâmetro uf inválido'),
         ]
     )]
-    public function municipios(Request $request): JsonResponse
+    public function municipios(Uf $uf)
     {
-        $uf = strtoupper($request->query('uf', ''));
-        if (strlen($uf) !== 2) {
-            return response()->json([
-                'message' => 'Parâmetro uf é obrigatório e deve ter 2 caracteres (sigla).',
-            ], 422);
-        }
+        $municipios = $uf->municipios()->get();
 
-        $data = Municipio::whereHas('uf', fn ($q) => $q->where('sigla', $uf))
-            ->orderBy('nome')
-            ->get()
-            ->map(fn (Municipio $m) => [
-                'value' => $m->nome,
-                'label' => $m->nome,
-            ])
-            ->values()
-            ->all();
-
-        return response()->json(['data' => $data]);
+        return MunicipioResource::collection($municipios);
     }
 }

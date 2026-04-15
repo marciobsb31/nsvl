@@ -1,90 +1,62 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\GovBrAuthController;
-use App\Http\Controllers\Auth\TokenDeTesteController;
+use App\Http\Controllers\Auth\UsuarioController;
 use App\Http\Controllers\EsferaController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\LocalidadeController;
-use App\Http\Controllers\GerenciarPerfilController;
-use App\Http\Controllers\TrocaContextoController;
+use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\SolicitacaoCadastroController;
+use App\Http\Controllers\TrocaContextoController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/health', [HealthController::class, 'check']);
 
-Route::get('/esferas', [EsferaController::class, 'index'])
-    ->name('esferas.index');
+Route::get('/esferas', [EsferaController::class, 'index']);
 
-Route::get('/localidades/ufs', [LocalidadeController::class, 'ufs'])
-    ->name('localidades.ufs');
-Route::get('/localidades/municipios', [LocalidadeController::class, 'municipios'])
-    ->name('localidades.municipios');
-Route::get('/localidades/completo', [LocalidadeController::class, 'completo'])
-    ->name('localidades.completo');
+Route::prefix('localidades')->group(function () {
+    Route::get('/ufs', [LocalidadeController::class, 'ufs']);
+    Route::get('/municipios/{uf}', [LocalidadeController::class, 'municipios']);
+    Route::get('/completo', [LocalidadeController::class, 'completo']);
+});
 
-Route::get('/auth/url', [GovBrAuthController::class, 'redirect'])
-    ->middleware('throttle:30,1')
-    ->name('auth.url');
-Route::get('/auth/redirect', [GovBrAuthController::class, 'callback'])
-    ->middleware('throttle:30,1')
-    ->name('auth.redirect');
-Route::get('/auth/callback', [GovBrAuthController::class, 'callback'])
-    ->middleware('throttle:30,1')
-    ->name('auth.callback.legacy');
-Route::post('/auth/exchange', [GovBrAuthController::class, 'exchange'])
-    ->middleware('throttle:30,1')
-    ->name('auth.exchange');
-Route::post('/auth/token-de-teste', [TokenDeTesteController::class, 'store'])
-    ->middleware('throttle:15,1')
-    ->name('auth.token-de-teste');
-
-Route::post('/solicitacoes-cadastro', [SolicitacaoCadastroController::class, 'store'])
-    ->middleware('throttle:20,1')
-    ->name('solicitacoes-cadastro.store.public');
-Route::get('/solicitacoes-cadastro/verificar-cpf', [SolicitacaoCadastroController::class, 'verificarCpf'])
-    ->middleware('throttle:30,1')
-    ->name('solicitacoes-cadastro.verificar-cpf');
+Route::prefix('auth')->group(function () {
+    Route::get('/url', [GovBrAuthController::class, 'redirect']);
+    Route::get('/redirect', [GovBrAuthController::class, 'callback']);
+    Route::get('/callback', [GovBrAuthController::class, 'callback']);
+    Route::post('/exchange', [GovBrAuthController::class, 'exchange']);
+});
+Route::prefix('solicitacoes-cadastro')->group(function () {
+    Route::post('/', [SolicitacaoCadastroController::class, 'store']);
+    Route::get('/verificar-cpf', [SolicitacaoCadastroController::class, 'verificarCpf']);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/auth/logout', [GovBrAuthController::class, 'logout'])
-        ->name('auth.logout');
+    Route::post('/auth/logout', [GovBrAuthController::class, 'logout'])->name('auth.logout');
 
-    Route::get('/user', [\App\Http\Controllers\Auth\UserController::class, 'me'])
-        ->name('user.me');
+    Route::prefix('usuario')->group(function () {
+        Route::get('/', [UsuarioController::class, 'me']);
+    });
 
-    Route::get('/perfis', [\App\Http\Controllers\PerfilController::class, 'index'])
-        ->name('perfis.index');
+    Route::prefix('contextos')->group(function () {
+        Route::get('/', [TrocaContextoController::class, 'index']);
+        Route::post('selecionar', [TrocaContextoController::class, 'selecionar']);
+    });
 
-    Route::get('/user/perfis-ativos', [TrocaContextoController::class, 'listarPerfisAtivos'])
-        ->name('user.perfis-ativos');
-    Route::post('/user/trocar-contexto', [TrocaContextoController::class, 'trocarContexto'])
-        ->name('user.trocar-contexto');
+    Route::get('/perfis', [PerfilController::class, 'index'])->name('perfis.index');
 
-    Route::get('/gerenciar-perfis', [GerenciarPerfilController::class, 'index'])
-        ->name('gerenciar-perfis.index');
-    Route::get('/gerenciar-perfis/permissoes', [GerenciarPerfilController::class, 'permissoes'])
-        ->name('gerenciar-perfis.permissoes');
-    Route::get('/gerenciar-perfis/hierarquia', [GerenciarPerfilController::class, 'hierarquia'])
-        ->name('gerenciar-perfis.hierarquia');
-    Route::post('/gerenciar-perfis', [GerenciarPerfilController::class, 'store'])
-        ->name('gerenciar-perfis.store');
-    Route::get('/gerenciar-perfis/{id}', [GerenciarPerfilController::class, 'show'])
-        ->name('gerenciar-perfis.show');
-    Route::put('/gerenciar-perfis/{id}', [GerenciarPerfilController::class, 'update'])
-        ->name('gerenciar-perfis.update');
-    Route::get('/gerenciar-perfis/{id}/historico', [GerenciarPerfilController::class, 'historico'])
-        ->name('gerenciar-perfis.historico');
+    Route::prefix('solicitacoes-cadastro')->group(function () {
+        Route::get('/', [SolicitacaoCadastroController::class, 'index'])
+            ->middleware('permission:solicitacoes_cadastro.visualizar');
+        Route::post('/{id}/perfis', [SolicitacaoCadastroController::class, 'adicionarPerfilVinculado']);
+        Route::patch('/{id}/perfis/{perfilUsuarioId}/ativar', [SolicitacaoCadastroController::class, 'ativarPerfilVinculado'])
+            ->middleware('permission:solicitacoes_cadastro.analisar');
+        Route::patch('/{id}/perfis/{perfilUsuarioId}/desativar', [SolicitacaoCadastroController::class, 'desativarPerfilVinculado'])
+            ->middleware('permission:solicitacoes_cadastro.analisar');
+        Route::get('/{solicitacao_cadastro}', [SolicitacaoCadastroController::class, 'show'])
+            ->middleware('permission:solicitacoes_cadastro.visualizar');
+        Route::patch('/{id}', [SolicitacaoCadastroController::class, 'update'])
+            ->middleware('permission:solicitacoes_cadastro.editar');
+    });
 
-    Route::get('/solicitacoes-cadastro', [SolicitacaoCadastroController::class, 'index'])
-        ->name('solicitacoes-cadastro.index');
-    Route::post('/solicitacoes-cadastro/{id}/perfis', [SolicitacaoCadastroController::class, 'adicionarPerfilVinculado'])
-        ->name('solicitacoes-cadastro.perfis.store');
-    Route::patch('/solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/ativar', [SolicitacaoCadastroController::class, 'ativarPerfilVinculado'])
-        ->name('solicitacoes-cadastro.perfis.ativar');
-    Route::patch('/solicitacoes-cadastro/{id}/perfis/{perfilUsuarioId}/desativar', [SolicitacaoCadastroController::class, 'desativarPerfilVinculado'])
-        ->name('solicitacoes-cadastro.perfis.desativar');
-    Route::get('/solicitacoes-cadastro/{id}', [SolicitacaoCadastroController::class, 'show'])
-        ->name('solicitacoes-cadastro.show');
-    Route::patch('/solicitacoes-cadastro/{id}', [SolicitacaoCadastroController::class, 'update'])
-        ->name('solicitacoes-cadastro.update');
 });

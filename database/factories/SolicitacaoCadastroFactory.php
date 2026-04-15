@@ -38,6 +38,7 @@ class SolicitacaoCadastroFactory extends Factory
     {
         return $this->state(function () {
             $statusAprovado = StatusSolicitacao::where('nome', 'aprovado')->first();
+
             return ['status_id' => $statusAprovado?->id ?? 2];
         });
     }
@@ -46,8 +47,9 @@ class SolicitacaoCadastroFactory extends Factory
     {
         return $this->state(function () {
             $statusReprovado = StatusSolicitacao::where('nome', 'reprovado')->first();
+
             return [
-                'status_id'               => $statusReprovado?->id ?? 3,
+                'status_id'                => $statusReprovado?->id ?? 3,
                 'justificativa_reprovacao' => fake()->sentence(),
             ];
         });

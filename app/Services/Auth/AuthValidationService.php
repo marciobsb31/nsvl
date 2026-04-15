@@ -27,14 +27,14 @@ class AuthValidationService
             ]);
         }
 
-        if (!$user) {
+        if (! $user) {
             $user = Usuario::where('cpf', $cpf)->first();
         }
 
         if ($user) {
             $this->sincronizarIdentidade($user, $govBrUser, $cpf);
 
-            if (!$user->possuiPerfilVigente()) {
+            if (! $user->perfisVigentes()) {
                 // Verificar a última solicitação para dar resposta adequada
                 $ultimaSolicitacao = SolicitacaoCadastro::where('usuario_id', $user->id)
                     ->latest('id')
@@ -49,7 +49,7 @@ class AuthValidationService
                     ]);
                 }
 
-                if (!$ultimaSolicitacao || $ultimaSolicitacao->status_id === $statusReprovado) {
+                if (! $ultimaSolicitacao || $ultimaSolicitacao->status_id === $statusReprovado) {
                     // Reprovado ou sem solicitação → permitir nova solicitação
                     throw ValidationException::withMessages([
                         'auth' => 'Solicitar acesso e aguardar avaliação',

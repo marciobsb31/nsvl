@@ -1,5 +1,24 @@
 <?php
 
+$normalizeMailValue = static function (mixed $value): ?string {
+    if ($value === null) {
+        return null;
+    }
+
+    $value = trim((string) $value);
+
+    if ($value === '' || strtolower($value) === 'null') {
+        return null;
+    }
+
+    return $value;
+};
+
+$mailScheme = $normalizeMailValue(env('MAIL_SCHEME', env('MAIL_ENCRYPTION')));
+$mailUsername = $normalizeMailValue(env('MAIL_USERNAME'));
+$mailPassword = $normalizeMailValue(env('MAIL_PASSWORD'));
+$mailEhloDomain = parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST);
+
 return [
 
     /*
@@ -38,17 +57,15 @@ return [
     'mailers' => [
 
         'smtp' => [
-            'transport' => 'smtp',
-            'scheme' => (($scheme = env('MAIL_SCHEME', env('MAIL_ENCRYPTION'))) === 'null' || $scheme === '')
-                ? null
-                : $scheme,
-            'url' => env('MAIL_URL'),
-            'host' => env('MAIL_HOST', '127.0.0.1'),
-            'port' => env('MAIL_PORT', 2525),
-            'username' => env('MAIL_USERNAME'),
-            'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
-            'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+            'transport'    => 'smtp',
+            'scheme'       => $mailScheme,
+            'url'          => env('MAIL_URL'),
+            'host'         => env('MAIL_HOST', '127.0.0.1'),
+            'port'         => (int) env('MAIL_PORT', 2525),
+            'username'     => $mailUsername,
+            'password'     => $mailPassword,
+            'timeout'      => 30,
+            'local_domain' => $mailEhloDomain,
         ],
 
         'ses' => [
@@ -69,12 +86,12 @@ return [
 
         'sendmail' => [
             'transport' => 'sendmail',
-            'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),
+            'path'      => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),
         ],
 
         'log' => [
             'transport' => 'log',
-            'channel' => env('MAIL_LOG_CHANNEL'),
+            'channel'   => env('MAIL_LOG_CHANNEL'),
         ],
 
         'array' => [
@@ -83,7 +100,7 @@ return [
 
         'failover' => [
             'transport' => 'failover',
-            'mailers' => [
+            'mailers'   => [
                 'smtp',
                 'log',
             ],
@@ -92,7 +109,7 @@ return [
 
         'roundrobin' => [
             'transport' => 'roundrobin',
-            'mailers' => [
+            'mailers'   => [
                 'ses',
                 'postmark',
             ],
@@ -114,7 +131,7 @@ return [
 
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+        'name'    => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
 ];
