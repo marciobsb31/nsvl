@@ -10,7 +10,7 @@
           title="Aumentar Fonte"
           @click="increaseFontSize"
         >
-          A+
+          <span class="text-acessibilidade">A+</span>
           <p class="m-0 texto-menu">Texto maior</p>
         </button>
         <button
@@ -20,7 +20,7 @@
           title="Diminuir Fonte"
           @click="decreaseFontSize"
         >
-          A-
+          <span class="text-acessibilidade">A-</span>
           <p class="m-0 texto-menu">Texto menor</p>
         </button>
       </div>
@@ -32,7 +32,7 @@
           title="Tamanho padrão de fonte"
           @click="resetFontSize"
         >
-          A
+          <span class="text-acessibilidade">A</span>
           <p class="m-0 texto-menu">Tamanho padrão</p>
         </button>
       </div>
@@ -47,7 +47,7 @@
           title="Alternar tema"
           @click="toggleTheme"
         >
-          <i class="fas fa-adjust" aria-hidden="true"></i>
+          <i class="fas fa-adjust text-acessibilidade" aria-hidden="true"></i>
           <p class="m-0 texto-menu">Alto contraste</p>
         </button>
       </div>
@@ -195,6 +195,14 @@ const toggleAcessibilidade = () => {
   .menu {
     right: 5rem;
   }
+}
+
+[data-theme='dark'] .texto-menu {
+  color: var(--pure-100);
+}
+
+[data-theme='dark'] .text-acessibilidade {
+  color: var(--pure-100);
 }
 
 [data-theme='dark'] .game-bar.fixed {
