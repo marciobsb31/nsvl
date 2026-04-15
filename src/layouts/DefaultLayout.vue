@@ -18,7 +18,7 @@
               </span>
             </div>
           </div>
-           <button
+          <button
             v-if="exibirTrocaContexto && possuiMultiplosPerfis"
             class="header-btn-contexto"
             type="button"
@@ -63,15 +63,15 @@
         @toggle-recolher="sidebarRecolhido = !sidebarRecolhido"
       />
       <main ref="mainRef" id="main-content" class="layout-default__main" tabindex="-1">
-        <div class="container main-content" >
+        <div class="container main-content">
           <Breadcrumb customClass="mb-3"></Breadcrumb>
-           <div class="container" :key="contextKey"></div>
+          <div class="container" :key="contextKey"></div>
           <slot />
         </div>
       </main>
     </div>
 
-     <TrocaContexto
+    <TrocaContexto
       v-if="exibirTrocaContexto"
       :visivel="modalTrocaContexto"
       @fechar="modalTrocaContexto = false"
@@ -79,14 +79,11 @@
     />
 
     <Footer inverted>
-
       <template #info>
         <div v-if="isMobile" class="mt-3">
           <img :src="logoGov" alt="Logo GOV" class="logo-gov" />
         </div>
-        <div class="footer">
-          © {{ currentYear }} NVSL — Todos os direitos reservados
-        </div>
+        <div class="footer">© {{ currentYear }} NVSL — Todos os direitos reservados</div>
       </template>
     </Footer>
 
@@ -119,7 +116,8 @@ const modalTrocaContexto = ref(false)
 /** Exibir botão e modal de troca de perfil no cabeçalho */
 const exibirTrocaContexto = false
 const router = useRouter()
-const { isAuthenticated, userName, user, possuiMultiplosPerfis, perfilAtivo, contextKey } = useAuth()
+const { isAuthenticated, userName, user, possuiMultiplosPerfis, perfilAtivo, contextKey } =
+  useAuth()
 
 const esferaMap: Record<string, string> = {
   federal: 'Federal',
@@ -129,7 +127,7 @@ const esferaMap: Record<string, string> = {
 
 const perfilAtivoLabel = computed(() => {
   const perfil = perfilAtivo.value
-  const esfera = user.value?.esfera_atuacao
+  const esfera = user.value?.contexto.esfera
   if (perfil) {
     const partes = [perfil.nome]
     if (esfera) partes.push(esferaMap[esfera] ?? esfera)
@@ -137,7 +135,6 @@ const perfilAtivoLabel = computed(() => {
   }
   return esfera ? (esferaMap[esfera] ?? esfera) : ''
 })
-
 
 const currentYear = computed(() => new Date().getFullYear())
 const logoGov = ref(logoGovColor)
@@ -161,8 +158,6 @@ watch(isMobile, (mobile) => {
 watch(sidebarRecolhido, (v) => {
   localStorage.setItem('nvsl_sidebar_recolhido', String(v))
 })
-
-
 </script>
 
 <style scoped>
@@ -286,7 +281,9 @@ watch(sidebarRecolhido, (v) => {
   background: transparent;
   color: var(--color-primary-default, #1351b4);
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
   flex-shrink: 0;
 }
 
@@ -299,30 +296,30 @@ watch(sidebarRecolhido, (v) => {
   font-size: 0.65rem;
 }
 
-[data-theme="dark"] .header-btn-contexto {
+[data-theme='dark'] .header-btn-contexto {
   border-color: var(--color-primary-lighten-01, #4d7fd6);
   color: var(--color-primary-lighten-01, #4d7fd6);
 }
 
-[data-theme="dark"] .header-btn-contexto:hover {
+[data-theme='dark'] .header-btn-contexto:hover {
   background: var(--color-primary-lighten-01, #4d7fd6);
   color: #fff;
 }
 
-[data-theme="dark"] .header-user {
+[data-theme='dark'] .header-user {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.15);
 }
 
-[data-theme="dark"] .header-user-nome {
+[data-theme='dark'] .header-user-nome {
   color: rgba(255, 255, 255, 0.95);
 }
 
-[data-theme="dark"] .header-user-perfil {
+[data-theme='dark'] .header-user-perfil {
   color: rgba(255, 255, 255, 0.65);
 }
 
-[data-theme="dark"] .header-user-icon {
+[data-theme='dark'] .header-user-icon {
   color: var(--color-primary-lighten-01, #4d7fd6);
 }
 
@@ -351,13 +348,13 @@ watch(sidebarRecolhido, (v) => {
   }
 }
 
-  .header-btn-contexto__texto {
-    display: none;
-  }
+.header-btn-contexto__texto {
+  display: none;
+}
 
-  .header-btn-contexto {
-    padding: 0.4rem 0.6rem;
-  }
+.header-btn-contexto {
+  padding: 0.4rem 0.6rem;
+}
 
 .footer {
   margin: 1rem;
@@ -367,4 +364,3 @@ watch(sidebarRecolhido, (v) => {
   height: 40px;
 }
 </style>
-

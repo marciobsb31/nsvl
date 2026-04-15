@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { solicitacaoRoutes } from '@/features/solicitacao-cadastro/solicitacaoCadastroRoutes'
 import { gerenciarSolicitacaoCadastroRoutes } from '@/features/gerenciar-solicitacao-cadastro/gerenciarSolicitacaoCadastroRoutes'
-import { gerenciarPerfisRoutes } from '@/features/gerenciar-perfis/gerenciarPerfisRoutes'
 import { useAuthStore } from '@/stores/authStore'
 import { useNotification } from '@/core/composables/useNotification'
 import { exibirGerenciarPerfis } from '@/core/config/featureFlags'
@@ -84,7 +83,7 @@ router.beforeEach(async (to) => {
   if (!authStore.user && to.name !== 'login') {
     try {
       const api = (await import('@/services/ApiService')).default
-      const { data } = await api.get<Record<string, unknown>>('/user')
+      const { data } = await api.get<Record<string, unknown>>('/usuario')
       authStore.setUser(data)
     } catch {
       sessionStorage.removeItem('nvsl_token')
@@ -95,7 +94,7 @@ router.beforeEach(async (to) => {
   if (to.meta.requiredModule && authStore.user) {
     const modulo = to.meta.requiredModule as string
     const temPermissao = authStore.temPermissao(modulo)
-    const esfera = authStore.user.esfera_atuacao ?? 'federal'
+    const esfera = authStore.user.contexto.esfera
     if (esfera !== 'federal' && !temPermissao) {
       const { error } = useNotification()
       error('Acesso não permitido.')

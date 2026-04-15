@@ -17,9 +17,9 @@
       <div v-if="detalhe" class="painel-cabecalho-info">
         <div class="painel-info-item">
           <span class="painel-info-label">Status da Solicitação</span>
-          <span class="painel-status-badge" :class="classeStatusBadge(detalhe.status)">
-            <span class="status-indicador" :class="'status-' + detalhe.status"></span>
-            {{ labelStatus(detalhe.status) }}
+          <span class="painel-status-badge" :class="classeStatusBadge(detalhe.status.nome)">
+            <span class="status-indicador" :class="'status-' + detalhe.status.nome"></span>
+            {{ labelStatus(detalhe.status.nome) }}
           </span>
         </div>
         <div class="painel-info-item">
@@ -41,7 +41,7 @@
 
     <!-- Bloco: Aguardando Avaliação (somente quando em_analise e usuário tem privilégio) -->
     <div
-      v-if="detalhe?.status === 'em_analise' && detalhe?.pode_avaliar !== false"
+      v-if="detalhe?.status.nome === StatusEnum.EM_ANALISE && detalhe?.pode_avaliar !== false"
       class="painel-secao"
     >
       <h3 class="secao-titulo">Aguardando Avaliação</h3>
@@ -49,15 +49,15 @@
         <div class="secao-linha-3cols">
           <div class="br-input">
             <label>Esfera de atuação</label>
-            <input type="text" :value="labelEsfera(detalhe.esfera_atuacao)" readonly />
+            <input type="text" :value="labelEsfera(detalhe.esfera.nome)" readonly />
           </div>
           <div class="br-input">
             <label>UF</label>
-            <input type="text" :value="detalhe.uf" readonly />
+            <input type="text" :value="detalhe.estado.nome" readonly />
           </div>
           <div class="br-input">
             <label>Município</label>
-            <input type="text" :value="detalhe.municipio" readonly />
+            <input type="text" :value="detalhe.municipio.nome" readonly />
           </div>
         </div>
         <div class="secao-linha-orgao-cargo">
@@ -162,7 +162,7 @@
           </div>
           <div class="br-input">
             <label>E-mail Institucional</label>
-            <input type="text" :value="detalhe?.email_institucional" readonly />
+            <input type="text" :value="detalhe?.email" readonly />
           </div>
         </div>
         <div class="secao-linha-2cols">
@@ -188,7 +188,7 @@
 
     <!-- Histórico de reprovação (status reprovado) — abaixo dos dados do solicitante -->
     <div
-      v-if="detalhe?.status === 'reprovado'"
+      v-if="detalhe?.status.nome === StatusEnum.REPROVADO"
       class="painel-secao painel-secao--historico-reprovacao"
     >
       <h3 class="secao-titulo">Histórico de reprovação</h3>
@@ -237,7 +237,7 @@
         <i class="fas fa-users fa-2x mb-2" aria-hidden="true"></i>
         <p>
           {{
-            detalhe?.status === 'aprovado'
+            detalhe?.status.nome === StatusEnum.APROVADO
               ? 'Nenhum perfil vinculado. Clique em Adicionar Perfil para vincular um novo perfil ao usuário.'
               : 'Nenhum perfil vinculado para este solicitante.'
           }}
@@ -479,6 +479,7 @@ import type {
   PerfilVinculado,
   SolicitacaoCadastroDetalhe,
 } from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
+import { StatusEnum } from '@/core/enums/StatusEmun'
 
 defineOptions({ name: 'PainelDetalharSolicitacao' })
 const { isMobile } = useBreakpoint()
@@ -714,18 +715,18 @@ function labelEsfera(esfera?: string) {
 
 function labelStatus(status: string) {
   const map: Record<string, string> = {
-    em_analise: 'EM ANÁLISE',
-    aprovado: 'APROVADA',
-    reprovado: 'REPROVADA',
+    [StatusEnum.EM_ANALISE]: 'EM ANÁLISE',
+    [StatusEnum.APROVADO]: 'APROVADA',
+    [StatusEnum.REPROVADO]: 'REPROVADA',
   }
   return map[status] ?? status
 }
 
 function classeStatusBadge(status: string) {
   const map: Record<string, string> = {
-    em_analise: 'status-em-analise',
-    aprovado: 'status-aprovada',
-    reprovado: 'status-reprovada',
+    [StatusEnum.EM_ANALISE]: 'status-em-analise',
+    [StatusEnum.APROVADO]: 'status-aprovada',
+    [StatusEnum.REPROVADO]: 'status-reprovada',
   }
   return map[status] ?? ''
 }

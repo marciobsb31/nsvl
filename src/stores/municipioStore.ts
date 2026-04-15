@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { listarMunicipios } from '@/services/LocalidadeService'
-import type { LocalidadeOption, Municipio } from '@/core/types/localidades/LocalidadeInterface'
+import type { Municipio } from '@/core/types/localidades/LocalidadeInterface'
 
 export const useMunicipioStore = defineStore('useMunicipioStore', () => {
   //state
@@ -10,7 +10,6 @@ export const useMunicipioStore = defineStore('useMunicipioStore', () => {
 
   // getters
   const municipiosOptions = computed(() => {
-    console.log('municipiosLista', municipiosLista.value)
     return (municipiosLista.value ?? []).map((municipio) => ({
       label: municipio.nome,
       value: String(municipio.id ?? ''),

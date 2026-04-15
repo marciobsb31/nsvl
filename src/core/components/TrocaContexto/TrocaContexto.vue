@@ -1,7 +1,14 @@
 <template>
   <Teleport to="body">
     <Transition name="tc-fade">
-      <div v-if="visivel" class="tc-overlay" @click.self="fechar" role="dialog" aria-modal="true" aria-label="Troca de contexto">
+      <div
+        v-if="visivel"
+        class="tc-overlay"
+        @click.self="fechar"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Troca de contexto"
+      >
         <div class="tc-modal" ref="modalRef">
           <div class="tc-modal__header">
             <h2 class="tc-modal__titulo">Troca de Contexto</h2>
@@ -10,15 +17,19 @@
             </button>
           </div>
           <p class="tc-modal__descricao">
-            Selecione o perfil que deseja utilizar. Menus, permissões e dados serão atualizados conforme o perfil escolhido.
+            Selecione o perfil que deseja utilizar. Menus, permissões e dados serão atualizados
+            conforme o perfil escolhido.
           </p>
           <div class="tc-lista" role="radiogroup" aria-label="Perfis disponíveis">
             <button
               v-for="perfil in perfisAtivos"
-              :key="perfil.perfil_usuario_id"
+              :key="perfil.id"
               type="button"
               class="tc-card"
-              :class="{ 'tc-card--ativo': isPerfilAtivo(perfil), 'tc-card--selecionando': selecionandoId === perfil.perfil_usuario_id }"
+              :class="{
+                'tc-card--ativo': isPerfilAtivo(perfil),
+                'tc-card--selecionando': selecionandoId === perfil.id,
+              }"
               :aria-pressed="isPerfilAtivo(perfil)"
               :disabled="trocandoContexto"
               @click="selecionarPerfil(perfil)"
@@ -29,23 +40,31 @@
               <div class="tc-card__conteudo">
                 <span class="tc-card__nome">{{ perfil.nome }}</span>
                 <div class="tc-card__detalhes">
-                  <span class="tc-card__detalhe" v-if="user?.esfera_atuacao">
+                  <span class="tc-card__detalhe" v-if="user?.contexto.esfera">
                     <i class="fas fa-layer-group" aria-hidden="true"></i>
-                    {{ labelEsfera(user.esfera_atuacao) }}
+                    {{ labelEsfera(user.contexto.esfera) }}
                   </span>
-                  <span class="tc-card__detalhe" v-if="user?.uf_lotacao">
+                  <!-- <span class="tc-card__detalhe" v-if="user?.uf_id">
                     <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                    {{ user.uf_lotacao }}
+                    {{ user.uf_id }}
                   </span>
-                  <span class="tc-card__detalhe" v-if="user?.municipio_lotacao">
+                  <span class="tc-card__detalhe" v-if="user?.municipio_id">
                     <i class="fas fa-city" aria-hidden="true"></i>
                     {{ user.municipio_lotacao }}
-                  </span>
+                  </span> -->
                 </div>
               </div>
               <div class="tc-card__acao">
-                <i v-if="isPerfilAtivo(perfil)" class="fas fa-check-circle tc-card__icone-ativo" aria-hidden="true"></i>
-                <i v-else class="fas fa-arrow-right tc-card__icone-selecionar" aria-hidden="true"></i>
+                <i
+                  v-if="isPerfilAtivo(perfil)"
+                  class="fas fa-check-circle tc-card__icone-ativo"
+                  aria-hidden="true"
+                ></i>
+                <i
+                  v-else
+                  class="fas fa-arrow-right tc-card__icone-selecionar"
+                  aria-hidden="true"
+                ></i>
               </div>
             </button>
           </div>
@@ -65,7 +84,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useAuth } from '@/core/composables/useAuth'
-import type { PerfilVigente } from '@/stores/authStore'
+import type { perfis } from '@/core/types/usuario/UsuarioInterface'
 defineOptions({ name: 'TrocaContexto' })
 const props = defineProps<{ visivel: boolean }>()
 const emit = defineEmits<{
@@ -84,15 +103,15 @@ function labelEsfera(esfera: string) {
   }
   return map[esfera] ?? esfera
 }
-function isPerfilAtivo(perfil: PerfilVigente) {
-  return perfilAtivo.value?.perfil_usuario_id === perfil.perfil_usuario_id
+function isPerfilAtivo(perfil: perfis) {
+  return perfilAtivo.value?.id === perfil.id
 }
-async function selecionarPerfil(perfil: PerfilVigente) {
+async function selecionarPerfil(perfil: perfis) {
   if (isPerfilAtivo(perfil) || trocandoContexto.value) return
   erroTroca.value = null
-  selecionandoId.value = perfil.perfil_usuario_id
+  selecionandoId.value = perfil.id
   try {
-    await trocarContexto(perfil.perfil_usuario_id)
+    await trocarContexto(perfil.id)
     emit('contexto-alterado')
     emit('fechar')
   } catch {
@@ -110,15 +129,18 @@ function fechar() {
 function handleEsc(e: KeyboardEvent) {
   if (e.key === 'Escape') fechar()
 }
-watch(() => props.visivel, (val) => {
-  if (val) {
-    document.addEventListener('keydown', handleEsc)
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.removeEventListener('keydown', handleEsc)
-    document.body.style.overflow = ''
-  }
-})
+watch(
+  () => props.visivel,
+  (val) => {
+    if (val) {
+      document.addEventListener('keydown', handleEsc)
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.removeEventListener('keydown', handleEsc)
+      document.body.style.overflow = ''
+    }
+  },
+)
 onUnmounted(() => {
   document.removeEventListener('keydown', handleEsc)
   document.body.style.overflow = ''
@@ -172,7 +194,9 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   font-size: 1rem;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 .tc-modal__fechar:hover {
   background: var(--color-secondary-03, #e8e8e8);
@@ -300,41 +324,41 @@ onUnmounted(() => {
   gap: 0.5rem;
 }
 /* Dark theme */
-[data-theme="dark"] .tc-modal {
+[data-theme='dark'] .tc-modal {
   background: var(--color-secondary-02, #1a1a1a);
 }
-[data-theme="dark"] .tc-modal__header {
+[data-theme='dark'] .tc-modal__header {
   border-color: rgba(255, 255, 255, 0.12);
 }
-[data-theme="dark"] .tc-card {
+[data-theme='dark'] .tc-card {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.12);
 }
-[data-theme="dark"] .tc-card:hover:not(:disabled):not(.tc-card--ativo) {
+[data-theme='dark'] .tc-card:hover:not(:disabled):not(.tc-card--ativo) {
   background: rgba(19, 81, 180, 0.15);
   border-color: var(--color-primary-lighten-01, #4d7fd6);
 }
-[data-theme="dark"] .tc-card--ativo {
+[data-theme='dark'] .tc-card--ativo {
   background: rgba(19, 81, 180, 0.15);
   border-color: var(--color-primary-lighten-01, #4d7fd6);
 }
-[data-theme="dark"] .tc-card__nome {
+[data-theme='dark'] .tc-card__nome {
   color: rgba(255, 255, 255, 0.95);
 }
-[data-theme="dark"] .tc-card__detalhe {
+[data-theme='dark'] .tc-card__detalhe {
   color: rgba(255, 255, 255, 0.6);
 }
-[data-theme="dark"] .tc-modal__descricao {
+[data-theme='dark'] .tc-modal__descricao {
   color: rgba(255, 255, 255, 0.55);
 }
-[data-theme="dark"] .tc-modal__fechar {
+[data-theme='dark'] .tc-modal__fechar {
   color: rgba(255, 255, 255, 0.6);
 }
-[data-theme="dark"] .tc-modal__fechar:hover {
+[data-theme='dark'] .tc-modal__fechar:hover {
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.9);
 }
-[data-theme="dark"] .tc-modal__erro {
+[data-theme='dark'] .tc-modal__erro {
   background: rgba(183, 28, 28, 0.15);
   color: #ef9a9a;
 }

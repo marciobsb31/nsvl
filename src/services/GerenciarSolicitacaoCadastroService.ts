@@ -1,3 +1,4 @@
+import type { Municipio } from '@/core/types/localidades/LocalidadeInterface'
 import api from './ApiService'
 
 /**
@@ -6,14 +7,24 @@ import api from './ApiService'
  * serão exibidos quando o backend passar a retorná-los no index.
  */
 export interface SolicitacaoGerenciarItem {
-  id: number
+  id: number | string
   nome: string
-  status: string
+  status: {
+    id?: number
+    nome: string
+  }
   created_at: string
   cpf?: string
-  esfera_atuacao?: string
-  uf?: string
-  municipio?: string
+  esfera: {
+    id?: number
+    nome: string
+  }
+  estado?: {
+    id?: number
+    nome: string
+    sigla: string
+  }
+  municipio?: Municipio
   orgao?: string
 }
 
@@ -28,7 +39,7 @@ export interface FiltrosGerenciarSolicitacao {
 }
 
 export async function listarSolicitacoesGerenciar(
-  filtros?: FiltrosGerenciarSolicitacao
+  filtros?: FiltrosGerenciarSolicitacao,
 ): Promise<SolicitacaoGerenciarItem[]> {
   const params = new URLSearchParams()
   if (filtros?.cpf) params.set('cpf', filtros.cpf.replace(/\D/g, ''))
@@ -51,10 +62,7 @@ export interface AprovarPayload {
   vigenciaFim?: string
 }
 
-export async function aprovarSolicitacao(
-  id: number,
-  payload?: AprovarPayload
-): Promise<void> {
+export async function aprovarSolicitacao(id: number, payload?: AprovarPayload): Promise<void> {
   const body: Record<string, unknown> = { status: 'aprovado' }
   if (payload?.perfilId != null) body.perfil_id = payload.perfilId
   if (payload?.vigenciaInicio) body.vigencia_inicio = payload.vigenciaInicio
@@ -66,10 +74,16 @@ export async function reprovarSolicitacao(id: number, justificativa: string): Pr
   await api.patch(`/solicitacoes-cadastro/${id}`, { status: 'reprovado', justificativa })
 }
 
-export async function ativarPerfilVinculado(solicitacaoId: number, perfilUsuarioId: number): Promise<void> {
+export async function ativarPerfilVinculado(
+  solicitacaoId: number,
+  perfilUsuarioId: number,
+): Promise<void> {
   await api.patch(`/solicitacoes-cadastro/${solicitacaoId}/perfis/${perfilUsuarioId}/ativar`)
 }
 
-export async function desativarPerfilVinculado(solicitacaoId: number, perfilUsuarioId: number): Promise<void> {
+export async function desativarPerfilVinculado(
+  solicitacaoId: number,
+  perfilUsuarioId: number,
+): Promise<void> {
   await api.patch(`/solicitacoes-cadastro/${solicitacaoId}/perfis/${perfilUsuarioId}/desativar`)
 }

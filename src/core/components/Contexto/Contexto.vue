@@ -1,9 +1,9 @@
 <template>
-    <div v-if="contextoAtualLabel" class="contexto-banner" role="status" aria-live="polite">
-      <i class="fas fa-shield-alt contexto-banner__icon" aria-hidden="true"></i>
-      <span class="contexto-banner__label">Contexto ativo:</span>
-      <strong class="contexto-banner__valor">{{ contextoAtualLabel }}</strong>
-    </div>
+  <div v-if="contextoAtualLabel" class="contexto-banner" role="status" aria-live="polite">
+    <i class="fas fa-shield-alt contexto-banner__icon" aria-hidden="true"></i>
+    <span class="contexto-banner__label">Contexto ativo:</span>
+    <strong class="contexto-banner__valor">{{ contextoAtualLabel }}</strong>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -20,23 +20,22 @@ const esferaMap: Record<string, string> = {
 
 const contextoAtualLabel = computed(() => {
   const perfil = perfilAtivo.value
-  const esfera = user.value?.esfera_atuacao
-  const uf = user.value?.uf_lotacao
-  const municipio = user.value?.municipio_lotacao
+  const esfera = user.value?.contexto.esfera
+  const uf = user.value?.contexto.localidade
+  const municipio = user.value?.contexto.localidade
   if (!perfil) {
-    return esfera ? esferaMap[esfera] ?? esfera : ''
+    return esfera ? (esferaMap[esfera] ?? esfera) : ''
   }
   const partes: string[] = []
   if (perfil.nome) partes.push(perfil.nome)
   if (esfera) partes.push(esferaMap[esfera] ?? esfera)
   if (uf) partes.push(uf)
-  if (municipio) partes.push(municipio)
+  // if (municipio) partes.push(municipio)
   return partes.join(' — ')
 })
 </script>
 
 <style scoped>
-
 .contexto-banner {
   display: flex;
   align-items: center;
@@ -79,4 +78,3 @@ const contextoAtualLabel = computed(() => {
   color: rgba(255, 255, 255, 0.6);
 }
 </style>
-

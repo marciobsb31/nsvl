@@ -80,24 +80,24 @@
               <tr v-for="s in solicitacoesPaginadas" :key="s.id">
                 <td>{{ s.cpf ?? '—' }}</td>
                 <td>{{ s.nome }}</td>
-                <td>{{ labelEsfera(s.esfera_atuacao) }}</td>
-                <td>{{ s.uf ?? '—' }}</td>
-                <td>{{ s.municipio ?? '—' }}</td>
+                <td>{{ labelEsfera(s.esfera.nome) }}</td>
+                <td>{{ s.estado?.nome ?? '—' }}</td>
+                <td>{{ s.municipio?.nome ?? '—' }}</td>
                 <td>{{ s.orgao ?? '—' }}</td>
                 <td>
-                  <span class="br-tag" :class="classeStatus(s.status)">
-                    {{ labelStatus(s.status) }}
+                  <span class="br-tag" :class="classeStatus(s.status.nome)">
+                    {{ labelStatus(s.status.nome) }}
                   </span>
                 </td>
                 <td>
                   <button
                     class="br-button secondary small"
                     type="button"
-                    @click="detalhar(s)"
+                    @click="detalhar(s.id)"
                     :disabled="carregandoDetalhe"
-                    :aria-label="rotuloBotaoDetalhar(s.status)"
+                    :aria-label="rotuloBotaoDetalhar(s.status.nome)"
                   >
-                    {{ rotuloBotaoDetalhar(s.status) }}
+                    {{ rotuloBotaoDetalhar(s.status.nome) }}
                   </button>
                 </td>
               </tr>
@@ -124,7 +124,7 @@
           </div>
           <div class="col-6 mb-1">
             <label for="esfera">Esfera de atuação</label>
-            <p class="m-0">{{ labelEsfera(s.esfera_atuacao) }}</p>
+            <p class="m-0">{{ labelEsfera(s.esfera.nome) }}</p>
           </div>
           <div class="col-6 mb-1">
             <label for="orgao">Órgão</label>
@@ -132,21 +132,21 @@
           </div>
           <div class="col-6 mb-1">
           <label for="situacao">Situação</label><br></br>
-           <span class="br-tag" :class="classeStatus(s.status)">
-                    {{ labelStatus(s.status) }}
+           <span class="br-tag" :class="classeStatus(s.status.nome)">
+                    {{ labelStatus(s.status.nome) }}
                   </span>
           </div>
           <div class="col-12 mt-3">
            <button
                     class="br-button secondary small block"
                     type="button"
-                    @click="detalhar(s)"
+                    @click="detalhar(s.id)"
                     :disabled="carregandoDetalhe"
-                    :aria-label="rotuloBotaoDetalhar(s.status)"
-                    :title="rotuloBotaoDetalhar(s.status)"
+                    :aria-label="rotuloBotaoDetalhar(s.status.nome)"
+                    :title="rotuloBotaoDetalhar(s.status.nome)"
                     slot="trigger"
                   >
-                    {{ rotuloBotaoDetalhar(s.status) }}
+                    {{ rotuloBotaoDetalhar(s.status.nome) }}
                   </button>
           </div>
           <div class="col-12 mt-3">
@@ -247,7 +247,7 @@ const solicitacoesOrdenadas = computed(() => {
 
   if (!ordenarColuna.value) {
     return lista.sort((a, b) => {
-      const prioridade = prioridadeStatus(a.status) - prioridadeStatus(b.status)
+      const prioridade = prioridadeStatus(a.status.nome) - prioridadeStatus(b.status.nome)
       if (prioridade !== 0) return prioridade
 
       const dataA = new Date(a.created_at ?? '').getTime()
@@ -258,7 +258,7 @@ const solicitacoesOrdenadas = computed(() => {
   const col = ordenarColuna.value
   const asc = ordenarAsc.value
   lista.sort((a, b) => {
-    const prioridade = prioridadeStatus(a.status) - prioridadeStatus(b.status)
+    const prioridade = prioridadeStatus(a.status.nome) - prioridadeStatus(b.status.nome)
     if (prioridade !== 0) return prioridade
 
     let va: string | number
@@ -270,20 +270,20 @@ const solicitacoesOrdenadas = computed(() => {
       va = (a.nome ?? '').toLowerCase()
       vb = (b.nome ?? '').toLowerCase()
     } else if (col === 'esfera') {
-      va = labelEsfera(a.esfera_atuacao).toLowerCase()
-      vb = labelEsfera(b.esfera_atuacao).toLowerCase()
+      va = labelEsfera(a.esfera.nome).toLowerCase()
+      vb = labelEsfera(b.esfera.nome).toLowerCase()
     } else if (col === 'uf') {
-      va = (a.uf ?? '').toLowerCase()
-      vb = (b.uf ?? '').toLowerCase()
+      va = (a.estado?.sigla ?? '').toLowerCase()
+      vb = (b.estado?.sigla ?? '').toLowerCase()
     } else if (col === 'municipio') {
-      va = (a.municipio ?? '').toLowerCase()
-      vb = (b.municipio ?? '').toLowerCase()
+      va = (a.municipio?.nome ?? '').toLowerCase()
+      vb = (b.municipio?.nome ?? '').toLowerCase()
     } else if (col === 'orgao') {
       va = (a.orgao ?? '').toLowerCase()
       vb = (b.orgao ?? '').toLowerCase()
     } else if (col === 'status') {
-      va = labelStatus(a.status).toLowerCase()
-      vb = labelStatus(b.status).toLowerCase()
+      va = labelStatus(a.status.nome).toLowerCase()
+      vb = labelStatus(b.status.nome).toLowerCase()
     } else {
       return 0
     }
@@ -389,18 +389,18 @@ function formatarData(data: string | undefined) {
 
 function labelStatus(status: string) {
   const map: Record<string, string> = {
-    em_analise: 'Em análise',
-    aprovado: 'Aprovada',
-    reprovado: 'Reprovada',
+    "Em análise": 'Em análise',
+    "Aprovada": 'Aprovada',
+    "Reprovada": 'Reprovada',
   }
   return map[status] ?? status
 }
 
 function classeStatus(status: string) {
   const map: Record<string, string> = {
-    em_analise: 'warning',
-    aprovado: 'success',
-    reprovado: 'danger',
+    "Em análise": 'warning',
+    "Aprovada": 'success',
+    "Reprovada": 'danger',
   }
   return map[status] ?? ''
 }
@@ -419,27 +419,26 @@ function labelEsfera(esfera?: string) {
  * Regra: "Em análise" → "Detalhar/Analisar"; demais → "Detalhar"
  */
 function rotuloBotaoDetalhar(status: string) {
-  return status === 'em_analise' ? 'Detalhar/Analisar' : 'Detalhar'
+  return status === 'Em análise' ? 'Detalhar/Analisar' : 'Detalhar'
 }
 
 const carregandoDetalhe = ref(false)
 
 
-async function detalhar(s: SolicitacaoGerenciarItem) {
-  const id = s?.id
+async function detalhar(s: any) {
+  const id = s
   if (id == null || id === undefined) {
     console.error('[Detalhar] ID inválido — item:', s)
     error('Não foi possível identificar a solicitação. Tente clicar em Listar novamente.')
     return
   }
-  console.log('[Detalhar] Iniciando — id:', id, 'nome:', s?.nome)
   carregandoDetalhe.value = true
   painelCadastroAberto.value = false
   painelDetalharAberto.value = false
   detalheSelecionado.value = null
   try {
-    const detalhe = await obterSolicitacaoCadastro(id)
-    console.log('[Detalhar] Resposta da API:', detalhe ? { id: detalhe.id, nome: detalhe.nome, perfis: detalhe.perfis_vinculados?.length } : null)
+    const detalhe = await obterSolicitacaoCadastro(id).then((res: any) => res.data)
+
     if (!detalhe?.id) {
       throw new Error('Resposta da API inválida: dados incompletos.')
     }
