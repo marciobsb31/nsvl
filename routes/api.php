@@ -55,7 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('permission:solicitacoes_cadastro.analisar');
         Route::get('/{solicitacao_cadastro}', [SolicitacaoCadastroController::class, 'show'])
             ->middleware('permission:solicitacoes_cadastro.visualizar');
-        Route::patch('/{id}', [SolicitacaoCadastroController::class, 'update'])
+        Route::patch('/{solicitacao_cadastro}', [SolicitacaoCadastroController::class, 'update'])
             ->middleware('permission:solicitacoes_cadastro.editar');
     });
 

@@ -13,6 +13,7 @@ use App\Models\PerfilUsuario;
 use App\Models\SolicitacaoCadastro;
 use App\Models\StatusSolicitacao;
 use App\Models\Usuario;
+use App\Models\UsuarioAbrangencia;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
@@ -225,43 +226,66 @@ class SolicitacaoCadastroService
     // Avaliar (aprovar / reprovar)
     // ------------------------------------------------------------------
 
-    public function avaliar(Usuario $user, int $id, array $dados): array
+    public function avaliar($solicitacao, array $dados): array
     {
-        $solicitacao = SolicitacaoCadastro::with(['usuario', 'esfera', 'ufRelacao', 'municipioRelacao'])->find($id);
-        if (! $solicitacao) {
-            throw ApiException::notFound('Solicitação não encontrada.');
-        }
-
-        $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
-        $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
-        $statusReprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::REPROVADO);
-
-        if ($solicitacao->status_id !== $statusEmAnalise) {
+        if ($solicitacao->status_id !== StatusSolicitacaoEnum::EM_ANALISE->value) {
             throw ValidationException::withMessages([
                 'status' => ['Apenas solicitações em análise podem ser aprovadas ou reprovadas.'],
             ]);
         }
 
-        $statusNome = $dados['status'];
-        $novoStatusId = $statusNome === 'aprovado' ? $statusAprovado : $statusReprovado;
+        $aprovado = (int) $dados['status_id'] === StatusSolicitacaoEnum::APROVADO->value;
+        $statusNome = $aprovado ? 'aprovado' : 'reprovado';
 
-        DB::transaction(function () use ($solicitacao, $novoStatusId, $statusAprovado, $dados): void {
-            $updateData = ['status_id' => $novoStatusId];
-            if ($novoStatusId !== $statusAprovado) {
-                $updateData['justificativa_reprovacao'] = $dados['justificativa'] ?? null;
-            }
+        DB::transaction(function () use ($solicitacao, $aprovado, $dados): void {
+            $updateData = [
+                'status_id'                => $aprovado ? StatusSolicitacaoEnum::APROVADO->value : StatusSolicitacaoEnum::REPROVADO->value,
+                'justificativa_reprovacao' => ! $aprovado ? ($dados['justificativa'] ?? null) : null,
+                'avaliado_por_id'          => auth()->id(),
+                'data_avaliacao'           => now(),
+            ];
+
             $solicitacao->update($updateData);
 
-            if ($novoStatusId === $statusAprovado) {
+            if ($aprovado) {
+                $nomeLocalidade = $solicitacao->municipioRelacao?->nome
+                    ?? $solicitacao->ufRelacao?->nome
+                    ?? 'Âmbito Nacional';
+
+                $abrangencia = UsuarioAbrangencia::firstOrCreate([
+                    'usuario_id'   => $solicitacao->usuario_id,
+                    'esfera_id'    => $solicitacao->esfera_id,
+                    'uf_id'        => $solicitacao->uf_id,
+                    'municipio_id' => $solicitacao->municipio_id,
+                ], [
+                    'nome'                  => "{$solicitacao->esfera?->nome} - {$nomeLocalidade}",
+                    'origem_tipo'           => 'solicitacao_cadastro',
+                    'origem_id'             => $solicitacao->id,
+                    'ativo'                 => true,
+                    'criado_por_usuario_id' => auth()->id(),
+                ]);
+
                 PerfilUsuario::updateOrCreate(
                     [
-                        'usuario_id' => $solicitacao->usuario_id,
-                        'perfil_id'  => (int) $dados['perfil_id'],
+                        'usuario_id'             => $solicitacao->usuario_id,
+                        'perfil_id'              => (int) $dados['perfil_id'],
+                        'usuario_abrangencia_id' => $abrangencia->id,
                     ],
                     [
-                        'data_inicio_vigencia' => $dados['vigencia_inicio'] ?? null,
-                        'data_fim_vigencia'    => $dados['vigencia_fim'] ?? null,
-                        'ativo'                => true,
+                        'data_inicio_vigencia'           => $dados['vigencia_inicio'] ?? now(),
+                        'data_fim_vigencia'              => $dados['vigencia_fim'] ?? null,
+                        'ativo'                          => true,
+                        'origem_tipo'                    => 'solicitacao',
+                        'atribuido_por_usuario_id'       => auth()->id(),
+                        'solicitacao_cadastro_origem_id' => $solicitacao->id,
+                    ]
+                );
+
+                $solicitacao->usuario->contextoAtivo()->updateOrCreate(
+                    ['usuario_id' => $solicitacao->usuario_id],
+                    [
+                        'perfil_usuario_id'      => $dados['perfil_id'],
+                        'usuario_abrangencia_id' => $abrangencia->id,
                     ]
                 );
             }
@@ -271,13 +295,14 @@ class SolicitacaoCadastroService
             'solicitacao_id' => $solicitacao->id,
             'status'         => $statusNome,
             'perfil_id'      => $dados['perfil_id'] ?? null,
+            'abrangencia'    => $solicitacao->abrangencia?->nome,
         ];
         if ($statusNome === 'reprovado') {
             $contextoAudit['motivo_reprovacao'] = $dados['justificativa'] ?? null;
         }
         $this->audit->log(
             'gerenciar_cadastros.avaliacao',
-            $user->id,
+            auth()->user()->id,
             $contextoAudit,
             TipoAuditoria::UPDATE->name,
             'solicitacoes_cadastro',
