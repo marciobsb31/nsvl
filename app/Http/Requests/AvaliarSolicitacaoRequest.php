@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Models\StatusSolicitacao;
+use App\Enums\StatusSolicitacaoEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AvaliarSolicitacaoRequest extends FormRequest
 {
@@ -14,21 +15,40 @@ class AvaliarSolicitacaoRequest extends FormRequest
 
     public function rules(): array
     {
-        $rules = [
-            'status' => ['required', 'in:aprovado,reprovado'],
+        return [
+            'status_id' => [
+                'required',
+                Rule::in([
+                    StatusSolicitacaoEnum::APROVADO->value,
+                    StatusSolicitacaoEnum::REPROVADO->value,
+                ]),
+            ],
+
+            'perfil_id' => [
+                Rule::requiredIf(fn () => $this->status_id === StatusSolicitacaoEnum::APROVADO->value),
+                'integer',
+                'exists:perfis,id',
+            ],
+
+            'vigencia_inicio' => [
+                'nullable',
+                'date',
+                Rule::requiredIf(fn () => $this->status_id === StatusSolicitacaoEnum::APROVADO->value),
+            ],
+
+            'vigencia_fim' => [
+                'nullable',
+                'date',
+                'after_or_equal:vigencia_inicio',
+            ],
+
+            'justificativa' => [
+                Rule::requiredIf(fn () => $this->status_id === StatusSolicitacaoEnum::REPROVADO->value),
+                'string',
+                'min:10',
+                'max:1000',
+            ],
         ];
-
-        if ($this->input('status') === StatusSolicitacao::APROVADO) {
-            $rules['perfil_id'] = ['required', 'integer', 'exists:perfis,id'];
-            $rules['vigencia_inicio'] = ['nullable', 'date'];
-            $rules['vigencia_fim'] = ['nullable', 'date', 'after_or_equal:vigencia_inicio'];
-        }
-
-        if ($this->input('status') === StatusSolicitacao::REPROVADO) {
-            $rules['justificativa'] = ['required', 'string', 'min:10', 'max:1000'];
-        }
-
-        return $rules;
     }
 
     public function messages(): array

@@ -120,17 +120,12 @@ class SolicitacaoCadastroController extends Controller
             new OA\Response(response: 422, description: 'Validação'),
         ]
     )]
-    public function update(AvaliarSolicitacaoRequest $request, int $id): JsonResponse
+    public function update(AvaliarSolicitacaoRequest $request, SolicitacaoCadastro $solicitacaoCadastro): JsonResponse
     {
-        $user = auth()->user();
-        $solicitacao = SolicitacaoCadastro::find($id);
-        if (! $solicitacao) {
-            throw ApiException::notFound('Solicitação não encontrada.');
-        }
 
-        Gate::authorize('update', $solicitacao);
+        Gate::authorize('update', $solicitacaoCadastro);
 
-        return response()->json($this->service->avaliar($user, $id, $request->validated()));
+        return response()->json($this->service->avaliar($solicitacaoCadastro, $request->validated()));
     }
 
     #[OA\Get(

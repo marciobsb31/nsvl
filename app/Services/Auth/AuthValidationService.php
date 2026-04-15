@@ -3,8 +3,8 @@
 namespace App\Services\Auth;
 
 use App\DTOs\Auth\GovBrUserDTO;
+use App\Enums\StatusSolicitacaoEnum;
 use App\Models\SolicitacaoCadastro;
-use App\Models\StatusSolicitacao;
 use App\Models\Usuario;
 use Illuminate\Validation\ValidationException;
 
@@ -12,6 +12,7 @@ class AuthValidationService
 {
     public function validarOuFalhar(GovBrUserDTO $govBrUser): Usuario
     {
+
         $cpf = preg_replace('/\D/', '', (string) ($govBrUser->cpf ?? $govBrUser->sub));
         if (strlen($cpf) !== 11) {
             throw ValidationException::withMessages([
@@ -34,22 +35,19 @@ class AuthValidationService
         if ($user) {
             $this->sincronizarIdentidade($user, $govBrUser, $cpf);
 
-            if (! $user->perfisVigentes()) {
-                // Verificar a última solicitação para dar resposta adequada
-                $ultimaSolicitacao = SolicitacaoCadastro::where('user_id', $user->id)
+            if ($user->perfisVigentes()->isEmpty()) {
+
+                $ultimaSolicitacao = SolicitacaoCadastro::where('usuario_id', $user->id)
                     ->latest('id')
                     ->first();
 
-                $statusReprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::REPROVADO);
-                $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
-
-                if ($ultimaSolicitacao && $ultimaSolicitacao->status_id === $statusEmAnalise) {
+                if ($ultimaSolicitacao && $ultimaSolicitacao->status_id === StatusSolicitacaoEnum::EM_ANALISE->value) {
                     throw ValidationException::withMessages([
                         'auth' => 'Solicitação de acesso em análise.',
                     ]);
                 }
 
-                if (! $ultimaSolicitacao || $ultimaSolicitacao->status_id === $statusReprovado) {
+                if (! $ultimaSolicitacao || $ultimaSolicitacao->status_id === StatusSolicitacaoEnum::REPROVADO->value) {
                     // Reprovado ou sem solicitação → permitir nova solicitação
                     throw ValidationException::withMessages([
                         'auth' => 'Solicitar acesso e aguardar avaliação',
@@ -64,20 +62,16 @@ class AuthValidationService
             return $user->fresh() ?? $user;
         }
 
-        $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
-        $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
-        $statusReprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::REPROVADO);
-
         $solicitacao = SolicitacaoCadastro::whereHas('usuario', fn ($q) => $q->where('cpf', $cpf))
             ->latest('id')
             ->first();
 
         if ($solicitacao) {
             $mensagem = match ($solicitacao->status_id) {
-                $statusEmAnalise => 'Solicitação de acesso em análise.',
-                $statusReprovado => 'Sua solicitação de cadastro foi reprovada.',
-                $statusAprovado  => 'Seu cadastro foi aprovado, mas nenhum perfil de acesso foi configurado. Procure o administrador do sistema.',
-                default          => 'Seu acesso não pôde ser validado no momento.',
+                StatusSolicitacaoEnum::EM_ANALISE->value => 'Solicitação de acesso em análise.',
+                StatusSolicitacaoEnum::REPROVADO->value  => 'Sua solicitação de cadastro foi reprovada.',
+                StatusSolicitacaoEnum::APROVADO->value   => 'Seu cadastro foi aprovado, mas nenhum perfil de acesso foi configurado. Procure o administrador do sistema.',
+                default                                  => 'Seu acesso não pôde ser validado no momento.',
             };
 
             throw ValidationException::withMessages(['auth' => $mensagem]);
