@@ -12,43 +12,31 @@ class SolicitacaoCadastroPolicy
         return $this->verificarVisibilidade($user, $solicitacao);
     }
 
-    /**
-     * Apenas gestores podem avaliar (aprovar/reprovar) solicitações
-     */
     public function update(Usuario $user, SolicitacaoCadastro $solicitacao): bool
     {
-        // Visitantes e Administradores não podem avaliar
-        if ($user->isVisitante()) {
-            return false;
-        }
-
-        // Apenas Gestores podem avaliar
-        if (!$user->isGestor()) {
-            return false;
-        }
-
         return $this->verificarVisibilidade($user, $solicitacao);
     }
 
     private function verificarVisibilidade(Usuario $user, SolicitacaoCadastro $solicitacao): bool
     {
-        $esfera = mb_strtolower(trim((string) $user->esfera_atuacao), 'UTF-8');
+        $esfera = strtolower($user->esfera_atuacao ?? 'federal');
 
-        if ($user->isPerfilFederalAtivo() || $esfera === 'federal') {
+        if ($esfera === 'federal') {
             return true;
         }
 
-        $solEsfera = mb_strtolower(trim((string) ($solicitacao->esfera?->nome ?? '')), 'UTF-8');
-        $solUfSigla = strtoupper(trim((string) ($solicitacao->ufRelacao?->sigla ?? '')));
-        $userUf = strtoupper(trim((string) $user->uf_lotacao));
+        $solEsfera = strtolower($solicitacao->esfera?->nome ?? '');
+        $solUfSigla = $solicitacao->ufRelacao?->sigla ?? '';
+        $userUf = $user->uf_lotacao ?? '';
 
         if ($esfera === 'estadual') {
             return $solEsfera === 'estadual' && $solUfSigla === $userUf;
         }
 
         if ($esfera === 'municipal') {
-            $solMunicipio = trim((string) ($solicitacao->municipioRelacao?->nome ?? ''));
-            $userMunicipio = trim((string) $user->municipio_lotacao);
+            $solMunicipio = $solicitacao->municipioRelacao?->nome ?? '';
+            $userMunicipio = $user->municipio_lotacao ?? '';
+
             return $solEsfera === 'municipal'
                 && $solUfSigla === $userUf
                 && $solMunicipio === $userMunicipio;

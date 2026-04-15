@@ -34,7 +34,7 @@ class PerfilController extends Controller
     public function index()
     {
 
-        $perfis = Perfil::listarCatalogoPermitidoParaUsuario($user);
+        $perfis = Perfil::query()->where('ativo', true)->get();
 
         return PerfilMinResource::collection($perfis);
     }
