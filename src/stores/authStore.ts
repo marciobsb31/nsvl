@@ -17,6 +17,7 @@ export const useAuthStore = defineStore('useAuthStore', () => {
   const perfisAtivos = computed(() => user.value?.perfis ?? [])
 
   const possuiMultiplosPerfis = computed(() => perfisAtivos.value.length > 1)
+  const permissoes = computed(() => user.value?.permissions ?? [])
 
   const perfilAtivo = computed(() => {
     if (!user.value) return null
@@ -114,6 +115,7 @@ export const useAuthStore = defineStore('useAuthStore', () => {
     userEmail,
     perfisAtivos,
     possuiMultiplosPerfis,
+    permissoes,
     perfilAtivo,
     setUser,
     temPermissao,

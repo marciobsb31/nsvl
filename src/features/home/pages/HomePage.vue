@@ -1,17 +1,11 @@
 <template>
   <DefaultLayout>
     <section class="home-page" aria-labelledby="home-title">
-
       <!-- Saudação -->
       <div class="home-page__welcome">
-        <h1 id="home-title" class="home-page__title">
-          Bem-vindo ao NVSL
-        </h1>
-        <p class="home-page__subtitle">
-          Sistema de Gestão — Novo Viver Sem Limite
-        </p>
+        <h1 id="home-title" class="home-page__title">Bem-vindo ao NVSL</h1>
+        <p class="home-page__subtitle">Sistema de Gestão — Novo Viver Sem Limite</p>
       </div>
-
     </section>
   </DefaultLayout>
 </template>
@@ -49,5 +43,4 @@ defineOptions({ name: 'HomePage' })
   color: var(--color-secondary-08, #333333);
   margin: 0 0 1rem;
 }
-
 </style>
