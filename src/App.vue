@@ -2,6 +2,7 @@
   <!-- Skip Link para acessibilidade — navegação por teclado -->
   <a href="#main-content" class="skip-link">Ir para o conteúdo principal</a>
   <NotificationPopup />
+  <Accessibility fixed />
 
   <!-- Renderiza o layout correspondente à rota -->
   <RouterView v-slot="{ Component, route }">
@@ -16,6 +17,7 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import NotificationPopup from '@/core/components/NotificationPopup/NotificationPopup.vue'
+import Accessibility from '@/core/components/Accessibility/Accessibility.vue'
 </script>
 
 <style>
