@@ -326,7 +326,11 @@ const props = withDefaults(
       id?: number
       name?: string
       email?: string
-      esfera_atuacao?: string
+      contexto?: {
+        esfera: string
+        localidade: string
+        perfil: string
+      }
       uf_lotacao?: string
       municipio_lotacao?: string
     } | null
@@ -507,12 +511,18 @@ async function onCpfBlur() {
   }
 }
 
-const { opcoesUf, opcoesMunicipio, carregarUfs } = useLocalidades(uf)
 const esferasStore = useEsferasStore()
 const opcoesEsfera = computed(() => esferasStore.esferasOptions)
+
+const ufStore = useUfStore()
+const opcoesUf = computed(() => ufStore.ufsOptions)
+
+const municipioStore = useMunicipioStore()
+const opcoesMunicipio = computed(() => municipioStore.municipiosOptions)
+
 const { opcoesPerfil, carregarPerfis } = usePerfis()
 const esferaUsuarioLogado = computed(() =>
-  String(props.usuarioLogado?.esfera_atuacao ?? '').toLowerCase(),
+  String(props.usuarioLogado?.contexto?.esfera ?? '').toLowerCase(),
 )
 const isEsferaBloqueada = computed(
   () => esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal',
@@ -560,15 +570,15 @@ const opcoesPerfilFiltradas = computed(() => {
 })
 
 onMounted(async () => {
-  carregarUfs()
   await esferasStore.carregarEsferas()
-  carregarPerfis()
+  await ufStore.carregarUfs()
+  await carregarPerfis()
 })
 
 watch(
   uf,
-  () => {
-    municipio.value = ''
+  async (value) => {
+    await municipioStore.carregarMunicipios(value)
   },
   { immediate: true },
 )
