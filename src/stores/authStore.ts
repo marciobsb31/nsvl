@@ -1,138 +1,124 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/ApiService'
+import type { AuthUser } from '@/core/types/usuario/UsuarioInterface'
 
-export interface PerfilVigente {
-    perfil_usuario_id: number
-    perfil_id: number
-    nome: string
-    data_inicio_vigencia?: string | null
-    data_fim_vigencia?: string | null
-    ativo?: boolean
-}
+export const useAuthStore = defineStore('useAuthStore', () => {
+  const user = ref<AuthUser | null>(null)
+  const isLoading = ref(false)
+  const error = ref<string | null>(null)
+  const trocandoContexto = ref(false)
+  const contextKey = ref(0)
 
-export interface AuthUser {
-    id: number
-    name: string
-    email?: string
-    sub?: string
-    esfera_atuacao?: string
-    uf_lotacao?: string
-    municipio_lotacao?: string
-    perfil_ativo_id?: number | null
-    perfis_vigentes: PerfilVigente[]
-}
+  const isAuthenticated = computed(() => !!user.value)
+  const userName = computed(() => user.value?.name ?? '')
+  const userEmail = computed(() => user.value?.email ?? '')
 
-export const useAuthStore = defineStore('auth', () => {
-    const user = ref<AuthUser | null>(null)
-    const isLoading = ref(false)
-    const error = ref<string | null>(null)
-    const trocandoContexto = ref(false)
-    const contextKey = ref(0)
+  const perfisAtivos = computed(() => user.value?.perfis ?? [])
 
-    const isAuthenticated = computed(() => !!user.value)
-    const userName = computed(() => user.value?.name ?? '')
-    const userEmail = computed(() => user.value?.email ?? '')
+  const possuiMultiplosPerfis = computed(() => perfisAtivos.value.length > 1)
 
-    const perfisAtivos = computed(() => user.value?.perfis_vigentes ?? [])
+  const perfilAtivo = computed(() => {
+    if (!user.value) return null
+    const ativoFromApi = perfisAtivos.value.find((p) => p.ativo === true)
+    if (ativoFromApi) return ativoFromApi
+    return perfisAtivos.value[0] ?? null
+  })
 
-    const possuiMultiplosPerfis = computed(() => perfisAtivos.value.length > 1)
-
-    const perfilAtivo = computed(() => {
-        if (!user.value) return null
-        const ativoFromApi = perfisAtivos.value.find(p => p.ativo === true)
-        if (ativoFromApi) return ativoFromApi
-        const ativoId = user.value.perfil_ativo_id
-        if (ativoId) {
-            return perfisAtivos.value.find(p => p.perfil_usuario_id === ativoId) ?? perfisAtivos.value[0] ?? null
-        }
-        return perfisAtivos.value[0] ?? null
-    })
-
-    function setUser(data: Record<string, unknown> | null): void {
-        if (!data) {
-            user.value = null
-            return
-        }
-        const rawPerfis = Array.isArray(data.perfis_vigentes) ? data.perfis_vigentes : []
-        user.value = {
-            id: Number(data.id),
-            name: String(data.name ?? ''),
-            email: data.email ? String(data.email) : undefined,
-            sub: data.sub ? String(data.sub) : undefined,
-            esfera_atuacao: data.esfera_atuacao ? String(data.esfera_atuacao) : undefined,
-            uf_lotacao: data.uf_lotacao ? String(data.uf_lotacao) : undefined,
-            municipio_lotacao: data.municipio_lotacao ? String(data.municipio_lotacao) : undefined,
-            perfil_ativo_id: data.perfil_ativo_id ? Number(data.perfil_ativo_id) : null,
-            perfis_vigentes: rawPerfis.map((p: Record<string, unknown>) => ({
-                perfil_usuario_id: Number(p.perfil_usuario_id),
-                perfil_id: Number(p.perfil_id),
-                nome: String(p.nome ?? ''),
-                data_inicio_vigencia: p.data_inicio_vigencia ? String(p.data_inicio_vigencia) : null,
-                data_fim_vigencia: p.data_fim_vigencia ? String(p.data_fim_vigencia) : null,
-                ativo: p.ativo === true || p.ativo === 'true',
-            })),
-        }
+  function setUser(data: Record<string, unknown> | null): void {
+    if (!data) {
+      user.value = null
+      return
     }
 
-    function temPermissao(_modulo: string, _acao?: string): boolean {
-        const esfera = user.value?.esfera_atuacao ?? 'federal'
-        if (esfera.toLowerCase() === 'federal') return true
-        return perfisAtivos.value.length > 0
-    }
+    const payload =
+      (data.user && typeof data.user === 'object'
+        ? (data.user as Record<string, unknown>)
+        : null) ??
+      (data.data && typeof data.data === 'object'
+        ? (data.data as Record<string, unknown>)
+        : null) ??
+      data
 
-    async function trocarContexto(perfilUsuarioId: number): Promise<void> {
-        trocandoContexto.value = true
-        error.value = null
-        try {
-            const { data } = await api.post<{ user: Record<string, unknown> }>('/user/trocar-contexto', {
-                perfil_usuario_id: perfilUsuarioId,
-            })
-            setUser(data.user)
-            contextKey.value++
-        } catch (e: unknown) {
-            const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
-                ?? 'Erro ao trocar contexto.'
-            error.value = msg
-            throw e
-        } finally {
-            trocandoContexto.value = false
-        }
+    const rawPerfis = Array.isArray(payload.perfis) ? payload.perfis : []
+    const rawContexto =
+      payload.contexto && typeof payload.contexto === 'object'
+        ? (payload.contexto as Record<string, unknown>)
+        : null
+    user.value = {
+      id: Number(payload.id),
+      name: String(payload.name ?? ''),
+      email: payload.email ? String(payload.email) : undefined,
+      sub: payload.sub ? String(payload.sub) : undefined,
+      contexto: {
+        esfera: rawContexto?.esfera ? String(rawContexto.esfera) : '',
+        localidade: rawContexto?.localidade ? String(rawContexto.localidade) : '',
+        perfil: rawContexto?.perfil ? String(rawContexto.perfil) : '',
+      },
+      perfis: rawPerfis,
+      permissions: payload.permissions ? (payload.permissions as string[]) : [],
     }
+  }
 
-    async function logout(): Promise<void> {
-        try {
-            if (sessionStorage.getItem('nvsl_token')) {
-                await api.post('/auth/logout')
-            }
-        } catch {
-            // Ignora falhas no logout remoto e limpa o estado local mesmo assim.
-        } finally {
-            sessionStorage.removeItem('nvsl_token')
-            user.value = null
-        }
-    }
+  function temPermissao(_modulo: string, _acao?: string): boolean {
+    const esfera = user.value?.contexto.esfera ?? 'federal'
+    if (esfera.toLowerCase() === 'federal') return true
+    return perfisAtivos.value.length > 0
+  }
 
-    function clearError(): void {
-        error.value = null
+  async function trocarContexto(perfilUsuarioId: number): Promise<void> {
+    trocandoContexto.value = true
+    error.value = null
+    try {
+      const { data } = await api.post<{ user: Record<string, unknown> }>('/user/trocar-contexto', {
+        perfil_usuario_id: perfilUsuarioId,
+      })
+      setUser(data.user)
+      contextKey.value++
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Erro ao trocar contexto.'
+      error.value = msg
+      throw e
+    } finally {
+      trocandoContexto.value = false
     }
+  }
 
-    return {
-        user,
-        isLoading,
-        error,
-        trocandoContexto,
-        contextKey,
-        isAuthenticated,
-        userName,
-        userEmail,
-        perfisAtivos,
-        possuiMultiplosPerfis,
-        perfilAtivo,
-        setUser,
-        temPermissao,
-        trocarContexto,
-        logout,
-        clearError,
+  async function logout(): Promise<void> {
+    try {
+      if (sessionStorage.getItem('nvsl_token')) {
+        await api.post('/auth/logout')
+      }
+    } catch {
+      // Ignora falhas no logout remoto e limpa o estado local mesmo assim.
+    } finally {
+      sessionStorage.removeItem('nvsl_token')
+      user.value = null
     }
+  }
+
+  function clearError(): void {
+    error.value = null
+  }
+
+  return {
+    user,
+    isLoading,
+    error,
+    trocandoContexto,
+    contextKey,
+    isAuthenticated,
+    userName,
+    userEmail,
+    perfisAtivos,
+    possuiMultiplosPerfis,
+    perfilAtivo,
+    setUser,
+    temPermissao,
+    trocarContexto,
+    logout,
+    clearError,
+  }
 })

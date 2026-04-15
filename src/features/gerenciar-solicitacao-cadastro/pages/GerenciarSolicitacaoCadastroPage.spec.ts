@@ -56,12 +56,25 @@ function itemBase(over: Partial<SolicitacaoGerenciarItem> = {}): SolicitacaoGere
   return {
     id: 1,
     nome: 'Maria',
-    status: 'em_analise',
+    status: {
+      id: 1,
+      nome: 'em_analise',
+    },
     created_at: '2026-01-01T10:00:00Z',
     cpf: '12345678901',
-    esfera_atuacao: 'federal',
-    uf: 'GO',
-    municipio: 'Goiânia',
+    esfera: {
+      id: 1,
+      nome: 'federal',
+    },
+    estado: {
+      id: 1,
+      nome: 'Goiás',
+      sigla: 'GO',
+    },
+    municipio: {
+      id: 1,
+      nome: 'Goiânia',
+    },
     orgao: 'Órgão X',
     ...over,
   }
@@ -275,8 +288,8 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
 
   it('usa rótulo Detalhar/Analisar para status em_analise e Detalhar para demais', async () => {
     listarSolicitacoesGerenciar.mockResolvedValue([
-      itemBase({ id: 1, status: 'em_analise' }),
-      itemBase({ id: 2, nome: 'B', status: 'aprovado' }),
+      itemBase({ id: 1, status: { id: 1, nome: 'em_analise' } }),
+      itemBase({ id: 2, nome: 'B', status: { id: 2, nome: 'aprovado' } }),
     ])
     const w = mountPage()
     await flushPromises()

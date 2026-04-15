@@ -299,9 +299,7 @@ import { useRouter } from 'vue-router'
 import { useForm, useField } from 'vee-validate'
 import * as yup from 'yup'
 import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
-import Card from '@/core/components/Card/Card.vue'
 import Modal from '@/core/components/Modal/Modal.vue'
-import TermoUsoPrivacidade from '@/core/components/TermoUsoPrivacidade/TermoUsoPrivacidade.vue'
 import Feedback from '@/core/components/Feedback/Feedback.vue'
 import { useEsferas } from '@/core/composables/useEsferas'
 import { useLocalidades } from '@/core/composables/useLocalidades'
@@ -314,6 +312,9 @@ import {
 } from '@/services/SolicitacaoCadastroService'
 import type { PerfilOption } from '@/services/PerfilService'
 import type { SolicitacaoCadastroPayload } from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
+import { useEsferasStore } from '@/stores/esferasStore'
+import { useUfStore } from '@/stores/ufStore'
+import { useMunicipioStore } from '@/stores/municipioStore'
 
 const regexSomenteLetras = /^[a-zA-ZáàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\s]+$/
 
@@ -325,7 +326,13 @@ const props = withDefaults(
       id?: number
       name?: string
       email?: string
-      esfera_atuacao?: string
+      contexto?: {
+        esfera: string
+        localidade: string
+        perfil: string
+        uf_id?: string | number
+        municipio_id?: string | number
+      }
       uf_lotacao?: string
       municipio_lotacao?: string
     } | null
@@ -411,6 +418,7 @@ const schema = yup.object({
     .trim()
     .when('uf', {
       is: (uf: string) => !!uf?.trim(),
+      // oxlint-disable-next-line unicorn/no-thenable
       then: (s) => s.required('Selecione o município.'),
       otherwise: (s) => s,
     }),
@@ -506,11 +514,18 @@ async function onCpfBlur() {
   }
 }
 
-const { opcoesUf, opcoesMunicipio, carregarUfs } = useLocalidades(uf)
-const { opcoesEsfera, carregarEsferas } = useEsferas()
+const esferasStore = useEsferasStore()
+const opcoesEsfera = computed(() => esferasStore.esferasOptions)
+
+const ufStore = useUfStore()
+const opcoesUf = computed(() => ufStore.ufsOptions)
+
+const municipioStore = useMunicipioStore()
+const opcoesMunicipio = computed(() => municipioStore.municipiosOptions)
+
 const { opcoesPerfil, carregarPerfis } = usePerfis()
 const esferaUsuarioLogado = computed(() =>
-  String(props.usuarioLogado?.esfera_atuacao ?? '').toLowerCase(),
+  String(props.usuarioLogado?.contexto?.esfera ?? '').toLowerCase(),
 )
 const isEsferaBloqueada = computed(
   () => esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal',
@@ -529,20 +544,15 @@ const opcoesEsferaFiltradas = computed(() => {
   return opcoesEsfera.value
 })
 const opcoesUfFiltradas = computed(() => {
-  if (isUfBloqueada.value && props.usuarioLogado?.uf_lotacao) {
-    return opcoesUf.value.filter(
-      (o) =>
-        String(o.value).toUpperCase() === String(props.usuarioLogado?.uf_lotacao).toUpperCase(),
-    )
+  if (isUfBloqueada.value && props.usuarioLogado?.contexto?.uf_id) {
+    return opcoesUf.value.filter((o) => o.value === props.usuarioLogado?.contexto?.uf_id)
   }
   return opcoesUf.value
 })
 const opcoesMunicipioFiltradas = computed(() => {
-  if (isMunicipioBloqueado.value && props.usuarioLogado?.municipio_lotacao) {
+  if (isMunicipioBloqueado.value && props.usuarioLogado?.contexto?.municipio_id) {
     return opcoesMunicipio.value.filter(
-      (o) =>
-        String(o.label).toLowerCase() ===
-        String(props.usuarioLogado?.municipio_lotacao).toLowerCase(),
+      (o) => o.value === props.usuarioLogado?.contexto?.municipio_id,
     )
   }
   return opcoesMunicipio.value
@@ -557,16 +567,16 @@ const opcoesPerfilFiltradas = computed(() => {
   return opcoesPerfil.value
 })
 
-onMounted(() => {
-  carregarUfs()
-  carregarEsferas()
-  carregarPerfis()
+onMounted(async () => {
+  await esferasStore.carregarEsferas()
+  await ufStore.carregarUfs()
+  await carregarPerfis()
 })
 
 watch(
   uf,
-  () => {
-    municipio.value = ''
+  async (value) => {
+    await municipioStore.carregarMunicipios(value)
   },
   { immediate: true },
 )
@@ -806,6 +816,7 @@ async function onSubmit(values: Record<string, unknown>) {
       msg = (e as Error).message
     }
     const isCpfError =
+      // oxlint-disable-next-line no-unsafe-optional-chaining
       msg.toLowerCase().includes('cpf') || (data?.errors && 'CPF' in (data?.errors as object))
     if (isCpfError) {
       const cpfMsg =

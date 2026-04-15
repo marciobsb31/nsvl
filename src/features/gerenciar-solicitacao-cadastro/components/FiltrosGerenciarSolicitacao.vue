@@ -4,23 +4,42 @@
       <div class="col-12 col-md-6">
         <div class="br-input mb-2">
           <label for="filtro-nome">Nome completo</label>
-          <input id="filtro-nome" type="text" placeholder="Informe o nome" v-model="filtrosLocal.nome" />
+          <input
+            id="filtro-nome"
+            type="text"
+            placeholder="Informe o nome"
+            v-model="filtrosLocal.nome"
+          />
         </div>
       </div>
       <div class="col-12 col-md-6">
         <div class="br-input mb-2">
           <label for="filtro-cpf">CPF</label>
-          <input id="filtro-cpf" type="text" placeholder="000.000.000-00" v-model="filtrosLocal.cpf"
-            v-maska="'###.###.###-##'" />
+          <input
+            id="filtro-cpf"
+            type="text"
+            placeholder="000.000.000-00"
+            v-model="filtrosLocal.cpf"
+            v-maska="'###.###.###-##'"
+          />
         </div>
       </div>
       <div class="col-12 col-md-4">
-        <SelectAutocomplete v-model="filtrosLocal.uf" label="Estado (UF)" placeholder="Selecione" :options="opcoesUf" />
+        <SelectAutocomplete
+          v-model="filtrosLocal.uf"
+          label="Estado (UF)"
+          placeholder="Selecione"
+          :options="opcoesUf"
+        />
       </div>
       <div class="col-12 col-md-4">
-        <SelectAutocomplete v-model="filtrosLocal.municipio" label="Município"
+        <SelectAutocomplete
+          v-model="filtrosLocal.municipio"
+          label="Município"
           :placeholder="filtrosLocal.uf ? 'Selecione o município' : 'Selecione primeiro a UF'"
-          :options="opcoesMunicipio" :disabled="!filtrosLocal.uf" />
+          :options="opcoesMunicipio"
+          :disabled="!filtrosLocal.uf"
+        />
       </div>
       <div class="col-12 col-md-4">
         <div class="br-input mb-2">
@@ -29,38 +48,69 @@
         </div>
       </div>
       <div class="col-12 col-md-4">
-        <SelectAutocomplete v-model="filtrosLocal.esfera" label="Esfera de atuação" placeholder="Selecione"
-          :options="opcoesEsfera" />
+        <SelectAutocomplete
+          v-model="filtrosLocal.esfera"
+          label="Esfera de atuação"
+          placeholder="Selecione"
+          :options="opcoesEsfera"
+        />
       </div>
       <div class="col-12 col-md-4">
-        <SelectAutocomplete v-model="filtrosLocal.status" label="Situação da solicitação" placeholder="Selecione"
-          :options="OPCOES_STATUS" />
+        <SelectAutocomplete
+          v-model="filtrosLocal.status"
+          label="Situação da solicitação"
+          placeholder="Selecione"
+          :options="OPCOES_STATUS"
+        />
       </div>
     </div>
   </div>
   <div class="filtros-acoes">
-    <br-button emphasis="secondary" type="button" @click="limparFiltros" aria-label="Limpar filtros">
+    <br-button
+      emphasis="secondary"
+      type="button"
+      @click="limparFiltros"
+      aria-label="Limpar filtros"
+    >
       Limpar Filtro
     </br-button>
-    <br-button :color-mode="$appTheme === 'dark' ? 'dark' : undefined" emphasis="primary" type="button" @click="listar"
-      :disabled="carregando" aria-label="Pesquisar solicitações">
+    <br-button
+      :color-mode="$appTheme === 'dark' ? 'dark' : undefined"
+      emphasis="primary"
+      type="button"
+      @click="listar"
+      :disabled="carregando"
+      aria-label="Pesquisar solicitações"
+    >
       Pesquisar
     </br-button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted, watch } from 'vue'
+import { reactive, onMounted, watch, computed } from 'vue'
 import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
 import { OPCOES_STATUS } from '../constants/opcoesFiltro'
-import { useEsferas } from '@/core/composables/useEsferas'
-import { useLocalidades } from '@/core/composables/useLocalidades'
+import { useEsferasStore } from '@/stores/esferasStore'
+import { useUfStore } from '@/stores/ufStore'
+import { useMunicipioStore } from '@/stores/municipioStore'
 import type { FiltrosGerenciarSolicitacao } from '@/services/GerenciarSolicitacaoCadastroService'
 
 defineOptions({ name: 'FiltrosGerenciarSolicitacao' })
 
-const { opcoesUf, opcoesMunicipio, carregarUfs, carregarMunicipios } = useLocalidades()
-const { opcoesEsfera, carregarEsferas } = useEsferas()
+const esferasStore = useEsferasStore()
+const opcoesEsfera = computed(() => {
+  return (esferasStore.esferasLista || []).map((esfera: any) => ({
+    label: esfera.nome,
+    value: esfera.nome,
+  }))
+})
+
+const ufStore = useUfStore()
+const opcoesUf = computed(() => ufStore.ufsOptions)
+
+const municipioStore = useMunicipioStore()
+const opcoesMunicipio = computed(() => municipioStore.municipiosOptions)
 
 const props = defineProps<{
   carregando?: boolean
@@ -105,18 +155,18 @@ function limparFiltros() {
   emit('limpar')
 }
 
-onMounted(() => {
-  carregarUfs()
-  carregarEsferas()
+onMounted(async () => {
+  await ufStore.carregarUfs()
+  await esferasStore.carregarEsferas()
 })
 
 watch(
   () => filtrosLocal.uf,
   (uf) => {
     filtrosLocal.municipio = undefined
-    carregarMunicipios(uf ?? '')
+    municipioStore.carregarMunicipios(uf ?? '')
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
@@ -147,7 +197,6 @@ watch(
 }
 
 @media (min-width: 576px) and (max-width: 991px) {
-
   .filtros-row:first-child,
   .filtros-row:nth-child(2) {
     grid-template-columns: repeat(2, 1fr);
