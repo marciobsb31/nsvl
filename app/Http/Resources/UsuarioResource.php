@@ -8,31 +8,16 @@ class UsuarioResource extends JsonResource
 {
     public function toArray($request)
     {
-        $contexto = $this->contextoAtivo;
-
         return [
-            'id'     => $this->id,
-            'name'   => $this->nome,
-            'email'  => $this->email,
-            'sub'    => $this->govbr_sub,
-            'perfis' => PerfilUsuarioResource::collection(
-                $this->whenLoaded('perfisUsuario')
-            ),
-
-            'contexto' => $this->when(
-                $contexto,
-                function () use ($contexto) {
-                    return [
-                        'perfil'     => $contexto->perfilUsuario?->perfil?->nome,
-                        'esfera'     => $contexto->abrangencia?->esfera?->nome,
-                        'localidade' => $contexto->abrangencia?->nome,
-                    ];
-                }
-            ),
-
+            'id'          => $this->id,
+            'name'        => $this->nome,
+            'email'       => $this->email,
+            'sub'         => $this->govbr_sub,
+            'perfis'      => PerfilUsuarioResource::collection($this->whenLoaded('perfisUsuario')),
+            'contexto'    => ContextoResource::make($this->contextoAtivo),
             'permissions' => $this->when(
-                $contexto,
-                fn () => $contexto->perfilUsuario
+                $this->contextoAtivo,
+                fn () => $this->contextoAtivo->perfilUsuario
                     ->perfil
                     ->permissoes
                     ->pluck('codigo')
