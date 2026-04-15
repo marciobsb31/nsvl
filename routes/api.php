@@ -34,7 +34,7 @@ Route::prefix('solicitacoes-cadastro')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [GovBrAuthController::class, 'logout'])->name('auth.logout');
 
-    Route::prefix('user')->group(function () {
+    Route::prefix('usuario')->group(function () {
         Route::get('/', [UsuarioController::class, 'me']);
     });
 
