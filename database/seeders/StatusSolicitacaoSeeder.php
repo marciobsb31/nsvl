@@ -10,12 +10,30 @@ class StatusSolicitacaoSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach (StatusSolicitacaoEnum::cases() as $status) {
+        $statuses = [
+            [
+                'id' => 1,
+                'codigo' => 'EM_ANALISE',
+                'nome' => StatusSolicitacao::EM_ANALISE,
+            ],
+            [
+                'id' => 2,
+                'codigo' => 'APROVADO',
+                'nome' => StatusSolicitacao::APROVADO,
+            ],
+            [
+                'id' => 3,
+                'codigo' => 'REPROVADO',
+                'nome' => StatusSolicitacao::REPROVADO,
+            ],
+        ];
+
+        foreach ($statuses as $status) {
             StatusSolicitacao::firstOrCreate(
-                ['id' => $status->value],
+                ['id' => $status['id']],
                 [
-                    'codigo'     => $status->name,
-                    'nome'       => $status->label(),
+                    'codigo'     => $status['codigo'],
+                    'nome'       => $status['nome'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]

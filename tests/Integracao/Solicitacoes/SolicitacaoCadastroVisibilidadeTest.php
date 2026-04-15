@@ -2,7 +2,10 @@
 
 namespace Tests\Integracao\Solicitacoes;
 
+use App\Models\Esfera;
 use App\Models\SolicitacaoCadastro;
+use App\Models\StatusSolicitacao;
+use App\Models\Uf;
 use App\Policies\SolicitacaoCadastroPolicy;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Integracao\TestCase;
@@ -19,6 +22,31 @@ class SolicitacaoCadastroVisibilidadeTest extends TestCase
             ->pluck('id');
 
         $this->assertGreaterThan(2, $ids->count());
+    }
+
+    #[Test]
+    public function scope_visivel_para_mantem_acesso_irrestrito_quando_perfil_ativo_e_federal(): void
+    {
+        $usuario = $this->usuarioPorSub('teste-federal-001');
+
+        $esferaEstadualId = Esfera::query()->where('nome', 'Estadual')->value('id');
+        $ufGoId = Uf::query()->where('sigla', 'GO')->value('id');
+        $statusAprovadoId = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
+
+        SolicitacaoCadastro::factory()->create([
+            'user_id' => $usuario->id,
+            'esfera_id' => $esferaEstadualId,
+            'uf_id' => $ufGoId,
+            'municipio_id' => null,
+            'status_id' => $statusAprovadoId,
+        ]);
+
+        $totalSolicitacoes = SolicitacaoCadastro::query()->count();
+        $totalVisivel = SolicitacaoCadastro::query()
+            ->visivelPara($usuario)
+            ->count();
+
+        $this->assertSame($totalSolicitacoes, $totalVisivel);
     }
 
     #[Test]

@@ -13,6 +13,7 @@ class PerfilUsuario extends Model
     protected $fillable = [
         'usuario_id',
         'perfil_id',
+        'usuario_abrangencia_id',
         'data_inicio_vigencia',
         'data_fim_vigencia',
         'origem_tipo',
@@ -53,6 +54,11 @@ class PerfilUsuario extends Model
     }
 
     public function abrangencia()
+    {
+        return $this->belongsTo(UsuarioAbrangencia::class, 'usuario_abrangencia_id');
+    }
+
+    public function usuarioAbrangencia(): BelongsTo
     {
         return $this->belongsTo(UsuarioAbrangencia::class, 'usuario_abrangencia_id');
     }
