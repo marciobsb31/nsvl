@@ -1,17 +1,17 @@
 <template>
   <DefaultLayout>
-    <section class="home-page" aria-labelledby="home-title">
-      <!-- Saudação -->
-      <div class="home-page__welcome">
-        <h1 id="home-title" class="home-page__title">Bem-vindo ao NVSL</h1>
-        <p class="home-page__subtitle">Sistema de Gestão — Novo Viver Sem Limite</p>
-      </div>
-    </section>
+    <HeaderPage
+      title="Bem-vindo(a) ao Novo Viver Sem Limite"
+      :subtitle="'Sistema de Gestão de Plano de Ação'"
+      customClass="mb-3"
+    >
+    </HeaderPage>
   </DefaultLayout>
 </template>
 
 <script setup lang="ts">
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import HeaderPage from '@/core/components/HeaderPage/HeaderPage.vue'
 
 defineOptions({ name: 'HomePage' })
 </script>
