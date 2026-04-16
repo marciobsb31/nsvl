@@ -14,7 +14,8 @@ class SolicitacaoCadastroPolicy
 
     public function update(Usuario $user, SolicitacaoCadastro $solicitacao): bool
     {
-        return $this->verificarVisibilidade($user, $solicitacao);
+        return $user->hasPermissao('solicitacoes_cadastro.analisar')
+            && $this->verificarVisibilidade($user, $solicitacao);
     }
 
     private function verificarVisibilidade(Usuario $user, SolicitacaoCadastro $solicitacao): bool

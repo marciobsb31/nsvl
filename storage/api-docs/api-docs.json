@@ -196,65 +196,6 @@
                 ]
             }
         },
-        "/api/auth/token-de-teste": {
-            "post": {
-                "tags": [
-                    "Autenticação"
-                ],
-                "summary": "Emite token Sanctum para usuário de teste",
-                "description": "Disponível apenas com APP_ENV=local ou testing (desabilitado em produção).",
-                "operationId": "87144eab9e2ba7da78310ff9ea6eaf1e",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "perfil": {
-                                        "description": "Qual usuário fixture usar",
-                                        "type": "string",
-                                        "enum": [
-                                            "federal",
-                                            "estadual",
-                                            "municipal"
-                                        ]
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Token e usuário",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "token": {
-                                            "type": "string"
-                                        },
-                                        "user": {
-                                            "$ref": "#/components/schemas/UserResource"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Ambiente não permitido"
-                    },
-                    "404": {
-                        "description": "Usuário de teste não encontrado (execute seeders)"
-                    },
-                    "429": {
-                        "description": "Limite de requisições"
-                    }
-                }
-            }
-        },
         "/api/user": {
             "get": {
                 "tags": [
@@ -262,7 +203,7 @@
                 ],
                 "summary": "Retorna os dados do usuário autenticado",
                 "description": "Campos sensíveis são omitidos da resposta.",
-                "operationId": "22a6f0a396f544b2567e620f838ed602",
+                "operationId": "cc7a3ca31fff3dd0cd7ae9a26719bf93",
                 "responses": {
                     "200": {
                         "description": "Dados seguros do usuário",
@@ -320,312 +261,6 @@
                         }
                     }
                 }
-            }
-        },
-        "/api/gerenciar-perfis": {
-            "get": {
-                "tags": [
-                    "Gerenciar perfis"
-                ],
-                "summary": "Lista perfis com filtros opcionais",
-                "operationId": "ee1156b303bcabfb370fda667fa9c6e0",
-                "parameters": [
-                    {
-                        "name": "nome",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "status",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "ativo",
-                                "inativo"
-                            ]
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Lista em data[]"
-                    },
-                    "401": {
-                        "description": "Não autenticado"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Gerenciar perfis"
-                ],
-                "summary": "Cadastra perfil do catálogo oficial",
-                "operationId": "dee2a37d1c30a333b66628e2eef65b10",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "nome"
-                                ],
-                                "properties": {
-                                    "nome": {
-                                        "type": "string"
-                                    },
-                                    "descricao": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "ativo": {
-                                        "type": "boolean",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Criado"
-                    },
-                    "401": {
-                        "description": "Não autenticado"
-                    },
-                    "422": {
-                        "description": "Validação"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/gerenciar-perfis/{id}": {
-            "get": {
-                "tags": [
-                    "Gerenciar perfis"
-                ],
-                "summary": "Detalha um perfil",
-                "operationId": "375dad40ea7b8b7d420b0d6637d1533d",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Perfil em data"
-                    },
-                    "401": {
-                        "description": "Não autenticado"
-                    },
-                    "404": {
-                        "description": "Não encontrado"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ]
-            },
-            "put": {
-                "tags": [
-                    "Gerenciar perfis"
-                ],
-                "summary": "Atualiza perfil",
-                "operationId": "810d588a8611400f069c574961752831",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "nome",
-                                    "ativo"
-                                ],
-                                "properties": {
-                                    "nome": {
-                                        "type": "string"
-                                    },
-                                    "descricao": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "ativo": {
-                                        "type": "boolean"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Atualizado"
-                    },
-                    "401": {
-                        "description": "Não autenticado"
-                    },
-                    "404": {
-                        "description": "Não encontrado"
-                    },
-                    "422": {
-                        "description": "Validação"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/gerenciar-perfis/{id}/historico": {
-            "get": {
-                "tags": [
-                    "Gerenciar perfis"
-                ],
-                "summary": "Histórico de auditoria do perfil",
-                "operationId": "439c5aa7f1b039cddae662e2a5067e6f",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Lista em data[]"
-                    },
-                    "401": {
-                        "description": "Não autenticado"
-                    },
-                    "404": {
-                        "description": "Não encontrado"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/gerenciar-perfis/hierarquia": {
-            "get": {
-                "tags": [
-                    "Gerenciar perfis"
-                ],
-                "summary": "Esfera do usuário e esferas permitidas para cadastro",
-                "operationId": "fa55bf76c8a54024c3b862769228247c",
-                "responses": {
-                    "200": {
-                        "description": "esfera_usuario e esferas_permitidas",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "esfera_usuario": {
-                                            "type": "string"
-                                        },
-                                        "esferas_permitidas": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Não autenticado"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/gerenciar-perfis/permissoes": {
-            "get": {
-                "tags": [
-                    "Gerenciar perfis"
-                ],
-                "summary": "Catálogo de permissões (legado)",
-                "description": "A modelagem atual não utiliza tabela de permissões granulares; retorna lista vazia.",
-                "operationId": "b2fd8f204a9af7f1e4cc918137a91324",
-                "responses": {
-                    "200": {
-                        "description": "Lista vazia de permissões legadas",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Não autenticado"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ]
             }
         },
         "/api/health": {
@@ -1175,89 +810,6 @@
                     }
                 ]
             }
-        },
-        "/api/user/perfis-ativos": {
-            "get": {
-                "tags": [
-                    "Contexto"
-                ],
-                "summary": "Perfis vigentes do usuário",
-                "operationId": "9d95ba2cd136f785ae6213787994bd41",
-                "responses": {
-                    "200": {
-                        "description": "Lista em data[]"
-                    },
-                    "401": {
-                        "description": "Não autenticado"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/user/trocar-contexto": {
-            "post": {
-                "tags": [
-                    "Contexto"
-                ],
-                "summary": "Define o perfil ativo (pivot perfil_usuario)",
-                "operationId": "8998279d49c041677dd421fc58bb927f",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "perfil_usuario_id"
-                                ],
-                                "properties": {
-                                    "perfil_usuario_id": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "user atualizado (toSafeArray)",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string"
-                                        },
-                                        "user": {
-                                            "$ref": "#/components/schemas/UserResource"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Não autenticado"
-                    },
-                    "403": {
-                        "description": "Perfil inválido para o usuário"
-                    },
-                    "422": {
-                        "description": "Validação"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ]
-            }
         }
     },
     "components": {
@@ -1314,7 +866,8 @@
     },
     "tags": [
         {
-            "name": "Autenticação"
+            "name": "Autenticação",
+            "description": "GOV.BR OAuth2 + PKCE e sessão Sanctum"
         },
         {
             "name": "Usuário"
@@ -1322,10 +875,6 @@
         {
             "name": "Cadastro",
             "description": "Dados auxiliares de formulário"
-        },
-        {
-            "name": "Gerenciar perfis",
-            "description": "Administração do catálogo de perfis"
         },
         {
             "name": "Sistema"
@@ -1341,10 +890,6 @@
         {
             "name": "Solicitações de cadastro",
             "description": "Fluxo público e gestão autenticada"
-        },
-        {
-            "name": "Contexto",
-            "description": "Perfil ativo do usuário"
         }
     ],
     "security": [

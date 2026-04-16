@@ -2,6 +2,7 @@
 
 namespace App\Services\SolicitacaoCadastro;
 
+use App\Enums\EsferaEnum;
 use App\Enums\StatusSolicitacaoEnum;
 use App\Enums\TipoAuditoria;
 use App\Exceptions\ApiException;
@@ -25,6 +26,18 @@ class SolicitacaoCadastroService
 {
     public function __construct(private readonly AuditLogService $audit) {}
 
+    public function registrarAcessoDetalhamento(SolicitacaoCadastro $solicitacao): void
+    {
+        $usuarioId = auth()->id();
+        if (! $usuarioId) {
+            return;
+        }
+
+        $this->audit->log('gerenciar_cadastros.detalhamento', $usuarioId, [
+            'solicitacao_id' => $solicitacao->id,
+        ], TipoAuditoria::VIEW->name, 'solicitacoes_cadastro', $solicitacao->id);
+    }
+
     public function detalhar(int $id): array
     {
         $solicitacao = SolicitacaoCadastro::with([
@@ -35,9 +48,7 @@ class SolicitacaoCadastroService
             throw ApiException::notFound('Solicitação não encontrada.');
         }
 
-        $this->audit->log('gerenciar_cadastros.detalhamento', auth()->user()->id, [
-            'solicitacao_id' => $solicitacao->id,
-        ], TipoAuditoria::VIEW->name, 'solicitacoes_cadastro', $solicitacao->id);
+        $this->registrarAcessoDetalhamento($solicitacao);
 
         try {
             $perfisVinculados = $this->obterPerfisVinculados($solicitacao);
@@ -67,7 +78,8 @@ class SolicitacaoCadastroService
             'vigencia_inicio_solicitada' => $solicitacao->vigencia_inicio_solicitada?->format('Y-m-d'),
             'vigencia_fim_solicitada'    => $solicitacao->vigencia_fim_solicitada?->format('Y-m-d'),
             'perfis_vinculados'          => $perfisVinculados,
-            'pode_avaliar'               => $solicitacao->status_id === $statusEmAnalise,
+            'pode_avaliar'               => $solicitacao->status_id === $statusEmAnalise
+                && (bool) auth()->user()?->hasPermissao('solicitacoes_cadastro.analisar'),
             'historico_reprovacoes'      => $this->montarHistoricoReprovacoes($solicitacao),
         ];
     }
@@ -79,12 +91,12 @@ class SolicitacaoCadastroService
      */
     private function montarHistoricoReprovacoes(SolicitacaoCadastro $solicitacao): array
     {
-        if (($solicitacao->statusSolicitacao?->nome ?? '') !== StatusSolicitacao::REPROVADO) {
+        if (strtolower($solicitacao->statusSolicitacao?->nome ?? '') !== StatusSolicitacao::REPROVADO) {
             return [];
         }
 
         $logs = AuditLog::query()
-            ->with('user')
+            ->with('usuario')
             ->where('tabela_afetada', 'solicitacoes_cadastro')
             ->where('registro_id', $solicitacao->id)
             ->where('acao', 'gerenciar_cadastros.avaliacao')
@@ -104,7 +116,7 @@ class SolicitacaoCadastroService
             $itens[] = [
                 'data'      => $log->created_at?->toIso8601String(),
                 'motivo'    => $motivo,
-                'avaliador' => $log->user?->nome,
+                'avaliador' => $log->usuario?->nome,
             ];
         }
 
@@ -237,6 +249,10 @@ class SolicitacaoCadastroService
         $aprovado = (int) $dados['status_id'] === StatusSolicitacaoEnum::APROVADO->value;
         $statusNome = $aprovado ? 'aprovado' : 'reprovado';
 
+        if ($aprovado && isset($dados['perfil_id'])) {
+            $this->validarHierarquiaPerfil((int) $dados['perfil_id']);
+        }
+
         DB::transaction(function () use ($solicitacao, $aprovado, $dados): void {
             $updateData = [
                 'status_id'                => $aprovado ? StatusSolicitacaoEnum::APROVADO->value : StatusSolicitacaoEnum::REPROVADO->value,
@@ -265,7 +281,7 @@ class SolicitacaoCadastroService
                     'criado_por_usuario_id' => auth()->id(),
                 ]);
 
-                PerfilUsuario::updateOrCreate(
+                $perfilUsuario = PerfilUsuario::updateOrCreate(
                     [
                         'usuario_id'             => $solicitacao->usuario_id,
                         'perfil_id'              => (int) $dados['perfil_id'],
@@ -281,10 +297,12 @@ class SolicitacaoCadastroService
                     ]
                 );
 
+                $solicitacao->usuario->update(['ativo' => true]);
+
                 $solicitacao->usuario->contextoAtivo()->updateOrCreate(
                     ['usuario_id' => $solicitacao->usuario_id],
                     [
-                        'perfil_usuario_id'      => $dados['perfil_id'],
+                        'perfil_usuario_id'      => $perfilUsuario->id,
                         'usuario_abrangencia_id' => $abrangencia->id,
                     ]
                 );
@@ -463,11 +481,15 @@ class SolicitacaoCadastroService
     public function adicionarPerfil(int $solicitacaoId, array $dados): array
     {
         $solicitacao = $this->buscarSolicitacao($solicitacaoId);
-        $statusAprovado = StatusSolicitacao::idPorNome(StatusSolicitacao::APROVADO);
 
-        if ($solicitacao->status_id !== $statusAprovado) {
+        $statusPermitidos = [
+            StatusSolicitacaoEnum::APROVADO->value,
+            StatusSolicitacaoEnum::EM_ANALISE->value,
+        ];
+
+        if (! in_array($solicitacao->status_id, $statusPermitidos, true)) {
             throw ValidationException::withMessages([
-                'status' => ['Apenas solicitações aprovadas permitem adicionar novos perfis vinculados.'],
+                'status' => ['Apenas solicitações em análise ou aprovadas permitem adicionar perfis vinculados.'],
             ]);
         }
 
@@ -476,22 +498,48 @@ class SolicitacaoCadastroService
             throw ApiException::notFound('Usuário da solicitação não encontrado.');
         }
 
+        $this->validarHierarquiaPerfil((int) $dados['perfil_id']);
+
+        $nomeLocalidade = $solicitacao->municipioRelacao?->nome
+            ?? $solicitacao->ufRelacao?->nome
+            ?? 'Âmbito Nacional';
+
+        $abrangencia = UsuarioAbrangencia::firstOrCreate(
+            [
+                'usuario_id'   => $usuarioSolicitante->id,
+                'esfera_id'    => $solicitacao->esfera_id,
+                'uf_id'        => $solicitacao->uf_id,
+                'municipio_id' => $solicitacao->municipio_id,
+            ],
+            [
+                'nome'                  => "{$solicitacao->esfera?->nome} - {$nomeLocalidade}",
+                'origem_tipo'           => 'solicitacao_cadastro',
+                'ativo'                 => true,
+                'criado_por_usuario_id' => auth()->id(),
+            ]
+        );
+
         $vinculoExistente = PerfilUsuario::where('usuario_id', $usuarioSolicitante->id)
             ->where('perfil_id', (int) $dados['perfil_id'])
+            ->where('usuario_abrangencia_id', $abrangencia->id)
             ->first();
 
         if ($vinculoExistente) {
             throw ValidationException::withMessages([
-                'perfil_id' => ['Este perfil já está vinculado ao usuário.'],
+                'perfil_id' => ['Este perfil já está vinculado ao usuário nesta abrangência.'],
             ]);
         }
 
         $vinculo = PerfilUsuario::create([
-            'usuario_id'           => $usuarioSolicitante->id,
-            'perfil_id'            => (int) $dados['perfil_id'],
-            'data_inicio_vigencia' => $dados['vigencia_inicio'] ?? null,
-            'data_fim_vigencia'    => $dados['vigencia_fim'] ?? null,
-            'ativo'                => true,
+            'usuario_id'                     => $usuarioSolicitante->id,
+            'perfil_id'                      => (int) $dados['perfil_id'],
+            'usuario_abrangencia_id'         => $abrangencia->id,
+            'data_inicio_vigencia'           => $dados['vigencia_inicio'] ?? null,
+            'data_fim_vigencia'              => $dados['vigencia_fim'] ?? null,
+            'ativo'                          => true,
+            'origem_tipo'                    => 'manual',
+            'atribuido_por_usuario_id'       => auth()->id(),
+            'solicitacao_cadastro_origem_id' => $solicitacao->id,
         ]);
 
         $this->audit->log('gerenciar_cadastros.perfil_adicionado', auth()->user()->id, [
@@ -507,6 +555,45 @@ class SolicitacaoCadastroService
     // ==================================================================
     // Metodos privados auxiliares
     // ==================================================================
+
+    /**
+     * Valida que o operador logado pode atribuir o perfil conforme hierarquia:
+     * Federal → qualquer perfil | Estadual → só estadual | Municipal → só municipal.
+     */
+    private function validarHierarquiaPerfil(int $perfilId): void
+    {
+        $operador = auth()->user();
+        if (! $operador) {
+            return;
+        }
+
+        $operador->load('contextoAtivo.abrangencia');
+        $esferaIdOperador = $operador->contextoAtivo?->abrangencia?->esfera_id;
+
+        // Federal (ou sem contexto definido) pode atribuir qualquer perfil
+        if ($esferaIdOperador === null || (int) $esferaIdOperador === EsferaEnum::FEDERAL->value) {
+            return;
+        }
+
+        $perfilSolicitado = \App\Models\Perfil::find($perfilId);
+        if (! $perfilSolicitado) {
+            return;
+        }
+
+        $esferaIdPerfil = (int) $perfilSolicitado->esfera_id;
+
+        if ((int) $esferaIdOperador === EsferaEnum::ESTADUAL->value && $esferaIdPerfil !== EsferaEnum::ESTADUAL->value) {
+            throw ValidationException::withMessages([
+                'perfil_id' => ['Perfil estadual só pode atribuir perfis do tipo Estadual.'],
+            ]);
+        }
+
+        if ((int) $esferaIdOperador === EsferaEnum::MUNICIPAL->value && $esferaIdPerfil !== EsferaEnum::MUNICIPAL->value) {
+            throw ValidationException::withMessages([
+                'perfil_id' => ['Perfil municipal só pode atribuir perfis do tipo Municipal.'],
+            ]);
+        }
+    }
 
     private function buscarSolicitacao(int $id): SolicitacaoCadastro
     {
