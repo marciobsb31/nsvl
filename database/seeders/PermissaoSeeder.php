@@ -18,6 +18,7 @@ class PermissaoSeeder extends Seeder
             'perfis'                => ['visualizar', 'editar', 'cadastrar', 'excluir'],
             'plano_acao'            => ['visualizar', 'cadastrar', 'editar', 'enviar'],
             'relatorio_execucao'    => ['visualizar', 'cadastrar', 'editar', 'enviar'],
+            'relatorios'            => ['visualizar', 'cadastrar', 'editar', 'enviar'],
             'auditoria'             => ['visualizar'],
         ];
 

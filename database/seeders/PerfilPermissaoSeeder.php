@@ -14,31 +14,19 @@ class PerfilPermissaoSeeder extends Seeder
 
         $map = [
             'gestor_federal' => $permissoes->keys()->toArray(),
-
-            'gestor_estadual' => [
-                'usuarios.visualizar', 'usuarios.editar',
-                'solicitacoes_cadastro.visualizar', 'solicitacoes_cadastro.editar', 'solicitacoes_cadastro.analisar',
-                'plano_acao.visualizar', 'plano_acao.cadastrar', 'plano_acao.editar', 'plano_acao.enviar',
-                'relatorio_execucao.visualizar', 'relatorio_execucao.enviar',
-            ],
-
-            'gestor_municipal' => [
-                'usuarios.visualizar', 'usuarios.editar',
-                'solicitacoes_cadastro.visualizar', 'solicitacoes_cadastro.editar', 'solicitacoes_cadastro.analisar',
-                'plano_acao.visualizar', 'plano_acao.cadastrar', 'plano_acao.editar', 'plano_acao.enviar',
-                'relatorio_execucao.visualizar', 'relatorio_execucao.enviar',
-            ],
+            'gestor_estadual' => $permissoes->keys()->toArray(),
+            'gestor_municipal' => $permissoes->keys()->toArray(),
 
             'admin_estadual' => [
-                'usuarios.visualizar',
                 'plano_acao.visualizar', 'plano_acao.cadastrar', 'plano_acao.editar',
                 'relatorio_execucao.visualizar',
+                'relatorios.visualizar',
             ],
 
             'admin_municipal' => [
-                'usuarios.visualizar',
                 'plano_acao.visualizar', 'plano_acao.cadastrar', 'plano_acao.editar',
                 'relatorio_execucao.visualizar',
+                'relatorios.visualizar',
             ],
 
             'visitante_federal' => [
@@ -49,15 +37,15 @@ class PerfilPermissaoSeeder extends Seeder
             ],
 
             'visitante_estadual' => [
-                'usuarios.visualizar',
                 'plano_acao.visualizar',
                 'relatorio_execucao.visualizar',
+                'relatorios.visualizar',
             ],
 
             'visitante_municipal' => [
-                'usuarios.visualizar',
                 'plano_acao.visualizar',
                 'relatorio_execucao.visualizar',
+                'relatorios.visualizar',
             ],
         ];
 
