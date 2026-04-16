@@ -27,9 +27,11 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
         $response
             ->assertOk()
             ->assertJson([
-                'disponivel' => false,
-                'mensagem'   => 'Este CPF jÃ¡ possui perfil ativo no sistema.',
+                'disponivel' => true,
+                'mensagem'   => 'Este CPF jÃ¡ possui perfil ativo nesta Ã¡rea de atuaÃ§Ã£o. Selecione outro perfil.',
             ]);
+
+        $this->assertIsArray($response->json('perfis_ativos'));
     }
 
     #[Test]

@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Support\MvpPerfilRules;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AdicionarPerfilVinculadoRequest extends FormRequest
 {
@@ -14,7 +16,15 @@ class AdicionarPerfilVinculadoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'perfil_id'       => ['required', 'integer', 'exists:perfis,id'],
+            'perfil_id'       => [
+                'required',
+                'integer',
+                Rule::exists('perfis', 'id')->where(function ($query) {
+                    $query
+                        ->where('ativo', true)
+                        ->whereIn('codigo', MvpPerfilRules::mvpProfileCodes());
+                }),
+            ],
             'vigencia_inicio' => ['nullable', 'date'],
             'vigencia_fim'    => ['nullable', 'date', 'after_or_equal:vigencia_inicio'],
         ];

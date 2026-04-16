@@ -34,7 +34,7 @@ class SolicitacaoCadastroServiceTest extends TestCase
         );
 
         $this->assertSame(
-            ['disponivel' => true, 'mensagem' => 'CPF disponÃ­vel para cadastro.'],
+            ['disponivel' => true, 'mensagem' => 'CPF disponÃ­vel para cadastro.', 'perfis_ativos' => []],
             $service->verificarCpf($cpfDisponivel),
         );
     }

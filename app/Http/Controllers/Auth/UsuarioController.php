@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UsuarioResource;
+use App\Support\UsuarioContextoResolver;
 use OpenApi\Attributes as OA;
 
 /**
@@ -42,14 +43,40 @@ class UsuarioController extends Controller
     )]
     public function me()
     {
+        $hoje = now()->toDateString();
 
-        return UsuarioResource::make(
-            auth()->user()->load([
+        $usuario = auth()->user()->load([
+                'perfisUsuario' => function ($q) use ($hoje) {
+                    $q->where('ativo', true)
+                        ->where(function ($subQ) use ($hoje) {
+                            $subQ->whereNull('data_inicio_vigencia')
+                                ->orWhereDate('data_inicio_vigencia', '<=', $hoje);
+                        })
+                        ->where(function ($subQ) use ($hoje) {
+                            $subQ->whereNull('data_fim_vigencia')
+                                ->orWhereDate('data_fim_vigencia', '>=', $hoje);
+                        });
+                },
                 'perfisUsuario.perfil',
                 'perfisUsuario.abrangencia.esfera',
+                'perfisUsuario.abrangencia.uf',
+                'perfisUsuario.abrangencia.municipio',
+                'perfisUsuario.solicitacaoCadastroOrigem',
                 'contextoAtivo.perfilUsuario.perfil.permissoes',
                 'contextoAtivo.abrangencia.esfera',
-            ])
-        );
+                'contextoAtivo.abrangencia.uf',
+                'contextoAtivo.abrangencia.municipio',
+            ]);
+
+        UsuarioContextoResolver::garantirContextoValido($usuario);
+
+        $usuario->load([
+            'contextoAtivo.perfilUsuario.perfil.permissoes',
+            'contextoAtivo.abrangencia.esfera',
+            'contextoAtivo.abrangencia.uf',
+            'contextoAtivo.abrangencia.municipio',
+        ]);
+
+        return UsuarioResource::make($usuario);
     }
 }

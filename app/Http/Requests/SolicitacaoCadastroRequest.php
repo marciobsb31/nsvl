@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\EsferaEnum;
 use App\Helpers\Helpers;
 use App\Rules\CpfValidoRule;
+use App\Support\MvpPerfilRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -44,7 +45,14 @@ class SolicitacaoCadastroRequest extends FormRequest
 
             'municipio_id' => [$esfera?->requiresMunicipio() ? 'required' : 'nullable', 'exists:municipios,id'],
 
-            'perfil_id'             => ['nullable', 'exists:perfis,id'],
+            'perfil_id'             => [
+                'nullable',
+                Rule::exists('perfis', 'id')->where(function ($query) {
+                    $query
+                        ->where('ativo', true)
+                        ->whereIn('codigo', MvpPerfilRules::mvpProfileCodes());
+                }),
+            ],
             'orgao'                 => ['required', 'string', 'max:255'],
             'cargo'                 => ['nullable', 'string', 'max:255'],
             'status_solicitacao_id' => ['nullable', 'exists:status_solicitacao,id'],

@@ -6,6 +6,7 @@ use App\Enums\TipoAuditoria;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UsuarioResource;
+use App\Support\UsuarioContextoResolver;
 use App\Services\Audit\AuditLogService;
 use App\Services\Auth\AuthValidationService;
 use App\Services\Auth\GovBrService;
@@ -109,6 +110,40 @@ class GovBrAuthController extends Controller
             $plainTextToken = $user->createToken('govbr-login')->plainTextToken;
 
             $loginCode = $this->govBrService->gerarState();
+
+            $hoje = now()->toDateString();
+
+            $user->load([
+                'perfisUsuario' => function ($q) use ($hoje) {
+                    $q->where('ativo', true)
+                        ->where(function ($subQ) use ($hoje) {
+                            $subQ->whereNull('data_inicio_vigencia')
+                                ->orWhereDate('data_inicio_vigencia', '<=', $hoje);
+                        })
+                        ->where(function ($subQ) use ($hoje) {
+                            $subQ->whereNull('data_fim_vigencia')
+                                ->orWhereDate('data_fim_vigencia', '>=', $hoje);
+                        });
+                },
+                'perfisUsuario.perfil',
+                'perfisUsuario.abrangencia.esfera',
+                'perfisUsuario.abrangencia.uf',
+                'perfisUsuario.abrangencia.municipio',
+                'perfisUsuario.solicitacaoCadastroOrigem',
+                'contextoAtivo.perfilUsuario.perfil.permissoes',
+                'contextoAtivo.abrangencia.esfera',
+                'contextoAtivo.abrangencia.uf',
+                'contextoAtivo.abrangencia.municipio',
+            ]);
+
+            UsuarioContextoResolver::garantirContextoValido($user);
+
+            $user->load([
+                'contextoAtivo.perfilUsuario.perfil.permissoes',
+                'contextoAtivo.abrangencia.esfera',
+                'contextoAtivo.abrangencia.uf',
+                'contextoAtivo.abrangencia.municipio',
+            ]);
 
             $userResource = UsuarioResource::make($user);
             $userData = json_decode($userResource->toJson(), true);

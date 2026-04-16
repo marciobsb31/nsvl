@@ -20,27 +20,21 @@ class SolicitacaoCadastroPolicy
 
     private function verificarVisibilidade(Usuario $user, SolicitacaoCadastro $solicitacao): bool
     {
-        $esfera = strtolower($user->esfera_atuacao ?? 'federal');
+        $user->loadMissing('contextoAtivo.abrangencia.esfera');
+        $abrangencia = $user->contextoAtivo?->abrangencia;
+        $esfera = strtolower((string) ($abrangencia?->esfera?->codigo ?? ''));
 
         if ($esfera === 'federal') {
             return true;
         }
 
-        $solEsfera = strtolower($solicitacao->esfera?->nome ?? '');
-        $solUfSigla = $solicitacao->ufRelacao?->sigla ?? '';
-        $userUf = $user->uf_lotacao ?? '';
-
         if ($esfera === 'estadual') {
-            return $solEsfera === 'estadual' && $solUfSigla === $userUf;
+            return (int) $solicitacao->uf_id === (int) $abrangencia?->uf_id;
         }
 
         if ($esfera === 'municipal') {
-            $solMunicipio = $solicitacao->municipioRelacao?->nome ?? '';
-            $userMunicipio = $user->municipio_lotacao ?? '';
-
-            return $solEsfera === 'municipal'
-                && $solUfSigla === $userUf
-                && $solMunicipio === $userMunicipio;
+            return (int) $solicitacao->uf_id === (int) $abrangencia?->uf_id
+                && (int) $solicitacao->municipio_id === (int) $abrangencia?->municipio_id;
         }
 
         return false;
