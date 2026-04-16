@@ -15,7 +15,6 @@
       <Card custom-class="mb-4">
         <FiltrosGerenciarSolicitacao
           :key="contextKey"
-          :carregando="carregando"
           @pesquisar="aplicarFiltros"
           @limpar="limparEpesquisar"
         />
