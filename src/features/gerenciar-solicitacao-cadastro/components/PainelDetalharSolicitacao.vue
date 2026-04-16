@@ -2,7 +2,10 @@
   <div class="painel-detalhar-solicitacao">
     <div class="painel-header">
       <div class="painel-header-topo">
-        <h2 class="painel-titulo">Detalhar/Avaliar Solicitação de Cadastro</h2>
+        <div>
+          <h2 class="painel-titulo">Detalhar / Avaliar cadastro no sistema</h2>
+          <p v-if="detalhe?.nome" class="painel-subtitulo-nome">{{ detalhe.nome }}</p>
+        </div>
         <button
           class="br-button secondary small"
           type="button"
@@ -17,9 +20,9 @@
       <div v-if="detalhe" class="painel-cabecalho-info">
         <div class="painel-info-item">
           <span class="painel-info-label">Status da Solicitação</span>
-          <span class="painel-status-badge" :class="classeStatusBadge(detalhe.status.nome)">
-            <span class="status-indicador" :class="'status-' + detalhe.status.nome"></span>
-            {{ labelStatus(detalhe.status.nome) }}
+          <span class="painel-status-badge" :class="classeStatusBadge(statusSolicitacaoNome)">
+            <span class="status-indicador" :class="'status-' + statusSolicitacaoNome"></span>
+            {{ labelStatus(statusSolicitacaoNome) }}
           </span>
         </div>
         <div class="painel-info-item">
@@ -40,63 +43,31 @@
     </div>
 
     <!-- Bloco: Aguardando Avaliação (somente quando em_analise e usuário tem privilégio) -->
-    <div
-      v-if="detalhe?.status.nome === StatusEnum.EM_ANALISE && detalhe?.pode_avaliar !== false"
-      class="painel-secao"
-    >
+    <div v-if="podeAprovarSolicitacao" class="painel-secao">
       <h3 class="secao-titulo">Aguardando Avaliação</h3>
       <div class="secao-aguardando-avaliacao">
         <div class="secao-linha-3cols">
           <div class="br-input">
             <label>Esfera de atuação</label>
-            <input type="text" :value="labelEsfera(detalhe.esfera.nome)" readonly />
+            <input type="text" :value="labelEsfera(esferaSolicitacaoNome)" readonly style="background-color: #f5f5f5;" />
           </div>
           <div class="br-input">
-            <label>UF</label>
-            <input type="text" :value="detalhe.estado.nome" readonly />
+            <label>UF de atuação</label>
+            <input type="text" :value="estadoSolicitacaoNome" readonly style="background-color: #f5f5f5;" />
           </div>
           <div class="br-input">
             <label>Município</label>
-            <input type="text" :value="detalhe.municipio.nome" readonly />
+            <input type="text" :value="municipioSolicitacaoNome" readonly style="background-color: #f5f5f5;" />
           </div>
         </div>
         <div class="secao-linha-orgao-cargo">
           <div class="br-input orgao-maior">
             <label>Órgão de atuação</label>
-            <input type="text" :value="detalhe.orgao" readonly />
+            <input type="text" :value="detalhe.orgao" readonly style="background-color: #f5f5f5;" />
           </div>
           <div class="br-input cargo-menor">
             <label>Cargo/Função</label>
-            <input type="text" :value="detalhe.cargo" readonly />
-          </div>
-        </div>
-        <div
-          v-if="detalhe.vigencia_inicio_solicitada || detalhe.vigencia_fim_solicitada"
-          class="secao-linha-3cols"
-        >
-          <div class="br-input">
-            <label>Vigência informada na solicitação (início)</label>
-            <input
-              type="text"
-              :value="
-                detalhe.vigencia_inicio_solicitada
-                  ? formatarDataExibicao(detalhe.vigencia_inicio_solicitada)
-                  : '—'
-              "
-              readonly
-            />
-          </div>
-          <div class="br-input">
-            <label>Vigência informada na solicitação (fim)</label>
-            <input
-              type="text"
-              :value="
-                detalhe.vigencia_fim_solicitada
-                  ? formatarDataExibicao(detalhe.vigencia_fim_solicitada)
-                  : '—'
-              "
-              readonly
-            />
+            <input type="text" :value="detalhe.cargo" readonly style="background-color: #f5f5f5;" />
           </div>
         </div>
         <div class="secao-linha-3cols secao-avaliacao-campos">
@@ -118,11 +89,11 @@
             </select>
           </div>
           <div class="br-input">
-            <label for="vigencia-inicio">Vigência (inicial)</label>
+            <label for="vigencia-inicio">Vigência início</label>
             <input id="vigencia-inicio" type="date" v-model="vigenciaInicio" />
           </div>
           <div class="br-input">
-            <label for="vigencia-fim">Vigência (fim)</label>
+            <label for="vigencia-fim">Vigência fim</label>
             <input id="vigencia-fim" type="date" v-model="vigenciaFim" />
           </div>
         </div>
@@ -139,7 +110,7 @@
         <button
           class="br-button primary"
           type="button"
-          @click="$emit('aprovar', { perfilId: perfilSelecionado, vigenciaInicio, vigenciaFim })"
+          @click="abrirModalAprovar"
           :disabled="avaliando || !perfilSelecionado"
         >
           Aprovar
@@ -162,7 +133,7 @@
           </div>
           <div class="br-input">
             <label>E-mail Institucional</label>
-            <input type="text" :value="detalhe?.email" readonly />
+            <input type="text" :value="emailInstitucional" readonly />
           </div>
         </div>
         <div class="secao-linha-2cols">
@@ -188,7 +159,7 @@
 
     <!-- Histórico de reprovação (status reprovado) — abaixo dos dados do solicitante -->
     <div
-      v-if="detalhe?.status.nome === StatusEnum.REPROVADO"
+      v-if="statusSolicitacaoNome === StatusEnum.REPROVADO"
       class="painel-secao painel-secao--historico-reprovacao"
     >
       <h3 class="secao-titulo">Histórico de reprovação</h3>
@@ -223,7 +194,7 @@
     </div>
 
     <!-- Perfis Vinculados -->
-    <div v-if="detalhe" class="painel-secao perfis-vinculados-secao">
+    <div v-if="detalhe && statusSolicitacaoNome !== StatusEnum.REPROVADO" class="painel-secao perfis-vinculados-secao">
       <div class="perfis-vinculados-header">
         <div>
           <h3 class="perfis-vinculados-titulo">Perfis vinculados</h3>
@@ -233,17 +204,7 @@
           </p>
         </div>
       </div>
-      <div v-if="!temPerfisVinculados" class="perfis-vinculados-vazio">
-        <i class="fas fa-users fa-2x mb-2" aria-hidden="true"></i>
-        <p>
-          {{
-            detalhe?.status.nome === StatusEnum.APROVADO
-              ? 'Nenhum perfil vinculado. Clique em Adicionar Perfil para vincular um novo perfil ao usuário.'
-              : 'Nenhum perfil vinculado para este solicitante.'
-          }}
-        </p>
-      </div>
-      <div v-else-if="!isMobile" class="table-responsive">
+      <div v-if="!isMobile" class="table-responsive">
         <table class="br-table tabela-perfis" role="table">
           <thead>
             <tr>
@@ -306,13 +267,16 @@
             </tr>
           </thead>
           <tbody>
+            <tr v-if="perfisVinculadosPaginados.length === 0">
+              <td colspan="10" class="td-vazio-perfis">Nenhum perfil vinculado.</td>
+            </tr>
             <tr v-for="(p, idx) in perfisVinculadosPaginados" :key="`perfil-${idx}-${p.id ?? idx}`">
               <td>{{ p.perfil }}</td>
               <td>{{ formatarDataExibicao(p.vigencia_inicio) }}</td>
               <td>{{ formatarDataExibicao(p.vigencia_fim) }}</td>
               <td>
-                <span class="br-tag" :class="p.ativo ? 'success' : 'danger'">
-                  {{ p.ativo ? 'Ativo' : 'Inativo' }}
+                <span class="br-tag" :class="p.ativo ? 'success' : 'warning'">
+                  {{ p.ativo ? 'Vigente' : 'Não vigente' }}
                 </span>
               </td>
               <td>{{ p.esfera }}</td>
@@ -324,11 +288,13 @@
                 <button
                   class="br-button secondary small"
                   type="button"
-                  :disabled="props.ehProprioCadastro && p.ativo"
+                  :disabled="acaoPerfilProprioBloqueada || !podeGerenciarPerfis"
                   :title="
-                    props.ehProprioCadastro && p.ativo
-                      ? 'Você não pode desativar seu próprio cadastro'
-                      : undefined
+                    acaoPerfilProprioBloqueada
+                      ? 'Você não pode ativar ou desativar seu próprio cadastro'
+                      : !podeGerenciarPerfis
+                        ? 'Somente usuários com privilégio de avaliação podem alterar perfis vinculados'
+                        : undefined
                   "
                   @click="
                     $emit('toggle-perfil', {
@@ -344,6 +310,9 @@
           </tbody>
         </table>
       </div>
+      <div v-else-if="isMobile && !temPerfisVinculados" class="perfis-vinculados-vazio">
+        <p>Nenhum perfil vinculado.</p>
+      </div>
       <div v-if="isMobile && temPerfisVinculados">
         <div
           class="row"
@@ -356,8 +325,8 @@
           </div>
           <div class="col-4 mb-1">
             <label for="vigente">Status</label><br />
-            <span class="br-tag" :class="p.ativo ? 'success' : 'danger'">
-              {{ p.ativo ? 'Ativo' : 'Inativo' }}
+            <span class="br-tag" :class="p.ativo ? 'success' : 'warning'">
+              {{ p.ativo ? 'Vigente' : 'Não vigente' }}
             </span>
           </div>
           <div class="col-4 mb-1">
@@ -392,11 +361,13 @@
             <button
               class="br-button secondary small block"
               type="button"
-              :disabled="props.ehProprioCadastro && p.ativo"
+              :disabled="acaoPerfilProprioBloqueada || !podeGerenciarPerfis"
               :title="
-                props.ehProprioCadastro && p.ativo
-                  ? 'Você não pode desativar seu próprio cadastro'
-                  : undefined
+                acaoPerfilProprioBloqueada
+                  ? 'Você não pode ativar ou desativar seu próprio cadastro'
+                  : !podeGerenciarPerfis
+                    ? 'Somente usuários com privilégio de avaliação podem alterar perfis vinculados'
+                    : undefined
               "
               @click="
                 $emit('toggle-perfil', {
@@ -419,7 +390,57 @@
         v-model:pageSize="itensPorPaginaPerfis"
         :total-items="perfisVinculadosOrdenados.length"
       />
+
     </div>
+
+    <!-- Modal Adicionar Perfil -->
+    <Modal
+      v-if="modalAdicionarPerfilVisivel"
+      title="Adicionar Perfil"
+      :show-actions="false"
+      @close="fecharModalAdicionarPerfil"
+    >
+      <form @submit.prevent="onSubmitAdicionarPerfil" class="form-modal-reprovar">
+        <div class="br-select mb-3">
+          <label for="perfil-adicionar">Perfil <span class="text-red-50">*</span></label>
+          <select id="perfil-adicionar" v-model="perfilParaAdicionar" required>
+            <option :value="null" disabled>Selecione o perfil</option>
+            <option
+              v-for="op in opcoesPerfilDisponiveis"
+              :key="String(op.value)"
+              :value="op.value"
+            >
+              {{ op.label }}
+            </option>
+          </select>
+        </div>
+        <div class="secao-linha-2cols mb-3">
+          <div class="br-input">
+            <label for="vigencia-inicio-adicionar">Vigência (início)</label>
+            <input id="vigencia-inicio-adicionar" type="date" v-model="vigenciaInicioAdicionar" />
+          </div>
+          <div class="br-input">
+            <label for="vigencia-fim-adicionar">Vigência (fim)</label>
+            <input id="vigencia-fim-adicionar" type="date" v-model="vigenciaFimAdicionar" />
+          </div>
+        </div>
+        <div v-if="erroAdicionarPerfil" class="br-message danger mb-3" role="alert">
+          <div class="content">{{ erroAdicionarPerfil }}</div>
+        </div>
+        <div class="form-modal-acoes">
+          <button class="br-button secondary" type="button" @click="fecharModalAdicionarPerfil">
+            Cancelar
+          </button>
+          <button
+            class="br-button primary"
+            type="submit"
+            :disabled="!perfilParaAdicionar || avaliando"
+          >
+            Adicionar
+          </button>
+        </div>
+      </form>
+    </Modal>
 
     <!-- Modal Reprovar com Justificativa -->
     <Modal
@@ -464,6 +485,31 @@
         </div>
       </form>
     </Modal>
+
+    <!-- Modal Confirmar Aprovação -->
+    <Modal
+      v-if="modalAprovarVisivel"
+      title="Confirmar Aprovação"
+      :show-actions="false"
+      @close="fecharModalAprovar"
+    >
+      <div class="form-modal-reprovar">
+        <p class="mb-3">Confirmar aprovação desta solicitação?</p>
+        <div class="form-modal-acoes">
+          <button class="br-button secondary" type="button" @click="fecharModalAprovar">
+            Cancelar
+          </button>
+          <button
+            class="br-button primary"
+            type="button"
+            :disabled="avaliando"
+            @click="onConfirmarAprovar"
+          >
+            Confirmar Aprovação
+          </button>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -471,6 +517,7 @@
 import { ref, computed, watch, onMounted, reactive } from 'vue'
 import { usePerfis } from '@/core/composables/usePerfis'
 import { useAuth } from '@/core/composables/useAuth'
+import { usePermissoes } from '@/core/composables/usePermissoes'
 import Modal from '@/core/components/Modal/Modal.vue'
 import PaginationControls from '@/core/components/PaginationControls/PaginationControls.vue'
 import { useBreakpoint } from '@/core/composables/useBreakpoint'
@@ -483,7 +530,8 @@ import { StatusEnum } from '@/core/enums/StatusEmun'
 
 defineOptions({ name: 'PainelDetalharSolicitacao' })
 const { isMobile } = useBreakpoint()
-const { perfilAtivo } = useAuth()
+const { perfilAtivo, user } = useAuth()
+const { hasPermissao } = usePermissoes()
 
 const props = withDefaults(
   defineProps<{
@@ -502,11 +550,71 @@ const emit = defineEmits<{
   ): void
   (e: 'reprovar', payload: { justificativa: string }): void
   (e: 'toggle-perfil', payload: { perfilUsuarioId: number; acao: 'ativar' | 'desativar' }): void
+  (
+    e: 'adicionar-perfil',
+    payload: { perfilId: string | number; vigenciaInicio?: string; vigenciaFim?: string },
+  ): void
 }>()
 
 const historicoReprovacoes = computed<HistoricoReprovacaoItem[]>(() => {
   const raw = props.detalhe?.historico_reprovacoes
   return Array.isArray(raw) ? raw : []
+})
+
+const statusSolicitacaoNome = computed(() => {
+  const status = props.detalhe?.status
+  if (typeof status === 'string') return status
+  if (status && typeof status === 'object' && 'nome' in status) {
+    const nome = (status as { nome?: unknown }).nome
+    return typeof nome === 'string' ? nome : ''
+  }
+  return ''
+})
+
+const esferaSolicitacaoNome = computed(() => {
+  const esfera = props.detalhe?.esfera
+  if (typeof esfera === 'string') return esfera
+  if (esfera && typeof esfera === 'object' && 'nome' in esfera) {
+    const nome = (esfera as { nome?: unknown }).nome
+    if (typeof nome === 'string' && nome.trim() !== '') return nome
+  }
+  const fallback = props.detalhe?.esfera_atuacao
+  return typeof fallback === 'string' ? fallback : ''
+})
+
+const estadoSolicitacaoNome = computed(() => {
+  const estado = props.detalhe?.estado
+  if (typeof estado === 'string') return estado
+  if (estado && typeof estado === 'object' && 'nome' in estado) {
+    const nome = (estado as { nome?: unknown }).nome
+    if (typeof nome === 'string' && nome.trim() !== '') return nome
+  }
+  const fallback = props.detalhe?.uf
+  return typeof fallback === 'string' && fallback.trim() !== '' ? fallback : '—'
+})
+
+const municipioSolicitacaoNome = computed(() => {
+  const municipio = props.detalhe?.municipio
+  if (typeof municipio === 'string') return municipio
+  if (municipio && typeof municipio === 'object' && 'nome' in municipio) {
+    const nome = (municipio as { nome?: unknown }).nome
+    if (typeof nome === 'string' && nome.trim() !== '') return nome
+  }
+  const fallback = props.detalhe?.municipio_nome
+  return typeof fallback === 'string' && fallback.trim() !== '' ? fallback : '—'
+})
+
+const emailInstitucional = computed(() => {
+  if (typeof props.detalhe?.email === 'string' && props.detalhe.email.trim() !== '') {
+    return props.detalhe.email
+  }
+  if (
+    typeof props.detalhe?.email_institucional === 'string' &&
+    props.detalhe.email_institucional.trim() !== ''
+  ) {
+    return props.detalhe.email_institucional
+  }
+  return '—'
 })
 
 const perfilSelecionado = ref<string | number | null>(null)
@@ -571,16 +679,6 @@ const perfisVinculadosPaginados = computed<PerfilVinculadoExibicao[]>(() => {
   return perfisVinculadosOrdenados.value.slice(inicio, fim)
 })
 
-function inferirNivelPerfil(nomePerfil: string): number {
-  const nome = nomePerfil.toLowerCase()
-
-  if (nome.includes('gestor')) return 3
-  if (nome.includes('administrador')) return 2
-  if (nome.includes('visitante')) return 1
-
-  return 0
-}
-
 function inferirEsferaPerfil(nomePerfil: string): string {
   const nome = nomePerfil.toLowerCase()
 
@@ -591,27 +689,41 @@ function inferirEsferaPerfil(nomePerfil: string): string {
   return ''
 }
 
+const esferaOperador = computed(() => {
+  const contextoEsfera = String(user.value?.contexto?.esfera ?? '').trim().toLowerCase()
+  if (contextoEsfera) return contextoEsfera
+
+  return inferirEsferaPerfil(String(perfilAtivo.value?.nome ?? ''))
+})
+
+const podeGerenciarPerfis = computed(() => hasPermissao('solicitacoes_cadastro.analisar'))
+const podeAprovarSolicitacao = computed(
+  () => statusSolicitacaoNome.value === StatusEnum.EM_ANALISE && props.detalhe?.pode_avaliar === true,
+)
+
 function operadorPodeConcederPerfil(nomePerfilDestino: string): boolean {
-  const nomePerfilOperador = String(perfilAtivo.value?.nome ?? '')
-  if (!nomePerfilOperador) return false
+  if (!podeGerenciarPerfis.value) return false
 
-  const nivelOperador = inferirNivelPerfil(nomePerfilOperador)
-  const nivelDestino = inferirNivelPerfil(nomePerfilDestino)
-  if (nivelOperador === 0 || nivelDestino === 0) return false
-  if (nivelOperador < nivelDestino) return false
-
-  const esferaOperador = inferirEsferaPerfil(nomePerfilOperador)
   const esferaDestino = inferirEsferaPerfil(nomePerfilDestino)
+  if (!esferaDestino) return false
 
-  if (esferaOperador !== 'federal' && esferaDestino !== esferaOperador) {
-    return false
+  if (esferaOperador.value === 'federal') {
+    return true
   }
 
-  return true
+  return esferaDestino === esferaOperador.value
 }
 
 const opcoesPerfilPermitidasOperador = computed(() => {
   return opcoesPerfil.value.filter((op) => operadorPodeConcederPerfil(String(op.label ?? '')))
+})
+
+const operadorEhAdministrador = computed(() => {
+  return String(perfilAtivo.value?.nome ?? '').toLowerCase().includes('administrador')
+})
+
+const acaoPerfilProprioBloqueada = computed(() => {
+  return Boolean(props.ehProprioCadastro && !operadorEhAdministrador.value)
 })
 
 const opcoesPerfilDisponiveis = computed(() => {
@@ -626,6 +738,55 @@ const opcoesPerfilDisponiveis = computed(() => {
 const modalReprovarVisivel = ref(false)
 const justificativaReprovacao = ref('')
 const erroReprovar = ref('')
+const modalAprovarVisivel = ref(false)
+const modalAdicionarPerfilVisivel = ref(false)
+const perfilParaAdicionar = ref<string | number | null>(null)
+const vigenciaInicioAdicionar = ref('')
+const vigenciaFimAdicionar = ref('')
+const erroAdicionarPerfil = ref('')
+
+function abrirModalAdicionarPerfil() {
+  perfilParaAdicionar.value = null
+  vigenciaInicioAdicionar.value = ''
+  vigenciaFimAdicionar.value = ''
+  erroAdicionarPerfil.value = ''
+  modalAdicionarPerfilVisivel.value = true
+}
+
+function fecharModalAdicionarPerfil() {
+  modalAdicionarPerfilVisivel.value = false
+}
+
+function onSubmitAdicionarPerfil() {
+  if (!perfilParaAdicionar.value) {
+    erroAdicionarPerfil.value = 'Selecione um perfil.'
+    return
+  }
+  erroAdicionarPerfil.value = ''
+  emit('adicionar-perfil', {
+    perfilId: perfilParaAdicionar.value,
+    vigenciaInicio: vigenciaInicioAdicionar.value || undefined,
+    vigenciaFim: vigenciaFimAdicionar.value || undefined,
+  })
+  fecharModalAdicionarPerfil()
+}
+
+function abrirModalAprovar() {
+  modalAprovarVisivel.value = true
+}
+
+function fecharModalAprovar() {
+  modalAprovarVisivel.value = false
+}
+
+function onConfirmarAprovar() {
+  fecharModalAprovar()
+  emit('aprovar', {
+    perfilId: perfilSelecionado.value,
+    vigenciaInicio: vigenciaInicio.value,
+    vigenciaFim: vigenciaFim.value,
+  })
+}
 
 function abrirModalReprovar() {
   justificativaReprovacao.value = ''
@@ -827,6 +988,19 @@ function compararValores(
   margin: 0;
 }
 
+.painel-subtitulo-nome {
+  font-size: 0.9rem;
+  color: var(--color-secondary-07, #555);
+  margin: 0.2rem 0 0;
+  font-weight: 500;
+}
+
+.perfis-vinculados-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
 .painel-cabecalho-info {
   display: flex;
   flex-wrap: wrap;
@@ -975,6 +1149,11 @@ function compararValores(
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+}
+
+.secao-dados-solicitante-layout input[readonly] {
+  background: var(--color-secondary-02, #f0f0f0);
+  border-color: var(--color-secondary-04, #d9d9d9);
 }
 
 .secao-linha-orgao-cargo {
@@ -1177,6 +1356,12 @@ function compararValores(
   font-size: 0.8125rem;
   min-height: 2rem;
   padding: 0.25rem 0.6rem;
+}
+
+.tabela-perfis .td-vazio-perfis {
+  text-align: center;
+  color: var(--secondary-text-color);
+  font-style: italic;
 }
 
 .tabela-perfis th.th-bold {

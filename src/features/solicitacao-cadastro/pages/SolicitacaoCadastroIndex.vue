@@ -246,22 +246,33 @@ function formatarData(data: string | undefined) {
   }
 }
 
-function statusLabel(status: string) {
+function statusNome(status: unknown): string {
+  if (typeof status === 'string') return status
+  if (status && typeof status === 'object' && 'nome' in status) {
+    const nome = (status as { nome?: unknown }).nome
+    return typeof nome === 'string' ? nome : ''
+  }
+  return ''
+}
+
+function statusLabel(status: unknown) {
+  const nome = statusNome(status)
   const map: Record<string, string> = {
     em_analise: 'Em análise',
     aprovado: 'Aprovado',
     reprovado: 'Reprovado',
   }
-  return map[status] || status
+  return map[nome] || nome
 }
 
-function statusClass(status: string) {
+function statusClass(status: unknown) {
+  const nome = statusNome(status)
   const map: Record<string, string> = {
     em_analise: 'warning',
     aprovado: 'success',
     reprovado: 'danger',
   }
-  return map[status] || ''
+  return map[nome] || ''
 }
 
 async function visualizar(id: number) {

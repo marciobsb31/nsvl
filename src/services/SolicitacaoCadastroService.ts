@@ -32,8 +32,10 @@ export async function listarSolicitacoesCadastro(): Promise<SolicitacaoCadastroI
 }
 
 export async function obterSolicitacaoCadastro(id: number): Promise<SolicitacaoCadastroDetalhe> {
-  const { data } = await api.get<SolicitacaoCadastroDetalhe>(`/solicitacoes-cadastro/${id}`)
-  return data
+  const { data } = await api.get<SolicitacaoCadastroDetalhe | { data: SolicitacaoCadastroDetalhe }>(
+    `/solicitacoes-cadastro/${id}`,
+  )
+  return (data as { data?: SolicitacaoCadastroDetalhe }).data ?? (data as SolicitacaoCadastroDetalhe)
 }
 
 export async function atualizarSolicitacaoCadastro(

@@ -111,7 +111,7 @@ describe('LoginPage (/login)', () => {
 
     expect(w.text()).toContain('Acesse o sistema')
     expect(w.text()).toContain('Entrar com GOV.BR')
-    expect(w.text()).toContain('Solicitar cadastro com GOV.BR')
+    expect(w.text()).toContain('Solicitar cadastro')
   })
 
   it('ao clicar em Entrar com GOV.BR redireciona para url retornada', async () => {
@@ -126,6 +126,18 @@ describe('LoginPage (/login)', () => {
 
     expect(getRedirectUrl).toHaveBeenCalled()
     expect(window.location.href).toBe('https://gov.br/auth')
+  })
+
+  it('ao clicar em Solicitar cadastro redireciona para solicitacao-cadastro', async () => {
+    const w = await mountLoadedPage()
+    await flushPromises()
+
+    const btn = w.find('[aria-label="Solicitar cadastro"]')
+    await btn.trigger('click')
+    await flushPromises()
+
+    expect(routerReplace).toHaveBeenCalledWith({ name: 'solicitacao-cadastro' })
+    expect(getRedirectUrl).not.toHaveBeenCalledWith('solicitacao')
   })
 
   it('quando retorna hash com govbr_error de solicitação de cadastro, navega para solicitacao-cadastro com query', async () => {
@@ -171,7 +183,7 @@ describe('LoginPage (/login)', () => {
 
     expect(w.text()).toContain('Login GOV.BR indisponível neste ambiente no momento.')
     expect(w.find('[aria-label="Entrar com GOV.BR"]').attributes('disabled')).toBeDefined()
-    expect(w.find('[aria-label="Solicitar cadastro"]').attributes('disabled')).toBeDefined()
+    expect(w.find('[aria-label="Solicitar cadastro"]').attributes('disabled')).toBeUndefined()
   })
 
   it('quando GOV.BR está desabilitado e o usuário tenta clicar (evento manual) entra no branch de bloqueio do entrarComGovBr', async () => {
