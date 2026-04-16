@@ -53,7 +53,7 @@
       </div>
     </div>
   </Card>
-  <section :class="{ fixed: props.fixed }">
+  <section class="fixed">
     <button
       class="br-button circle primary"
       type="button"
@@ -70,25 +70,6 @@
         />
       </svg>
     </button>
-    <div class="game-bar" :class="{ fixed: props.fixed }">
-      <!-- <button class="br-button circle small" type="button"
-            :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
-            title="Alternar tema" @click="toggleTheme" >
-            <i class="fas fa-adjust" aria-hidden="true"></i>
-        </button>
-        <button class="br-button circle small font-acessibilidade" type="button" aria-label="Diminuir Fonte"
-            title="Diminuir Fonte"   @click="decreaseFontSize">
-            A-
-        </button>
-          <button class="br-button circle small font-acessibilidade" type="button" aria-label="Tamanho padrão de fonte"
-            title="Tamanho padrão de fonte"   @click="resetFontSize">
-            A
-        </button>
-        <button class="br-button circle small font-acessibilidade" type="button" aria-label="Aumentar Fonte"
-            title="Aumentar Fonte"   @click="increaseFontSize">
-            A+
-        </button> -->
-    </div>
   </section>
 </template>
 
@@ -101,12 +82,7 @@ import { ref } from 'vue'
 const { increaseFontSize, decreaseFontSize, resetFontSize } = useAccessibilityFont()
 
 defineOptions({ name: 'Accessibility' })
-const props = defineProps({
-  fixed: {
-    type: Boolean,
-    default: false,
-  },
-})
+
 const { mode, setMode } = useTheme()
 
 const toggleTheme = () => {
@@ -135,9 +111,10 @@ const toggleAcessibilidade = () => {
 .menu {
   position: fixed;
   z-index: 9999 !important;
-  bottom: 19rem;
-  right: 5rem;
+  top: 20%;
+  right: 70px;
   width: 300px;
+  transform: translateY(calc(20% + 10px));
 }
 
 .menu-section {
@@ -163,9 +140,10 @@ const toggleAcessibilidade = () => {
 
 .fixed {
   position: fixed;
-  z-index: 9999 !important;
-  bottom: 33rem;
-  right: 1.5rem;
+  z-index: 9998 !important;
+  top: 18%;
+  right: 19px;
+  transform: translateY(calc(100% + 10px));
 }
 
 .game-bar {
@@ -193,9 +171,10 @@ const toggleAcessibilidade = () => {
 
 @media (max-width: 768px) {
   .menu {
-    right: 5rem;
+    top: 18%;
   }
   .fixed {
+    top: 16%;
     right: 1rem;
   }
 }

@@ -159,18 +159,21 @@ textarea:focus-visible {
 /* VLibras — posicionamento no canto inferior */
 [vw] {
   position: fixed !important;
-  bottom: 14rem !important;
+  bottom: -10% !important;
   right: 0 !important;
-  z-index: 9998 !important;
+}
+
+div[vw]:has([vw-plugin-wrapper].active) {
+  z-index: 9999 !important;
 }
 
 div[vw] {
-  z-index: 9998 !important;
+  z-index: 9997 !important;
 }
 
 [vw-access-button] {
-  bottom: 16rem !important;
-  right: 0.75rem !important;
+  top: -10% !important;
+  right: 24% !important;
   position: fixed !important;
 }
 

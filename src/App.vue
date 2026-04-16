@@ -2,7 +2,7 @@
   <!-- Skip Link para acessibilidade — navegação por teclado -->
   <a href="#main-content" class="skip-link">Ir para o conteúdo principal</a>
   <NotificationPopup />
-  <Accessibility fixed />
+  <Accessibility />
 
   <!-- Renderiza o layout correspondente à rota -->
   <RouterView v-slot="{ Component, route }">
