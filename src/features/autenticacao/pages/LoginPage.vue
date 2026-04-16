@@ -38,12 +38,12 @@
           <button
             type="button"
             class="br-button success block mt-3 login-register-button"
-            :disabled="carregandoGovBr || !govBrDisponivel"
+            :disabled="carregandoGovBr"
             aria-label="Solicitar cadastro"
-            @click="entrarComGovBr('solicitacao')"
-            :aria-describedby="govBrDisponivel ? 'login-description' : 'govbr-status'"
+            @click="irParaSolicitacaoCadastro"
+            aria-describedby="login-description"
           >
-            {{ carregandoGovBr ? 'Redirecionando...' : 'Solicitar cadastro com GOV.BR' }}
+            {{ carregandoGovBr ? 'Redirecionando...' : 'Solicitar cadastro' }}
           </button>
         </div>
       </div>
@@ -101,6 +101,10 @@ async function entrarComGovBr(flow: 'login' | 'solicitacao' = 'login') {
   } finally {
     carregandoGovBr.value = false
   }
+}
+
+async function irParaSolicitacaoCadastro() {
+  await router.replace({ name: 'solicitacao-cadastro' })
 }
 
 async function processarRetornoGovBr() {

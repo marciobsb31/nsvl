@@ -322,7 +322,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
     await w.find('[data-testid="det-aprovar"]').trigger('click')
     await flushPromises()
     expect(apiAprovar).toHaveBeenCalled()
-    expect(successMock).toHaveBeenCalledWith('Solicitação aprovada com sucesso.')
+    expect(successMock).toHaveBeenCalledWith('Cadastro aprovado com sucesso.')
     expect(listarSolicitacoesGerenciar).toHaveBeenCalled()
   })
 

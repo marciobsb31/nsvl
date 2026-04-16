@@ -1,6 +1,9 @@
 import type { Municipio } from '@/core/types/localidades/LocalidadeInterface'
 import api from './ApiService'
 
+const STATUS_APROVADO_ID = 3
+const STATUS_REPROVADO_ID = 4
+
 /**
  * Item da listagem de solicitações para a tela Gerenciar Cadastros.
  * Campos adicionais (esfera_atuacao, uf, municipio, email_institucional, orgao)
@@ -63,7 +66,7 @@ export interface AprovarPayload {
 }
 
 export async function aprovarSolicitacao(id: number, payload?: AprovarPayload): Promise<void> {
-  const body: Record<string, unknown> = { status: 'aprovado' }
+  const body: Record<string, unknown> = { status_id: STATUS_APROVADO_ID }
   if (payload?.perfilId != null) body.perfil_id = payload.perfilId
   if (payload?.vigenciaInicio) body.vigencia_inicio = payload.vigenciaInicio
   if (payload?.vigenciaFim) body.vigencia_fim = payload.vigenciaFim
@@ -71,7 +74,10 @@ export async function aprovarSolicitacao(id: number, payload?: AprovarPayload): 
 }
 
 export async function reprovarSolicitacao(id: number, justificativa: string): Promise<void> {
-  await api.patch(`/solicitacoes-cadastro/${id}`, { status: 'reprovado', justificativa })
+  await api.patch(`/solicitacoes-cadastro/${id}`, {
+    status_id: STATUS_REPROVADO_ID,
+    justificativa,
+  })
 }
 
 export async function ativarPerfilVinculado(
@@ -86,4 +92,20 @@ export async function desativarPerfilVinculado(
   perfilUsuarioId: number,
 ): Promise<void> {
   await api.patch(`/solicitacoes-cadastro/${solicitacaoId}/perfis/${perfilUsuarioId}/desativar`)
+}
+
+export interface AdicionarPerfilPayload {
+  perfilId: string | number
+  vigenciaInicio?: string
+  vigenciaFim?: string
+}
+
+export async function adicionarPerfilVinculado(
+  solicitacaoId: number,
+  payload: AdicionarPerfilPayload,
+): Promise<void> {
+  const body: Record<string, unknown> = { perfil_id: payload.perfilId }
+  if (payload.vigenciaInicio) body.vigencia_inicio = payload.vigenciaInicio
+  if (payload.vigenciaFim) body.vigencia_fim = payload.vigenciaFim
+  await api.post(`/solicitacoes-cadastro/${solicitacaoId}/perfis`, body)
 }

@@ -193,6 +193,7 @@
             @aprovar="aprovarSolicitacao"
             @reprovar="reprovarSolicitacao"
             @toggle-perfil="onTogglePerfilVinculado"
+            @adicionar-perfil="onAdicionarPerfilVinculado"
           />
         </aside>
       </Transition>
@@ -213,6 +214,7 @@ import {
   reprovarSolicitacao as apiReprovar,
   ativarPerfilVinculado as apiAtivarPerfilVinculado,
   desativarPerfilVinculado as apiDesativarPerfilVinculado,
+  adicionarPerfilVinculado as apiAdicionarPerfilVinculado,
   type SolicitacaoGerenciarItem,
   type FiltrosGerenciarSolicitacao as FiltrosGerenciarSolicitacaoType,
 } from '@/services/GerenciarSolicitacaoCadastroService'
@@ -236,6 +238,15 @@ const { isMobile } = useBreakpoint()
 const { user, contextKey } = useAuth()
 const { hasPermissao } = usePermissoes()
 
+function extrairNomeStatus(status: unknown): string {
+  if (typeof status === 'string') return status
+  if (status && typeof status === 'object' && 'nome' in status) {
+    const nome = (status as { nome?: unknown }).nome
+    return typeof nome === 'string' ? nome : ''
+  }
+  return ''
+}
+
 const permiteAnalisarVisualizar = (status?: string) => {
   if( status === StatusEnum.EM_ANALISE ) {
     return hasPermissao('solicitacoes_cadastro.analisar')
@@ -258,7 +269,8 @@ const solicitacoesOrdenadas = computed(() => {
 
   if (!ordenarColuna.value) {
     return lista.sort((a, b) => {
-      const prioridade = prioridadeStatus(a.status.nome) - prioridadeStatus(b.status.nome)
+      const prioridade =
+        prioridadeStatus(extrairNomeStatus(a.status)) - prioridadeStatus(extrairNomeStatus(b.status))
       if (prioridade !== 0) return prioridade
 
       const dataA = new Date(a.created_at ?? '').getTime()
@@ -269,7 +281,8 @@ const solicitacoesOrdenadas = computed(() => {
   const col = ordenarColuna.value
   const asc = ordenarAsc.value
   lista.sort((a, b) => {
-    const prioridade = prioridadeStatus(a.status.nome) - prioridadeStatus(b.status.nome)
+    const prioridade =
+      prioridadeStatus(extrairNomeStatus(a.status)) - prioridadeStatus(extrairNomeStatus(b.status))
     if (prioridade !== 0) return prioridade
 
     let va: string | number
@@ -293,8 +306,8 @@ const solicitacoesOrdenadas = computed(() => {
       va = (a.orgao ?? '').toLowerCase()
       vb = (b.orgao ?? '').toLowerCase()
     } else if (col === 'status') {
-      va = labelStatus(a.status.nome).toLowerCase()
-      vb = labelStatus(b.status.nome).toLowerCase()
+      va = labelStatus(extrairNomeStatus(a.status)).toLowerCase()
+      vb = labelStatus(extrairNomeStatus(b.status)).toLowerCase()
     } else {
       return 0
     }
@@ -400,18 +413,18 @@ function formatarData(data: string | undefined) {
 
 function labelStatus(status: string) {
   const map: Record<string, string> = {
-    "Em análise": 'Em análise',
-    "Aprovada": 'Aprovada',
-    "Reprovada": 'Reprovada',
+    [StatusEnum.EM_ANALISE]: 'Em análise',
+    [StatusEnum.APROVADO]: 'Aprovada',
+    [StatusEnum.REPROVADO]: 'Reprovada',
   }
   return map[status] ?? status
 }
 
 function classeStatus(status: string) {
   const map: Record<string, string> = {
-    "Em análise": 'warning',
-    "Aprovada": 'success',
-    "Reprovada": 'danger',
+    [StatusEnum.EM_ANALISE]: 'warning',
+    [StatusEnum.APROVADO]: 'success',
+    [StatusEnum.REPROVADO]: 'danger',
   }
   return map[status] ?? ''
 }
@@ -430,7 +443,7 @@ function labelEsfera(esfera?: string) {
  * Regra: "Em análise" → "Detalhar/Analisar"; demais → "Detalhar"
  */
 function rotuloBotaoDetalhar(status: string) {
-  return status === 'Em análise' ? 'Detalhar/Analisar' : 'Detalhar'
+  return status === StatusEnum.EM_ANALISE ? 'Detalhar/Analisar' : 'Detalhar'
 }
 
 const carregandoDetalhe = ref(false)
@@ -448,7 +461,7 @@ async function detalhar(s: any) {
   painelDetalharAberto.value = false
   detalheSelecionado.value = null
   try {
-    const detalhe = await obterSolicitacaoCadastro(id).then((res: any) => res.data)
+    const detalhe = await obterSolicitacaoCadastro(id)
 
     if (!detalhe?.id) {
       throw new Error('Resposta da API inválida: dados incompletos.')
@@ -482,7 +495,7 @@ async function aprovarSolicitacao(payload?: { perfilId?: string | number | null;
   avaliando.value = true
   try {
     await apiAprovar(detalheSelecionado.value.id, payload)
-    success('Solicitação aprovada com sucesso.')
+    success('Cadastro aprovado com sucesso.')
     fecharPainelDetalhar()
     carregarSolicitacoes()
   } catch (e: unknown) {
@@ -503,6 +516,29 @@ async function reprovarSolicitacao(payload: { justificativa: string }) {
     carregarSolicitacoes()
   } catch (e: unknown) {
     const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao reprovar.'
+    error(msg)
+  } finally {
+    avaliando.value = false
+  }
+}
+
+async function onAdicionarPerfilVinculado(payload: {
+  perfilId: string | number
+  vigenciaInicio?: string
+  vigenciaFim?: string
+}) {
+  if (!detalheSelecionado.value) return
+  avaliando.value = true
+  const solicitacaoId = detalheSelecionado.value.id
+  try {
+    await apiAdicionarPerfilVinculado(solicitacaoId, payload)
+    success('Perfil adicionado com sucesso.')
+    const atualizado = await obterSolicitacaoCadastro(solicitacaoId)
+    detalheSelecionado.value = { ...atualizado }
+  } catch (e: unknown) {
+    const msg =
+      (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+      'Erro ao adicionar perfil.'
     error(msg)
   } finally {
     avaliando.value = false
