@@ -100,10 +100,7 @@ defineOptions({ name: 'FiltrosGerenciarSolicitacao' })
 
 const esferasStore = useEsferasStore()
 const opcoesEsfera = computed(() => {
-  return (esferasStore.esferasLista || []).map((esfera: any) => ({
-    label: esfera.nome,
-    value: esfera.nome,
-  }))
+  return esferasStore.esferasOptions
 })
 
 const ufStore = useUfStore()

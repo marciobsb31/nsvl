@@ -57,12 +57,29 @@ export async function excluirSolicitacaoCadastro(id: number): Promise<{ message:
 export interface VerificarCpfResponse {
   disponivel: boolean
   mensagem: string
+  perfis_ativos?: Array<{
+    id: number
+    nome: string
+    codigo?: string
+  }>
 }
 
-export async function verificarCpfDisponivel(cpf: string): Promise<VerificarCpfResponse> {
+export async function verificarCpfDisponivel(
+  cpf: string,
+  area?: {
+    esfera_id?: number
+    uf_id?: number
+    municipio_id?: number
+  },
+): Promise<VerificarCpfResponse> {
   const digitos = cpf.replace(/\D/g, '')
   const { data } = await api.get<VerificarCpfResponse>('/solicitacoes-cadastro/verificar-cpf', {
-    params: { cpf: digitos },
+    params: {
+      cpf: digitos,
+      ...(area?.esfera_id ? { esfera_id: area.esfera_id } : {}),
+      ...(area?.uf_id ? { uf_id: area.uf_id } : {}),
+      ...(area?.municipio_id ? { municipio_id: area.municipio_id } : {}),
+    },
   })
   return data
 }
