@@ -21,7 +21,6 @@
       <Card custom-class="mb-4">
         <FiltrosGerenciarSolicitacao
           :key="contextKey"
-          :carregando="carregando"
           @pesquisar="aplicarFiltros"
           @limpar="limparEpesquisar"
         />
@@ -233,7 +232,7 @@ import { useBreakpoint } from '@/core/composables/useBreakpoint'
 import Contexto from '@/core/components/Contexto/Contexto.vue'
 import type { SolicitacaoCadastroDetalhe } from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
 import { usePermissoes } from '@/core/composables/usePermissoes'
-import { StatusEnum } from '@/core/enums/StatusEmun'
+import { StatusNomeEnum } from '@/core/enums/StatusEmun'
 
 
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
@@ -275,7 +274,7 @@ function extrairNomeStatus(status: unknown): string {
 }
 
 const permiteAnalisarVisualizar = (status?: string) => {
-  if( status === StatusEnum.EM_ANALISE ) {
+  if( status === StatusNomeEnum.EM_ANALISE ) {
     return hasPermissao('solicitacoes_cadastro.analisar')
   }
   return hasPermissao('solicitacoes_cadastro.visualizar')
@@ -444,18 +443,18 @@ function formatarData(data: string | undefined) {
 
 function labelStatus(status: string) {
   const map: Record<string, string> = {
-    [StatusEnum.EM_ANALISE]: 'Em análise',
-    [StatusEnum.APROVADO]: 'Aprovada',
-    [StatusEnum.REPROVADO]: 'Reprovada',
+    [StatusNomeEnum.EM_ANALISE]: 'Em análise',
+    [StatusNomeEnum.APROVADO]: 'Aprovada',
+    [StatusNomeEnum.REPROVADO]: 'Reprovada',
   }
   return map[status] ?? status
 }
 
 function classeStatus(status: string) {
   const map: Record<string, string> = {
-    [StatusEnum.EM_ANALISE]: 'warning',
-    [StatusEnum.APROVADO]: 'success',
-    [StatusEnum.REPROVADO]: 'danger',
+    [StatusNomeEnum.EM_ANALISE]: 'warning',
+    [StatusNomeEnum.APROVADO]: 'success',
+    [StatusNomeEnum.REPROVADO]: 'danger',
   }
   return map[status] ?? ''
 }
@@ -474,7 +473,7 @@ function labelEsfera(esfera?: string) {
  * Regra: "Em análise" → "Detalhar/Analisar"; demais → "Detalhar"
  */
 function rotuloBotaoDetalhar(status: string) {
-  return status === StatusEnum.EM_ANALISE ? 'Detalhar/Analisar' : 'Detalhar'
+  return status === StatusNomeEnum.EM_ANALISE ? 'Detalhar/Analisar' : 'Detalhar'
 }
 
 const carregandoDetalhe = ref(false)

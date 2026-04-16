@@ -49,25 +49,40 @@
         <div class="secao-linha-3cols">
           <div class="br-input">
             <label>Esfera de atuação</label>
-            <input type="text" :value="labelEsfera(esferaSolicitacaoNome)" readonly style="background-color: #f5f5f5;" />
+            <input
+              type="text"
+              :value="labelEsfera(esferaSolicitacaoNome)"
+              readonly
+              style="background-color: #f5f5f5"
+            />
           </div>
           <div class="br-input">
             <label>UF de atuação</label>
-            <input type="text" :value="estadoSolicitacaoNome" readonly style="background-color: #f5f5f5;" />
+            <input
+              type="text"
+              :value="estadoSolicitacaoNome"
+              readonly
+              style="background-color: #f5f5f5"
+            />
           </div>
           <div class="br-input">
             <label>Município</label>
-            <input type="text" :value="municipioSolicitacaoNome" readonly style="background-color: #f5f5f5;" />
+            <input
+              type="text"
+              :value="municipioSolicitacaoNome"
+              readonly
+              style="background-color: #f5f5f5"
+            />
           </div>
         </div>
         <div class="secao-linha-orgao-cargo">
           <div class="br-input orgao-maior">
             <label>Órgão de atuação</label>
-            <input type="text" :value="detalhe.orgao" readonly style="background-color: #f5f5f5;" />
+            <input type="text" :value="detalhe.orgao" readonly style="background-color: #f5f5f5" />
           </div>
           <div class="br-input cargo-menor">
             <label>Cargo/Função</label>
-            <input type="text" :value="detalhe.cargo" readonly style="background-color: #f5f5f5;" />
+            <input type="text" :value="detalhe.cargo" readonly style="background-color: #f5f5f5" />
           </div>
         </div>
         <div class="secao-linha-3cols secao-avaliacao-campos">
@@ -159,7 +174,7 @@
 
     <!-- Histórico de reprovação (status reprovado) — abaixo dos dados do solicitante -->
     <div
-      v-if="statusSolicitacaoNome === StatusEnum.REPROVADO"
+      v-if="statusSolicitacaoNome === StatusNomeEnum.REPROVADO"
       class="painel-secao painel-secao--historico-reprovacao"
     >
       <h3 class="secao-titulo">Histórico de reprovação</h3>
@@ -194,7 +209,10 @@
     </div>
 
     <!-- Perfis Vinculados -->
-    <div v-if="detalhe && statusSolicitacaoNome !== StatusEnum.REPROVADO" class="painel-secao perfis-vinculados-secao">
+    <div
+      v-if="detalhe && statusSolicitacaoNome !== StatusNomeEnum.REPROVADO"
+      class="painel-secao perfis-vinculados-secao"
+    >
       <div class="perfis-vinculados-header">
         <div>
           <h3 class="perfis-vinculados-titulo">Perfis vinculados</h3>
@@ -390,7 +408,6 @@
         v-model:pageSize="itensPorPaginaPerfis"
         :total-items="perfisVinculadosOrdenados.length"
       />
-
     </div>
 
     <!-- Modal Adicionar Perfil -->
@@ -405,11 +422,7 @@
           <label for="perfil-adicionar">Perfil <span class="text-red-50">*</span></label>
           <select id="perfil-adicionar" v-model="perfilParaAdicionar" required>
             <option :value="null" disabled>Selecione o perfil</option>
-            <option
-              v-for="op in opcoesPerfilDisponiveis"
-              :key="String(op.value)"
-              :value="op.value"
-            >
+            <option v-for="op in opcoesPerfilDisponiveis" :key="String(op.value)" :value="op.value">
               {{ op.label }}
             </option>
           </select>
@@ -526,7 +539,7 @@ import type {
   PerfilVinculado,
   SolicitacaoCadastroDetalhe,
 } from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
-import { StatusEnum } from '@/core/enums/StatusEmun'
+import { StatusNomeEnum } from '@/core/enums/StatusEmun'
 
 defineOptions({ name: 'PainelDetalharSolicitacao' })
 const { isMobile } = useBreakpoint()
@@ -690,7 +703,9 @@ function inferirEsferaPerfil(nomePerfil: string): string {
 }
 
 const esferaOperador = computed(() => {
-  const contextoEsfera = String(user.value?.contexto?.esfera ?? '').trim().toLowerCase()
+  const contextoEsfera = String(user.value?.contexto?.esfera ?? '')
+    .trim()
+    .toLowerCase()
   if (contextoEsfera) return contextoEsfera
 
   return inferirEsferaPerfil(String(perfilAtivo.value?.nome ?? ''))
@@ -698,7 +713,9 @@ const esferaOperador = computed(() => {
 
 const podeGerenciarPerfis = computed(() => hasPermissao('solicitacoes_cadastro.analisar'))
 const podeAprovarSolicitacao = computed(
-  () => statusSolicitacaoNome.value === StatusEnum.EM_ANALISE && props.detalhe?.pode_avaliar === true,
+  () =>
+    statusSolicitacaoNome.value === StatusNomeEnum.EM_ANALISE &&
+    props.detalhe?.pode_avaliar === true,
 )
 
 function operadorPodeConcederPerfil(nomePerfilDestino: string): boolean {
@@ -719,7 +736,9 @@ const opcoesPerfilPermitidasOperador = computed(() => {
 })
 
 const operadorEhAdministrador = computed(() => {
-  return String(perfilAtivo.value?.nome ?? '').toLowerCase().includes('administrador')
+  return String(perfilAtivo.value?.nome ?? '')
+    .toLowerCase()
+    .includes('administrador')
 })
 
 const acaoPerfilProprioBloqueada = computed(() => {
@@ -876,18 +895,18 @@ function labelEsfera(esfera?: string) {
 
 function labelStatus(status: string) {
   const map: Record<string, string> = {
-    [StatusEnum.EM_ANALISE]: 'EM ANÁLISE',
-    [StatusEnum.APROVADO]: 'APROVADA',
-    [StatusEnum.REPROVADO]: 'REPROVADA',
+    [StatusNomeEnum.EM_ANALISE]: 'EM ANÁLISE',
+    [StatusNomeEnum.APROVADO]: 'APROVADA',
+    [StatusNomeEnum.REPROVADO]: 'REPROVADA',
   }
   return map[status] ?? status
 }
 
 function classeStatusBadge(status: string) {
   const map: Record<string, string> = {
-    [StatusEnum.EM_ANALISE]: 'status-em-analise',
-    [StatusEnum.APROVADO]: 'status-aprovada',
-    [StatusEnum.REPROVADO]: 'status-reprovada',
+    [StatusNomeEnum.EM_ANALISE]: 'status-em-analise',
+    [StatusNomeEnum.APROVADO]: 'status-aprovada',
+    [StatusNomeEnum.REPROVADO]: 'status-reprovada',
   }
   return map[status] ?? ''
 }
