@@ -18,9 +18,9 @@ class AcaoSeeder extends Seeder
                 'ativo'     => true,
             ],
             [
-                'codigo'    => 'criar',
-                'nome'      => 'Criar',
-                'descricao' => 'Permite a criação de novos registros.',
+                'codigo'    => 'cadastrar',
+                'nome'      => 'Cadastrar',
+                'descricao' => 'Permite o cadastro de novos registros.',
                 'ativo'     => true,
             ],
             [

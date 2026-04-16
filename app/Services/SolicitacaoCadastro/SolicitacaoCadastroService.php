@@ -46,8 +46,6 @@ class SolicitacaoCadastroService
             report($e);
         }
 
-        $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
-
         return [
             'id'                         => $solicitacao->id,
             'nome'                       => $solicitacao->usuario?->nome ?? '',
@@ -67,7 +65,7 @@ class SolicitacaoCadastroService
             'vigencia_inicio_solicitada' => $solicitacao->vigencia_inicio_solicitada?->format('Y-m-d'),
             'vigencia_fim_solicitada'    => $solicitacao->vigencia_fim_solicitada?->format('Y-m-d'),
             'perfis_vinculados'          => $perfisVinculados,
-            'pode_avaliar'               => $solicitacao->status_id === $statusEmAnalise,
+            'pode_avaliar'               => $solicitacao->status_id === StatusSolicitacaoEnum::EM_ANALISE->value,
             'historico_reprovacoes'      => $this->montarHistoricoReprovacoes($solicitacao),
         ];
     }
@@ -258,9 +256,8 @@ class SolicitacaoCadastroService
                     'uf_id'        => $solicitacao->uf_id,
                     'municipio_id' => $solicitacao->municipio_id,
                 ], [
-                    'nome'                  => "{$solicitacao->esfera?->nome} - {$nomeLocalidade}",
+                    'nome'                  => $nomeLocalidade,
                     'origem_tipo'           => 'solicitacao_cadastro',
-                    'origem_id'             => $solicitacao->id,
                     'ativo'                 => true,
                     'criado_por_usuario_id' => auth()->id(),
                 ]);
