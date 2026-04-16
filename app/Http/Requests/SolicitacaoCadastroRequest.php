@@ -16,6 +16,9 @@ class SolicitacaoCadastroRequest extends FormRequest
             'cpf'                    => Helpers::onlyDigits($this->cpf ?? ''),
             'telefone_institucional' => Helpers::onlyDigits($this->telefone_institucional ?? ''),
             'telefone_pessoal'       => Helpers::onlyDigits($this->telefone_pessoal ?? ''),
+            'perfil_id'              => $this->input('perfilId') ?? $this->input('perfil_id'),
+            'vigencia_inicio'        => $this->input('vigenciaInicio') ?? $this->input('vigencia_inicio'),
+            'vigencia_fim'           => $this->input('vigenciaFim') ?? $this->input('vigencia_fim'),
         ]);
     }
 

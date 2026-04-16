@@ -25,7 +25,7 @@ class AvaliarSolicitacaoRequest extends FormRequest
             ],
 
             'perfil_id' => [
-                Rule::requiredIf(fn () => $this->status_id === StatusSolicitacaoEnum::APROVADO->value),
+                Rule::requiredIf(fn () => (int) $this->status_id === StatusSolicitacaoEnum::APROVADO->value),
                 'integer',
                 'exists:perfis,id',
             ],
@@ -33,7 +33,7 @@ class AvaliarSolicitacaoRequest extends FormRequest
             'vigencia_inicio' => [
                 'nullable',
                 'date',
-                Rule::requiredIf(fn () => $this->status_id === StatusSolicitacaoEnum::APROVADO->value),
+                Rule::requiredIf(fn () => (int) $this->status_id === StatusSolicitacaoEnum::APROVADO->value),
             ],
 
             'vigencia_fim' => [
@@ -43,7 +43,7 @@ class AvaliarSolicitacaoRequest extends FormRequest
             ],
 
             'justificativa' => [
-                Rule::requiredIf(fn () => $this->status_id === StatusSolicitacaoEnum::REPROVADO->value),
+                Rule::requiredIf(fn () => (int) $this->status_id === StatusSolicitacaoEnum::REPROVADO->value),
                 'string',
                 'min:10',
                 'max:1000',

@@ -71,6 +71,7 @@ class SolicitacaoCadastroController extends Controller
     public function show(SolicitacaoCadastro $solicitacaoCadastro)
     {
         Gate::authorize('view', $solicitacaoCadastro);
+        $this->service->registrarAcessoDetalhamento($solicitacaoCadastro);
 
         return SolicitacaoCadastroResource::make($solicitacaoCadastro);
     }

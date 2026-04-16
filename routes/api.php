@@ -48,7 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('solicitacoes-cadastro')->group(function () {
         Route::get('/', [SolicitacaoCadastroController::class, 'index'])
             ->middleware('permission:solicitacoes_cadastro.visualizar');
-        Route::post('/{id}/perfis', [SolicitacaoCadastroController::class, 'adicionarPerfilVinculado']);
+        Route::post('/{id}/perfis', [SolicitacaoCadastroController::class, 'adicionarPerfilVinculado'])
+            ->middleware('permission:solicitacoes_cadastro.analisar');
         Route::patch('/{id}/perfis/{perfilUsuarioId}/ativar', [SolicitacaoCadastroController::class, 'ativarPerfilVinculado'])
             ->middleware('permission:solicitacoes_cadastro.analisar');
         Route::patch('/{id}/perfis/{perfilUsuarioId}/desativar', [SolicitacaoCadastroController::class, 'desativarPerfilVinculado'])
@@ -56,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{solicitacao_cadastro}', [SolicitacaoCadastroController::class, 'show'])
             ->middleware('permission:solicitacoes_cadastro.visualizar');
         Route::patch('/{solicitacao_cadastro}', [SolicitacaoCadastroController::class, 'update'])
-            ->middleware('permission:solicitacoes_cadastro.editar');
+            ->middleware('permission:solicitacoes_cadastro.analisar');
     });
 
 });
