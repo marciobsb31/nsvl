@@ -112,9 +112,13 @@ class LocalidadeController extends Controller
             new OA\Response(response: 422, description: 'Parâmetro uf inválido'),
         ]
     )]
-    public function municipios(Uf $uf)
+    public function municipios(string $ufParam)
     {
-        $municipios = $uf->municipios()->get();
+        $ufModel = ctype_digit($ufParam)
+            ? Uf::query()->where('id', (int) $ufParam)->firstOrFail()
+            : Uf::query()->where('sigla', strtoupper($ufParam))->firstOrFail();
+
+        $municipios = $ufModel->municipios()->orderBy('nome')->get();
 
         return MunicipioResource::collection($municipios);
     }

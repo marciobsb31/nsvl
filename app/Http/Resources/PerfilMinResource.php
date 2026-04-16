@@ -15,6 +15,7 @@ class PerfilMinResource extends JsonResource
             'codigo'    => $this->codigo,
             'descricao' => $this->descricao,
             'ativo'     => $this->ativo,
+            'esfera_id' => $this->esfera_id,
         ];
     }
 }

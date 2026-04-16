@@ -10,6 +10,7 @@ use App\Helpers\CpfHelper;
 use App\Mail\SolicitacaoCadastroAvaliada;
 use App\Mail\SolicitacaoCadastroEnviada;
 use App\Models\AuditLog;
+use App\Models\Perfil;
 use App\Models\PerfilUsuario;
 use App\Models\SolicitacaoCadastro;
 use App\Models\StatusSolicitacao;
@@ -133,6 +134,11 @@ class SolicitacaoCadastroService
 
     public function criar(array $dados): array
     {
+        // Validar hierarquia se gestor autenticado
+        $usuarioAutenticado = auth()->user();
+        if ($usuarioAutenticado) {
+            $this->validarHierarquiaCadastro($usuarioAutenticado, $dados);
+        }
 
         $usuario = Usuario::where('cpf', $dados['cpf'])->first();
 
@@ -170,7 +176,9 @@ class SolicitacaoCadastroService
             throw ApiException::unprocessable('Já existe uma solicitação em análise para este CPF. Aguarde a avaliação da equipe gestora antes de enviar uma nova solicitação.');
         }
 
-        $perfilIdSolicitado = isset($dados['perfilId']) ? (int) $dados['perfilId'] : null;
+        $perfilIdSolicitado = isset($dados['perfil_id']) && $dados['perfil_id'] !== null
+            ? (int) $dados['perfil_id']
+            : (isset($dados['perfilId']) && $dados['perfilId'] !== null ? (int) $dados['perfilId'] : null);
         if ($perfilIdSolicitado === 0) {
             $perfilIdSolicitado = null;
         }
@@ -652,5 +660,73 @@ class SolicitacaoCadastroService
         });
 
         return $perfis;
+    }
+
+    /**
+     * Valida que o gestor autenticado respeita a hierarquia de esfera ao cadastrar usuário.
+     * Federal: sem restrições.
+     * Estadual: deve cadastrar na mesma UF, esfera estadual e perfil estadual.
+     * Municipal: deve cadastrar na mesma UF + município, esfera municipal e perfil municipal.
+     */
+    private function validarHierarquiaCadastro(Usuario $gestor, array $dados): void
+    {
+        $gestor->loadMissing('contextoAtivo.abrangencia');
+        $abrangencia = $gestor->contextoAtivo?->abrangencia;
+
+        if (! $abrangencia) {
+            return;
+        }
+
+        try {
+            $esferaGestor = EsferaEnum::from((int) $abrangencia->esfera_id);
+        } catch (\ValueError) {
+            return;
+        }
+
+        if ($esferaGestor === EsferaEnum::FEDERAL) {
+            return;
+        }
+
+        $esferaRequisitada  = (int) ($dados['esfera_id'] ?? 0);
+        $ufRequisitada      = (int) ($dados['uf_id'] ?? 0);
+        $municipioRequisitado = (int) ($dados['municipio_id'] ?? 0);
+        $perfilRequisitadoId  = isset($dados['perfil_id']) && $dados['perfil_id'] !== null
+            ? (int) $dados['perfil_id']
+            : null;
+
+        if ($esferaGestor === EsferaEnum::ESTADUAL) {
+            if ($esferaRequisitada !== EsferaEnum::ESTADUAL->value) {
+                throw ApiException::forbidden('Acesso não permitido.');
+            }
+            if ($ufRequisitada !== (int) $abrangencia->uf_id) {
+                throw ApiException::forbidden('Acesso não permitido.');
+            }
+            if ($perfilRequisitadoId !== null) {
+                $perfil = Perfil::find($perfilRequisitadoId);
+                if (! $perfil || $perfil->esfera_id !== EsferaEnum::ESTADUAL->value) {
+                    throw ApiException::forbidden('Acesso não permitido.');
+                }
+            }
+
+            return;
+        }
+
+        if ($esferaGestor === EsferaEnum::MUNICIPAL) {
+            if ($esferaRequisitada !== EsferaEnum::MUNICIPAL->value) {
+                throw ApiException::forbidden('Acesso não permitido.');
+            }
+            if ($ufRequisitada !== (int) $abrangencia->uf_id) {
+                throw ApiException::forbidden('Acesso não permitido.');
+            }
+            if ($municipioRequisitado !== (int) $abrangencia->municipio_id) {
+                throw ApiException::forbidden('Acesso não permitido.');
+            }
+            if ($perfilRequisitadoId !== null) {
+                $perfil = Perfil::find($perfilRequisitadoId);
+                if (! $perfil || $perfil->esfera_id !== EsferaEnum::MUNICIPAL->value) {
+                    throw ApiException::forbidden('Acesso não permitido.');
+                }
+            }
+        }
     }
 }
