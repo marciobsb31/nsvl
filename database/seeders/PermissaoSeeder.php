@@ -13,9 +13,9 @@ class PermissaoSeeder extends Seeder
         $acoes = DB::table('acoes')->get()->keyBy('codigo');
 
         $matriz = [
-            'usuarios'              => ['visualizar', 'editar', 'excluir'],
-            'solicitacoes_cadastro' => ['visualizar', 'editar', 'analisar'],
-            'perfis'                => ['visualizar', 'editar'],
+            'usuarios'              => ['visualizar', 'editar', 'excluir', 'cadastrar'],
+            'solicitacoes_cadastro' => ['visualizar', 'editar', 'analisar', 'cadastrar'],
+            'perfis'                => ['visualizar', 'editar', 'cadastrar', 'excluir'],
             'plano_acao'            => ['visualizar', 'cadastrar', 'editar', 'enviar'],
             'relatorio_execucao'    => ['visualizar', 'cadastrar', 'editar', 'enviar'],
             'auditoria'             => ['visualizar'],

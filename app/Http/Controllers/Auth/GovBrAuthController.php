@@ -116,8 +116,8 @@ class GovBrAuthController extends Controller
             Cache::put(
                 $this->loginCodeCacheKey($loginCode),
                 [
-                    'token' => $plainTextToken,
-                    'user'  => $userData,
+                    'token'   => $plainTextToken,
+                    'usuario' => $userData,
                 ],
                 now()->addSeconds((int) config('govbr.login_code_ttl_seconds', 120))
             );
@@ -197,13 +197,13 @@ class GovBrAuthController extends Controller
         ]);
 
         $data = Cache::pull($this->loginCodeCacheKey($payload['code']));
-        if (! is_array($data) || empty($data['token']) || empty($data['user'])) {
+        if (! is_array($data) || empty($data['token']) || empty($data['usuario'])) {
             throw ApiException::unprocessable('Código de autenticação GOV.BR inválido ou expirado.');
         }
 
         return response()->json([
-            'token' => $data['token'],
-            'user'  => $data['user'],
+            'token'   => $data['token'],
+            'usuario' => $data['usuario'],
         ]);
     }
 
@@ -226,18 +226,19 @@ class GovBrAuthController extends Controller
             new OA\Response(response: 429, description: 'Limite de requisições'),
         ]
     )]
-    public function logout(Request $request): JsonResponse
+    public function logout(): JsonResponse
     {
-        $user = $request->user();
-        $request->user()?->currentAccessToken()?->delete();
+        $user = auth()->user();
+        $user->currentAccessToken()?->delete();
 
-        $this->auditLogService->log('auth.logout', $user?->id, [
-            'provider' => 'sanctum',
-        ], TipoAuditoria::LOGOUT->name);
+        $this->auditLogService->log(
+            'auth.logout',
+            $user->id,
+            ['provider' => 'sanctum'],
+            TipoAuditoria::LOGOUT->name
+        );
 
-        return response()->json([
-            'message' => 'Logout realizado com sucesso.',
-        ]);
+        return response()->json(['message' => 'Logout realizado com sucesso.']);
     }
 
     private function garantirConfiguracao(): void
