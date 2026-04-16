@@ -131,7 +131,6 @@ async function handleSair() {
 
 <style scoped>
 .sidebar {
-  width: 260px;
   min-width: 260px;
   background-color: var(--background);
   border-right: 1px solid var(--color-secondary-04, #ddd);
