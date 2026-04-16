@@ -149,6 +149,7 @@
           <div class="col-12 col-md-4">
             <SelectAutocomplete
               v-model="esferaAtuacao"
+              class="cadastro-select--sem-seta"
               label="Esfera de atuação"
               placeholder="Esfera de atuação"
               :options="opcoesEsferaFiltradas"
@@ -160,6 +161,7 @@
           <div class="col-12 col-md-3">
             <SelectAutocomplete
               ref="ufRef"
+              class="cadastro-select--sem-seta"
               :model-value="uf"
               @update:model-value="onUfChange"
               label="Estado (UF)"
@@ -172,14 +174,27 @@
             <Feedback v-if="errorsUf" :message="errorsUf" type="danger" />
           </div>
           <div class="col-12 col-md-5">
+            <div v-if="isMunicipioBloqueado" class="br-input">
+              <label for="cad-municipio-readonly"
+                >Município<span class="text-red-50 text-up-01"> *</span></label
+              >
+              <input
+                id="cad-municipio-readonly"
+                type="text"
+                :value="municipioBloqueadoLabel"
+                disabled
+                readonly
+              />
+            </div>
             <SelectAutocomplete
+              v-else
               ref="municipioRef"
               :model-value="municipio"
               @update:model-value="onMunicipioChange"
               label="Município"
               placeholder="Selecione o município."
               :options="opcoesMunicipioFiltradas"
-              :disabled="!uf || isMunicipioBloqueado"
+              :disabled="!uf"
               input-id="cad-municipio"
               required
             />
@@ -237,6 +252,9 @@
               required
             />
             <Feedback v-if="errorsPerfil" :message="errorsPerfil" type="danger" />
+            <span v-if="mensagemPerfisAtivosCpf" class="cadastro-field-hint cadastro-field-hint--info">
+              {{ mensagemPerfisAtivosCpf }}
+            </span>
           </div>
           <div class="br-input mb-2">
             <label for="cad-vigencia-inicio"
@@ -276,7 +294,7 @@
       </div>
       <div class="formulario-acoes">
         <button class="br-button secondary" type="button" @click="$emit('voltar')">Cancelar</button>
-        <button class="br-button primary" type="submit" :disabled="enviando">
+        <button class="br-button primary" type="submit" :disabled="enviando || !formularioPreenchido">
           {{ enviando ? 'Confirmando...' : 'Confirmar' }}
         </button>
       </div>
@@ -492,26 +510,73 @@ const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
 const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
 
 const verificandoCpf = ref(false)
+const perfisAtivosCpfIds = ref<number[]>([])
+const perfisAtivosCpfNomes = ref<string[]>([])
+const mensagemPerfisAtivosCpf = ref('')
 
-async function onCpfBlur() {
-  await validateField('CPF')
-  if (errorsCpf.value) return
+function limparRestricoesPerfilPorCpf() {
+  perfisAtivosCpfIds.value = []
+  perfisAtivosCpfNomes.value = []
+  mensagemPerfisAtivosCpf.value = ''
+}
 
-  const digitos = String(cpf.value ?? '').replace(/\D/g, '')
-  if (digitos.length !== 11) return
-  if (!validarCpf(digitos)) return
+function areaAtualParaValidacaoCpf() {
+  const esferaId = Number(esferaAtuacao.value ?? 0)
+  const ufId = Number(uf.value ?? 0)
+  const municipioId = Number(municipio.value ?? 0)
 
+  return {
+    ...(esferaId > 0 ? { esfera_id: esferaId } : {}),
+    ...(ufId > 0 ? { uf_id: ufId } : {}),
+    ...(municipioId > 0 ? { municipio_id: municipioId } : {}),
+  }
+}
+
+async function consultarPerfisAtivosDoCpf(digitos: string) {
   verificandoCpf.value = true
   try {
-    const res = await verificarCpfDisponivel(digitos)
+    const res = await verificarCpfDisponivel(digitos, areaAtualParaValidacaoCpf())
     if (!res.disponivel) {
+      limparRestricoesPerfilPorCpf()
       setFieldError('CPF', mapearMensagemCpf(res.mensagem))
+      return
     }
+
+    setFieldError('CPF', '')
+
+    const perfisAtivos = Array.isArray(res.perfis_ativos) ? res.perfis_ativos : []
+    perfisAtivosCpfIds.value = perfisAtivos
+      .map((p) => Number(p.id))
+      .filter((id) => Number.isFinite(id) && id > 0)
+    perfisAtivosCpfNomes.value = perfisAtivos
+      .map((p) => String(p.nome ?? '').trim())
+      .filter((nome) => nome.length > 0)
+
+    mensagemPerfisAtivosCpf.value = perfisAtivosCpfNomes.value.length
+      ? `Este CPF já possui perfil(is) ativo(s) nesta área: ${perfisAtivosCpfNomes.value.join(', ')}. Selecione outro perfil.`
+      : ''
   } catch {
+    limparRestricoesPerfilPorCpf()
     setFieldError('CPF', 'Não foi possível verificar o CPF. Tente novamente.')
   } finally {
     verificandoCpf.value = false
   }
+}
+
+async function onCpfBlur() {
+  await validateField('CPF')
+  if (errorsCpf.value) {
+    limparRestricoesPerfilPorCpf()
+    return
+  }
+
+  const digitos = String(cpf.value ?? '').replace(/\D/g, '')
+  if (digitos.length !== 11 || !validarCpf(digitos)) {
+    limparRestricoesPerfilPorCpf()
+    return
+  }
+
+  await consultarPerfisAtivosDoCpf(digitos)
 }
 
 const esferasStore = useEsferasStore()
@@ -524,53 +589,183 @@ const municipioStore = useMunicipioStore()
 const opcoesMunicipio = computed(() => municipioStore.municipiosOptions)
 
 const { opcoesPerfil, carregarPerfis } = usePerfis()
-const esferaUsuarioLogado = computed(() =>
-  String(props.usuarioLogado?.contexto?.esfera ?? '').toLowerCase(),
-)
+const PERFIS_ESTADUAIS_PERMITIDOS = [
+  'gestor estadual',
+  'administrador estadual',
+  'visitante estadual',
+] as const
+const PERFIS_MUNICIPAIS_PERMITIDOS = [
+  'gestor municipal',
+  'administrador municipal',
+  'visitante municipal',
+] as const
+
+function normalizarTexto(valor: string): string {
+  return String(valor ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+function encontrarOpcaoEsferaPorCodigo(codigo: 'federal' | 'estadual' | 'municipal') {
+  return opcoesEsfera.value.find((opcao) => normalizarTexto(String(opcao.label)) === codigo)
+}
+
+const esferaUsuarioLogado = computed(() => {
+  const esferaContexto = normalizarTexto(String(props.usuarioLogado?.contexto?.esfera ?? ''))
+  if (esferaContexto === 'federal' || esferaContexto === 'estadual' || esferaContexto === 'municipal') {
+    return esferaContexto
+  }
+
+  const nomePerfil = normalizarTexto(String(props.usuarioLogado?.contexto?.perfil ?? ''))
+  if (nomePerfil.includes('estadual')) return 'estadual'
+  if (nomePerfil.includes('municipal')) return 'municipal'
+  return 'federal'
+})
+
+const ufSiglaContexto = computed(() => {
+  const ufIdContexto = Number(props.usuarioLogado?.contexto?.uf_id ?? 0)
+  if (ufIdContexto > 0) {
+    const ufDoContexto = ufStore.ufsLista.find((item) => Number(item.id) === ufIdContexto)
+    if (ufDoContexto?.sigla) return String(ufDoContexto.sigla).toUpperCase()
+  }
+
+  const ufLotacao = String(props.usuarioLogado?.uf_lotacao ?? '').trim().toUpperCase()
+  return ufLotacao
+})
+
+const municipioIdContexto = computed(() => {
+  const municipioId = props.usuarioLogado?.contexto?.municipio_id
+  if (municipioId != null && String(municipioId).trim() !== '') {
+    return String(municipioId)
+  }
+
+  const municipioLotacao = String(props.usuarioLogado?.municipio_lotacao ?? '').trim().toLowerCase()
+  if (!municipioLotacao) return ''
+  const municipioEncontrado = municipioStore.municipiosLista.find(
+    (item) => String(item.nome ?? '').trim().toLowerCase() === municipioLotacao,
+  )
+  return municipioEncontrado ? String(municipioEncontrado.id) : ''
+})
+
 const isEsferaBloqueada = computed(
   () => esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal',
 )
 const isUfBloqueada = computed(
   () => esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal',
 )
-const isMunicipioBloqueado = computed(() => esferaUsuarioLogado.value === 'municipal')
+const isMunicipioBloqueado = computed(
+  () => esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal',
+)
 const opcoesEsferaFiltradas = computed(() => {
   if (esferaUsuarioLogado.value === 'estadual') {
-    return opcoesEsfera.value.filter((o) => String(o.value).toLowerCase() === 'estadual')
+    return opcoesEsfera.value.filter((o) => normalizarTexto(String(o.label)) === 'estadual')
   }
   if (esferaUsuarioLogado.value === 'municipal') {
-    return opcoesEsfera.value.filter((o) => String(o.value).toLowerCase() === 'municipal')
+    return opcoesEsfera.value.filter((o) => normalizarTexto(String(o.label)) === 'municipal')
   }
   return opcoesEsfera.value
 })
 const opcoesUfFiltradas = computed(() => {
-  if (isUfBloqueada.value && props.usuarioLogado?.contexto?.uf_id) {
-    return opcoesUf.value.filter((o) => o.value === props.usuarioLogado?.contexto?.uf_id)
+  if (isUfBloqueada.value && ufSiglaContexto.value) {
+    return opcoesUf.value.filter((o) => String(o.value).toUpperCase() === ufSiglaContexto.value)
   }
   return opcoesUf.value
 })
 const opcoesMunicipioFiltradas = computed(() => {
-  if (isMunicipioBloqueado.value && props.usuarioLogado?.contexto?.municipio_id) {
-    return opcoesMunicipio.value.filter(
-      (o) => o.value === props.usuarioLogado?.contexto?.municipio_id,
-    )
+  if (isMunicipioBloqueado.value && municipioIdContexto.value) {
+    return opcoesMunicipio.value.filter((o) => String(o.value) === municipioIdContexto.value)
   }
   return opcoesMunicipio.value
 })
-const opcoesPerfilFiltradas = computed(() => {
+
+const municipioBloqueadoLabel = computed(() => {
+  const valorMunicipio = String(municipio.value ?? '').trim()
+  if (!valorMunicipio) return ''
+
+  const opcao = opcoesMunicipio.value.find((o) => String(o.value) === valorMunicipio)
+  if (opcao) return String(opcao.label)
+
+  const municipioLista = municipioStore.municipiosLista.find(
+    (item) => String(item.id) === valorMunicipio,
+  )
+  if (municipioLista?.nome) return String(municipioLista.nome)
+
+  return valorMunicipio
+})
+const opcoesPerfilPorEsfera = computed(() => {
   if (esferaUsuarioLogado.value === 'estadual') {
-    return opcoesPerfil.value.filter((p) => String(p.label).toLowerCase().includes('estadual'))
+    return opcoesPerfil.value.filter((p) =>
+      PERFIS_ESTADUAIS_PERMITIDOS.includes(
+        normalizarTexto(String(p.label)) as (typeof PERFIS_ESTADUAIS_PERMITIDOS)[number],
+      ),
+    )
   }
   if (esferaUsuarioLogado.value === 'municipal') {
-    return opcoesPerfil.value.filter((p) => String(p.label).toLowerCase().includes('municipal'))
+    return opcoesPerfil.value.filter((p) =>
+      PERFIS_MUNICIPAIS_PERMITIDOS.includes(
+        normalizarTexto(String(p.label)) as (typeof PERFIS_MUNICIPAIS_PERMITIDOS)[number],
+      ),
+    )
   }
   return opcoesPerfil.value
 })
+
+const opcoesPerfilFiltradas = computed(() => {
+  if (!perfisAtivosCpfIds.value.length) return opcoesPerfilPorEsfera.value
+
+  return opcoesPerfilPorEsfera.value.filter((p) => {
+    const perfilId = Number(p.value)
+    return !perfisAtivosCpfIds.value.includes(perfilId)
+  })
+})
+
+function aplicarContextoTerritorialNoFormulario() {
+  if (esferaUsuarioLogado.value === 'estadual') {
+    const esferaSelecionada = encontrarOpcaoEsferaPorCodigo('estadual')
+    if (esferaSelecionada) {
+      esferaAtuacao.value = String(esferaSelecionada.value)
+      setFieldValue('esferaAtuacao', esferaAtuacao.value)
+    }
+
+    if (ufSiglaContexto.value) {
+      uf.value = ufSiglaContexto.value
+      setFieldValue('uf', uf.value)
+    }
+
+    if (municipioIdContexto.value) {
+      municipio.value = municipioIdContexto.value
+      setFieldValue('municipio', municipio.value)
+    }
+
+    return
+  }
+
+  if (esferaUsuarioLogado.value === 'municipal') {
+    const esferaSelecionada = encontrarOpcaoEsferaPorCodigo('municipal')
+    if (esferaSelecionada) {
+      esferaAtuacao.value = String(esferaSelecionada.value)
+      setFieldValue('esferaAtuacao', esferaAtuacao.value)
+    }
+
+    if (ufSiglaContexto.value) {
+      uf.value = ufSiglaContexto.value
+      setFieldValue('uf', uf.value)
+    }
+
+    if (municipioIdContexto.value) {
+      municipio.value = municipioIdContexto.value
+      setFieldValue('municipio', municipio.value)
+    }
+  }
+}
 
 onMounted(async () => {
   await esferasStore.carregarEsferas()
   await ufStore.carregarUfs()
   await carregarPerfis()
+  aplicarContextoTerritorialNoFormulario()
 })
 
 watch(
@@ -582,21 +777,15 @@ watch(
 )
 
 watch(
-  () => props.usuarioLogado,
-  (usuario) => {
-    if (!usuario) return
-
-    if (esferaUsuarioLogado.value === 'estadual') {
-      esferaAtuacao.value = 'estadual'
-      if (usuario.uf_lotacao) uf.value = usuario.uf_lotacao
-      return
-    }
-
-    if (esferaUsuarioLogado.value === 'municipal') {
-      esferaAtuacao.value = 'municipal'
-      if (usuario.uf_lotacao) uf.value = usuario.uf_lotacao
-      if (usuario.municipio_lotacao) municipio.value = usuario.municipio_lotacao
-    }
+  () => [
+    props.usuarioLogado,
+    esferaUsuarioLogado.value,
+    ufSiglaContexto.value,
+    municipioIdContexto.value,
+    opcoesEsfera.value.length,
+  ],
+  () => {
+    aplicarContextoTerritorialNoFormulario()
   },
   { immediate: true, deep: true },
 )
@@ -608,15 +797,44 @@ watch(opcoesPerfilFiltradas, (opcoes) => {
   }
   if (perfil.value == null) return
   const existe = opcoes.some((op) => String(op.value) === String(perfil.value))
-  if (!existe) perfil.value = null
+  if (!existe) {
+    const perfilBloqueadoPorCpf = perfisAtivosCpfIds.value.includes(Number(perfil.value))
+    perfil.value = null
+    if (perfilBloqueadoPorCpf) {
+      setFieldError(
+        'perfil',
+        'Este CPF já possui o perfil selecionado ativo para a área de atuação informada. Selecione outro perfil.',
+      )
+    }
+  }
 })
 
+watch(cpf, () => {
+  limparRestricoesPerfilPorCpf()
+})
+
+watch(
+  () => [esferaAtuacao.value, uf.value, municipio.value],
+  async () => {
+    const digitos = String(cpf.value ?? '').replace(/\D/g, '')
+    if (digitos.length !== 11 || !validarCpf(digitos)) {
+      limparRestricoesPerfilPorCpf()
+      return
+    }
+
+    await consultarPerfisAtivosDoCpf(digitos)
+  },
+)
+
 watch(opcoesMunicipioFiltradas, (opcoes) => {
-  if (!isMunicipioBloqueado.value) return
-  const municipioLotacao = String(props.usuarioLogado?.municipio_lotacao ?? '')
-  if (!municipioLotacao) return
-  const opcao = opcoes.find((o) => String(o.label).toLowerCase() === municipioLotacao.toLowerCase())
-  if (opcao) municipio.value = String(opcao.value ?? opcao.label)
+  if (!municipioIdContexto.value) return
+  const opcao = opcoes.find((o) => String(o.value) === municipioIdContexto.value)
+  if (!opcao) return
+
+  if (isMunicipioBloqueado.value || !municipio.value) {
+    municipio.value = String(opcao.value)
+    setFieldValue('municipio', municipio.value)
+  }
 })
 
 const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
@@ -641,7 +859,7 @@ const formularioPreenchido = computed(() => {
   const todosPreenchidos = camposTexto.every((f) => String(f.value ?? '').trim() !== '')
   const perfilPreenchido = perfil.value !== null && perfil.value !== ''
   const vigenciaPreenchida = String(vigenciaInicio.value ?? '').trim() !== ''
-  return todosPreenchidos && perfilPreenchido && vigenciaPreenchida && formMeta.value.valid
+  return todosPreenchidos && perfilPreenchido && vigenciaPreenchida
 })
 
 const MAPA_CAMPO_PARA_FOCO: Record<string, string> = {
@@ -836,46 +1054,41 @@ async function onSubmit(values: Record<string, unknown>) {
 }
 
 function validarHierarquiaNoFrontend(_values: Record<string, unknown>): string | null {
-  const esferaVal = String(esferaAtuacao.value ?? '').toLowerCase()
+  const esferaSelecionada = opcoesEsfera.value.find(
+    (opcao) => String(opcao.value) === String(esferaAtuacao.value ?? ''),
+  )
+  const esferaVal = normalizarTexto(String(esferaSelecionada?.label ?? ''))
   const ufValor = String(uf.value ?? '').toUpperCase()
-  const municipioValor = String(municipio.value ?? '')
-    .toLowerCase()
-    .trim()
+  const municipioValor = String(municipio.value ?? '').trim()
   const perfilSelecionado = opcoesPerfil.value.find(
     (op: PerfilOption) => String(op.value) === String(perfil.value ?? ''),
   )
-  const tipoPerfil = inferirTipoPerfilPorNome(perfilSelecionado?.label ?? '')
+  const nomePerfilSelecionado = normalizarTexto(String(perfilSelecionado?.label ?? ''))
 
   if (esferaUsuarioLogado.value === 'estadual') {
-    if (tipoPerfil !== 'estadual' || esferaVal !== 'estadual') return 'Acesso não permitido.'
-    if (ufValor !== String(props.usuarioLogado?.uf_lotacao ?? '').toUpperCase())
+    if (!PERFIS_ESTADUAIS_PERMITIDOS.includes(nomePerfilSelecionado as (typeof PERFIS_ESTADUAIS_PERMITIDOS)[number])) {
       return 'Acesso não permitido.'
+    }
+    if (esferaVal !== 'estadual') return 'Acesso não permitido.'
+    if (ufSiglaContexto.value && ufValor !== ufSiglaContexto.value) {
+      return 'Acesso não permitido.'
+    }
   }
 
   if (esferaUsuarioLogado.value === 'municipal') {
-    if (tipoPerfil !== 'municipal' || esferaVal !== 'municipal') return 'Acesso não permitido.'
-    if (ufValor !== String(props.usuarioLogado?.uf_lotacao ?? '').toUpperCase())
+    if (!PERFIS_MUNICIPAIS_PERMITIDOS.includes(nomePerfilSelecionado as (typeof PERFIS_MUNICIPAIS_PERMITIDOS)[number])) {
       return 'Acesso não permitido.'
-    if (
-      municipioValor !==
-      String(props.usuarioLogado?.municipio_lotacao ?? '')
-        .toLowerCase()
-        .trim()
-    )
+    }
+    if (esferaVal !== 'municipal') return 'Acesso não permitido.'
+    if (ufSiglaContexto.value && ufValor !== ufSiglaContexto.value) {
       return 'Acesso não permitido.'
+    }
+    if (municipioIdContexto.value && municipioValor !== municipioIdContexto.value) {
+      return 'Acesso não permitido.'
+    }
   }
 
   return null
-}
-
-function inferirTipoPerfilPorNome(
-  nome: string,
-): 'federal' | 'estadual' | 'municipal' | 'desconhecido' {
-  const label = nome.toLowerCase()
-  if (label.includes('federal') || label.includes('nacional')) return 'federal'
-  if (label.includes('estadual')) return 'estadual'
-  if (label.includes('municipal')) return 'municipal'
-  return 'desconhecido'
 }
 </script>
 
@@ -983,6 +1196,14 @@ function inferirTipoPerfilPorNome(
   margin-bottom: 0.25rem;
 }
 
+.cadastro-select--sem-seta :deep(.br-input .br-button) {
+  display: none !important;
+}
+
+.cadastro-select--sem-seta :deep(.br-input input) {
+  padding-right: 0.75rem !important;
+}
+
 .cadastro-field-hint {
   display: block;
   font-size: 0.75rem;
@@ -994,6 +1215,10 @@ function inferirTipoPerfilPorNome(
 .cadastro-field-hint--loading {
   color: var(--primary-text-color);
   font-style: italic;
+}
+
+.cadastro-field-hint--info {
+  color: var(--color-primary-default, #1351b4);
 }
 
 .cadastro-label-opcional {

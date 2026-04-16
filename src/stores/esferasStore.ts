@@ -1,17 +1,17 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { listarEsferas } from '@/services/EsferaService'
+import { listarEsferas, type EsferaOption } from '@/services/EsferaService'
 
 export const useEsferasStore = defineStore('useEsferasStore', () => {
   //state
-  const esferasLista = ref<any[]>([])
+  const esferasLista = ref<EsferaOption[]>([])
   const carregandoEsferas = ref(false)
 
   //getters
   const esferasOptions = computed(() => {
     return (esferasLista.value ?? []).map((esfera) => ({
-      label: esfera.nome,
-      value: esfera.id,
+      label: esfera.label,
+      value: esfera.value,
     }))
   })
 

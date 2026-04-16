@@ -14,14 +14,25 @@ export const useAuthStore = defineStore('useAuthStore', () => {
   const userName = computed(() => user.value?.name ?? '')
   const userEmail = computed(() => user.value?.email ?? '')
 
-  const perfisAtivos = computed(() => user.value?.perfis ?? [])
+  const perfisAtivos = computed(() => {
+    const hoje = new Date().toISOString().slice(0, 10)
+    return (user.value?.perfis ?? []).filter((perfil) => {
+      if (!perfil.ativo) return false
+      const inicio = perfil.data_inicio_vigencia ? String(perfil.data_inicio_vigencia).slice(0, 10) : null
+      const fim = perfil.data_fim_vigencia ? String(perfil.data_fim_vigencia).slice(0, 10) : null
+      const inicioValido = !inicio || inicio <= hoje
+      const fimValido = !fim || fim >= hoje
+      return inicioValido && fimValido
+    })
+  })
 
   const possuiMultiplosPerfis = computed(() => perfisAtivos.value.length > 1)
   const permissoes = computed(() => user.value?.permissions ?? [])
 
   const perfilAtivo = computed(() => {
     if (!user.value) return null
-    const ativoFromApi = perfisAtivos.value.find((p) => p.ativo === true)
+    const ativoFromApi = perfisAtivos.value.find((p) => p.id === Number(user.value?.contexto?.perfil_usuario_id))
+      ?? perfisAtivos.value.find((p) => p.ativo === true)
     if (ativoFromApi) return ativoFromApi
     return perfisAtivos.value[0] ?? null
   })
@@ -55,26 +66,55 @@ export const useAuthStore = defineStore('useAuthStore', () => {
         esfera: rawContexto?.esfera ? String(rawContexto.esfera) : '',
         localidade: rawContexto?.localidade ? String(rawContexto.localidade) : '',
         perfil: rawContexto?.perfil ? String(rawContexto.perfil) : '',
+        perfil_usuario_id: rawContexto?.perfil_usuario_id ? Number(rawContexto.perfil_usuario_id) : undefined,
+        uf_id: rawContexto?.uf_id ? Number(rawContexto.uf_id) : undefined,
+        municipio_id: rawContexto?.municipio_id ? Number(rawContexto.municipio_id) : undefined,
       },
       perfis: rawPerfis,
       permissions: payload.permissions ? (payload.permissions as string[]) : [],
     }
   }
 
-  function temPermissao(_modulo: string, _acao?: string): boolean {
-    const esfera = user.value?.contexto.esfera ?? 'federal'
-    if (esfera.toLowerCase() === 'federal') return true
-    return perfisAtivos.value.length > 0
+  function temPermissao(modulo: string, _acao?: string): boolean {
+    const esferaContexto = String(user.value?.contexto?.esfera ?? '').toLowerCase().trim()
+    const esferaPerfilAtivo = String(perfilAtivo.value?.esfera ?? '').toLowerCase().trim()
+    if (esferaContexto === 'federal' || esferaPerfilAtivo === 'federal') {
+      return true
+    }
+
+    const lista = permissoes.value
+    if (lista.includes(modulo)) return true
+
+    const mapeamentoPorModulo: Record<string, string[]> = {
+      'Gerenciar Cadastros': ['solicitacoes_cadastro.'],
+      'Plano de Ação': ['plano_acao.'],
+      Relatórios: ['relatorio_execucao.'],
+      'Gerenciar Perfis': ['perfis.'],
+    }
+
+    const prefixes = mapeamentoPorModulo[modulo] ?? []
+    if (prefixes.length > 0) {
+      return lista.some((permissao) => prefixes.some((prefix) => permissao.startsWith(prefix)))
+    }
+
+    return false
   }
 
   async function trocarContexto(perfilUsuarioId: number): Promise<void> {
     trocandoContexto.value = true
     error.value = null
     try {
-      const { data } = await api.post<{ user: Record<string, unknown> }>('/user/trocar-contexto', {
+      const { data } = await api.post<{ user?: Record<string, unknown> }>('/contextos/selecionar', {
         perfil_usuario_id: perfilUsuarioId,
       })
-      setUser(data.user)
+
+      if (data?.user) {
+        setUser(data.user)
+      } else {
+        const usuarioAtualizado = await api.get<Record<string, unknown>>('/usuario')
+        setUser(usuarioAtualizado.data)
+      }
+
       contextKey.value++
     } catch (e: unknown) {
       const msg =
