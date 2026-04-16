@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\StatusSolicitacaoEnum;
+use App\Support\MvpPerfilRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -27,7 +28,11 @@ class AvaliarSolicitacaoRequest extends FormRequest
             'perfil_id' => [
                 Rule::requiredIf(fn () => (int) $this->status_id === StatusSolicitacaoEnum::APROVADO->value),
                 'integer',
-                'exists:perfis,id',
+                Rule::exists('perfis', 'id')->where(function ($query) {
+                    $query
+                        ->where('ativo', true)
+                        ->whereIn('codigo', MvpPerfilRules::mvpProfileCodes());
+                }),
             ],
 
             'vigencia_inicio' => [

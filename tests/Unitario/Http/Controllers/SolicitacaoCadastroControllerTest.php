@@ -42,7 +42,7 @@ class SolicitacaoCadastroControllerTest extends TestCase
         $service = $this->createMock(SolicitacaoCadastroService::class);
         $service->expects($this->once())
             ->method('verificarCpf')
-            ->with('11144477735')
+            ->with('11144477735', null, null, null)
             ->willReturn([
                 'disponivel' => true,
                 'mensagem'   => 'CPF disponível para cadastro.',

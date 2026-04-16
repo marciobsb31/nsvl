@@ -17,6 +17,7 @@ use App\Models\StatusSolicitacao;
 use App\Models\Usuario;
 use App\Models\UsuarioAbrangencia;
 use App\Services\Audit\AuditLogService;
+use App\Support\MvpPerfilRules;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -179,6 +180,38 @@ class SolicitacaoCadastroService
             : (isset($dados['perfilId']) && $dados['perfilId'] !== null ? (int) $dados['perfilId'] : null);
         if ($perfilIdSolicitado === 0) {
             $perfilIdSolicitado = null;
+        }
+
+        if ($usuario && $perfilIdSolicitado) {
+            $hoje = now()->toDateString();
+            $jaPossuiPerfilAtivoNaAbrangencia = PerfilUsuario::query()
+                ->where('usuario_id', $usuario->id)
+                ->where('perfil_id', $perfilIdSolicitado)
+                ->where('ativo', true)
+                ->where(function ($q) use ($hoje) {
+                    $q->whereNull('data_inicio_vigencia')->orWhere('data_inicio_vigencia', '<=', $hoje);
+                })
+                ->where(function ($q) use ($hoje) {
+                    $q->whereNull('data_fim_vigencia')->orWhere('data_fim_vigencia', '>=', $hoje);
+                })
+                ->whereHas('abrangencia', function ($q) use ($dados) {
+                    if (isset($dados['esfera_id']) && $dados['esfera_id'] !== null) {
+                        $q->where('esfera_id', (int) $dados['esfera_id']);
+                    }
+                    if (isset($dados['uf_id']) && $dados['uf_id'] !== null) {
+                        $q->where('uf_id', (int) $dados['uf_id']);
+                    }
+                    if (isset($dados['municipio_id']) && $dados['municipio_id'] !== null) {
+                        $q->where('municipio_id', (int) $dados['municipio_id']);
+                    }
+                })
+                ->exists();
+
+            if ($jaPossuiPerfilAtivoNaAbrangencia) {
+                throw ApiException::unprocessable(
+                    'Este CPF já possui o perfil selecionado ativo para a área de atuação informada. Selecione outro perfil.'
+                );
+            }
         }
 
         $solicitacao = SolicitacaoCadastro::create([
@@ -373,7 +406,12 @@ class SolicitacaoCadastroService
     // Verificar CPF
     // ------------------------------------------------------------------
 
-    public function verificarCpf(string $cpfRaw): array
+    public function verificarCpf(
+        string $cpfRaw,
+        ?int $esferaId = null,
+        ?int $ufId = null,
+        ?int $municipioId = null
+    ): array
     {
         $cpf = preg_replace('/\D/', '', $cpfRaw);
 
@@ -395,13 +433,55 @@ class SolicitacaoCadastroService
             return ['disponivel' => false, 'mensagem' => 'Já existe uma solicitação em análise para este CPF.'];
         }
 
-        // Verificar se possui perfil vigente (ativo) — se sim, bloqueia
         $usuario = Usuario::where('cpf', $cpf)->first();
-        if ($usuario && $usuario->perfisVigentes()) {
-            return ['disponivel' => false, 'mensagem' => 'Este CPF já possui perfil ativo no sistema.'];
+        if (! $usuario) {
+            return ['disponivel' => true, 'mensagem' => 'CPF disponível para cadastro.', 'perfis_ativos' => []];
         }
 
-        return ['disponivel' => true, 'mensagem' => 'CPF disponível para cadastro.'];
+        $hoje = now()->toDateString();
+        $perfisAtivosQuery = PerfilUsuario::query()
+            ->with(['perfil:id,nome,codigo', 'abrangencia:id,esfera_id,uf_id,municipio_id'])
+            ->where('usuario_id', $usuario->id)
+            ->where('ativo', true)
+            ->where(function ($q) use ($hoje) {
+                $q->whereNull('data_inicio_vigencia')->orWhere('data_inicio_vigencia', '<=', $hoje);
+            })
+            ->where(function ($q) use ($hoje) {
+                $q->whereNull('data_fim_vigencia')->orWhere('data_fim_vigencia', '>=', $hoje);
+            });
+
+        if ($esferaId !== null) {
+            $perfisAtivosQuery->whereHas('abrangencia', fn ($q) => $q->where('esfera_id', $esferaId));
+        }
+
+        if ($ufId !== null) {
+            $perfisAtivosQuery->whereHas('abrangencia', fn ($q) => $q->where('uf_id', $ufId));
+        }
+
+        if ($municipioId !== null) {
+            $perfisAtivosQuery->whereHas('abrangencia', fn ($q) => $q->where('municipio_id', $municipioId));
+        }
+
+        $perfisAtivos = $perfisAtivosQuery
+            ->get()
+            ->map(fn ($perfilUsuario) => [
+                'id' => (int) $perfilUsuario->perfil_id,
+                'nome' => (string) ($perfilUsuario->perfil?->nome ?? ''),
+                'codigo' => (string) ($perfilUsuario->perfil?->codigo ?? ''),
+            ])
+            ->unique('id')
+            ->values()
+            ->all();
+
+        $mensagem = count($perfisAtivos) > 0
+            ? 'Este CPF já possui perfil ativo nesta área de atuação. Selecione outro perfil.'
+            : 'CPF disponível para cadastro.';
+
+        return [
+            'disponivel' => true,
+            'mensagem' => $mensagem,
+            'perfis_ativos' => $perfisAtivos,
+        ];
     }
 
     // ------------------------------------------------------------------
@@ -573,30 +653,17 @@ class SolicitacaoCadastroService
             return;
         }
 
-        $operador->load('contextoAtivo.abrangencia');
-        $esferaIdOperador = $operador->contextoAtivo?->abrangencia?->esfera_id;
-
-        // Federal (ou sem contexto definido) pode atribuir qualquer perfil
-        if ($esferaIdOperador === null || (int) $esferaIdOperador === EsferaEnum::FEDERAL->value) {
-            return;
-        }
-
         $perfilSolicitado = \App\Models\Perfil::find($perfilId);
         if (! $perfilSolicitado) {
             return;
         }
 
-        $esferaIdPerfil = (int) $perfilSolicitado->esfera_id;
+        $codigoPerfilOperador = MvpPerfilRules::resolveActiveProfileCode($operador);
+        $codigoPerfilSolicitado = (string) $perfilSolicitado->codigo;
 
-        if ((int) $esferaIdOperador === EsferaEnum::ESTADUAL->value && $esferaIdPerfil !== EsferaEnum::ESTADUAL->value) {
+        if (! MvpPerfilRules::canEvaluatorAssign($codigoPerfilOperador, $codigoPerfilSolicitado)) {
             throw ValidationException::withMessages([
-                'perfil_id' => ['Perfil estadual só pode atribuir perfis do tipo Estadual.'],
-            ]);
-        }
-
-        if ((int) $esferaIdOperador === EsferaEnum::MUNICIPAL->value && $esferaIdPerfil !== EsferaEnum::MUNICIPAL->value) {
-            throw ValidationException::withMessages([
-                'perfil_id' => ['Perfil municipal só pode atribuir perfis do tipo Municipal.'],
+                'perfil_id' => ['O perfil autenticado não pode atribuir o perfil selecionado.'],
             ]);
         }
     }

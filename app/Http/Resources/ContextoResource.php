@@ -10,6 +10,7 @@ class ContextoResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'perfil_usuario_id' => $this->perfil_usuario_id ? (int) $this->perfil_usuario_id : null,
             'perfil'       => $this->perfilUsuario?->perfil?->nome,
             'esfera'       => $this->abrangencia?->esfera?->nome,
             'localidade'   => $this->abrangencia?->nome,

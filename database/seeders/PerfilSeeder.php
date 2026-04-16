@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Support\MvpPerfilRules;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -92,5 +93,12 @@ class PerfilSeeder extends Seeder
                 ])
             );
         }
+
+        DB::table('perfis')
+            ->whereNotIn('codigo', MvpPerfilRules::mvpProfileCodes())
+            ->update([
+                'ativo' => false,
+                'updated_at' => $now,
+            ]);
     }
 }

@@ -143,8 +143,17 @@ class SolicitacaoCadastroController extends Controller
     )]
     public function verificarCpf(Request $request): JsonResponse
     {
+        $esferaId = $request->query('esfera_id');
+        $ufId = $request->query('uf_id');
+        $municipioId = $request->query('municipio_id');
+
         return response()->json(
-            $this->service->verificarCpf((string) $request->query('cpf', ''))
+            $this->service->verificarCpf(
+                (string) $request->query('cpf', ''),
+                is_numeric($esferaId) ? (int) $esferaId : null,
+                is_numeric($ufId) ? (int) $ufId : null,
+                is_numeric($municipioId) ? (int) $municipioId : null,
+            )
         );
     }
 
