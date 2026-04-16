@@ -18,6 +18,7 @@ class RecursoSeeder extends Seeder
             ['codigo' => 'auditoria', 'nome' => 'Auditoria', 'descricao' => 'Logs do sistema.'],
             ['codigo' => 'plano_acao', 'nome' => 'Plano de Ação', 'descricao' => 'Gestão e envio de planos de ação.'],
             ['codigo' => 'relatorio_execucao', 'nome' => 'Relatório de Execução', 'descricao' => 'Relatórios de prestação de contas.'],
+            ['codigo' => 'relatorios', 'nome' => 'Relatórios', 'descricao' => 'Relatórios'],
         ];
 
         foreach ($recursos as $recurso) {
