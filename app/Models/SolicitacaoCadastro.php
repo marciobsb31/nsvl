@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Models\Scopes\AbrangenciaScope;
 use App\Traits\FilterScope;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -117,43 +116,5 @@ class SolicitacaoCadastro extends Model
     public function getMunicipioNomeAttribute(): string
     {
         return $this->getMunicipioAttribute();
-    }
-
-    /**
-     * Scope: filtra solicitações conforme esfera de atuação do usuário.
-     *  - Federal: acesso irrestrito
-     *  - Estadual: apenas mesma esfera + mesma UF
-     *  - Municipal: apenas mesma esfera + mesma UF + mesmo município
-     *
-     * @param  Builder<self>  $query
-     */
-    public function scopeVisivelPara(Builder $query, Usuario $user): void
-    {
-        $esfera = $user->esfera_atuacao;
-
-        if ($esfera === 'federal' || $esfera === 'Federal') {
-            return;
-        }
-
-        $ufSigla = $user->uf_lotacao;
-        $municipioNome = $user->municipio_lotacao;
-
-        if (strtolower($esfera) === 'estadual') {
-            $esferaId = Esfera::where('nome', 'Estadual')->value('id');
-            $ufId = Uf::where('sigla', $ufSigla)->value('id');
-            $query->where('esfera_id', $esferaId)
-                ->where('uf_id', $ufId);
-
-            return;
-        }
-
-        if (strtolower($esfera) === 'municipal') {
-            $esferaId = Esfera::where('nome', 'Municipal')->value('id');
-            $ufId = Uf::where('sigla', $ufSigla)->value('id');
-            $municipioId = Municipio::where('nome', $municipioNome)->where('uf_id', $ufId)->value('id');
-            $query->where('esfera_id', $esferaId)
-                ->where('uf_id', $ufId)
-                ->where('municipio_id', $municipioId);
-        }
     }
 }

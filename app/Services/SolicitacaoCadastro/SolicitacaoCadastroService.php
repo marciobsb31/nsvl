@@ -58,8 +58,6 @@ class SolicitacaoCadastroService
             report($e);
         }
 
-        $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
-
         return [
             'id'                         => $solicitacao->id,
             'nome'                       => $solicitacao->usuario?->nome ?? '',
@@ -284,7 +282,7 @@ class SolicitacaoCadastroService
                 ], [
                     'nome'                  => "{$solicitacao->esfera?->nome} - {$nomeLocalidade}",
                     'origem_tipo'           => 'solicitacao_cadastro',
-                    'origem_id'             => $solicitacao->id,
+                    'solicitacao_cadastro_origem_id' => $solicitacao->id,
                     'ativo'                 => true,
                     'criado_por_usuario_id' => auth()->id(),
                 ]);
