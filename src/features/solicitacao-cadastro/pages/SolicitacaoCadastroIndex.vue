@@ -182,7 +182,6 @@ const { success, error } = useNotification()
 
 const govbrNome = (route.query.nome as string) ?? ''
 const govbrCpf = (route.query.cpf as string) ?? ''
-const govbrEmail = (route.query.email as string) ?? ''
 const modoGovBr = !!(govbrNome && govbrCpf)
 
 function formatarCpf(cpf: string): string {
@@ -209,7 +208,7 @@ const schemaSolicitacao = computed(() =>
 const initialValues = computed(() => ({
   nome: modoGovBr ? govbrNome : '',
   CPF: modoGovBr ? formatarCpf(govbrCpf) : '',
-  emailInstitucional: modoGovBr ? govbrEmail : '',
+  emailInstitucional: '',
   telefoneInstitucional: '',
   telefonePessoal: '',
   esferaAtuacao: '',
