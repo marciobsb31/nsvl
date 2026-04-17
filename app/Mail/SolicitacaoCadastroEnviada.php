@@ -20,7 +20,7 @@ class SolicitacaoCadastroEnviada extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'NVSL — Solicitação de Cadastro Recebida',
+            subject: 'NVSL - Solicitação de Cadastro Recebida',
         );
     }
 
