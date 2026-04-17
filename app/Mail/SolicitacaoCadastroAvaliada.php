@@ -22,8 +22,8 @@ class SolicitacaoCadastroAvaliada extends Mailable
     public function envelope(): Envelope
     {
         $assunto = $this->status === 'aprovado'
-            ? 'NVSL - Solicitacao de Cadastro Aprovada'
-            : 'NVSL - Solicitacao de Cadastro Reprovada';
+            ? 'NVSL - Solicitação de Cadastro Aprovada'
+            : 'NVSL - Solicitação de Cadastro Reprovada';
 
         return new Envelope(subject: $assunto);
     }
