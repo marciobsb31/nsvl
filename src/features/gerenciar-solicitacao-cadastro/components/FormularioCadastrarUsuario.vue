@@ -589,6 +589,7 @@ const municipioStore = useMunicipioStore()
 const opcoesMunicipio = computed(() => municipioStore.municipiosOptions)
 
 const { opcoesPerfil, carregarPerfis } = usePerfis()
+const PERFIS_FEDERAIS_PERMITIDOS = ['gestor federal', 'visitante federal'] as const
 const PERFIS_ESTADUAIS_PERMITIDOS = [
   'gestor estadual',
   'administrador estadual',
@@ -611,6 +612,21 @@ function normalizarTexto(valor: string): string {
 function encontrarOpcaoEsferaPorCodigo(codigo: 'federal' | 'estadual' | 'municipal') {
   return opcoesEsfera.value.find((opcao) => normalizarTexto(String(opcao.label)) === codigo)
 }
+
+const esferaSelecionadaFormulario = computed<'federal' | 'estadual' | 'municipal'>(() => {
+  const valorSelecionado = String(esferaAtuacao.value ?? '').trim()
+  if (valorSelecionado) {
+    const opcaoSelecionada = opcoesEsfera.value.find(
+      (opcao) => String(opcao.value) === valorSelecionado,
+    )
+    const codigo = normalizarTexto(String(opcaoSelecionada?.label ?? ''))
+    if (codigo === 'federal' || codigo === 'estadual' || codigo === 'municipal') {
+      return codigo
+    }
+  }
+
+  return esferaUsuarioLogado.value
+})
 
 const esferaUsuarioLogado = computed(() => {
   const esferaContexto = normalizarTexto(String(props.usuarioLogado?.contexto?.esfera ?? ''))
@@ -695,20 +711,30 @@ const municipioBloqueadoLabel = computed(() => {
   return valorMunicipio
 })
 const opcoesPerfilPorEsfera = computed(() => {
-  if (esferaUsuarioLogado.value === 'estadual') {
+  if (esferaSelecionadaFormulario.value === 'federal') {
+    return opcoesPerfil.value.filter((p) =>
+      PERFIS_FEDERAIS_PERMITIDOS.includes(
+        normalizarTexto(String(p.label)) as (typeof PERFIS_FEDERAIS_PERMITIDOS)[number],
+      ),
+    )
+  }
+
+  if (esferaSelecionadaFormulario.value === 'estadual') {
     return opcoesPerfil.value.filter((p) =>
       PERFIS_ESTADUAIS_PERMITIDOS.includes(
         normalizarTexto(String(p.label)) as (typeof PERFIS_ESTADUAIS_PERMITIDOS)[number],
       ),
     )
   }
-  if (esferaUsuarioLogado.value === 'municipal') {
+
+  if (esferaSelecionadaFormulario.value === 'municipal') {
     return opcoesPerfil.value.filter((p) =>
       PERFIS_MUNICIPAIS_PERMITIDOS.includes(
         normalizarTexto(String(p.label)) as (typeof PERFIS_MUNICIPAIS_PERMITIDOS)[number],
       ),
     )
   }
+
   return opcoesPerfil.value
 })
 
