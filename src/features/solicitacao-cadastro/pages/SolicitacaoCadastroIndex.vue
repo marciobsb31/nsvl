@@ -23,7 +23,7 @@
         >
           <Card
             title="Dados do(a) solicitante"
-            subtitle="Dados do GOV.BR: nome e CPF foram obtidos na autenticação e não podem ser alterados."
+            subtitle="Os campos nome e CPF foram obtidos através da sua conta no GOV.BR e não podem ser alterados."
             custom-class="solicitacao-card solicitacao-card--first"
           >
             <FormularioDadosSolicitante :modo-gov-br="modoGovBr" />
@@ -31,7 +31,7 @@
 
           <Card
             title="Informação do(a) solicitante"
-            subtitle="Informações de atuação institucional do solicitante."
+            subtitle="Dados de atuação institucional."
             custom-class="solicitacao-card"
           >
             <FormularioInformacaoSolicitante />
@@ -178,7 +178,7 @@ defineOptions({
 
 const router = useRouter()
 const route = useRoute()
-const { success, error } = useNotification()
+const { success, error, warning } = useNotification()
 
 const govbrNome = (route.query.nome as string) ?? ''
 const govbrCpf = (route.query.cpf as string) ?? ''
@@ -230,6 +230,21 @@ const editando = ref(false)
 const modalExcluir = ref<boolean>(false)
 const solicitacaoExcluir = ref<SolicitacaoCadastroItem | null>(null)
 const excluindo = ref(false)
+
+function camposObrigatoriosPreenchidos(values: Record<string, unknown>) {
+  const obrigatorios = [
+    'nome',
+    'CPF',
+    'emailInstitucional',
+    'telefoneInstitucional',
+    'esferaAtuacao',
+    'uf',
+    'municipio',
+    'orgao',
+    'cargo',
+  ]
+  return obrigatorios.every((campo) => String(values[campo] ?? '').trim() !== '')
+}
 
 function formatarData(data: string | undefined) {
   if (!data) return '-'

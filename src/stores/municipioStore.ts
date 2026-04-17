@@ -18,7 +18,6 @@ export const useMunicipioStore = defineStore('useMunicipioStore', () => {
 
   //actions
   async function carregarMunicipios(uf: string) {
-    if (!uf || uf.length !== 2) return
     try {
       municipiosLista.value = await listarMunicipios(uf)
     } catch {

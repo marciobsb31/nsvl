@@ -156,6 +156,7 @@ const opcoesMunicipio = computed(() => {
 //Watcher para carregar municípios quando UF muda
 watch(uf, async (newUf) => {
   if (newUf) {
+    console.log('Carregando municípios para UF:', newUf)
     await municipioStore.carregarMunicipios(newUf)
   }
 })
