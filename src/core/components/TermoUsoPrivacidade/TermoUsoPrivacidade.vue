@@ -2,12 +2,14 @@
   <div class="termo-uso-privacidade" role="region" :aria-labelledby="tituloId">
     <h3 :id="tituloId" class="termo-uso-privacidade__titulo">Declaração de ciência</h3>
     <p class="termo-uso-privacidade__texto">
-      <strong>Ao confirmar a solicitação você aceita o seguinte termo de uso e privacidade:</strong>
-      os dados informados serão utilizados exclusivamente para fins de análise, habilitação e gestão de acesso ao sistema NVSL.
-    </p>
-    <p class="termo-uso-privacidade__texto termo-uso-privacidade__texto--muted">
-      O envio implica ciência quanto ao tratamento de dados pessoais e uso institucional, em conformidade com a
-      legislação aplicável.
+      Os dados pessoais no NVSL são tratados em conformidade com a Lei nº 13.709/2018 (LGPD). São
+      coletados apenas dados de identificação (CPF, nome, órgão de atuação e cargo) e de contato
+      (telefone e e-mail), com a finalidade de acesso à plataforma e de gestão do Plano Nacional dos
+      Direitos da Pessoa com Deficiência. <br /><br />
+      O NVSL adota medidas de segurança para proteger as informações e garantir a privacidade dos
+      usuários.
+      <br /><br />
+      Ao confirmar a solicitação, você concorda com os termos indicados.
     </p>
   </div>
 </template>
