@@ -124,11 +124,13 @@ describe('LoginPage (/login)', () => {
     await btn.trigger('click')
     await flushPromises()
 
-    expect(getRedirectUrl).toHaveBeenCalled()
+    expect(getRedirectUrl).toHaveBeenCalledWith('login')
     expect(window.location.href).toBe('https://gov.br/auth')
   })
 
-  it('ao clicar em Solicitar cadastro redireciona para solicitacao-cadastro', async () => {
+  it('ao clicar em Solicitar cadastro redireciona para a url GOV.BR do fluxo de solicitação', async () => {
+    getRedirectUrl.mockResolvedValue('https://gov.br/auth-solicitacao')
+
     const w = await mountLoadedPage()
     await flushPromises()
 
@@ -136,8 +138,8 @@ describe('LoginPage (/login)', () => {
     await btn.trigger('click')
     await flushPromises()
 
-    expect(routerReplace).toHaveBeenCalledWith({ name: 'solicitacao-cadastro' })
-    expect(getRedirectUrl).not.toHaveBeenCalledWith('solicitacao')
+    expect(getRedirectUrl).toHaveBeenCalledWith('solicitacao')
+    expect(window.location.href).toBe('https://gov.br/auth-solicitacao')
   })
 
   it('quando retorna hash com govbr_error de solicitação de cadastro, navega para solicitacao-cadastro com query', async () => {
@@ -150,6 +152,19 @@ describe('LoginPage (/login)', () => {
     expect(routerReplace).toHaveBeenCalledWith({
       name: 'solicitacao-cadastro',
       query: { nome: 'Ana', cpf: '123' },
+    })
+  })
+
+  it('quando retorna hash com govbr_flow de solicitação, navega para solicitacao-cadastro com query', async () => {
+    window.location.hash =
+      '#govbr_flow=solicitacao&govbr_nome=Ana&govbr_cpf=123&govbr_email=ana%40gov.br'
+
+    await mountLoadedPage()
+    await flushPromises()
+
+    expect(routerReplace).toHaveBeenCalledWith({
+      name: 'solicitacao-cadastro',
+      query: { nome: 'Ana', cpf: '123', email: 'ana@gov.br' },
     })
   })
 

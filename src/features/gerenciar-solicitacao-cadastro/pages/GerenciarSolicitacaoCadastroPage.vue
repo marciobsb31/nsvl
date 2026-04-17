@@ -3,8 +3,14 @@
       <HeaderPage title="Gerenciar solicitação de cadastros no sistema"
         :subtitle="'Aplique filtros e clique em <strong>Pesquisar</strong>.'"
         customClass="mb-3">
-        <template v-slot:actions v-if="hasPermissao('solicitacoes_cadastro.cadastrar')">
-          <br-button :color-mode="$appTheme ==='dark' ? $appTheme : undefined" emphasis="primary" @click="onCliqueCadastrarUsuario" aria-label="Cadastrar usuário">
+        <template v-slot:actions>
+          <br-button
+            v-if="podeCadastrarUsuario"
+            :color-mode="$appTheme ==='dark' ? $appTheme : undefined"
+            emphasis="primary"
+            @click="onCliqueCadastrarUsuario"
+            aria-label="Cadastrar usuário"
+          >
             Cadastrar usuário
           </br-button>
         </template>
@@ -233,8 +239,29 @@ defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 const { error, success } = useNotification()
 const { isMobile } = useBreakpoint()
 
-const { user, contextKey } = useAuth()
+const { user, contextKey, perfilAtivo } = useAuth()
 const { hasPermissao } = usePermissoes()
+
+const PERFIS_GESTORES_CADASTRO = ['gestor federal', 'gestor estadual', 'gestor municipal'] as const
+
+function normalizarPerfil(nome?: string): string {
+  return String(nome ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+const nomePerfilAtivo = computed(() => {
+  const nomeDoPerfilAtivo = String(perfilAtivo.value?.nome ?? '').trim()
+  if (nomeDoPerfilAtivo) return nomeDoPerfilAtivo
+  return String(user.value?.contexto?.perfil ?? '').trim()
+})
+
+const podeCadastrarUsuario = computed(() => {
+  const perfilNormalizado = normalizarPerfil(nomePerfilAtivo.value)
+  return PERFIS_GESTORES_CADASTRO.includes(perfilNormalizado as (typeof PERFIS_GESTORES_CADASTRO)[number])
+})
 
 function extrairNomeStatus(status: unknown): string {
   if (typeof status === 'string') return status
@@ -377,6 +404,10 @@ function abrirPainelCadastro() {
 }
 
 function onCliqueCadastrarUsuario() {
+  if (!podeCadastrarUsuario.value) {
+    error('Somente Gestor Federal, Gestor Estadual e Gestor Municipal podem cadastrar usuários.')
+    return
+  }
   abrirPainelCadastro()
 }
 

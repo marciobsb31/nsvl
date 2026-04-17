@@ -59,15 +59,19 @@
         :class="{ highlighted: index === highlightedIndex }"
         @mousedown.prevent="selectOption(option)"
       >
-        <div class="br-radio">
-          <input
-            :id="`opt-${inputId}-${option.value}`"
-            type="radio"
-            :name="`autocomplete-${inputId}`"
-            :value="option.value"
-            :checked="modelValue === option.value"
-          />
-          <label :for="`opt-${inputId}-${option.value}`">{{ option.label }}</label>
+        <div class="select-option-row">
+          <div class="select-option-row__left">
+            <i
+              v-if="modelValue === option.value"
+              class="fas fa-check select-option-row__check"
+              aria-hidden="true"
+            ></i>
+            <span v-else class="select-option-row__check-placeholder" aria-hidden="true"></span>
+            <span class="select-option-row__label">{{ labelSemEmUso(option.label) }}</span>
+          </div>
+          <span v-if="option.inUse || option.badge" class="select-option-row__badge">
+            {{ option.badge ?? 'Em uso' }}
+          </span>
         </div>
       </div>
       <div v-if="filteredOptions.length === 0" class="br-item br-item--empty">
@@ -83,6 +87,8 @@ import { ref, computed, watch } from 'vue'
 export type SelectAutocompleteOption = {
   label: string
   value: string | number
+  badge?: string
+  inUse?: boolean
 }
 
 defineOptions({ name: 'SelectAutocomplete' })
@@ -217,6 +223,10 @@ function onListKeydown(e: KeyboardEvent) {
   else if (e.key === 'Escape') close()
 }
 
+function labelSemEmUso(label: string): string {
+  return label.replace(/\s*•\s*Em uso$/i, '').trim()
+}
+
 function focus() {
   inputRef.value?.focus()
 }
@@ -243,6 +253,55 @@ defineExpose({ focus })
 
 .br-item.highlighted {
   background-color: var(--color-primary-pastel, #e8f4fc);
+}
+
+.br-item {
+  cursor: pointer;
+  padding: 0.32rem 0.5rem;
+}
+
+.select-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.select-option-row__left {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.select-option-row__label {
+  font-size: 0.76rem;
+  line-height: 1.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.select-option-row__check {
+  color: var(--color-success, #168821);
+  font-size: 0.68rem;
+}
+
+.select-option-row__check-placeholder {
+  width: 0.68rem;
+  height: 0.68rem;
+  display: inline-block;
+}
+
+.select-option-row__badge {
+  flex-shrink: 0;
+  padding: 0.06rem 0.34rem;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #0b6b2d;
+  background: #d4f7df;
+  border: 1px solid #97e0b0;
 }
 
 .br-item--empty {

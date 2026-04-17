@@ -18,6 +18,12 @@ const router = createRouter({
       meta: { title: 'Entrar — NVSL', public: true },
     },
     {
+      path: '/callback',
+      name: 'callback',
+      component: () => import('@/features/autenticacao/pages/LoginPage.vue'),
+      meta: { title: 'Entrar — NVSL', public: true },
+    },
+    {
       path: '/',
       name: 'home',
       component: () => import('@/features/home/pages/HomePage.vue'),
@@ -66,7 +72,7 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   document.title = (to.meta.title as string) ?? 'NVSL'
 
-  const publicRoutes = ['login', 'solicitacao-cadastro']
+  const publicRoutes = ['login', 'callback', 'solicitacao-cadastro']
   if (publicRoutes.includes(to.name as string)) return true
 
   const token = sessionStorage.getItem('nvsl_token')

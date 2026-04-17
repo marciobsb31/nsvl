@@ -37,10 +37,10 @@
 
           <button
             type="button"
-            class="br-button success block mt-3 login-register-button"
+            class="br-button success block mt-3 login-govbr__button login-register-button"
             :disabled="carregandoGovBr"
             aria-label="Solicitar cadastro"
-            @click="irParaSolicitacaoCadastro"
+            @click="entrarComGovBr('solicitacao')"
             aria-describedby="login-description"
           >
             {{ carregandoGovBr ? 'Redirecionando...' : 'Solicitar cadastro' }}
@@ -103,10 +103,6 @@ async function entrarComGovBr(flow: 'login' | 'solicitacao' = 'login') {
   }
 }
 
-async function irParaSolicitacaoCadastro() {
-  await router.replace({ name: 'solicitacao-cadastro' })
-}
-
 async function processarRetornoGovBr() {
   const hash = window.location.hash.replace(/^#/, '')
   if (!hash) return
@@ -114,18 +110,36 @@ async function processarRetornoGovBr() {
   const params = new URLSearchParams(hash)
   const loginCode = params.get('govbr_login_code')
   const govbrError = params.get('govbr_error')
+  const govbrFlow = params.get('govbr_flow')
+  const govbrNome = params.get('govbr_nome')
+  const govbrCpf = params.get('govbr_cpf')
+  const govbrEmail = params.get('govbr_email')
 
-  if (!loginCode && !govbrError) return
+  if (!loginCode && !govbrError && !govbrFlow) return
 
   window.history.replaceState({}, document.title, window.location.pathname)
 
+  if (govbrFlow === 'solicitacao' && govbrNome && govbrCpf) {
+    await router.replace({
+      name: 'solicitacao-cadastro',
+      query: {
+        nome: govbrNome,
+        cpf: govbrCpf,
+        ...(govbrEmail ? { email: govbrEmail } : {}),
+      },
+    })
+    return
+  }
+
   if (govbrError) {
-    const govbrNome = params.get('govbr_nome')
-    const govbrCpf = params.get('govbr_cpf')
     if (govbrError === 'Solicitar acesso e aguardar avaliação' && govbrNome && govbrCpf) {
       await router.replace({
         name: 'solicitacao-cadastro',
-        query: { nome: govbrNome, cpf: govbrCpf },
+        query: {
+          nome: govbrNome,
+          cpf: govbrCpf,
+          ...(govbrEmail ? { email: govbrEmail } : {}),
+        },
       })
       return
     }
