@@ -38,7 +38,7 @@
           </Card>
 
           <Card
-            title="Aceite do Termo de Uso e Privacidade"
+            title="Aceite do Termo de Uso e do Aviso de Privacidade"
             subtitle="O aceite ocorre no ato da confirmação e envio da solicitação."
             custom-class="solicitacao-card solicitacao-card--termo"
           >

@@ -22,8 +22,6 @@
         <label for="input-cpf">
           CPF
           <span v-if="!modoEdicao && !modoGovBr" class="text-red-50 text-up-01">*</span>
-          <template v-else-if="modoGovBr"> (GOV.BR)</template>
-          <template v-else> (opcional)</template>
         </label>
         <input
           id="input-cpf"
