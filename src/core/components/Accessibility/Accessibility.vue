@@ -74,6 +74,7 @@
       "
       title="Abrir menu de acessibilidade"
       @click="toggleAcessibilidade"
+      ref="toggleButtonRef"
     >
       <!-- <i class="fas fa-universal-access icon-accessibility" aria-hidden="true"></i> -->
       <svg class="icon-accessibility" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -151,12 +152,15 @@ watch(
 const acessibilidade = ref(false)
 
 const menuRef = ref<HTMLElement | null>(null)
+const toggleButtonRef = ref<HTMLElement | null>(null)
 
 const onOutsideClick = (event: MouseEvent) => {
   if (!acessibilidade.value) return
   const el = menuRef.value
   if (!el) return
   if (!(event.target instanceof Node)) return
+  const toggleEl = toggleButtonRef.value
+  if (toggleEl && toggleEl.contains(event.target)) return
   if (!el.contains(event.target)) {
     acessibilidade.value = false
   }
