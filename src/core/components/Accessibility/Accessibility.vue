@@ -1,68 +1,70 @@
 <template>
-  <Card custom-class="menu" v-if="acessibilidade">
-    <div>
-      <p class="m-1 p-0 item-titulo">Texto</p>
-      <div class="menu-section mb-2">
-        <button
-          class="br-button item-menu font-acessibilidade"
-          type="button"
-          aria-label="Aumentar Fonte"
-          title="Aumentar Fonte"
-          @click="increaseFontSize"
-        >
-          <span class="text-acessibilidade">A+</span>
-          <p class="m-0 texto-menu">Texto maior</p>
-        </button>
-        <button
-          class="br-button item-menu font-acessibilidade"
-          type="button"
-          aria-label="Diminuir Fonte"
-          title="Diminuir Fonte"
-          @click="decreaseFontSize"
-        >
-          <span class="text-acessibilidade">A-</span>
-          <p class="m-0 texto-menu">Texto menor</p>
-        </button>
+  <div v-if="acessibilidade" ref="menuRef">
+    <Card custom-class="menu">
+      <div>
+        <p class="m-1 p-0 item-titulo">Texto</p>
+        <div class="menu-section mb-2">
+          <button
+            class="br-button item-menu font-acessibilidade"
+            type="button"
+            aria-label="Aumentar Fonte"
+            title="Aumentar Fonte"
+            @click="increaseFontSize"
+          >
+            <span class="text-acessibilidade">A+</span>
+            <p class="m-0 texto-menu">Texto maior</p>
+          </button>
+          <button
+            class="br-button item-menu font-acessibilidade"
+            type="button"
+            aria-label="Diminuir Fonte"
+            title="Diminuir Fonte"
+            @click="decreaseFontSize"
+          >
+            <span class="text-acessibilidade">A-</span>
+            <p class="m-0 texto-menu">Texto menor</p>
+          </button>
+        </div>
+        <div class="menu-section">
+          <button
+            class="br-button item-menu font-acessibilidade"
+            type="button"
+            aria-label="Tamanho padrão de fonte"
+            title="Tamanho padrão de fonte"
+            @click="resetFontSize"
+          >
+            <span class="text-acessibilidade">A</span>
+            <p class="m-0 texto-menu">Tamanho padrão</p>
+          </button>
+        </div>
       </div>
-      <div class="menu-section">
-        <button
-          class="br-button item-menu font-acessibilidade"
-          type="button"
-          aria-label="Tamanho padrão de fonte"
-          title="Tamanho padrão de fonte"
-          @click="resetFontSize"
-        >
-          <span class="text-acessibilidade">A</span>
-          <p class="m-0 texto-menu">Tamanho padrão</p>
-        </button>
+      <div>
+        <p class="m-1 p-0 item-titulo">Visual</p>
+        <div class="menu-section">
+          <button
+            class="br-button item-menu-column"
+            type="button"
+            :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
+            title="Alternar tema"
+            @click="toggleTheme"
+          >
+            <div>
+              <i class="fas fa-adjust text-acessibilidade" aria-hidden="true"></i>
+              <p class="m-0 texto-menu">Contraste {{ tema }}</p>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                v-for="item in progressFill"
+                :key="item.modo"
+                :class="{ 'active-bar': item.active }"
+              ></div>
+            </div>
+          </button>
+        </div>
       </div>
-    </div>
-    <div>
-      <p class="m-1 p-0 item-titulo">Visual</p>
-      <div class="menu-section">
-        <button
-          class="br-button item-menu-column"
-          type="button"
-          :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
-          title="Alternar tema"
-          @click="toggleTheme"
-        >
-          <div>
-            <i class="fas fa-adjust text-acessibilidade" aria-hidden="true"></i>
-            <p class="m-0 texto-menu">Contraste {{ tema }}</p>
-          </div>
-          <div class="progress-bar">
-            <div
-              class="progress-fill"
-              v-for="item in progressFill"
-              :key="item.modo"
-              :class="{ 'active-bar': item.active }"
-            ></div>
-          </div>
-        </button>
-      </div>
-    </div>
-  </Card>
+    </Card>
+  </div>
   <section class="fixed">
     <button
       class="br-button circle primary"
@@ -87,7 +89,7 @@
 import { useTheme } from '@/core/composables/useTheme'
 import { useAccessibilityFont } from '@/core/composables/useAccessibilityFont'
 import Card from '../Card/Card.vue'
-import { ref, computed, reactive, watch } from 'vue'
+import { ref, computed, reactive, watch, onMounted, onBeforeUnmount } from 'vue'
 import { AcessibilidadeEnum } from '@/core/enums/AcessibilidadeEnum'
 
 const { increaseFontSize, decreaseFontSize, resetFontSize } = useAccessibilityFont()
@@ -147,6 +149,26 @@ watch(
 )
 
 const acessibilidade = ref(false)
+
+const menuRef = ref<HTMLElement | null>(null)
+
+const onOutsideClick = (event: MouseEvent) => {
+  if (!acessibilidade.value) return
+  const el = menuRef.value
+  if (!el) return
+  if (!(event.target instanceof Node)) return
+  if (!el.contains(event.target)) {
+    acessibilidade.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', onOutsideClick, true)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onOutsideClick, true)
+})
 
 const toggleAcessibilidade = () => {
   acessibilidade.value = !acessibilidade.value

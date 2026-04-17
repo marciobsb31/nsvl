@@ -90,3 +90,7 @@
 [data-theme='dark'] .br-input input::placeholder {
   color: var(--pure-100) !important;
 }
+
+[data-theme='dark'] .br-item.highlighted {
+  background-color: var(--gray-cool-80) !important;
+}
