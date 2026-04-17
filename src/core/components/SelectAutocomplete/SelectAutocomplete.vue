@@ -306,7 +306,7 @@ defineExpose({ focus })
 
 .br-item--empty {
   padding: 1rem;
-  color: var(--color-secondary-06, #888);
+  color: var(--secondary-text-color-02, #888);
   font-style: italic;
 }
 

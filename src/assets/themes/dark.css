@@ -76,3 +76,17 @@
 [data-theme='dark'] .br-message .content {
   color: var(--color-secondary-08);
 }
+
+[data-theme='dark'] .br-input input[readonly] {
+  background: var(--gray-warm-90) !important;
+  color: var(--pure-0) !important;
+}
+
+[data-theme='dark'] .br-input input {
+  background: var(--pure-0) !important;
+  color: var(--pure-100) !important;
+}
+
+[data-theme='dark'] .br-input input::placeholder {
+  color: var(--pure-100) !important;
+}
