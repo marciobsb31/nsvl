@@ -269,6 +269,59 @@ class AuthValidationServiceTest extends TestCase
         );
     }
 
+    #[Test]
+    public function permite_fluxo_de_solicitacao_para_usuario_ativo_sem_solicitacao_em_analise(): void
+    {
+        $service = app(AuthValidationService::class);
+
+        $usuario = Usuario::factory()->create([
+            'cpf'       => '98765432100',
+            'govbr_sub' => 'sub-solicitacao-ativo',
+            'ativo'     => true,
+        ]);
+
+        $dados = $service->validarSolicitacaoOuFalhar(new GovBrUserDTO(
+            sub: 'sub-solicitacao-ativo',
+            name: 'Usuário Ativo',
+            email: 'ativo@gov.br',
+            cpf: '98765432100',
+        ));
+
+        $this->assertSame('Usuário Ativo', $dados['nome']);
+        $this->assertSame('98765432100', $dados['cpf']);
+        $this->assertSame('ativo@gov.br', $dados['email']);
+        $this->assertDatabaseHas('usuarios', [
+            'id'        => $usuario->id,
+            'govbr_sub' => 'sub-solicitacao-ativo',
+        ]);
+    }
+
+    #[Test]
+    public function bloqueia_fluxo_de_solicitacao_quando_ja_existe_solicitacao_em_analise(): void
+    {
+        $service = app(AuthValidationService::class);
+
+        $usuario = Usuario::factory()->create([
+            'cpf'       => '12312312387',
+            'govbr_sub' => 'sub-solicitacao-em-analise',
+            'ativo'     => false,
+        ]);
+
+        SolicitacaoCadastro::factory()->create([
+            'user_id'   => $usuario->id,
+            'status_id' => StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE),
+        ]);
+
+        $this->assertAuthValidationMessage(
+            'Já existe uma solicitação em análise para este CPF. Aguarde a avaliação da equipe gestora antes de enviar uma nova solicitação.',
+            fn () => $service->validarSolicitacaoOuFalhar(new GovBrUserDTO(
+                sub: 'sub-solicitacao-em-analise',
+                name: 'Usuário Em Análise',
+                cpf: '12312312387',
+            )),
+        );
+    }
+
     private function assertAuthValidationMessage(string $mensagemEsperada, callable $callback): void
     {
         try {

@@ -13,28 +13,9 @@ class AuthValidationService
     public function validarOuFalhar(GovBrUserDTO $govBrUser): Usuario
     {
 
-        $cpf = preg_replace('/\D/', '', (string) ($govBrUser->cpf ?? $govBrUser->sub));
-        if (strlen($cpf) !== 11) {
-            throw ValidationException::withMessages([
-                'auth' => 'Não foi possível identificar o CPF retornado pelo GOV.BR.',
-            ]);
-        }
-
-        $user = Usuario::where('govbr_sub', $govBrUser->sub)->first();
-
-        if ($user && $user->cpf && $user->cpf !== $cpf) {
-            throw ValidationException::withMessages([
-                'auth' => 'Os dados do GOV.BR não correspondem ao cadastro existente no sistema.',
-            ]);
-        }
-
-        if (! $user) {
-            $user = Usuario::where('cpf', $cpf)->first();
-        }
+        [$user, $cpf] = $this->resolverUsuarioPorGovBr($govBrUser);
 
         if ($user) {
-            $this->sincronizarIdentidade($user, $govBrUser, $cpf);
-
             if ($user->perfisVigentes()->isEmpty()) {
 
                 $ultimaSolicitacao = SolicitacaoCadastro::where('usuario_id', $user->id)
@@ -80,6 +61,60 @@ class AuthValidationService
         throw ValidationException::withMessages([
             'auth' => 'Solicitar acesso e aguardar avaliação',
         ]);
+    }
+
+    public function validarSolicitacaoOuFalhar(GovBrUserDTO $govBrUser): array
+    {
+        [$user, $cpf] = $this->resolverUsuarioPorGovBr($govBrUser);
+
+        $existeEmAnalise = SolicitacaoCadastro::query()
+            ->when(
+                $user,
+                fn ($query) => $query->where('usuario_id', $user->id),
+                fn ($query) => $query->whereHas('usuario', fn ($subQuery) => $subQuery->where('cpf', $cpf))
+            )
+            ->where('status_id', StatusSolicitacaoEnum::EM_ANALISE->value)
+            ->exists();
+
+        if ($existeEmAnalise) {
+            throw ValidationException::withMessages([
+                'auth' => 'Já existe uma solicitação em análise para este CPF. Aguarde a avaliação da equipe gestora antes de enviar uma nova solicitação.',
+            ]);
+        }
+
+        return [
+            'nome'  => $govBrUser->name ?? '',
+            'cpf'   => $cpf,
+            'email' => $govBrUser->email ?? '',
+        ];
+    }
+
+    private function resolverUsuarioPorGovBr(GovBrUserDTO $govBrUser): array
+    {
+        $cpf = preg_replace('/\D/', '', (string) ($govBrUser->cpf ?? $govBrUser->sub));
+        if (strlen($cpf) !== 11) {
+            throw ValidationException::withMessages([
+                'auth' => 'Não foi possível identificar o CPF retornado pelo GOV.BR.',
+            ]);
+        }
+
+        $user = Usuario::where('govbr_sub', $govBrUser->sub)->first();
+
+        if ($user && $user->cpf && $user->cpf !== $cpf) {
+            throw ValidationException::withMessages([
+                'auth' => 'Os dados do GOV.BR não correspondem ao cadastro existente no sistema.',
+            ]);
+        }
+
+        if (! $user) {
+            $user = Usuario::where('cpf', $cpf)->first();
+        }
+
+        if ($user) {
+            $this->sincronizarIdentidade($user, $govBrUser, $cpf);
+        }
+
+        return [$user?->fresh() ?? $user, $cpf];
     }
 
     private function sincronizarIdentidade(Usuario $user, GovBrUserDTO $govBrUser, string $cpf): void
