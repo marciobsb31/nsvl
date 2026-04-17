@@ -233,3 +233,7 @@ div[vw] {
 input::placeholder {
   font-style: normal;
 }
+
+.grayscale {
+  filter: grayscale(1);
+}
