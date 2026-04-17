@@ -117,6 +117,59 @@ class AutenticacaoCallbackTest extends TestCase
     }
 
     #[Test]
+    public function redireciona_para_a_tela_de_solicitacao_quando_o_fluxo_govbr_for_solicitacao(): void
+    {
+        $this->configurarGovbr();
+
+        Cache::put('govbr:oauth:estado-solicitacao', [
+            'flow'          => 'solicitacao',
+            'nonce'         => 'nonce-solicitacao',
+            'code_verifier' => 'verifier-solicitacao',
+        ], now()->addMinute());
+
+        $govBrService = Mockery::mock(GovBrService::class);
+        $govBrService->shouldReceive('trocarCodePorToken')
+            ->once()
+            ->andReturn([
+                'access_token' => 'token-govbr',
+                'id_token'     => 'id-token',
+            ]);
+        $govBrService->shouldReceive('validarNonce')
+            ->once()
+            ->andReturn(true);
+        $govBrService->shouldReceive('obterUsuario')
+            ->once()
+            ->andReturn(new GovBrUserDTO(
+                sub: '99988877766',
+                name: 'Solicitante GovBr',
+                email: 'solicitante@teste.gov.br',
+                cpf: '99988877766',
+            ));
+
+        $authValidationService = Mockery::mock(AuthValidationService::class);
+        $authValidationService->shouldReceive('validarSolicitacaoOuFalhar')
+            ->once()
+            ->andReturn([
+                'nome'  => 'Solicitante GovBr',
+                'cpf'   => '99988877766',
+                'email' => 'solicitante@teste.gov.br',
+            ]);
+
+        $this->app->instance(GovBrService::class, $govBrService);
+        $this->app->instance(AuthValidationService::class, $authValidationService);
+
+        $response = $this->get('/api/auth/redirect?state=estado-solicitacao&code=codigo-solicitacao');
+
+        $location = (string) $response->headers->get('Location');
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('govbr_flow=solicitacao', $location);
+        $this->assertStringContainsString('govbr_nome=Solicitante+GovBr', $location);
+        $this->assertStringContainsString('govbr_cpf=99988877766', $location);
+        $this->assertStringContainsString('govbr_email=solicitante%40teste.gov.br', $location);
+    }
+
+    #[Test]
     public function redireciona_com_erro_quando_o_estado_expira_ou_e_invalido(): void
     {
         $this->configurarGovbr();

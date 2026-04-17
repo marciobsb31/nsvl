@@ -39,6 +39,7 @@ class GovBrAuthControllerTest extends TestCase
 
         $this->assertSame('https://sso.exemplo.gov.br/authorize?...', $response->getData(true)['url']);
         $this->assertSame([
+            'flow'          => 'login',
             'nonce'         => 'nonce-unitario',
             'code_verifier' => 'verifier-unitario',
         ], Cache::get('govbr:oauth:estado-unitario'));
@@ -137,6 +138,14 @@ class GovBrAuthControllerTest extends TestCase
             'http://frontend.local/login#govbr_error=falha&govbr_nome=Maria',
             $redirect->getTargetUrl(),
         );
+    }
+
+    #[Test]
+    public function normaliza_o_flow_de_autenticacao(): void
+    {
+        $this->assertSame('login', $this->invocarMetodoPrivado('normalizarFlow', null));
+        $this->assertSame('login', $this->invocarMetodoPrivado('normalizarFlow', 'qualquer-coisa'));
+        $this->assertSame('solicitacao', $this->invocarMetodoPrivado('normalizarFlow', 'solicitacao'));
     }
 
     #[Test]

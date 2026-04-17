@@ -46,9 +46,11 @@ class GovBrAuthController extends Controller
             new OA\Response(response: 429, description: 'Limite de requisições'),
         ]
     )]
-    public function redirect(): JsonResponse
+    public function redirect(Request $request): JsonResponse
     {
-        return response()->json(['url' => $this->gerarUrlDeAutorizacao()]);
+        return response()->json(['url' => $this->gerarUrlDeAutorizacao(
+            $this->normalizarFlow($request->query('flow'))
+        )]);
     }
 
     #[OA\Get(
@@ -70,6 +72,7 @@ class GovBrAuthController extends Controller
     public function callback(Request $request): RedirectResponse
     {
         $govBrUser = null;
+        $flow = 'login';
 
         try {
             $this->garantirConfiguracao();
@@ -97,6 +100,8 @@ class GovBrAuthController extends Controller
                 ]);
             }
 
+            $flow = $this->normalizarFlow($oauthData['flow'] ?? null);
+
             $tokens = $this->govBrService->trocarCodePorToken($code, (string) $oauthData['code_verifier']);
 
             if (! $this->govBrService->validarNonce($tokens['id_token'] ?? null, (string) $oauthData['nonce'])) {
@@ -106,6 +111,18 @@ class GovBrAuthController extends Controller
             }
 
             $govBrUser = $this->govBrService->obterUsuario($tokens['access_token']);
+
+            if ($flow === 'solicitacao') {
+                $dadosSolicitacao = $this->authValidationService->validarSolicitacaoOuFalhar($govBrUser);
+
+                return $this->redirectToFrontend([
+                    'govbr_flow'  => 'solicitacao',
+                    'govbr_nome'  => $dadosSolicitacao['nome'],
+                    'govbr_cpf'   => $dadosSolicitacao['cpf'],
+                    'govbr_email' => $dadosSolicitacao['email'],
+                ]);
+            }
+
             $user = $this->authValidationService->validarOuFalhar($govBrUser);
             $plainTextToken = $user->createToken('govbr-login')->plainTextToken;
 
@@ -175,6 +192,10 @@ class GovBrAuthController extends Controller
             ]);
 
             $params = ['govbr_error' => $mensagem];
+
+            if ($flow === 'solicitacao') {
+                $params['govbr_flow'] = 'solicitacao';
+            }
 
             if ($govBrUser && $mensagem === 'Solicitar acesso e aguardar avaliação') {
                 $cpf = preg_replace('/\D/', '', (string) ($govBrUser->cpf ?? $govBrUser->sub));
@@ -300,7 +321,7 @@ class GovBrAuthController extends Controller
         return 'govbr:oauth:'.$state;
     }
 
-    private function gerarUrlDeAutorizacao(): string
+    private function gerarUrlDeAutorizacao(string $flow = 'login'): string
     {
         $this->garantirConfiguracao();
 
@@ -312,6 +333,7 @@ class GovBrAuthController extends Controller
         Cache::put(
             $this->oauthCacheKey($state),
             [
+                'flow'          => $this->normalizarFlow($flow),
                 'nonce'         => $nonce,
                 'code_verifier' => $codeVerifier,
             ],
@@ -328,5 +350,10 @@ class GovBrAuthController extends Controller
     private function loginCodeCacheKey(string $code): string
     {
         return 'govbr:login-code:'.$code;
+    }
+
+    private function normalizarFlow(mixed $flow): string
+    {
+        return $flow === 'solicitacao' ? 'solicitacao' : 'login';
     }
 }
