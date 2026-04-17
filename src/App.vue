@@ -3,7 +3,6 @@
   <a href="#main-content" class="skip-link">Ir para o conteúdo principal</a>
   <NotificationPopup />
   <Accessibility />
-
   <!-- Renderiza o layout correspondente à rota -->
   <RouterView v-slot="{ Component, route }">
     <component :is="route.meta.layout ?? 'div'">
@@ -18,6 +17,9 @@
 import { RouterView } from 'vue-router'
 import NotificationPopup from '@/core/components/NotificationPopup/NotificationPopup.vue'
 import Accessibility from '@/core/components/Accessibility/Accessibility.vue'
+import { useShadowRoot } from '@/core/composables/useShadowRoot'
+
+const shadowRoot = useShadowRoot()
 </script>
 
 <style>

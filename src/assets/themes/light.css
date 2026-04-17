@@ -1,6 +1,6 @@
-[data-theme="light"] {
+[data-theme='light'] {
   /* Text colors Project */
-  --primary-text-color: var(--blue-warm-vivid-70);
+  --primary-text-color: var(--pure-100);
   --primary-text-dark-color: var(--color-primary-darken-02);
   --secondary-text-color: var(--color-secondary-07);
   --secondary-text-color-02: var(--color-secondary-06);
@@ -10,13 +10,36 @@
   /* Border colors */
   --border-login-color: var(--cyan-vivid-40);
   --border-card-color: none;
-  
+
   /* Background colors */
   --background: var(--pure-0);
   --background-gray: var(--gray-warm-10);
   --background-blue: var(--blue-warm-vivid-70);
+  --background-progress-bar: var(--blue-warm-vivid-10);
+  --background-progress-bar-active: var(--blue-warm-vivid-70);
 
   /* Text colors high */
   --secondary-text-color-high: var(--color-secondary-07);
 }
 
+[data-theme='light'] .br-button.is-primary,
+[data-theme='light'] .br-button.primary,
+[data-theme='light'] .br-button[primary] {
+  --interactive-rgb: var(--color-dark-rgb) !important;
+  background-color: var(--gray-warm-80) !important;
+  color: var(--pure-0) !important;
+}
+
+[data-theme='light'] .br-button.is-secondary,
+[data-theme='light'] .br-button.secondary,
+[data-theme='light'] .br-button[secondary] {
+  --interactive-rgb: var(--color-dark-rgb) !important;
+  background-color: none !important;
+  border-color: var(--pure-100) !important;
+  color: var(--pure-100) !important;
+}
+
+[data-theme='light'] .login-register-button {
+  background-color: var(--gray-warm-80) !important;
+  color: var(--pure-0) !important;
+}

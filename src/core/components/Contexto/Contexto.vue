@@ -77,4 +77,8 @@ const contextoAtualLabel = computed(() => {
 [data-theme='dark'] .contexto-banner__label {
   color: rgba(255, 255, 255, 0.6);
 }
+
+[data-theme='light'] .contexto-banner {
+  background: var(--gray-warm-10);
+}
 </style>

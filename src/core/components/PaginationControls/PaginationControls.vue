@@ -1,14 +1,11 @@
 <template>
   <div v-if="totalPages > 1 || showPageSize" class="pagination-controls">
     <div class="pagination-controls__left">
-      <label class="pagination-controls__label">Itens por página
-      <select
-        class="pagination-controls__select"
-        :value="pageSize"
-        @change="onPageSizeChange"
-      >
-        <option v-for="opt in pageSizeOptions" :key="opt" :value="opt">{{ opt }}</option>
-      </select>
+      <label class="pagination-controls__label"
+        >Itens por página
+        <select class="pagination-controls__select" :value="pageSize" @change="onPageSizeChange">
+          <option v-for="opt in pageSizeOptions" :key="opt" :value="opt">{{ opt }}</option>
+        </select>
       </label>
     </div>
     <div class="pagination-controls__right">
@@ -40,20 +37,25 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 defineOptions({ name: 'PaginationControls' })
-const props = withDefaults(defineProps<{
-  totalItems: number
-  currentPage: number
-  pageSize: number
-  pageSizeOptions?: number[]
-}>(), {
-  pageSizeOptions: () => [10, 20, 50],
-})
+const props = withDefaults(
+  defineProps<{
+    totalItems: number
+    currentPage: number
+    pageSize: number
+    pageSizeOptions?: number[]
+  }>(),
+  {
+    pageSizeOptions: () => [10, 20, 50],
+  },
+)
 const emit = defineEmits<{
   (e: 'update:currentPage', value: number): void
   (e: 'update:pageSize', value: number): void
 }>()
 const totalPages = computed(() => Math.max(1, Math.ceil(props.totalItems / props.pageSize)))
-const startItem = computed(() => (props.totalItems === 0 ? 0 : (props.currentPage - 1) * props.pageSize + 1))
+const startItem = computed(() =>
+  props.totalItems === 0 ? 0 : (props.currentPage - 1) * props.pageSize + 1,
+)
 const endItem = computed(() => Math.min(props.totalItems, props.currentPage * props.pageSize))
 const showPageSize = computed(() => props.totalItems > 0)
 function onPageSizeChange(event: Event) {
@@ -84,7 +86,7 @@ function onPageSizeChange(event: Event) {
 .pagination-controls__info,
 .pagination-controls__page {
   font-size: 0.8125rem;
-  color: var(--color-secondary-07, #555);
+  color: var(--secondary-text-color, #555);
 }
 .pagination-controls__select {
   min-height: 2rem;

@@ -284,7 +284,8 @@ defineExpose({ focus })
 
 .select-option-row__check {
   color: var(--color-success, #168821);
-  font-size: 0.68rem;
+  font-size: 1rem;
+  margin-right: 0.25rem;
 }
 
 .select-option-row__check-placeholder {
@@ -306,7 +307,7 @@ defineExpose({ focus })
 
 .br-item--empty {
   padding: 1rem;
-  color: var(--color-secondary-06, #888);
+  color: var(--secondary-text-color-02, #888);
   font-style: italic;
 }
 

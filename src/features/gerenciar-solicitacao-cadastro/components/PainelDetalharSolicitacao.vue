@@ -1008,8 +1008,8 @@ function compararValores(
 }
 
 .painel-subtitulo-nome {
-  font-size: 0.9rem;
-  color: var(--color-secondary-07, #555);
+  font-size: 1.25rem;
+  color: var(--secondary-text-color);
   margin: 0.2rem 0 0;
   font-weight: 500;
 }

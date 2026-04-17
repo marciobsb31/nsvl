@@ -234,7 +234,6 @@ import type { SolicitacaoCadastroDetalhe } from '@/core/types/solicitacao-cadast
 import { usePermissoes } from '@/core/composables/usePermissoes'
 import { StatusNomeEnum } from '@/core/enums/StatusEmun'
 
-
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
 const { error, success } = useNotification()
@@ -644,6 +643,8 @@ watch(contextKey, () => {
 onMounted(() => {
   limparEpesquisar()
 })
+
+
 
 </script>
 

@@ -300,4 +300,13 @@ async function handleSair() {
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+[data-theme='light'] .sidebar__icon,
+[data-theme='light'] .sidebar__titulo,
+[data-theme='light'] .sidebar__toggle {
+  color: var(--blue-warm-vivid-70) !important;
+}
+[data-theme='light'] .sidebar__item:hover {
+  background-color: var(--color-primary-pastel) !important;
+}
 </style>
