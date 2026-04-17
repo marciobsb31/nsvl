@@ -39,14 +39,18 @@
               ></i>
             </button>
             <transition name="contexto-panel-accordion">
-              <div v-if="exibirComboContexto" id="header-contexto-panel" class="header-combo-contexto">
+              <div
+                v-if="exibirComboContexto"
+                id="header-contexto-panel"
+                class="header-combo-contexto"
+              >
                 <div class="header-combo-contexto__header">
                   <span class="header-combo-contexto__titulo">Selecionar perfil ativo</span>
-                  <span class="header-combo-contexto__badge">Atualização imediata</span>
+                  <!-- <span class="header-combo-contexto__badge">Atualização imediata</span> -->
                 </div>
                 <div v-if="perfilAtivoLabel" class="header-combo-contexto__perfil-uso">
                   <span class="header-combo-contexto__perfil-titulo">Perfil em uso:</span>
-                  <span class="header-combo-contexto__badge-uso">{{ perfilAtivoLabel }}</span>
+                  <span class="br-tag success perfil-ativo p-1">{{ perfilAtivoLabel }}</span>
                 </div>
                 <SelectAutocomplete
                   v-model="perfilSelecionadoId"
@@ -56,8 +60,12 @@
                   :disabled="trocandoContexto || trocandoPerfilHeader"
                   input-id="header-contexto-select"
                 />
-                <small class="header-combo-contexto__hint">A troca atualiza permissões e dados sem novo login.</small>
-                <small v-if="erroTrocaContexto" class="header-combo-contexto__erro">{{ erroTrocaContexto }}</small>
+                <small class="header-combo-contexto__hint"
+                  >A troca atualiza permissões e dados sem novo login.</small
+                >
+                <small v-if="erroTrocaContexto" class="header-combo-contexto__erro">{{
+                  erroTrocaContexto
+                }}</small>
               </div>
             </transition>
           </div>
@@ -129,7 +137,9 @@ import logoGovBranca from '@/assets/images/logo/mdh_com_gov_branca.png'
 import { useTheme } from '@/core/composables/useTheme'
 import Breadcrumb from '@/core/components/Breadcrumb/Breadcrumb.vue'
 import ScrollToTop from '@/core/components/ScrollToTop/ScrollToTop.vue'
-import SelectAutocomplete, { type SelectAutocompleteOption } from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
+import SelectAutocomplete, {
+  type SelectAutocompleteOption,
+} from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
 
 const { isMobile } = useBreakpoint()
 const mainRef = ref<HTMLElement | null>(null)
@@ -340,7 +350,7 @@ watch(sidebarRecolhido, (v) => {
   min-width: 360px;
   width: min(540px, 88vw);
   max-width: min(540px, 88vw);
-  padding: 0.6rem;
+  padding: 1rem;
   border-radius: 10px;
   background: var(--background);
   border: 1px solid var(--color-secondary-04, #c5c5c5);
@@ -495,8 +505,8 @@ watch(sidebarRecolhido, (v) => {
 }
 
 [data-theme='dark'] .header-btn-contexto {
-  border-color: var(--color-primary-lighten-01, #4d7fd6);
-  color: var(--color-primary-lighten-01, #4d7fd6);
+  border-color: var(--pure-0);
+  color: var(--pure-0);
   background: rgba(255, 255, 255, 0.06);
 }
 
@@ -572,6 +582,10 @@ watch(sidebarRecolhido, (v) => {
 .contexto-panel-accordion-enter-to,
 .contexto-panel-accordion-leave-from {
   max-height: 320px;
+}
+
+.perfil-ativo {
+  font-size: 0.85rem;
 }
 
 @media (max-width: 575px) {
