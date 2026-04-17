@@ -251,7 +251,7 @@
               input-id="cad-perfil"
               required
             />
-            <Feedback v-if="errorsPerfil" :message="errorsPerfil" type="danger" />
+            <Feedback v-if="mostrarErroPerfil" :message="errorsPerfil" type="danger" />
             <span v-if="mensagemPerfisAtivosCpf" class="cadastro-field-hint cadastro-field-hint--info">
               {{ mensagemPerfisAtivosCpf }}
             </span>
@@ -386,6 +386,7 @@ function mapearMensagemCadastro(original: string): string {
 }
 
 const enviando = ref(false)
+const tentouEnviar = ref(false)
 const modalErroVisivel = ref(false)
 const mensagemErroModal = ref('')
 const tituloModalErro = ref('Dados incompletos')
@@ -522,7 +523,7 @@ function limparRestricoesPerfilPorCpf() {
 
 function areaAtualParaValidacaoCpf() {
   const esferaId = Number(esferaAtuacao.value ?? 0)
-  const ufId = Number(uf.value ?? 0)
+  const ufId = resolverUfIdSelecionada() ?? 0
   const municipioId = Number(municipio.value ?? 0)
 
   return {
@@ -584,6 +585,21 @@ const opcoesEsfera = computed(() => esferasStore.esferasOptions)
 
 const ufStore = useUfStore()
 const opcoesUf = computed(() => ufStore.ufsOptions)
+
+function resolverUfIdSelecionada(): number | undefined {
+  const valorSelecionado = String(uf.value ?? '').trim()
+  if (!valorSelecionado) return undefined
+
+  const numeroDireto = Number(valorSelecionado)
+  if (Number.isFinite(numeroDireto) && numeroDireto > 0) return numeroDireto
+
+  const siglaSelecionada = valorSelecionado.toUpperCase()
+  const ufEncontrada = ufStore.ufsLista.find(
+    (item) => String(item.sigla ?? '').trim().toUpperCase() === siglaSelecionada,
+  )
+
+  return ufEncontrada?.id
+}
 
 const municipioStore = useMunicipioStore()
 const opcoesMunicipio = computed(() => municipioStore.municipiosOptions)
@@ -865,10 +881,15 @@ watch(opcoesMunicipioFiltradas, (opcoes) => {
 
 const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
 const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
-const { value: perfil, errorMessage: errorsPerfil } = useField<string | number | null>('perfil')
+const { value: perfil, errorMessage: errorsPerfil, meta: perfilMeta } =
+  useField<string | number | null>('perfil')
 const { value: vigenciaInicio, errorMessage: errorsVigenciaInicio } =
   useField<string>('vigenciaInicio')
 const { value: vigenciaFim, errorMessage: errorsVigenciaFim } = useField<string>('vigenciaFim')
+
+const mostrarErroPerfil = computed(() => {
+  return Boolean(errorsPerfil.value) && (perfilMeta.touched || perfilMeta.dirty || tentouEnviar.value)
+})
 
 const formularioPreenchido = computed(() => {
   const camposTexto = [
@@ -960,6 +981,7 @@ function lerValoresDosRefs(): Record<string, unknown> {
 }
 
 async function onConfirmar() {
+  tentouEnviar.value = true
   setFieldValue('perfil', perfil.value as never)
   setFieldValue('esferaAtuacao', esferaAtuacao.value)
   setFieldValue('uf', uf.value)
@@ -1004,6 +1026,8 @@ function fecharModalErro() {
 function montarPayload(): SolicitacaoCadastroPayload {
   const cpfVal = String(cpf.value ?? '').replace(/\D/g, '')
   const perfilNum = perfil.value != null && perfil.value !== '' ? Number(perfil.value) : NaN
+  const ufIdSelecionada = resolverUfIdSelecionada()
+  const municipioIdSelecionado = Number(municipio.value ?? '')
   const telPessoal = telefonePessoal.value
     ? String(telefonePessoal.value).replace(/\D/g, '')
     : undefined
@@ -1014,8 +1038,8 @@ function montarPayload(): SolicitacaoCadastroPayload {
     telefone_institucional: String(telefoneInstitucional.value ?? '').replace(/\D/g, ''),
     telefone_pessoal: telPessoal,
     esfera_id: Number(esferaAtuacao.value ?? ''),
-    uf_id: Number(uf.value ?? ''),
-    municipio_id: Number(municipio.value ?? ''),
+    uf_id: ufIdSelecionada ?? '',
+    municipio_id: Number.isFinite(municipioIdSelecionado) ? municipioIdSelecionado : '',
     orgao: String(orgao.value ?? '').trim(),
     cargo: String(cargo.value ?? '').trim(),
     perfilId: !Number.isNaN(perfilNum) && perfilNum > 0 ? perfilNum : undefined,
