@@ -20,9 +20,8 @@ function applyFontSize(size: FontSizeMode) {
   localStorage.setItem(STORAGE_KEY, size)
 }
 
-function initFontSize() {
-  const saved = localStorage.getItem(STORAGE_KEY) as FontSizeMode | null
-  applyFontSize(saved && sizes.includes(saved) ? saved : 'normal')
+function initAccessibility() {
+  applyGrayscale()
 }
 
 function increaseFontSize() {
@@ -39,12 +38,32 @@ function resetFontSize() {
   applyFontSize('normal')
 }
 
-export function useAccessibilityFont() {
+function toggleGrayscale() {
+  const body = document.body
+  const isGrayscale = body.classList.contains('grayscale')
+
+  if (isGrayscale) {
+    body.classList.remove('grayscale')
+    localStorage.removeItem('accessibility-grayscale')
+  } else {
+    body.classList.add('grayscale')
+    localStorage.setItem('accessibility-grayscale', 'true')
+  }
+}
+
+function applyGrayscale() {
+  if (localStorage.getItem('accessibility-grayscale') === 'true') {
+    document.body.classList.add('grayscale')
+  }
+}
+
+export function useAccessibility() {
   return {
     currentFontSize,
-    initFontSize,
+    initAccessibility,
     increaseFontSize,
     decreaseFontSize,
     resetFontSize,
+    toggleGrayscale,
   }
 }

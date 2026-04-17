@@ -62,6 +62,18 @@
             </div>
           </button>
         </div>
+        <div class="menu-section mt-2">
+          <button
+            class="br-button item-menu font-acessibilidade"
+            type="button"
+            aria-label="Escala de cinza"
+            title="Escala de cinza"
+            @click="toggleGrayscale"
+          >
+            <i class="fas fa-fill-drip text-acessibilidade" aria-hidden="true"></i>
+            <p class="m-0 texto-menu">Escala de cinza</p>
+          </button>
+        </div>
       </div>
     </Card>
   </div>
@@ -74,6 +86,7 @@
       "
       title="Abrir menu de acessibilidade"
       @click="toggleAcessibilidade"
+      ref="toggleButtonRef"
     >
       <!-- <i class="fas fa-universal-access icon-accessibility" aria-hidden="true"></i> -->
       <svg class="icon-accessibility" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -87,12 +100,13 @@
 
 <script setup lang="ts">
 import { useTheme } from '@/core/composables/useTheme'
-import { useAccessibilityFont } from '@/core/composables/useAccessibilityFont'
+import { useAccessibility } from '@/core/composables/useAccessibility'
 import Card from '../Card/Card.vue'
 import { ref, computed, reactive, watch, onMounted, onBeforeUnmount } from 'vue'
 import { AcessibilidadeEnum } from '@/core/enums/AcessibilidadeEnum'
 
-const { increaseFontSize, decreaseFontSize, resetFontSize } = useAccessibilityFont()
+const { increaseFontSize, decreaseFontSize, resetFontSize, toggleGrayscale, initAccessibility } =
+  useAccessibility()
 
 defineOptions({ name: 'Accessibility' })
 
@@ -151,18 +165,22 @@ watch(
 const acessibilidade = ref(false)
 
 const menuRef = ref<HTMLElement | null>(null)
+const toggleButtonRef = ref<HTMLElement | null>(null)
 
 const onOutsideClick = (event: MouseEvent) => {
   if (!acessibilidade.value) return
   const el = menuRef.value
   if (!el) return
   if (!(event.target instanceof Node)) return
+  const toggleEl = toggleButtonRef.value
+  if (toggleEl && toggleEl.contains(event.target)) return
   if (!el.contains(event.target)) {
     acessibilidade.value = false
   }
 }
 
 onMounted(() => {
+  initAccessibility()
   document.addEventListener('mousedown', onOutsideClick, true)
 })
 
