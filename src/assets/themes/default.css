@@ -1,0 +1,23 @@
+[data-theme='default'] {
+  /* Text colors Project */
+  --primary-text-color: var(--blue-warm-vivid-70);
+  --primary-text-dark-color: var(--color-primary-darken-02);
+  --secondary-text-color: var(--color-secondary-07);
+  --secondary-text-color-02: var(--color-secondary-06);
+  --dark-text-color: var(--color-secondary-08);
+  --white-text-color: var(--pure-0);
+
+  /* Border colors */
+  --border-login-color: var(--cyan-vivid-40);
+  --border-card-color: none;
+
+  /* Background colors */
+  --background: var(--pure-0);
+  --background-gray: var(--gray-warm-10);
+  --background-blue: var(--blue-warm-vivid-70);
+  --background-progress-bar: var(--blue-warm-vivid-10);
+  --background-progress-bar-active: var(--blue-warm-vivid-70);
+
+  /* Text colors high */
+  --secondary-text-color-high: var(--color-secondary-07);
+}

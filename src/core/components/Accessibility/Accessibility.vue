@@ -38,17 +38,27 @@
       </div>
     </div>
     <div>
-      <p class="m-1 p-0 item-titulo">Contraste</p>
+      <p class="m-1 p-0 item-titulo">Visual</p>
       <div class="menu-section">
         <button
-          class="br-button item-menu"
+          class="br-button item-menu-column"
           type="button"
           :aria-label="mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
           title="Alternar tema"
           @click="toggleTheme"
         >
-          <i class="fas fa-adjust text-acessibilidade" aria-hidden="true"></i>
-          <p class="m-0 texto-menu">Alto contraste</p>
+          <div>
+            <i class="fas fa-adjust text-acessibilidade" aria-hidden="true"></i>
+            <p class="m-0 texto-menu">Contraste {{ tema }}</p>
+          </div>
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              v-for="item in progressFill"
+              :key="item.modo"
+              :class="{ 'active-bar': item.active }"
+            ></div>
+          </div>
         </button>
       </div>
     </div>
@@ -77,7 +87,8 @@
 import { useTheme } from '@/core/composables/useTheme'
 import { useAccessibilityFont } from '@/core/composables/useAccessibilityFont'
 import Card from '../Card/Card.vue'
-import { ref } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
+import { AcessibilidadeEnum } from '@/core/enums/AcessibilidadeEnum'
 
 const { increaseFontSize, decreaseFontSize, resetFontSize } = useAccessibilityFont()
 
@@ -85,9 +96,55 @@ defineOptions({ name: 'Accessibility' })
 
 const { mode, setMode } = useTheme()
 
+const progressFill = reactive<{ modo: 'claro' | 'escuro'; active: boolean }[]>([
+  {
+    modo: 'claro',
+    active: false,
+  },
+  {
+    modo: 'escuro',
+    active: false,
+  },
+])
+
 const toggleTheme = () => {
-  setMode(mode.value === 'dark' ? 'light' : 'dark')
+  if (mode.value === AcessibilidadeEnum.DEFAULT) {
+    setMode(AcessibilidadeEnum.LIGHT)
+  } else if (mode.value === AcessibilidadeEnum.LIGHT) {
+    setMode(AcessibilidadeEnum.DARK)
+  } else {
+    setMode(AcessibilidadeEnum.DEFAULT)
+  }
 }
+
+const tema = computed(() => {
+  if (mode.value === AcessibilidadeEnum.DARK) return 'escuro'
+  if (mode.value === AcessibilidadeEnum.LIGHT) return 'claro'
+  return ''
+})
+
+const setProgressFill = (novoModo: 'claro' | 'escuro' | '') => {
+  if (progressFill[0]) progressFill[0].active = false
+  if (progressFill[1]) progressFill[1].active = false
+
+  if (novoModo === 'claro') {
+    if (progressFill[0]) progressFill[0].active = true
+    return
+  }
+
+  if (novoModo === 'escuro') {
+    if (progressFill[0]) progressFill[0].active = true
+    if (progressFill[1]) progressFill[1].active = true
+  }
+}
+
+watch(
+  mode,
+  () => {
+    setProgressFill(tema.value)
+  },
+  { immediate: true },
+)
 
 const acessibilidade = ref(false)
 
@@ -132,10 +189,28 @@ const toggleAcessibilidade = () => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 1rem 0;
+  padding: 1rem;
   background-color: var(--gray-warm-3);
   border-radius: 0.5rem;
   width: 100%;
+}
+
+.item-menu-column {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: var(--gray-warm-3);
+  border-radius: 0.5rem;
+  width: 100%;
+  height: 100%;
+}
+
+.item-menu-column > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .fixed {
@@ -192,5 +267,25 @@ const toggleAcessibilidade = () => {
 }
 [data-theme='dark'] .game-bar.fixed button {
   color: var(--pure-0);
+}
+
+.progress-bar {
+  display: flex;
+  width: 100%;
+  height: 1rem;
+  border-radius: 0.5rem;
+  gap: 0.25rem;
+}
+
+.progress-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.5rem;
+}
+.progress-fill:not(.active-bar) {
+  background-color: var(--background-progress-bar);
+}
+.active-bar {
+  background-color: var(--background-progress-bar-active);
 }
 </style>

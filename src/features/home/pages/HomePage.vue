@@ -28,7 +28,7 @@ defineOptions({ name: 'HomePage' })
 .home-page__title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--color-primary-default, #1351b4);
+  color: var(--primary-text-color);
   margin: 0 0 0.5rem;
 }
 
