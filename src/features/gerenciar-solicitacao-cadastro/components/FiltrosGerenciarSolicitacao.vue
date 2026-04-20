@@ -87,7 +87,7 @@
           v-model="filtrosLocal.status_id"
           label="Situação da solicitação"
           placeholder="Selecione"
-          :options="OPCOES_STATUS"
+          :options="opcoesStatus"
         />
       </div>
     </div>
@@ -123,6 +123,7 @@ import { useUfStore } from '@/stores/ufStore'
 import { useMunicipioStore } from '@/stores/municipioStore'
 import type { FiltrosGerenciarSolicitacao } from '@/services/GerenciarSolicitacaoCadastroService'
 import { useAuth } from '@/core/composables/useAuth'
+import { useStatusStore } from '@/stores/statusStore'
 
 defineOptions({ name: 'FiltrosGerenciarSolicitacao' })
 
@@ -138,6 +139,9 @@ const municipioStore = useMunicipioStore()
 const opcoesMunicipio = computed(() => municipioStore.municipiosOptions)
 const { user, perfilAtivo } = useAuth()
 const aplicandoContextoTerritorial = ref(false)
+
+const statusStore = useStatusStore()
+const opcoesStatus = computed(() => statusStore.statusOptions)
 
 const props = defineProps<{
   carregando?: boolean
@@ -354,6 +358,7 @@ function limparFiltros() {
 onMounted(async () => {
   await ufStore.carregarUfs()
   await esferasStore.carregarEsferas()
+  await statusStore.carregarStatus()
   await aplicarContextoTerritorialNosFiltros()
 })
 
