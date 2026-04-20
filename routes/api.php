@@ -7,6 +7,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\LocalidadeController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\SolicitacaoCadastroController;
+use App\Http\Controllers\StatusSolicitacaoController;
 use App\Http\Controllers\TrocaContextoController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,7 @@ Route::prefix('auth')->group(function () {
     Route::get('/callback', [GovBrAuthController::class, 'callback']);
     Route::post('/exchange', [GovBrAuthController::class, 'exchange']);
 });
+
 Route::prefix('solicitacoes-cadastro')->group(function () {
     Route::post('/', [SolicitacaoCadastroController::class, 'store']);
     Route::get('/verificar-cpf', [SolicitacaoCadastroController::class, 'verificarCpf']);
@@ -44,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/perfis', [PerfilController::class, 'index'])->name('perfis.index');
+    Route::get('/status-solicitacao', StatusSolicitacaoController::class);
 
     Route::prefix('solicitacoes-cadastro')->group(function () {
         Route::get('/', [SolicitacaoCadastroController::class, 'index'])
