@@ -9,6 +9,7 @@ export const gerenciarSolicitacaoCadastroRoutes: RouteRecordRaw[] = [
     meta: {
       title: 'Gerenciar Cadastros — NVSL',
       requiredModule: 'Gerenciar Cadastros',
+      guard: 'solicitacoes_cadastro.visualizar',
     },
   },
 ]

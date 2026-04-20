@@ -4,6 +4,7 @@ import { gerenciarSolicitacaoCadastroRoutes } from '@/features/gerenciar-solicit
 import { useAuthStore } from '@/stores/authStore'
 import { useNotification } from '@/core/composables/useNotification'
 import { exibirGerenciarPerfis } from '@/core/config/featureFlags'
+import { usePermissoes } from '@/core/composables/usePermissoes'
 
 /**
  * Roteador principal da aplicação
@@ -108,6 +109,16 @@ router.beforeEach(async (to) => {
     if (!temPermissao) {
       const { error } = useNotification()
       error('Acesso não permitido.')
+      return { name: 'home' }
+    }
+  }
+
+  if (to.meta.guard) {
+    const { hasPermissao } = usePermissoes()
+    const guard = to.meta.guard as string
+    if (!hasPermissao(guard)) {
+      const { warning } = useNotification()
+      warning('O perfil selecionado não possui permissão para acessar essa página', 'Atenção')
       return { name: 'home' }
     }
   }

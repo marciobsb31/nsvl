@@ -140,9 +140,9 @@ import ScrollToTop from '@/core/components/ScrollToTop/ScrollToTop.vue'
 import SelectAutocomplete, {
   type SelectAutocompleteOption,
 } from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
+import { useNotification } from '@/core/composables/useNotification'
 
 const { isMobile } = useBreakpoint()
-const mainRef = ref<HTMLElement | null>(null)
 const sidebarAberto = ref(false)
 const sidebarRecolhido = ref(localStorage.getItem('nvsl_sidebar_recolhido') === 'true')
 const { mode } = useTheme()
@@ -150,6 +150,7 @@ const exibirComboContexto = ref(false)
 const perfilSelecionadoId = ref<number | null>(null)
 const trocandoPerfilHeader = ref(false)
 const erroTrocaContexto = ref('')
+const { success } = useNotification()
 
 const router = useRouter()
 const {
@@ -160,7 +161,6 @@ const {
   perfisAtivos,
   perfilAtivo,
   contextKey,
-  temPermissao,
   trocarContexto,
   trocandoContexto,
   refreshUser,
@@ -200,7 +200,10 @@ const opcoesTrocaContexto = computed<SelectAutocompleteOption[]>(() => {
   }
 
   function prioridadeTipo(nome?: string): number {
-    const n = String(nome ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    const n = String(nome ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
     for (const [chave, ordem] of Object.entries(PRIORIDADE_TIPO)) {
       if (n.includes(chave)) return ordem
     }
@@ -208,7 +211,13 @@ const opcoesTrocaContexto = computed<SelectAutocompleteOption[]>(() => {
   }
 
   function prioridadeEsfera(esfera?: string): number {
-    return PRIORIDADE_ESFERA[String(esfera ?? '').toLowerCase().trim()] ?? 99
+    return (
+      PRIORIDADE_ESFERA[
+        String(esfera ?? '')
+          .toLowerCase()
+          .trim()
+      ] ?? 99
+    )
   }
 
   return [...perfisAtivos.value]
@@ -257,15 +266,16 @@ watch(mode, (newMode) => {
 onMounted(() => {
   logoGov.value = mode.value === 'dark' ? logoGovBranca : logoGovColor
   perfilSelecionadoId.value = perfilAtivo.value?.id ?? null
-
-  function handleVisibilityChange() {
-    if (document.visibilityState === 'visible' && isAuthenticated.value) {
-      refreshUser()
-    }
-  }
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-  onUnmounted(() => document.removeEventListener('visibilitychange', handleVisibilityChange))
 })
+
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible' && isAuthenticated.value) {
+    refreshUser()
+  }
+}
+document.addEventListener('visibilitychange', handleVisibilityChange)
+
+onUnmounted(() => document.removeEventListener('visibilitychange', handleVisibilityChange))
 
 watch(
   () => perfilAtivo.value?.id,
@@ -283,8 +293,8 @@ watch(perfilSelecionadoId, async (novoId) => {
   erroTrocaContexto.value = ''
   try {
     await trocarContexto(Number(novoId))
-    const podeGerenciarCadastros = temPermissao('Gerenciar Cadastros')
-    await router.replace(podeGerenciarCadastros ? '/gerenciar-cadastros' : '/')
+    await router.replace(router.currentRoute.value.path)
+    success('Contexto trocado com sucesso!')
     exibirComboContexto.value = false
   } catch {
     erroTrocaContexto.value = 'Não foi possível trocar o contexto. Tente novamente.'

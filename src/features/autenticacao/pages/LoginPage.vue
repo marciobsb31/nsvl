@@ -26,7 +26,7 @@
             <button
               type="button"
               class="br-button secondary block login-govbr__button"
-              :disabled="carregandoGovBr || !govBrDisponivel"
+              :disabled="carregandoGovBr || !govBrDisponivel || carregandoGovBrSolicitacao"
               aria-label="Entrar com GOV.BR"
               @click="entrarComGovBr('login')"
               aria-describedby="login-description"
@@ -38,12 +38,12 @@
           <button
             type="button"
             class="br-button success block mt-3 login-govbr__button login-register-button"
-            :disabled="carregandoGovBr"
+            :disabled="carregandoGovBr || carregandoGovBrSolicitacao"
             aria-label="Solicitar cadastro"
             @click="entrarComGovBr('solicitacao')"
             aria-describedby="login-description"
           >
-            {{ carregandoGovBr ? 'Redirecionando...' : 'Solicitar cadastro' }}
+            {{ carregandoGovBrSolicitacao ? 'Redirecionando...' : 'Solicitar cadastro' }}
           </button>
         </div>
       </div>
@@ -67,6 +67,7 @@ const authStore = useAuthStore()
 const govBrDisponivel =
   String(import.meta.env.VITE_GOVBR_ENABLED ?? 'true').toLowerCase() === 'true'
 const carregandoGovBr = ref(false)
+const carregandoGovBrSolicitacao = ref(false)
 const erro = ref('')
 const erroRef = ref<HTMLElement | null>(null)
 
@@ -90,8 +91,11 @@ async function entrarComGovBr(flow: 'login' | 'solicitacao' = 'login') {
     erro.value = 'Login GOV.BR indisponível neste ambiente no momento.'
     return
   }
-
-  carregandoGovBr.value = true
+  if (flow === 'login') {
+    carregandoGovBr.value = true
+  } else {
+    carregandoGovBrSolicitacao.value = true
+  }
   erro.value = ''
   try {
     const url = await AuthService.getRedirectUrl(flow)
@@ -100,6 +104,7 @@ async function entrarComGovBr(flow: 'login' | 'solicitacao' = 'login') {
     erro.value = 'Login GOV.BR indisponível neste ambiente no momento.'
   } finally {
     carregandoGovBr.value = false
+    carregandoGovBrSolicitacao.value = false
   }
 }
 

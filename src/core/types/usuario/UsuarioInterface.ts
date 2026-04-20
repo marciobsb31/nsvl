@@ -1,6 +1,9 @@
 export interface Contexto {
   perfil_usuario_id?: number
-  esfera: string
+  esfera: {
+    id: number
+    nome: string
+  }
   localidade: string
   perfil: string
   uf_id?: number
@@ -29,5 +32,5 @@ export interface AuthUser {
   sub?: string
   contexto: Contexto
   perfis: perfis[]
-  permissions: string[]
+  permissoes: string[]
 }

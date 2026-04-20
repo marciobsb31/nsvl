@@ -34,11 +34,11 @@ export interface SolicitacaoGerenciarItem {
 export interface FiltrosGerenciarSolicitacao {
   cpf?: string
   nome?: string
-  uf?: string
-  municipio?: string
+  uf_id?: string
+  municipio_id?: string
   orgao?: string
-  esfera?: string
-  status?: string
+  esfera_id?: string
+  status_id?: string
 }
 
 export async function listarSolicitacoesGerenciar(
@@ -47,11 +47,11 @@ export async function listarSolicitacoesGerenciar(
   const params = new URLSearchParams()
   if (filtros?.cpf) params.set('cpf', filtros.cpf.replace(/\D/g, ''))
   if (filtros?.nome) params.set('nome', filtros.nome)
-  if (filtros?.uf) params.set('uf', filtros.uf)
-  if (filtros?.municipio) params.set('municipio', filtros.municipio)
+  if (filtros?.uf_id) params.set('uf_id', filtros.uf_id)
+  if (filtros?.municipio_id) params.set('municipio_id', filtros.municipio_id)
   if (filtros?.orgao) params.set('orgao', filtros.orgao)
-  if (filtros?.esfera) params.set('esfera', filtros.esfera)
-  if (filtros?.status) params.set('status', filtros.status)
+  if (filtros?.esfera_id) params.set('esfera_id', filtros.esfera_id)
+  if (filtros?.status_id) params.set('status_id', filtros.status_id)
 
   const itens: SolicitacaoGerenciarItem[] = []
   let paginaAtual = 1
