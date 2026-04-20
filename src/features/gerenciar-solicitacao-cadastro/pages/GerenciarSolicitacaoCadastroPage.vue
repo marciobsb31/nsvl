@@ -82,7 +82,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in solicitacoesPaginadas" :key="s.id">
+              <tr v-for="s in solicitacoesOrdenadas" :key="s.id">
                 <td>{{ maskCpf(s.cpf) }}</td>
                 <td>{{ s.nome }}</td>
                 <td>{{ labelEsfera(s.esfera.nome) }}</td>
@@ -111,14 +111,16 @@
         </div>
         <PaginationControls
           v-if="solicitacoesOrdenadas.length > 0"
-          v-model:currentPage="paginaAtual"
-          v-model:pageSize="itensPorPagina"
-          :total-items="solicitacoesOrdenadas.length"
+          :current-page="paginaAtual"
+          :page-size="itensPorPagina"
+          :total-items="totalItens"
+          @onPageSize="onPageSizeChange"
+          @onPage="onPageChange"
         />
 
       </Card>
-      <Card custom-class="mb-4" v-if="isMobile && solicitacoesPaginadas.length > 0">
-        <div class="row table-mobile" v-for="s in solicitacoesPaginadas" :key="s.id">
+      <Card custom-class="mb-4" v-if="isMobile && solicitacoesOrdenadas.length > 0">
+        <div class="row table-mobile" v-for="s in solicitacoesOrdenadas" :key="s.id">
           <div class="col-12 mb-1">
             <label for="nome">Nome completo</label>
             <p class="m-0">{{ s.nome }}</p>
@@ -299,6 +301,7 @@ const ordenarColuna = ref<string | null>(null)
 const ordenarAsc = ref(true)
 const paginaAtual = ref(1)
 const itensPorPagina = ref(10)
+const totalItens = ref(0)
 
 const solicitacoesOrdenadas = computed(() => {
   const lista = [...solicitacoes.value]
@@ -354,12 +357,6 @@ const solicitacoesOrdenadas = computed(() => {
   return lista
 })
 
-const solicitacoesPaginadas = computed(() => {
-  const inicio = (paginaAtual.value - 1) * itensPorPagina.value
-  const fim = inicio + itensPorPagina.value
-  return solicitacoesOrdenadas.value.slice(inicio, fim)
-})
-
 function ordenarPor(coluna: string) {
   if (ordenarColuna.value === coluna) {
     ordenarAsc.value = !ordenarAsc.value
@@ -385,11 +382,19 @@ function onCadastroSucesso() {
 }
 
 async function carregarSolicitacoes() {
+
   carregando.value = true
   jaListou.value = true
   try {
-    solicitacoes.value = await listarSolicitacoesGerenciar(filtrosAtivos.value)
-    paginaAtual.value = 1
+    const resp = await listarSolicitacoesGerenciar(
+      filtrosAtivos.value,
+      paginaAtual.value,
+      itensPorPagina.value,
+    )
+    solicitacoes.value = resp.itens
+    totalItens.value = resp.pagination?.total ?? resp.itens.length
+    if (resp.pagination?.current_page != null) paginaAtual.value = resp.pagination.current_page
+    if (resp.pagination?.per_page != null) itensPorPagina.value = resp.pagination.per_page
   } catch (e: unknown) {
     solicitacoes.value = []
     const err = e as {
@@ -699,6 +704,17 @@ watch(contextKey, () => {
 onMounted(() => {
   limparEpesquisar()
 })
+
+
+async function onPageSizeChange(pageSize: number) {
+  itensPorPagina.value = pageSize
+  await carregarSolicitacoes()
+}
+
+async function onPageChange(page: number) {
+  paginaAtual.value = page
+  await carregarSolicitacoes()
+}
 
 
 

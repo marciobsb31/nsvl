@@ -17,7 +17,7 @@
         class="br-button circle small"
         :disabled="currentPage <= 1"
         aria-label="Página anterior"
-        @click="$emit('update:currentPage', currentPage - 1)"
+        @click="previousPage"
       >
         <i class="fas fa-chevron-left" aria-hidden="true"></i>
       </button>
@@ -27,7 +27,7 @@
         class="br-button circle small"
         :disabled="currentPage >= totalPages"
         aria-label="Próxima página"
-        @click="$emit('update:currentPage', currentPage + 1)"
+        @click="nextPage"
       >
         <i class="fas fa-chevron-right" aria-hidden="true"></i>
       </button>
@@ -51,6 +51,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'update:currentPage', value: number): void
   (e: 'update:pageSize', value: number): void
+  (e: 'onPageSize', value: number): void
+  (e: 'onPage', value: number): void
 }>()
 const totalPages = computed(() => Math.max(1, Math.ceil(props.totalItems / props.pageSize)))
 const startItem = computed(() =>
@@ -63,8 +65,19 @@ function onPageSizeChange(event: Event) {
   const parsed = Number(target.value)
   if (!Number.isNaN(parsed) && parsed > 0) {
     emit('update:pageSize', parsed)
+    emit('onPageSize', parsed)
     emit('update:currentPage', 1)
   }
+}
+
+function nextPage() {
+  emit('update:currentPage', props.currentPage + 1)
+  emit('onPage', props.currentPage + 1)
+}
+
+function previousPage() {
+  emit('update:currentPage', props.currentPage - 1)
+  emit('onPage', props.currentPage - 1)
 }
 </script>
 <style scoped>
