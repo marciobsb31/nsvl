@@ -12,27 +12,30 @@ import { useAuth } from '@/core/composables/useAuth'
 
 const { user, perfilAtivo } = useAuth()
 
-const esferaMap: Record<string, string> = {
-  federal: 'Federal',
-  estadual: 'Estadual',
-  municipal: 'Municipal',
-}
-
 const contextoAtualLabel = computed(() => {
   const perfil = perfilAtivo.value
-  const esfera = user.value?.contexto.esfera
-  const uf = user.value?.contexto.localidade
-  const municipio = user.value?.contexto.localidade
   if (!perfil) {
-    return esfera ? (esferaMap[esfera] ?? esfera) : ''
+    const nomePerfil = user.value?.contexto.perfil
+    const localidade = user.value?.contexto.localidade
+    if (nomePerfil && localidade) {
+      return `${nomePerfil} - ${localidade}`
+    }
+    return nomePerfil ?? localidade ?? ''
   }
-  const partes: string[] = []
-  if (perfil.nome) partes.push(perfil.nome)
-  if (esfera) partes.push(esferaMap[esfera] ?? esfera)
-  if (uf) partes.push(uf)
-  // if (municipio) partes.push(municipio)
-  return partes.join(' — ')
+
+  return montarLabelPerfil(perfil)
 })
+
+function montarLabelPerfil(perfil: {
+  nome: string
+  municipio?: string | null
+  localidade?: string | null
+  uf?: string | null
+}) {
+  const localidade = perfil.municipio ?? perfil.localidade ?? '—'
+  const uf = perfil.uf ?? '—'
+  return `${perfil.nome} - ${localidade} - ${uf}`
+}
 </script>
 
 <style scoped>

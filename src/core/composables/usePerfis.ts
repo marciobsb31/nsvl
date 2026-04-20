@@ -3,13 +3,14 @@ import { listarPerfis, type PerfilOption } from '@/services/PerfilService'
 
 const FALLBACK_PERFIS: PerfilOption[] = [
   { value: 1, label: 'Gestor Federal' },
-  { value: 2, label: 'Gestor Estadual' },
-  { value: 3, label: 'Gestor Municipal' },
-  { value: 4, label: 'Administrador Estadual' },
-  { value: 5, label: 'Administrador Municipal' },
-  { value: 6, label: 'Visitante Federal' },
-  { value: 7, label: 'Visitante Estadual' },
-  { value: 8, label: 'Visitante Municipal' },
+  { value: 3, label: 'Gestor Estadual' },
+  { value: 4, label: 'Gestor Municipal' },
+  { value: 2, label: 'Administrador Federal' },
+  { value: 5, label: 'Administrador Estadual' },
+  { value: 6, label: 'Administrador Municipal' },
+  { value: 7, label: 'Visitante Federal' },
+  { value: 8, label: 'Visitante Estadual' },
+  { value: 9, label: 'Visitante Municipal' },
 ]
 
 // Singleton: estado compartilhado entre todos os componentes

@@ -233,13 +233,15 @@ import Contexto from '@/core/components/Contexto/Contexto.vue'
 import type { SolicitacaoCadastroDetalhe } from '@/core/types/solicitacao-cadastro/SolicitacaoInterface'
 import { usePermissoes } from '@/core/composables/usePermissoes'
 import { StatusNomeEnum } from '@/core/enums/StatusEmun'
+import { useRouter } from 'vue-router'
 
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
-const { error, success } = useNotification()
+const { warning, success, error } = useNotification()
 const { isMobile } = useBreakpoint()
+const router = useRouter()
 
-const { user, contextKey, perfilAtivo } = useAuth()
+const { user, contextKey, perfilAtivo, refreshUser } = useAuth()
 const { hasPermissao } = usePermissoes()
 
 const PERFIS_GESTORES_CADASTRO = ['gestor federal', 'gestor estadual', 'gestor municipal'] as const
@@ -272,6 +274,15 @@ function extrairNomeStatus(status: unknown): string {
   return ''
 }
 
+function normalizarNomeStatus(status?: string): string {
+  return String(status ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .trim()
+}
+
 const permiteAnalisarVisualizar = (status?: string) => {
   if( status === StatusNomeEnum.EM_ANALISE ) {
     return hasPermissao('solicitacoes_cadastro.analisar')
@@ -290,7 +301,7 @@ const itensPorPagina = ref(10)
 
 const solicitacoesOrdenadas = computed(() => {
   const lista = [...solicitacoes.value]
-  const prioridadeStatus = (status?: string) => (status === 'em_analise' ? 0 : 1)
+  const prioridadeStatus = (status?: string) => (normalizarNomeStatus(status) === 'em_analise' ? 0 : 1)
 
   if (!ordenarColuna.value) {
     return lista.sort((a, b) => {
@@ -378,8 +389,36 @@ async function carregarSolicitacoes() {
   try {
     solicitacoes.value = await listarSolicitacoesGerenciar(filtrosAtivos.value)
      paginaAtual.value = 1
-  } catch {
+  } catch (e: unknown) {
     solicitacoes.value = []
+    const err = e as {
+      response?: { status?: number; data?: { message?: string } }
+      message?: string
+    }
+    const status = err?.response?.status
+
+    if (status === 401) {
+      error('Sessão expirada. Faça login novamente.')
+      return
+    }
+
+    if (status === 403) {
+      error('Seu perfil atual não possui permissão para visualizar solicitações.')
+      router.replace({ name: 'home' })
+      return
+    }
+
+    const mensagemApi = err?.response?.data?.message
+    if (mensagemApi && mensagemApi.trim().length > 0) {
+      error(mensagemApi)
+      return
+    }
+
+    if (err?.response) {
+      error('Não foi possível carregar as solicitações no momento. Tente novamente.')
+      return
+    }
+
     error('Não foi possível carregar as solicitações. Verifique se o backend está em execução.')
   } finally {
     carregando.value = false
@@ -524,6 +563,7 @@ async function aprovarSolicitacao(payload?: { perfilId?: string | number | null;
   avaliando.value = true
   try {
     await apiAprovar(detalheSelecionado.value.id, payload)
+    await refreshUser()
     success('Cadastro aprovado com sucesso.')
     fecharPainelDetalhar()
     carregarSolicitacoes()
@@ -637,10 +677,33 @@ watch(contextKey, () => {
   painelCadastroAberto.value = false
   painelDetalharAberto.value = false
   detalheSelecionado.value = null
+
+  const possuiPermissaoVisualizar = hasPermissao('solicitacoes_cadastro.visualizar')
+
+  if (!possuiPermissaoVisualizar) {
+    warning(
+      'O perfil selecionado não possui permissão para gerenciar solicitações. Você será redirecionado para a página inicial.',
+      'Atenção',
+    )
+    router.replace({ name: 'home' })
+    return
+  }
+
   limparEpesquisar()
 })
 
 onMounted(() => {
+  const possuiPermissaoVisualizar = hasPermissao('solicitacoes_cadastro.visualizar')
+
+  if (!possuiPermissaoVisualizar) {
+    warning(
+      'O perfil selecionado não possui permissão para gerenciar solicitações. Você será redirecionado para a página inicial.',
+      'Atenção',
+    )
+    router.replace({ name: 'home' })
+    return
+  }
+
   limparEpesquisar()
 })
 

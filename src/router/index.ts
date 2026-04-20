@@ -91,6 +91,11 @@ router.beforeEach(async (to) => {
       const api = (await import('@/services/ApiService')).default
       const { data } = await api.get<Record<string, unknown>>('/usuario')
       authStore.setUser(data)
+      // Seleciona automaticamente o perfil hierarquicamente mais alto
+      const maisAlto = authStore.perfilHierarquicoMaisAlto
+      if (maisAlto && maisAlto.id !== authStore.perfilAtivo?.id) {
+        await authStore.trocarContexto(maisAlto.id)
+      }
     } catch {
       sessionStorage.removeItem('nvsl_token')
       return { name: 'login' }
@@ -100,8 +105,7 @@ router.beforeEach(async (to) => {
   if (to.meta.requiredModule && authStore.user) {
     const modulo = to.meta.requiredModule as string
     const temPermissao = authStore.temPermissao(modulo)
-    const esfera = authStore.user.contexto.esfera
-    if (esfera !== 'federal' && !temPermissao) {
+    if (!temPermissao) {
       const { error } = useNotification()
       error('Acesso não permitido.')
       return { name: 'home' }

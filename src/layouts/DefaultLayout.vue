@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/core/composables/useAuth'
 import Header from '@/core/components/Header/Header.vue'
@@ -160,27 +160,26 @@ const {
   perfisAtivos,
   perfilAtivo,
   contextKey,
+  temPermissao,
   trocarContexto,
   trocandoContexto,
+  refreshUser,
 } = useAuth()
 
 const exibirTrocaContexto = computed(() => isAuthenticated.value && possuiMultiplosPerfis.value)
 
-const esferaMap: Record<string, string> = {
-  federal: 'Federal',
-  estadual: 'Estadual',
-  municipal: 'Municipal',
-}
-
 const perfilAtivoLabel = computed(() => {
   const perfil = perfilAtivo.value
-  const esfera = user.value?.contexto.esfera
   if (perfil) {
-    const partes = [perfil.nome]
-    if (esfera) partes.push(esferaMap[esfera] ?? esfera)
-    return partes.join(' — ')
+    return montarLabelPerfil(perfil)
   }
-  return esfera ? (esferaMap[esfera] ?? esfera) : ''
+
+  const nomePerfil = user.value?.contexto.perfil
+  const localidade = user.value?.contexto.localidade
+  if (nomePerfil && localidade) {
+    return `${nomePerfil} - ${localidade}`
+  }
+  return nomePerfil ?? localidade ?? ''
 })
 
 const currentYear = computed(() => new Date().getFullYear())
@@ -188,23 +187,59 @@ const logoGov = ref(logoGovColor)
 
 const opcoesTrocaContexto = computed<SelectAutocompleteOption[]>(() => {
   const perfilAtualId = perfilAtivo.value?.id
-  return perfisAtivos.value.map((perfil) => {
-    const localidade = perfil.municipio ?? perfil.localidade ?? '—'
-    const uf = perfil.uf ?? '—'
-    const emUso = perfil.id === perfilAtualId
-    const label = `${perfil.nome} - ${localidade} - ${uf}`
 
-    return {
-      value: perfil.id,
-      label,
-      badge: emUso ? 'Em uso' : undefined,
-      inUse: emUso,
+  const PRIORIDADE_TIPO: Record<string, number> = {
+    gestor: 0,
+    administrador: 1,
+    visitante: 2,
+  }
+  const PRIORIDADE_ESFERA: Record<string, number> = {
+    federal: 0,
+    estadual: 1,
+    municipal: 2,
+  }
+
+  function prioridadeTipo(nome?: string): number {
+    const n = String(nome ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    for (const [chave, ordem] of Object.entries(PRIORIDADE_TIPO)) {
+      if (n.includes(chave)) return ordem
     }
-  })
+    return 99
+  }
+
+  function prioridadeEsfera(esfera?: string): number {
+    return PRIORIDADE_ESFERA[String(esfera ?? '').toLowerCase().trim()] ?? 99
+  }
+
+  return [...perfisAtivos.value]
+    .sort((a, b) => {
+      const tipoDiff = prioridadeTipo(a.nome) - prioridadeTipo(b.nome)
+      if (tipoDiff !== 0) return tipoDiff
+      const esferaDiff = prioridadeEsfera(a.esfera) - prioridadeEsfera(b.esfera)
+      if (esferaDiff !== 0) return esferaDiff
+      return String(a.nome).localeCompare(String(b.nome), 'pt-BR')
+    })
+    .map((perfil) => {
+      const emUso = perfil.id === perfilAtualId
+      const label = montarLabelPerfil(perfil)
+      return {
+        value: perfil.id,
+        label,
+        badge: emUso ? 'Em uso' : undefined,
+        inUse: emUso,
+      }
+    })
 })
 
-function labelEsfera(esfera: string) {
-  return esferaMap[esfera] ?? esfera
+function montarLabelPerfil(perfil: {
+  nome: string
+  municipio?: string | null
+  localidade?: string | null
+  uf?: string | null
+}) {
+  const localidade = perfil.municipio ?? perfil.localidade ?? '—'
+  const uf = perfil.uf ?? '—'
+  return `${perfil.nome} - ${localidade} - ${uf}`
 }
 
 function toggleTrocaContexto() {
@@ -222,6 +257,14 @@ watch(mode, (newMode) => {
 onMounted(() => {
   logoGov.value = mode.value === 'dark' ? logoGovBranca : logoGovColor
   perfilSelecionadoId.value = perfilAtivo.value?.id ?? null
+
+  function handleVisibilityChange() {
+    if (document.visibilityState === 'visible' && isAuthenticated.value) {
+      refreshUser()
+    }
+  }
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  onUnmounted(() => document.removeEventListener('visibilitychange', handleVisibilityChange))
 })
 
 watch(
@@ -240,7 +283,8 @@ watch(perfilSelecionadoId, async (novoId) => {
   erroTrocaContexto.value = ''
   try {
     await trocarContexto(Number(novoId))
-    await router.replace('/gerenciar-cadastros')
+    const podeGerenciarCadastros = temPermissao('Gerenciar Cadastros')
+    await router.replace(podeGerenciarCadastros ? '/gerenciar-cadastros' : '/')
     exibirComboContexto.value = false
   } catch {
     erroTrocaContexto.value = 'Não foi possível trocar o contexto. Tente novamente.'

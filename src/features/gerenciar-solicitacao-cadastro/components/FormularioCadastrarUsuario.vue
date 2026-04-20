@@ -46,18 +46,12 @@
                 required
                 :aria-invalid="!!errorsCpf"
                 aria-describedby="cad-cpf-err cad-cpf-hint"
-                @blur="onCpfBlur"
+              @blur="onCpfBlur"
               />
               <span v-if="verificandoCpf" class="cadastro-field-hint cadastro-field-hint--loading"
                 >Verificando CPF...</span
               >
-              <Feedback v-if="errorsCpf" id="cad-cpf-err" :message="errorsCpf" type="danger" />
-              <span
-                v-if="!errorsCpf && !verificandoCpf"
-                id="cad-cpf-hint"
-                class="cadastro-field-hint"
-                >Use um CPF ainda não cadastrado no sistema.</span
-              >
+              <Feedback v-if="mostrarErroCpf" id="cad-cpf-err" :message="errorsCpf" type="danger" />
             </div>
           </div>
 
@@ -147,34 +141,50 @@
             </div>
           </div>
           <div class="col-12 col-md-4">
+            <div v-if="isEsferaBloqueada" class="br-input cadastro-readonly-field">
+              <label for="cad-esfera-readonly"
+                >Esfera de atuação<span class="text-red-50 text-up-01"> *</span></label
+              >
+              <input
+                id="cad-esfera-readonly"
+                type="text"
+                :value="esferaBloqueadaLabel"
+                disabled
+                readonly
+              />
+            </div>
             <SelectAutocomplete
+              v-else
               v-model="esferaAtuacao"
-              class="cadastro-select--sem-seta"
               label="Esfera de atuação"
               placeholder="Esfera de atuação"
               :options="opcoesEsferaFiltradas"
-              :disabled="isEsferaBloqueada"
               required
             />
             <Feedback v-if="errorsEsfera" :message="errorsEsfera" type="danger" />
           </div>
           <div class="col-12 col-md-3">
+            <div v-if="isUfBloqueada" class="br-input cadastro-readonly-field">
+              <label for="cad-uf-readonly"
+                >Estado (UF)<span class="text-red-50 text-up-01"> *</span></label
+              >
+              <input id="cad-uf-readonly" type="text" :value="ufBloqueadaLabel" disabled readonly />
+            </div>
             <SelectAutocomplete
+              v-else
               ref="ufRef"
-              class="cadastro-select--sem-seta"
               :model-value="uf"
               @update:model-value="onUfChange"
               label="Estado (UF)"
               placeholder="Selecione"
               :options="opcoesUfFiltradas"
-              :disabled="isUfBloqueada"
               input-id="cad-uf"
               required
             />
             <Feedback v-if="errorsUf" :message="errorsUf" type="danger" />
           </div>
           <div class="col-12 col-md-5">
-            <div v-if="isMunicipioBloqueado" class="br-input">
+            <div v-if="isMunicipioBloqueado" class="br-input cadastro-readonly-field">
               <label for="cad-municipio-readonly"
                 >Município<span class="text-red-50 text-up-01"> *</span></label
               >
@@ -196,9 +206,11 @@
               :options="opcoesMunicipioFiltradas"
               :disabled="!uf"
               input-id="cad-municipio"
+              :aria-invalid="!!alertaCpfAreaAtiva"
               required
             />
             <Feedback v-if="uf && errorsMunicipio" :message="errorsMunicipio" type="danger" />
+            <Feedback v-if="alertaCpfAreaAtiva" id="alerta-cpf-area" :message="alertaCpfAreaAtiva" type="danger" />
           </div>
           <div class="col-12 col-md-6">
             <div class="br-input">
@@ -252,9 +264,6 @@
               required
             />
             <Feedback v-if="mostrarErroPerfil" :message="errorsPerfil" type="danger" />
-            <span v-if="mensagemPerfisAtivosCpf" class="cadastro-field-hint cadastro-field-hint--info">
-              {{ mensagemPerfisAtivosCpf }}
-            </span>
           </div>
           <div class="br-input mb-2">
             <label for="cad-vigencia-inicio"
@@ -500,6 +509,8 @@ const {
 
 const { value: nome, errorMessage: errorsNome } = useField<string>('nome')
 const { value: cpf, errorMessage: errorsCpf } = useField<string>('CPF')
+const cpfTocado = ref(false)
+const mostrarErroCpf = computed(() => !!errorsCpf.value && (cpfTocado.value || tentouEnviar.value))
 const { value: emailInstitucional, errorMessage: errorsEmail } =
   useField<string>('emailInstitucional')
 const { value: telefoneInstitucional, errorMessage: errorsTelInst } =
@@ -514,11 +525,13 @@ const verificandoCpf = ref(false)
 const perfisAtivosCpfIds = ref<number[]>([])
 const perfisAtivosCpfNomes = ref<string[]>([])
 const mensagemPerfisAtivosCpf = ref('')
+const alertaCpfAreaAtiva = ref('')
 
 function limparRestricoesPerfilPorCpf() {
   perfisAtivosCpfIds.value = []
   perfisAtivosCpfNomes.value = []
   mensagemPerfisAtivosCpf.value = ''
+  alertaCpfAreaAtiva.value = ''
 }
 
 function areaAtualParaValidacaoCpf() {
@@ -537,14 +550,7 @@ async function consultarPerfisAtivosDoCpf(digitos: string) {
   verificandoCpf.value = true
   try {
     const res = await verificarCpfDisponivel(digitos, areaAtualParaValidacaoCpf())
-    if (!res.disponivel) {
-      limparRestricoesPerfilPorCpf()
-      setFieldError('CPF', mapearMensagemCpf(res.mensagem))
-      return
-    }
-
-    setFieldError('CPF', '')
-
+    
     const perfisAtivos = Array.isArray(res.perfis_ativos) ? res.perfis_ativos : []
     perfisAtivosCpfIds.value = perfisAtivos
       .map((p) => Number(p.id))
@@ -553,9 +559,19 @@ async function consultarPerfisAtivosDoCpf(digitos: string) {
       .map((p) => String(p.nome ?? '').trim())
       .filter((nome) => nome.length > 0)
 
-    mensagemPerfisAtivosCpf.value = perfisAtivosCpfNomes.value.length
-      ? `Este CPF já possui perfil(is) ativo(s) nesta área: ${perfisAtivosCpfNomes.value.join(', ')}. Selecione outro perfil.`
-      : ''
+    // No cadastro interno, apenas mostrar os perfis ativos como informação, sem bloquear
+    // Apenas marcar como erro se não estiver disponível POR OUTRO MOTIVO (não por perfil ativo)
+    if (!res.disponivel && !perfisAtivosCpfNomes.value.length) {
+      setFieldError('CPF', mapearMensagemCpf(res.mensagem))
+      alertaCpfAreaAtiva.value = ''
+    } else {
+      setFieldError('CPF', '')
+      alertaCpfAreaAtiva.value = perfisAtivosCpfNomes.value.length
+        ? `Este CPF já possui perfil(is) ativo(s) nesta área: ${perfisAtivosCpfNomes.value.join(', ')}.`
+        : ''
+    }
+
+    mensagemPerfisAtivosCpf.value = ''
   } catch {
     limparRestricoesPerfilPorCpf()
     setFieldError('CPF', 'Não foi possível verificar o CPF. Tente novamente.')
@@ -565,19 +581,12 @@ async function consultarPerfisAtivosDoCpf(digitos: string) {
 }
 
 async function onCpfBlur() {
+  cpfTocado.value = true
   await validateField('CPF')
   if (errorsCpf.value) {
     limparRestricoesPerfilPorCpf()
     return
   }
-
-  const digitos = String(cpf.value ?? '').replace(/\D/g, '')
-  if (digitos.length !== 11 || !validarCpf(digitos)) {
-    limparRestricoesPerfilPorCpf()
-    return
-  }
-
-  await consultarPerfisAtivosDoCpf(digitos)
 }
 
 const esferasStore = useEsferasStore()
@@ -605,7 +614,7 @@ const municipioStore = useMunicipioStore()
 const opcoesMunicipio = computed(() => municipioStore.municipiosOptions)
 
 const { opcoesPerfil, carregarPerfis } = usePerfis()
-const PERFIS_FEDERAIS_PERMITIDOS = ['gestor federal', 'visitante federal'] as const
+const PERFIS_FEDERAIS_PERMITIDOS = ['gestor federal', 'administrador federal', 'visitante federal'] as const
 const PERFIS_ESTADUAIS_PERMITIDOS = [
   'gestor estadual',
   'administrador estadual',
@@ -667,6 +676,21 @@ const ufSiglaContexto = computed(() => {
   return ufLotacao
 })
 
+const ufBloqueadaLabel = computed(() => {
+  const ufSigla = String(uf.value ?? ufSiglaContexto.value ?? '').trim().toUpperCase()
+  if (!ufSigla) return '—'
+
+  const ufEncontrada = ufStore.ufsLista.find(
+    (item) => String(item.sigla ?? '').trim().toUpperCase() === ufSigla,
+  )
+
+  if (ufEncontrada?.nome) {
+    return `${ufEncontrada.nome} - ${ufSigla}`
+  }
+
+  return ufSigla
+})
+
 const municipioIdContexto = computed(() => {
   const municipioId = props.usuarioLogado?.contexto?.municipio_id
   if (municipioId != null && String(municipioId).trim() !== '') {
@@ -712,6 +736,20 @@ const opcoesMunicipioFiltradas = computed(() => {
   return opcoesMunicipio.value
 })
 
+const esferaBloqueadaLabel = computed(() => {
+  const valorSelecionado = String(esferaAtuacao.value ?? '').trim()
+  if (valorSelecionado) {
+    const opcaoSelecionada = opcoesEsfera.value.find((opcao) => String(opcao.value) === valorSelecionado)
+    const label = String(opcaoSelecionada?.label ?? '').trim()
+    if (label) return label
+  }
+
+  if (esferaUsuarioLogado.value === 'federal') return 'Federal'
+  if (esferaUsuarioLogado.value === 'estadual') return 'Estadual'
+  if (esferaUsuarioLogado.value === 'municipal') return 'Municipal'
+  return '—'
+})
+
 const municipioBloqueadoLabel = computed(() => {
   const valorMunicipio = String(municipio.value ?? '').trim()
   if (!valorMunicipio) return ''
@@ -724,7 +762,9 @@ const municipioBloqueadoLabel = computed(() => {
   )
   if (municipioLista?.nome) return String(municipioLista.nome)
 
-  return valorMunicipio
+  if (municipioStore.carregandoMunicipio) return 'Carregando município...'
+
+  return 'Município não localizado'
 })
 const opcoesPerfilPorEsfera = computed(() => {
   if (esferaSelecionadaFormulario.value === 'federal') {
@@ -808,6 +848,13 @@ onMounted(async () => {
   await ufStore.carregarUfs()
   await carregarPerfis()
   aplicarContextoTerritorialNoFormulario()
+  
+  // Pré-preencher vigência com a data de hoje
+  const hoje = new Date().toISOString().split('T')[0] ?? ''
+  if (hoje) {
+    vigenciaInicio.value = hoje
+    setFieldValue('vigenciaInicio', hoje)
+  }
 })
 
 watch(
@@ -825,6 +872,7 @@ watch(
     ufSiglaContexto.value,
     municipioIdContexto.value,
     opcoesEsfera.value.length,
+    opcoesUf.value.length,
   ],
   () => {
     aplicarContextoTerritorialNoFormulario()
@@ -852,12 +900,19 @@ watch(opcoesPerfilFiltradas, (opcoes) => {
 })
 
 watch(cpf, () => {
+  cpfTocado.value = false
   limparRestricoesPerfilPorCpf()
 })
 
 watch(
   () => [esferaAtuacao.value, uf.value, municipio.value],
   async () => {
+    // Consultar CPF apenas quando os 3 campos de área estão preenchidos
+    if (!esferaAtuacao.value || !uf.value || !municipio.value) {
+      limparRestricoesPerfilPorCpf()
+      return
+    }
+
     const digitos = String(cpf.value ?? '').replace(/\D/g, '')
     if (digitos.length !== 11 || !validarCpf(digitos)) {
       limparRestricoesPerfilPorCpf()
@@ -1057,6 +1112,21 @@ async function onSubmit(values: Record<string, unknown>) {
     return
   }
 
+  const perfilSelecionadoId = Number(perfil.value ?? 0)
+  if (
+    Number.isFinite(perfilSelecionadoId) &&
+    perfilSelecionadoId > 0 &&
+    perfisAtivosCpfIds.value.includes(perfilSelecionadoId)
+  ) {
+    const msgPerfilDuplicado =
+      'Este CPF já possui o perfil selecionado ativo para a área de atuação informada. Selecione outro perfil.'
+    setFieldError('perfil', msgPerfilDuplicado)
+    tituloModalErro.value = 'Erro ao cadastrar'
+    mensagemErroModal.value = msgPerfilDuplicado
+    modalErroVisivel.value = true
+    return
+  }
+
   enviando.value = true
   try {
     const payload = montarPayload()
@@ -1064,7 +1134,7 @@ async function onSubmit(values: Record<string, unknown>) {
     console.debug('[Cadastro] perfil.value =', perfil.value, '| perfilId =', payload.perfilId)
     await enviarSolicitacaoCadastro(payload)
     const msgSucesso =
-      'Cadastro realizado com sucesso! A solicitação foi registrada com status "Em análise" e está disponível na lista.'
+      'Cadastro realizado com sucesso!A  solicitação foi aprovada e o acesso ao sistema está liberado.'
     success(msgSucesso)
     emit('sucesso')
     await router.push({ name: 'gerenciar-cadastros' })
@@ -1252,6 +1322,15 @@ function validarHierarquiaNoFrontend(_values: Record<string, unknown>): string |
 
 .cadastro-select--sem-seta :deep(.br-input input) {
   padding-right: 0.75rem !important;
+}
+
+.cadastro-readonly-field :deep(input[readonly]),
+.cadastro-readonly-field :deep(input[disabled]) {
+  background-color: var(--gray-5, #f0f0f0) !important;
+  color: var(--secondary-text-color, #555) !important;
+  border-color: var(--gray-30, #d9d9d9) !important;
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 .cadastro-field-hint {

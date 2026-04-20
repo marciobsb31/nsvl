@@ -29,6 +29,23 @@ export const useAuthStore = defineStore('useAuthStore', () => {
   const possuiMultiplosPerfis = computed(() => perfisAtivos.value.length > 1)
   const permissoes = computed(() => user.value?.permissions ?? [])
 
+  const HIERARQUIA_ESFERA: Record<string, number> = {
+    federal: 1,
+    estadual: 2,
+    municipal: 3,
+  }
+
+  function prioridadeEsfera(esfera?: string): number {
+    return HIERARQUIA_ESFERA[String(esfera ?? '').toLowerCase().trim()] ?? 99
+  }
+
+  const perfilHierarquicoMaisAlto = computed(() => {
+    if (perfisAtivos.value.length === 0) return null
+    return [...perfisAtivos.value].sort(
+      (a, b) => prioridadeEsfera(a.esfera) - prioridadeEsfera(b.esfera),
+    )[0]
+  })
+
   const perfilAtivo = computed(() => {
     if (!user.value) return null
     const ativoFromApi = perfisAtivos.value.find((p) => p.id === Number(user.value?.contexto?.perfil_usuario_id))
@@ -75,7 +92,17 @@ export const useAuthStore = defineStore('useAuthStore', () => {
     }
   }
 
+  const MODULOS_APENAS_GESTORES = ['Gerenciar Perfis', 'Gerenciar Cadastros']
+
   function temPermissao(modulo: string, _acao?: string): boolean {
+    const perfilNome = String(user.value?.contexto?.perfil ?? '').toLowerCase()
+    const ehAdministradorOuVisitante =
+      perfilNome.includes('administrador') || perfilNome.includes('visitante')
+
+    if (MODULOS_APENAS_GESTORES.includes(modulo) && ehAdministradorOuVisitante) {
+      return false
+    }
+
     const esferaContexto = String(user.value?.contexto?.esfera ?? '').toLowerCase().trim()
     const esferaPerfilAtivo = String(perfilAtivo.value?.esfera ?? '').toLowerCase().trim()
     if (esferaContexto === 'federal' || esferaPerfilAtivo === 'federal') {
@@ -127,6 +154,16 @@ export const useAuthStore = defineStore('useAuthStore', () => {
     }
   }
 
+  async function refreshUser(): Promise<void> {
+    if (!sessionStorage.getItem('nvsl_token')) return
+    try {
+      const { data } = await api.get<Record<string, unknown>>('/usuario')
+      setUser(data)
+    } catch {
+      // Ignora silenciosamente — não desautentica em caso de falha de rede
+    }
+  }
+
   async function logout(): Promise<void> {
     try {
       if (sessionStorage.getItem('nvsl_token')) {
@@ -157,9 +194,11 @@ export const useAuthStore = defineStore('useAuthStore', () => {
     possuiMultiplosPerfis,
     permissoes,
     perfilAtivo,
+    perfilHierarquicoMaisAlto,
     setUser,
     temPermissao,
     trocarContexto,
+    refreshUser,
     logout,
     clearError,
   }

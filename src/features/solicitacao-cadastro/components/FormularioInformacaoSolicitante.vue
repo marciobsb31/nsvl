@@ -77,6 +77,7 @@
         :message="errorsMunicipio"
         type="danger"
       />
+      <Feedback v-if="alertaCpfArea" id="err-cpf-area" :message="alertaCpfArea" type="danger" />
     </div>
     <div class="col-12 col-md-7">
       <div class="br-input">
@@ -118,16 +119,22 @@
 </template>
 <script setup lang="ts">
 import SelectAutocomplete from '@/core/components/SelectAutocomplete/SelectAutocomplete.vue'
-import { onMounted, watch, computed } from 'vue'
-import { useField } from 'vee-validate'
+import { onMounted, watch, computed, ref } from 'vue'
+import { useField, useForm } from 'vee-validate'
 import Feedback from '@/core/components/Feedback/Feedback.vue'
 import { useUfStore } from '@/stores/ufStore'
 import { useMunicipioStore } from '@/stores/municipioStore'
 import { useEsferasStore } from '@/stores/esferasStore'
+import { verificarCpfDisponivel } from '@/services/SolicitacaoCadastroService'
+import { validarCpf } from '@/core/utils/validarCpf'
 
 defineOptions({
   name: 'FormularioInformacaoSolicitante',
 })
+
+const emit = defineEmits<{
+  'update:cpfBloqueado': [value: boolean]
+}>()
 
 // Máscara dinâmica: fixo (##) ####-#### ou celular (##) #####-####
 const telefoneMask = { mask: ['(##) ####-####', '(##) #####-####'] }
@@ -139,6 +146,24 @@ const esferasStore = useEsferasStore()
 const { value: esferaAtuacao, errorMessage: errorsEsfera } = useField<string>('esferaAtuacao')
 const { value: uf, errorMessage: errorsUf } = useField<string>('uf')
 const { value: municipio, errorMessage: errorsMunicipio } = useField<string>('municipio')
+const { value: cpf } = useField<string>('CPF')
+const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
+const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
+const { value: emailInstitucional, errorMessage: errorsEmail } = useField<string>('emailInstitucional')
+const { value: telefoneInstitucional, errorMessage: errorsTelInst } = useField<string>('telefoneInstitucional')
+const { setFieldError } = useForm()
+const alertaCpfArea = ref('')
+
+const MENSAGENS_CPF_EM_USO: Record<string, string> = {
+  'Já existe uma solicitação em análise para este CPF na mesma área de atuação.':
+    'Este CPF já possui uma solicitação em análise para esta área de atuação.',
+  'Este CPF já possui perfil ativo nesta área de atuação. Não é possível abrir nova solicitação para esta área.':
+    'Este CPF já possui perfil ativo para esta área de atuação.',
+}
+
+function mapearMensagemCpf(original: string): string {
+  return MENSAGENS_CPF_EM_USO[original] ?? original
+}
 
 //Lista de esferas
 const esferaAtuacaoOptions = computed(() => {
@@ -161,17 +186,65 @@ watch(uf, async (newUf) => {
   }
 })
 
+function resolverUfIdSelecionada(): number | undefined {
+  const valorSelecionado = String(uf.value ?? '').trim()
+  if (!valorSelecionado) return undefined
+
+  const numeroDireto = Number(valorSelecionado)
+  if (Number.isFinite(numeroDireto) && numeroDireto > 0) return numeroDireto
+
+  const siglaSelecionada = valorSelecionado.toUpperCase()
+  const ufEncontrada = ufStore.ufsLista.find(
+    (item) => String(item.sigla ?? '').trim().toUpperCase() === siglaSelecionada,
+  )
+
+  return ufEncontrada?.id
+}
+
+watch(municipio, async (novoMunicipio) => {
+  alertaCpfArea.value = ''
+  emit('update:cpfBloqueado', false)
+  if (!novoMunicipio) return
+
+  const digitosCpf = String(cpf.value ?? '').replace(/\D/g, '')
+  if (digitosCpf.length !== 11 || !validarCpf(digitosCpf)) return
+
+  const esferaId = Number(esferaAtuacao.value ?? 0)
+  const ufId = resolverUfIdSelecionada() ?? 0
+  const municipioId = Number(novoMunicipio ?? 0)
+
+  if (esferaId <= 0 || ufId <= 0 || municipioId <= 0) return
+
+  try {
+    const res = await verificarCpfDisponivel(digitosCpf, {
+      esfera_id: esferaId,
+      uf_id: ufId,
+      municipio_id: municipioId,
+    })
+
+    if (!res.disponivel) {
+      const mensagem = mapearMensagemCpf(res.mensagem)
+      alertaCpfArea.value = mensagem
+      emit('update:cpfBloqueado', true)
+      setFieldError('CPF', mensagem)
+      return
+    }
+
+    setFieldError('CPF', undefined)
+  } catch {
+    const msg = 'Não foi possível verificar o CPF para a área informada. Tente novamente.'
+    alertaCpfArea.value = msg
+    emit('update:cpfBloqueado', true)
+    setFieldError('CPF', msg)
+  }
+})
+
 onMounted(async () => {
   await esferasStore.carregarEsferas()
   await ufStore.carregarUfs()
 })
 
-const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
-const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
-const { value: emailInstitucional, errorMessage: errorsEmail } =
-  useField<string>('emailInstitucional')
-const { value: telefoneInstitucional, errorMessage: errorsTelInst } =
-  useField<string>('telefoneInstitucional')
+
 </script>
 
 <style scoped>

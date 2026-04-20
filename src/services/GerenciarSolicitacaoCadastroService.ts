@@ -53,10 +53,31 @@ export async function listarSolicitacoesGerenciar(
   if (filtros?.esfera) params.set('esfera', filtros.esfera)
   if (filtros?.status) params.set('status', filtros.status)
 
-  const query = params.toString()
-  const url = query ? `/solicitacoes-cadastro?${query}` : '/solicitacoes-cadastro'
-  const { data } = await api.get<{ data: SolicitacaoGerenciarItem[] }>(url)
-  return data.data ?? []
+  const itens: SolicitacaoGerenciarItem[] = []
+  let paginaAtual = 1
+  let ultimaPagina = 1
+
+  do {
+    params.set('page', String(paginaAtual))
+    params.set('per_page', '100')
+
+    const query = params.toString()
+    const url = query ? `/solicitacoes-cadastro?${query}` : '/solicitacoes-cadastro'
+
+    const { data } = await api.get<{
+      data: SolicitacaoGerenciarItem[]
+      meta?: { current_page?: number; last_page?: number }
+    }>(url)
+
+    itens.push(...(data.data ?? []))
+
+    const currentPage = Number(data.meta?.current_page ?? paginaAtual)
+    const lastPage = Number(data.meta?.last_page ?? paginaAtual)
+    paginaAtual = currentPage + 1
+    ultimaPagina = Math.max(1, lastPage)
+  } while (paginaAtual <= ultimaPagina)
+
+  return itens
 }
 
 export interface AprovarPayload {

@@ -34,7 +34,7 @@
             subtitle="Dados de atuação institucional."
             custom-class="solicitacao-card"
           >
-            <FormularioInformacaoSolicitante />
+            <FormularioInformacaoSolicitante @update:cpf-bloqueado="cpfBloqueado = $event" />
           </Card>
 
           <Card
@@ -56,7 +56,7 @@
             <button
               class="br-button primary solicitacao-acoes__btn solicitacao-acoes__btn--principal"
               type="submit"
-              :disabled="isSubmitting"
+              :disabled="isSubmitting || !camposObrigatoriosPreenchidos(formValues) || cpfBloqueado"
               :aria-busy="isSubmitting"
             >
               {{ isSubmitting ? 'Enviando...' : 'Confirmar e enviar solicitação' }}
@@ -220,6 +220,7 @@ const initialValues = computed(() => ({
 
 const isSubmitting = ref(false)
 const formKey = ref(0)
+const cpfBloqueado = ref(false)
 
 const solicitacoes = ref<SolicitacaoCadastroItem[]>([])
 const modalVisualizar = ref<number | null>(null)
@@ -414,11 +415,11 @@ async function onSubmit(values: Record<string, unknown>) {
       payload.cpf = cpfVal.replace(/\D/g, '')
     }
     await enviarSolicitacaoCadastro(payload)
-    success(
-      'Solicitação enviada com sucesso! Sua solicitação está com o status "Em Análise" e será avaliada pela equipe gestora. Você será redirecionado para a tela de login.',
-    )
+    success('Solicitação registrada com sucesso! Seu pedido está com o status "Em Análise" e será avaliado pela equipe gestora.')
     setTimeout(() => {
-      router.push({ name: 'login' })
+      router.push({ name: 'login' }).catch(() => {
+        isSubmitting.value = false
+      })
     }, 4000)
   } catch (err: unknown) {
     const axErr = err as {
@@ -609,4 +610,5 @@ onMounted(() => {
     min-width: 14rem;
   }
 }
+
 </style>

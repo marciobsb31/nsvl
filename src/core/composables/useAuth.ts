@@ -18,6 +18,7 @@ export function useAuth() {
         contextKey: computed(() => authStore.contextKey),
         temPermissao: authStore.temPermissao,
         trocarContexto: authStore.trocarContexto,
+        refreshUser: authStore.refreshUser,
         logout: authStore.logout,
         clearError: authStore.clearError,
     }

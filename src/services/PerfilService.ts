@@ -15,6 +15,7 @@ const PERFIS_PERMITIDOS_ORDEM = [
   'Gestor Federal',
   'Gestor Estadual',
   'Gestor Municipal',
+  'Administrador Federal',
   'Administrador Estadual',
   'Administrador Municipal',
   'Visitante Federal',

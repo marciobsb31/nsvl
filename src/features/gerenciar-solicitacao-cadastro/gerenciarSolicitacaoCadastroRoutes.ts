@@ -8,6 +8,7 @@ export const gerenciarSolicitacaoCadastroRoutes: RouteRecordRaw[] = [
       import('@/features/gerenciar-solicitacao-cadastro/pages/GerenciarSolicitacaoCadastroPage.vue'),
     meta: {
       title: 'Gerenciar Cadastros — NVSL',
+      requiredModule: 'Gerenciar Cadastros',
     },
   },
 ]

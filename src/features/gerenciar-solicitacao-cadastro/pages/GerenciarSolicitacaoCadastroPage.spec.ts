@@ -14,20 +14,46 @@ const mockPerfilAtivo = ref<{
   ativo?: boolean
 } | null>(null)
 
+const refreshUserMock = vi.fn()
+
 vi.mock('@/core/composables/useAuth', () => ({
   useAuth: () => ({
     user: mockUser,
     contextKey: mockContextKey,
     perfilAtivo: mockPerfilAtivo,
+    refreshUser: refreshUserMock,
   }),
 }))
 
 const errorMock = vi.fn()
 const successMock = vi.fn()
+const warningMock = vi.fn()
 vi.mock('@/core/composables/useNotification', () => ({
   useNotification: () => ({
     error: errorMock,
     success: successMock,
+    warning: warningMock,
+  }),
+}))
+
+const permissoesAtivas = new Set<string>([
+  'solicitacoes_cadastro.visualizar',
+  'solicitacoes_cadastro.analisar',
+])
+
+const hasPermissaoMock = vi.fn((permissao: string) => permissoesAtivas.has(permissao))
+
+vi.mock('@/core/composables/usePermissoes', () => ({
+  usePermissoes: () => ({
+    hasPermissao: hasPermissaoMock,
+  }),
+}))
+
+const routerReplaceMock = vi.fn()
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({
+    replace: routerReplaceMock,
   }),
 }))
 
@@ -161,11 +187,20 @@ function mountPage() {
 describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    permissoesAtivas.clear()
+    permissoesAtivas.add('solicitacoes_cadastro.visualizar')
+    permissoesAtivas.add('solicitacoes_cadastro.analisar')
     mockUser.value = null
     mockContextKey.value = 0
-    mockPerfilAtivo.value = null
+    mockPerfilAtivo.value = {
+      perfil_usuario_id: 1,
+      perfil_id: 1,
+      nome: 'Gestor Federal',
+      ativo: true,
+    }
     listarSolicitacoesGerenciar.mockResolvedValue([])
     obterSolicitacaoCadastro.mockResolvedValue(detalheBase())
+    refreshUserMock.mockResolvedValue(undefined)
   })
 
   it('exibe título e botão Cadastrar usuário', async () => {
@@ -252,6 +287,19 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
     expect(w.findAll('tbody tr')).toHaveLength(10)
   })
 
+  it('prioriza status Em análise na ordenação inicial', async () => {
+    listarSolicitacoesGerenciar.mockResolvedValue([
+      itemBase({ id: 1, nome: 'Aprovado Primeiro', created_at: '2026-12-31T10:00:00Z', status: { id: 2, nome: 'Aprovado' } }),
+      itemBase({ id: 2, nome: 'Em Analise Depois', created_at: '2026-01-01T10:00:00Z', status: { id: 1, nome: 'Em análise' } }),
+    ])
+
+    const w = mountPage()
+    await flushPromises()
+
+    const primeiraLinha = w.find('tbody tr')
+    expect(primeiraLinha.text()).toContain('Em Analise Depois')
+  })
+
   it('abre painel de cadastro ao clicar em Cadastrar usuário', async () => {
     const w = mountPage()
     await flushPromises()
@@ -269,8 +317,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
     }
     const w = mountPage()
     await flushPromises()
-    await w.find('[aria-label="Cadastrar usuário"]').trigger('click')
-    await w.vm.$nextTick()
+    expect(w.find('[aria-label="Cadastrar usuário"]').exists()).toBe(false)
     expect(w.find('[data-testid="form-cadastro"]').exists()).toBe(false)
   })
 
@@ -288,15 +335,16 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
 
   it('usa rótulo Detalhar/Analisar para status em_analise e Detalhar para demais', async () => {
     listarSolicitacoesGerenciar.mockResolvedValue([
-      itemBase({ id: 1, status: { id: 1, nome: 'em_analise' } }),
-      itemBase({ id: 2, nome: 'B', status: { id: 2, nome: 'aprovado' } }),
+      itemBase({ id: 1, status: { id: 1, nome: 'Em análise' } }),
+      itemBase({ id: 2, nome: 'B', status: { id: 2, nome: 'Aprovado' } }),
     ])
     const w = mountPage()
     await flushPromises()
     const botoes = w.findAll('tbody .br-button')
     expect(botoes.length).toBeGreaterThanOrEqual(2)
-    expect(botoes[0]!.text()).toContain('Detalhar/Analisar')
-    expect(botoes[1]!.text()).toContain('Detalhar')
+    const textos = botoes.map((b) => b.text())
+    expect(textos).toContain('Detalhar/Analisar')
+    expect(textos).toContain('Detalhar')
   })
 
   it('carrega detalhe e abre painel ao detalhar solicitação', async () => {
@@ -322,6 +370,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
     await w.find('[data-testid="det-aprovar"]').trigger('click')
     await flushPromises()
     expect(apiAprovar).toHaveBeenCalled()
+    expect(refreshUserMock).toHaveBeenCalled()
     expect(successMock).toHaveBeenCalledWith('Cadastro aprovado com sucesso.')
     expect(listarSolicitacoesGerenciar).toHaveBeenCalled()
   })
@@ -399,5 +448,105 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
     expect(errorMock).toHaveBeenCalledWith(
       'Não foi possível carregar as solicitações. Verifique se o backend está em execução.',
     )
+  })
+
+  it('exibe mensagem de acesso negado quando API retorna 403', async () => {
+    listarSolicitacoesGerenciar.mockRejectedValue({
+      response: { status: 403 },
+    })
+
+    mountPage()
+    await flushPromises()
+
+    expect(errorMock).toHaveBeenCalledWith(
+      'Seu perfil atual não possui permissão para visualizar solicitações.',
+    )
+    expect(routerReplaceMock).toHaveBeenCalledWith({ name: 'home' })
+  })
+
+  it('redireciona no mount quando perfil não possui solicitacoes_cadastro.visualizar', async () => {
+    permissoesAtivas.delete('solicitacoes_cadastro.visualizar')
+
+    mountPage()
+    await flushPromises()
+
+    expect(warningMock).toHaveBeenCalledWith(
+      'O perfil selecionado não possui permissão para gerenciar solicitações. Você será redirecionado para a página inicial.',
+      'Atenção',
+    )
+    expect(routerReplaceMock).toHaveBeenCalledWith({ name: 'home' })
+    expect(listarSolicitacoesGerenciar).not.toHaveBeenCalled()
+  })
+
+  it('permite carregamento para perfis gestores (federal, estadual, municipal)', async () => {
+    const perfisGestores = [
+      'Gestor Federal',
+      'Gestor Estadual',
+      'Gestor Municipal',
+    ]
+
+    for (const nomePerfil of perfisGestores) {
+      vi.clearAllMocks()
+      permissoesAtivas.clear()
+      permissoesAtivas.add('solicitacoes_cadastro.visualizar')
+      permissoesAtivas.add('solicitacoes_cadastro.analisar')
+      mockPerfilAtivo.value = {
+        perfil_usuario_id: 1,
+        perfil_id: 1,
+        nome: nomePerfil,
+        ativo: true,
+      }
+
+      mountPage()
+      await flushPromises()
+
+      expect(listarSolicitacoesGerenciar).toHaveBeenCalled()
+      expect(routerReplaceMock).not.toHaveBeenCalled()
+    }
+  })
+
+  it('bloqueia perfis sem permissão de visualização (admin e visitante)', async () => {
+    const perfisSemAcesso = [
+      'Administrador Federal',
+      'Administrador Estadual',
+      'Administrador Municipal',
+      'Visitante Estadual',
+      'Visitante Municipal',
+    ]
+
+    for (const nomePerfil of perfisSemAcesso) {
+      vi.clearAllMocks()
+      permissoesAtivas.clear()
+      mockPerfilAtivo.value = {
+        perfil_usuario_id: 1,
+        perfil_id: 1,
+        nome: nomePerfil,
+        ativo: true,
+      }
+
+      mountPage()
+      await flushPromises()
+
+      expect(warningMock).toHaveBeenCalled()
+      expect(routerReplaceMock).toHaveBeenCalledWith({ name: 'home' })
+      expect(listarSolicitacoesGerenciar).not.toHaveBeenCalled()
+    }
+  })
+
+  it('permite visitante federal em modo somente visualização', async () => {
+    permissoesAtivas.clear()
+    permissoesAtivas.add('solicitacoes_cadastro.visualizar')
+    mockPerfilAtivo.value = {
+      perfil_usuario_id: 1,
+      perfil_id: 1,
+      nome: 'Visitante Federal',
+      ativo: true,
+    }
+
+    mountPage()
+    await flushPromises()
+
+    expect(listarSolicitacoesGerenciar).toHaveBeenCalled()
+    expect(routerReplaceMock).not.toHaveBeenCalled()
   })
 })
