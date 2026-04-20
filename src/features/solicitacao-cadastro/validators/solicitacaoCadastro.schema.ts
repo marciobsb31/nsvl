@@ -1,12 +1,4 @@
 import * as yup from 'yup'
-import { verificarCpfDisponivel } from '@/services/SolicitacaoCadastroService'
-
-const MENSAGENS_CPF_EM_USO: Record<string, string> = {
-  'Este CPF já possui cadastro ativo no sistema.':
-    'Este CPF já está vinculado a um cadastro ativo. Faça login com GOV.BR para acessar o sistema.',
-  'Já existe uma solicitação em análise para este CPF.':
-    'Este CPF já possui uma solicitação em análise. Aguarde a avaliação da equipe gestora.',
-}
 
 /**
  * Valida CPF conforme algoritmo oficial (dígitos verificadores)
@@ -58,21 +50,6 @@ export const SolicitacaoCadastroSchema = yup.object({
     .test('cpf-valido', 'CPF inválido. Confira os números digitados.', (value) => {
       if (!value) return false
       return validarCPF(value)
-    })
-    .test('cpf-disponivel', 'Verificando...', async (value) => {
-      if (!value || !validarCPF(value)) return true
-      const digitos = value.replace(/\D/g, '')
-      if (digitos.length !== 11) return true
-      try {
-        const res = await verificarCpfDisponivel(digitos)
-        if (!res.disponivel) {
-          throw new yup.ValidationError(MENSAGENS_CPF_EM_USO[res.mensagem] ?? res.mensagem)
-        }
-        return true
-      } catch (err) {
-        if (err instanceof yup.ValidationError) throw err
-        return true
-      }
     }),
   emailInstitucional: yup
     .string()

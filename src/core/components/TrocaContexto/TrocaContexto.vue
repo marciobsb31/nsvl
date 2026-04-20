@@ -40,9 +40,9 @@
               <div class="tc-card__conteudo">
                 <span class="tc-card__nome">{{ perfil.nome }}</span>
                 <div class="tc-card__detalhes">
-                  <span class="tc-card__detalhe" v-if="user?.contexto.esfera">
+                  <span class="tc-card__detalhe" v-if="detalhePerfil(perfil)">
                     <i class="fas fa-layer-group" aria-hidden="true"></i>
-                    {{ labelEsfera(user.contexto.esfera) }}
+                    {{ detalhePerfil(perfil) }}
                   </span>
                   <!-- <span class="tc-card__detalhe" v-if="user?.uf_id">
                     <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
@@ -101,7 +101,18 @@ function labelEsfera(esfera: string) {
     estadual: 'Estadual',
     municipal: 'Municipal',
   }
-  return map[esfera] ?? esfera
+  return map[String(esfera).toLowerCase()] ?? esfera
+}
+
+function detalhePerfil(perfil: perfis) {
+  const esfera = String(perfil.esfera ?? '').toLowerCase().trim()
+  if (esfera === 'municipal' && perfil.municipio) {
+    return perfil.municipio
+  }
+  if (perfil.esfera) {
+    return labelEsfera(perfil.esfera)
+  }
+  return ''
 }
 function isPerfilAtivo(perfil: perfis) {
   return perfilAtivo.value?.id === perfil.id

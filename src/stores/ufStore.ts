@@ -11,8 +11,8 @@ export const useUfStore = defineStore('useUfStore', () => {
   //getters
   const ufsOptions = computed(() => {
     return (ufsLista.value ?? []).map((uf) => ({
-      label: uf.sigla + ' - ' + uf.nome,
-      value: uf.id,
+      label: uf.nome + ' - ' + uf.sigla,
+      value: uf.sigla,
     }))
   })
 

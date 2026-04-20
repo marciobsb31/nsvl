@@ -4,7 +4,6 @@
       <div class="painel-header-topo">
         <div>
           <h2 class="painel-titulo">Detalhar / Avaliar cadastro no sistema</h2>
-          <p v-if="detalhe?.nome" class="painel-subtitulo-nome">{{ detalhe.nome }}</p>
         </div>
         <button
           class="br-button secondary small"
@@ -91,11 +90,11 @@
             <select
               id="perfil-selecao"
               v-model="perfilSelecionado"
-              :disabled="opcoesPerfilPermitidasOperador.length === 0"
+              :disabled="opcoesPerfilPermitidasAvaliacao.length === 0"
             >
               <option :value="null" disabled>Selecione o perfil</option>
               <option
-                v-for="opcao in opcoesPerfilPermitidasOperador"
+                v-for="opcao in opcoesPerfilPermitidasAvaliacao"
                 :key="String(opcao.value)"
                 :value="opcao.value"
               >
@@ -293,7 +292,7 @@
               <td>{{ formatarDataExibicao(p.vigencia_inicio) }}</td>
               <td>{{ formatarDataExibicao(p.vigencia_fim) }}</td>
               <td>
-                <span class="br-tag" :class="p.ativo ? 'success' : 'warning'">
+                <span class="br-tag" :class="p.ativo ? 'success' : 'danger'">
                   {{ p.ativo ? 'Vigente' : 'Não vigente' }}
                 </span>
               </td>
@@ -306,12 +305,14 @@
                 <button
                   class="br-button secondary small"
                   type="button"
-                  :disabled="acaoPerfilProprioBloqueada || !podeGerenciarPerfis"
+                  :disabled="acaoPerfilProprioBloqueada || !operadorPodeConcederPerfil(String(p.perfil ?? ''))"
                   :title="
                     acaoPerfilProprioBloqueada
                       ? 'Você não pode ativar ou desativar seu próprio cadastro'
                       : !podeGerenciarPerfis
                         ? 'Somente usuários com privilégio de avaliação podem alterar perfis vinculados'
+                        : !operadorPodeConcederPerfil(String(p.perfil ?? ''))
+                          ? 'Você só pode alterar perfis da sua esfera de atuação'
                         : undefined
                   "
                   @click="
@@ -343,7 +344,7 @@
           </div>
           <div class="col-4 mb-1">
             <label for="vigente">Status</label><br />
-            <span class="br-tag" :class="p.ativo ? 'success' : 'warning'">
+            <span class="br-tag" :class="p.ativo ? 'success' : 'danger'">
               {{ p.ativo ? 'Vigente' : 'Não vigente' }}
             </span>
           </div>
@@ -379,12 +380,14 @@
             <button
               class="br-button secondary small block"
               type="button"
-              :disabled="acaoPerfilProprioBloqueada || !podeGerenciarPerfis"
+              :disabled="acaoPerfilProprioBloqueada || !operadorPodeConcederPerfil(String(p.perfil ?? ''))"
               :title="
                 acaoPerfilProprioBloqueada
                   ? 'Você não pode ativar ou desativar seu próprio cadastro'
                   : !podeGerenciarPerfis
                     ? 'Somente usuários com privilégio de avaliação podem alterar perfis vinculados'
+                    : !operadorPodeConcederPerfil(String(p.perfil ?? ''))
+                      ? 'Você só pode alterar perfis da sua esfera de atuação'
                     : undefined
               "
               @click="
@@ -718,6 +721,10 @@ const podeAprovarSolicitacao = computed(
     props.detalhe?.pode_avaliar === true,
 )
 
+const esferaSolicitacaoNormalizada = computed(() => {
+  return String(esferaSolicitacaoNome.value ?? '').trim().toLowerCase()
+})
+
 function operadorPodeConcederPerfil(nomePerfilDestino: string): boolean {
   if (!podeGerenciarPerfis.value) return false
 
@@ -733,6 +740,16 @@ function operadorPodeConcederPerfil(nomePerfilDestino: string): boolean {
 
 const opcoesPerfilPermitidasOperador = computed(() => {
   return opcoesPerfil.value.filter((op) => operadorPodeConcederPerfil(String(op.label ?? '')))
+})
+
+const opcoesPerfilPermitidasAvaliacao = computed(() => {
+  const esferaSolicitacao = inferirEsferaPerfil(esferaSolicitacaoNormalizada.value)
+  if (!esferaSolicitacao) return []
+
+  return opcoesPerfilPermitidasOperador.value.filter((op) => {
+    const esferaPerfil = inferirEsferaPerfil(String(op.label ?? ''))
+    return esferaPerfil === esferaSolicitacao
+  })
 })
 
 const operadorEhAdministrador = computed(() => {
@@ -1005,13 +1022,6 @@ function compararValores(
   font-size: 1.25rem;
   font-weight: 700;
   margin: 0;
-}
-
-.painel-subtitulo-nome {
-  font-size: 1.25rem;
-  color: var(--secondary-text-color);
-  margin: 0.2rem 0 0;
-  font-weight: 500;
 }
 
 .perfis-vinculados-footer {

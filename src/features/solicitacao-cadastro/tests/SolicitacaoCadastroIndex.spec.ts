@@ -97,7 +97,11 @@ describe('SolicitacaoCadastroIndex (/solicitacao-cadastro)', () => {
     vi.clearAllMocks()
     routeQuery.nome = 'Nome Gov'
     routeQuery.cpf = '12345678909'
-    enviarSolicitacaoCadastroMock.mockResolvedValue(undefined)
+    enviarSolicitacaoCadastroMock.mockResolvedValue({
+      message:
+        'Solicitação registrada com sucesso! Seu pedido está com o status "Em Análise" e será avaliado pela equipe gestora.',
+      solicitacao_id: 1,
+    })
     obterSolicitacaoCadastroMock.mockResolvedValue(detalheBase())
     atualizarSolicitacaoCadastroMock.mockResolvedValue(undefined)
     excluirSolicitacaoCadastroMock.mockResolvedValue(undefined)
@@ -298,7 +302,7 @@ describe('SolicitacaoCadastroIndex (/solicitacao-cadastro)', () => {
     })
     expect(atualizarSolicitacaoCadastroMock).toHaveBeenCalledWith(
       10,
-      expect.objectContaining({ telefonePessoal: null }),
+      expect.objectContaining({ telefone_pessoal: null }),
     )
 
     vm.modalEditar = 10
@@ -316,7 +320,7 @@ describe('SolicitacaoCadastroIndex (/solicitacao-cadastro)', () => {
     })
     expect(atualizarSolicitacaoCadastroMock).toHaveBeenCalledWith(
       10,
-      expect.objectContaining({ CPF: '123', telefonePessoal: '61988887777' }),
+      expect.objectContaining({ cpf: '123', telefone_pessoal: '61988887777' }),
     )
 
     vm.modalEditar = 10
@@ -376,11 +380,14 @@ describe('SolicitacaoCadastroIndex (/solicitacao-cadastro)', () => {
 
     expect(enviarSolicitacaoCadastroMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        CPF: '12345678909',
-        telefoneInstitucional: '6133334444',
-        telefonePessoal: '61988887777',
-        uf: 'GO',
+        cpf: '12345678909',
+        telefone_institucional: '6133334444',
+        telefone_pessoal: '61988887777',
+        uf_id: 'GO',
       }),
+    )
+    expect(successMock).toHaveBeenCalledWith(
+      'Solicitação registrada com sucesso! Seu pedido está com o status "Em Análise" e será avaliado pela equipe gestora. Você será redirecionado para a tela de login.',
     )
 
     vi.advanceTimersByTime(4000)
@@ -400,7 +407,7 @@ describe('SolicitacaoCadastroIndex (/solicitacao-cadastro)', () => {
       cargo: 'c',
     })
     expect(enviarSolicitacaoCadastroMock).toHaveBeenCalledWith(
-      expect.not.objectContaining({ CPF: expect.anything() }),
+      expect.not.objectContaining({ cpf: expect.anything() }),
     )
 
     enviarSolicitacaoCadastroMock.mockRejectedValueOnce({

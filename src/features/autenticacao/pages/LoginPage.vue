@@ -156,6 +156,11 @@ async function processarRetornoGovBr() {
     )
     sessionStorage.setItem('nvsl_token', data.token)
     authStore.setUser(data.user)
+    // Seleciona automaticamente o perfil hierarquicamente mais alto ao logar
+    const maisAlto = authStore.perfilHierarquicoMaisAlto
+    if (maisAlto && maisAlto.id !== authStore.perfilAtivo?.id) {
+      await authStore.trocarContexto(maisAlto.id)
+    }
     await router.replace({ name: 'home' })
   } catch (e: unknown) {
     const res = (e as { response?: { data?: { message?: string } } })?.response
