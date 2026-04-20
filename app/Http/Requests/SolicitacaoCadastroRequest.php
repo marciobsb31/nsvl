@@ -69,7 +69,7 @@ class SolicitacaoCadastroRequest extends FormRequest
 
             'municipio_id' => [$esfera?->requiresMunicipio() ? 'required' : 'nullable', 'exists:municipios,id'],
 
-            'perfil_id'             => [
+            'perfil_id' => [
                 'nullable',
                 Rule::exists('perfis', 'id')->where(function ($query) {
                     $query

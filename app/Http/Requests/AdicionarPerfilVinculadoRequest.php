@@ -16,7 +16,7 @@ class AdicionarPerfilVinculadoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'perfil_id'       => [
+            'perfil_id' => [
                 'required',
                 'integer',
                 Rule::exists('perfis', 'id')->where(function ($query) {

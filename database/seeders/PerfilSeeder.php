@@ -97,7 +97,7 @@ class PerfilSeeder extends Seeder
         DB::table('perfis')
             ->whereNotIn('codigo', MvpPerfilRules::mvpProfileCodes())
             ->update([
-                'ativo' => false,
+                'ativo'      => false,
                 'updated_at' => $now,
             ]);
     }

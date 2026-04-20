@@ -80,7 +80,7 @@ class SolicitacaoCadastroService
             'perfis_vinculados'          => $perfisVinculados,
             'pode_avaliar'               => $solicitacao->status_id === $statusEmAnalise
                 && (bool) auth()->user()?->hasPermissao('solicitacoes_cadastro.analisar'),
-            'historico_reprovacoes'      => $this->montarHistoricoReprovacoes($solicitacao),
+            'historico_reprovacoes' => $this->montarHistoricoReprovacoes($solicitacao),
         ];
     }
 
@@ -248,27 +248,27 @@ class SolicitacaoCadastroService
                 ?? 'Âmbito Nacional';
 
             $abrangencia = UsuarioAbrangencia::create([
-                'usuario_id'   => $solicitacao->usuario_id,
-                'esfera_id'    => $solicitacao->esfera_id,
-                'uf_id'        => $solicitacao->uf_id,
-                'municipio_id' => $solicitacao->municipio_id,
-                'nome'                  => "{$solicitacao->esfera?->nome} - {$nomeLocalidade}",
-                'origem_tipo'           => 'solicitacao_cadastro',
+                'usuario_id'                     => $solicitacao->usuario_id,
+                'esfera_id'                      => $solicitacao->esfera_id,
+                'uf_id'                          => $solicitacao->uf_id,
+                'municipio_id'                   => $solicitacao->municipio_id,
+                'nome'                           => "{$solicitacao->esfera?->nome} - {$nomeLocalidade}",
+                'origem_tipo'                    => 'solicitacao_cadastro',
                 'solicitacao_cadastro_origem_id' => $solicitacao->id,
-                'ativo'                 => true,
-                'criado_por_usuario_id' => auth()->id(),
+                'ativo'                          => true,
+                'criado_por_usuario_id'          => auth()->id(),
             ]);
 
             $perfilUsuario = PerfilUsuario::create([
-                'usuario_id'                    => $solicitacao->usuario_id,
-                'perfil_id'                     => (int) $perfilIdSolicitado,
-                'usuario_abrangencia_id'        => $abrangencia->id,
-                'data_inicio_vigencia'          => $dados['vigencia_inicio'] ?? now(),
-                'data_fim_vigencia'             => $dados['vigencia_fim'] ?? null,
-                'ativo'                         => true,
-                'origem_tipo'                   => 'solicitacao',
-                'atribuido_por_usuario_id'      => auth()->id(),
-                'solicitacao_cadastro_origem_id'=> $solicitacao->id,
+                'usuario_id'                     => $solicitacao->usuario_id,
+                'perfil_id'                      => (int) $perfilIdSolicitado,
+                'usuario_abrangencia_id'         => $abrangencia->id,
+                'data_inicio_vigencia'           => $dados['vigencia_inicio'] ?? now(),
+                'data_fim_vigencia'              => $dados['vigencia_fim'] ?? null,
+                'ativo'                          => true,
+                'origem_tipo'                    => 'solicitacao',
+                'atribuido_por_usuario_id'       => auth()->id(),
+                'solicitacao_cadastro_origem_id' => $solicitacao->id,
             ]);
 
             $solicitacao->usuario->update(['ativo' => true]);
@@ -335,7 +335,7 @@ class SolicitacaoCadastroService
         }
 
         return [
-            'message'        => $cadastroInterno
+            'message' => $cadastroInterno
                 ? 'Cadastro interno realizado com sucesso. Usuário ativado diretamente.'
                 : 'Solicitação registrada com sucesso! Seu pedido está com o status "Em Análise" e será avaliado pela equipe gestora.',
             'solicitacao_id' => $solicitacao->id,
@@ -382,11 +382,11 @@ class SolicitacaoCadastroService
                     'uf_id'        => $solicitacao->uf_id,
                     'municipio_id' => $solicitacao->municipio_id,
                 ], [
-                    'nome'                  => "{$solicitacao->esfera?->nome} - {$nomeLocalidade}",
-                    'origem_tipo'           => 'solicitacao_cadastro',
+                    'nome'                           => "{$solicitacao->esfera?->nome} - {$nomeLocalidade}",
+                    'origem_tipo'                    => 'solicitacao_cadastro',
                     'solicitacao_cadastro_origem_id' => $solicitacao->id,
-                    'ativo'                 => true,
-                    'criado_por_usuario_id' => auth()->id(),
+                    'ativo'                          => true,
+                    'criado_por_usuario_id'          => auth()->id(),
                 ]);
 
                 $perfilUsuario = PerfilUsuario::updateOrCreate(
@@ -492,8 +492,7 @@ class SolicitacaoCadastroService
         ?int $esferaId = null,
         ?int $ufId = null,
         ?int $municipioId = null
-    ): array
-    {
+    ): array {
         $cpf = preg_replace('/\D/', '', $cpfRaw);
 
         if (strlen($cpf) !== 11) {
@@ -536,8 +535,8 @@ class SolicitacaoCadastroService
         $perfisAtivos = $perfisAtivosQuery
             ->get()
             ->map(fn ($perfilUsuario) => [
-                'id' => (int) $perfilUsuario->perfil_id,
-                'nome' => (string) ($perfilUsuario->perfil?->nome ?? ''),
+                'id'     => (int) $perfilUsuario->perfil_id,
+                'nome'   => (string) ($perfilUsuario->perfil?->nome ?? ''),
                 'codigo' => (string) ($perfilUsuario->perfil?->codigo ?? ''),
             ])
             ->unique('id')
@@ -549,8 +548,8 @@ class SolicitacaoCadastroService
             : 'CPF disponível para cadastro.';
 
         return [
-            'disponivel' => count($perfisAtivos) === 0,
-            'mensagem' => $mensagem,
+            'disponivel'    => count($perfisAtivos) === 0,
+            'mensagem'      => $mensagem,
             'perfis_ativos' => $perfisAtivos,
         ];
     }
@@ -724,7 +723,7 @@ class SolicitacaoCadastroService
             return;
         }
 
-        $perfilSolicitado = \App\Models\Perfil::find($perfilId);
+        $perfilSolicitado = Perfil::find($perfilId);
         if (! $perfilSolicitado) {
             return;
         }
@@ -825,10 +824,10 @@ class SolicitacaoCadastroService
             return;
         }
 
-        $esferaRequisitada  = (int) ($dados['esfera_id'] ?? 0);
-        $ufRequisitada      = (int) ($dados['uf_id'] ?? 0);
+        $esferaRequisitada = (int) ($dados['esfera_id'] ?? 0);
+        $ufRequisitada = (int) ($dados['uf_id'] ?? 0);
         $municipioRequisitado = (int) ($dados['municipio_id'] ?? 0);
-        $perfilRequisitadoId  = isset($dados['perfil_id']) && $dados['perfil_id'] !== null
+        $perfilRequisitadoId = isset($dados['perfil_id']) && $dados['perfil_id'] !== null
             ? (int) $dados['perfil_id']
             : null;
 

@@ -44,11 +44,11 @@ class PerfilController extends Controller
 
         $ordemMvp = MvpPerfilRules::mvpProfileCodes();
         $orderSql = 'CASE codigo '
-            . collect($ordemMvp)
+            .collect($ordemMvp)
                 ->values()
                 ->map(fn (string $codigo, int $i) => "WHEN '{$codigo}' THEN {$i}")
                 ->implode(' ')
-            . ' ELSE 999 END';
+            .' ELSE 999 END';
 
         $perfis = Perfil::query()
             ->where('ativo', true)

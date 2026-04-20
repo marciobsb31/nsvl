@@ -46,27 +46,27 @@ class UsuarioController extends Controller
         $hoje = now()->toDateString();
 
         $usuario = auth()->user()->load([
-                'perfisUsuario' => function ($q) use ($hoje) {
-                    $q->where('ativo', true)
-                        ->where(function ($subQ) use ($hoje) {
-                            $subQ->whereNull('data_inicio_vigencia')
-                                ->orWhereDate('data_inicio_vigencia', '<=', $hoje);
-                        })
-                        ->where(function ($subQ) use ($hoje) {
-                            $subQ->whereNull('data_fim_vigencia')
-                                ->orWhereDate('data_fim_vigencia', '>=', $hoje);
-                        });
-                },
-                'perfisUsuario.perfil',
-                'perfisUsuario.abrangencia.esfera',
-                'perfisUsuario.abrangencia.uf',
-                'perfisUsuario.abrangencia.municipio',
-                'perfisUsuario.solicitacaoCadastroOrigem',
-                'contextoAtivo.perfilUsuario.perfil.permissoes',
-                'contextoAtivo.abrangencia.esfera',
-                'contextoAtivo.abrangencia.uf',
-                'contextoAtivo.abrangencia.municipio',
-            ]);
+            'perfisUsuario' => function ($q) use ($hoje) {
+                $q->where('ativo', true)
+                    ->where(function ($subQ) use ($hoje) {
+                        $subQ->whereNull('data_inicio_vigencia')
+                            ->orWhereDate('data_inicio_vigencia', '<=', $hoje);
+                    })
+                    ->where(function ($subQ) use ($hoje) {
+                        $subQ->whereNull('data_fim_vigencia')
+                            ->orWhereDate('data_fim_vigencia', '>=', $hoje);
+                    });
+            },
+            'perfisUsuario.perfil',
+            'perfisUsuario.abrangencia.esfera',
+            'perfisUsuario.abrangencia.uf',
+            'perfisUsuario.abrangencia.municipio',
+            'perfisUsuario.solicitacaoCadastroOrigem',
+            'contextoAtivo.perfilUsuario.perfil.permissoes',
+            'contextoAtivo.abrangencia.esfera',
+            'contextoAtivo.abrangencia.uf',
+            'contextoAtivo.abrangencia.municipio',
+        ]);
 
         UsuarioContextoResolver::garantirContextoValido($usuario);
 
