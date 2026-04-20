@@ -370,7 +370,7 @@ async function onSubmitEditar(values: Record<string, unknown>) {
       telefone_institucional: values.telefoneInstitucional as string,
       telefone_pessoal: tpEd.length >= 10 && tpEd.length <= 11 ? tpEd : null,
       esfera_id: Number(values.esferaAtuacao ?? 0),
-      uf_id: values.uf as string,
+      uf_id: Number(values.uf ?? 0),
       municipio_id: values.municipio as string,
       orgao: values.orgao as string,
       cargo: values.cargo as string,
@@ -403,9 +403,7 @@ async function onSubmit(values: Record<string, unknown>) {
       telefone_institucional: telInst,
       telefone_pessoal: tp.length >= 10 && tp.length <= 11 ? tp : null,
       esfera_id: Number(values.esferaAtuacao ?? 0),
-      uf_id: String(values.uf ?? '')
-        .trim()
-        .toUpperCase(),
+      uf_id: Number(values.uf ?? 0),
       municipio_id: String(values.municipio ?? '').trim(),
       orgao: String(values.orgao ?? '').trim(),
       cargo: String(values.cargo ?? '').trim(),
@@ -415,7 +413,9 @@ async function onSubmit(values: Record<string, unknown>) {
       payload.cpf = cpfVal.replace(/\D/g, '')
     }
     await enviarSolicitacaoCadastro(payload)
-    success('Solicitação registrada com sucesso! Seu pedido está com o status "Em Análise" e será avaliado pela equipe gestora.')
+    success(
+      'Solicitação registrada com sucesso! Seu pedido está com o status "Em Análise" e será avaliado pela equipe gestora.',
+    )
     setTimeout(() => {
       router.push({ name: 'login' }).catch(() => {
         isSubmitting.value = false
@@ -610,5 +610,4 @@ onMounted(() => {
     min-width: 14rem;
   }
 }
-
 </style>

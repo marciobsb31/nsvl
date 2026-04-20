@@ -31,7 +31,7 @@
         </div>
         <SelectAutocomplete
           v-else
-          v-model="filtrosLocal.uf"
+          v-model="filtrosLocal.uf_id"
           label="Estado (UF)"
           placeholder="Selecione"
           :options="opcoesUfFiltradas"
@@ -50,11 +50,11 @@
         </div>
         <SelectAutocomplete
           v-else
-          v-model="filtrosLocal.municipio"
+          v-model="filtrosLocal.municipio_id"
           label="Município"
-          :placeholder="filtrosLocal.uf ? 'Selecione o município' : 'Selecione primeiro a UF'"
+          :placeholder="filtrosLocal.uf_id ? 'Selecione o município' : 'Selecione primeiro a UF'"
           :options="opcoesMunicipioFiltradas"
-          :disabled="!filtrosLocal.uf"
+          :disabled="!filtrosLocal.uf_id"
         />
       </div>
       <div class="col-12 col-md-4">
@@ -76,7 +76,7 @@
         </div>
         <SelectAutocomplete
           v-else
-          v-model="filtrosLocal.esfera"
+          v-model="filtrosLocal.esfera_id"
           label="Esfera de atuação"
           placeholder="Selecione"
           :options="opcoesEsferaFiltradas"
@@ -84,7 +84,7 @@
       </div>
       <div class="col-12 col-md-4">
         <SelectAutocomplete
-          v-model="filtrosLocal.status"
+          v-model="filtrosLocal.status_id"
           label="Situação da solicitação"
           placeholder="Selecione"
           :options="OPCOES_STATUS"
@@ -151,11 +151,11 @@ const emit = defineEmits<{
 const filtrosLocal = reactive<FiltrosGerenciarSolicitacao>({
   cpf: undefined,
   nome: undefined,
-  uf: undefined,
-  municipio: undefined,
+  uf_id: undefined,
+  municipio_id: undefined,
   orgao: undefined,
-  esfera: undefined,
-  status: undefined,
+  esfera_id: undefined,
+  status_id: undefined,
 })
 
 function normalizarTexto(valor?: string): string {
@@ -167,12 +167,18 @@ function normalizarTexto(valor?: string): string {
 }
 
 const esferaUsuarioLogado = computed<'federal' | 'estadual' | 'municipal'>(() => {
-  const esferaContexto = normalizarTexto(String(user.value?.contexto?.esfera ?? ''))
-  if (esferaContexto === 'federal' || esferaContexto === 'estadual' || esferaContexto === 'municipal') {
+  const esferaContexto = normalizarTexto(String(user.value?.contexto?.esfera?.nome ?? ''))
+  if (
+    esferaContexto === 'federal' ||
+    esferaContexto === 'estadual' ||
+    esferaContexto === 'municipal'
+  ) {
     return esferaContexto
   }
 
-  const nomePerfil = normalizarTexto(String(user.value?.contexto?.perfil ?? perfilAtivo.value?.nome ?? ''))
+  const nomePerfil = normalizarTexto(
+    String(user.value?.contexto?.perfil ?? perfilAtivo.value?.nome ?? ''),
+  )
   if (nomePerfil.includes('estadual')) return 'estadual'
   if (nomePerfil.includes('municipal')) return 'municipal'
   return 'federal'
@@ -185,7 +191,9 @@ const ufSiglaContexto = computed(() => {
     if (ufDoContexto?.sigla) return String(ufDoContexto.sigla).toUpperCase()
   }
 
-  const ufPerfilAtivo = String(perfilAtivo.value?.uf ?? '').trim().toUpperCase()
+  const ufPerfilAtivo = String(perfilAtivo.value?.uf ?? '')
+    .trim()
+    .toUpperCase()
   return ufPerfilAtivo || undefined
 })
 
@@ -195,10 +203,15 @@ const municipioIdContexto = computed(() => {
     return String(municipioId)
   }
 
-  const municipioPerfil = String(perfilAtivo.value?.municipio ?? '').trim().toLowerCase()
+  const municipioPerfil = String(perfilAtivo.value?.municipio ?? '')
+    .trim()
+    .toLowerCase()
   if (!municipioPerfil) return undefined
   const municipioEncontrado = municipioStore.municipiosLista.find(
-    (item) => String(item.nome ?? '').trim().toLowerCase() === municipioPerfil,
+    (item) =>
+      String(item.nome ?? '')
+        .trim()
+        .toLowerCase() === municipioPerfil,
   )
 
   return municipioEncontrado ? String(municipioEncontrado.id) : undefined
@@ -210,9 +223,7 @@ const isEsferaBloqueada = computed(
 const isUfBloqueada = computed(
   () => esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal',
 )
-const isMunicipioBloqueado = computed(
-  () => esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal',
-)
+const isMunicipioBloqueado = computed(() => esferaUsuarioLogado.value === 'municipal')
 
 const opcoesEsferaFiltradas = computed(() => {
   if (esferaUsuarioLogado.value === 'estadual') {
@@ -239,7 +250,9 @@ const opcoesMunicipioFiltradas = computed(() => {
 })
 
 const esferaBloqueadaLabel = computed(() => {
-  const esfera = String(filtrosLocal.esfera ?? esferaUsuarioLogado.value ?? '').trim().toLowerCase()
+  const esfera = String(filtrosLocal.esfera_id ?? esferaUsuarioLogado.value ?? '')
+    .trim()
+    .toLowerCase()
   if (esfera === 'federal') return 'Federal'
   if (esfera === 'estadual') return 'Estadual'
   if (esfera === 'municipal') return 'Municipal'
@@ -247,11 +260,16 @@ const esferaBloqueadaLabel = computed(() => {
 })
 
 const ufBloqueadaLabel = computed(() => {
-  const uf = String(filtrosLocal.uf ?? ufSiglaContexto.value ?? '').trim().toUpperCase()
+  const uf = String(filtrosLocal.uf_id ?? ufSiglaContexto.value ?? '')
+    .trim()
+    .toUpperCase()
   if (!uf) return '—'
 
   const ufEncontrada = ufStore.ufsLista.find(
-    (item) => String(item.sigla ?? '').trim().toUpperCase() === uf,
+    (item) =>
+      String(item.sigla ?? '')
+        .trim()
+        .toUpperCase() === uf,
   )
 
   if (ufEncontrada?.nome) {
@@ -262,7 +280,9 @@ const ufBloqueadaLabel = computed(() => {
 })
 
 const municipioBloqueadoLabel = computed(() => {
-  const municipioSelecionado = String(filtrosLocal.municipio ?? municipioIdContexto.value ?? '').trim()
+  const municipioSelecionado = String(
+    filtrosLocal.municipio_id ?? municipioIdContexto.value ?? '',
+  ).trim()
   if (!municipioSelecionado) return '—'
 
   const opcao = opcoesMunicipio.value.find((o) => String(o.value) === municipioSelecionado)
@@ -281,15 +301,15 @@ async function aplicarContextoTerritorialNosFiltros() {
 
   aplicandoContextoTerritorial.value = true
 
-  filtrosLocal.esfera = esferaUsuarioLogado.value
+  filtrosLocal.esfera_id = esferaUsuarioLogado.value
 
   if (ufSiglaContexto.value) {
-    filtrosLocal.uf = ufSiglaContexto.value
+    filtrosLocal.uf_id = ufSiglaContexto.value
     await municipioStore.carregarMunicipios(ufSiglaContexto.value)
   }
 
   if (municipioIdContexto.value) {
-    filtrosLocal.municipio = municipioIdContexto.value
+    filtrosLocal.municipio_id = municipioIdContexto.value
   }
 
   aplicandoContextoTerritorial.value = false
@@ -300,11 +320,11 @@ function listar() {
   const cpfDigits = filtrosLocal.cpf?.replace(/\D/g, '')
   if (cpfDigits && cpfDigits.length >= 11) f.cpf = filtrosLocal.cpf
   if (filtrosLocal.nome?.trim()) f.nome = filtrosLocal.nome.trim()
-  if (filtrosLocal.uf) f.uf = filtrosLocal.uf
-  if (filtrosLocal.municipio?.trim()) f.municipio = filtrosLocal.municipio.trim()
+  if (filtrosLocal.uf_id) f.uf_id = filtrosLocal.uf_id
+  if (filtrosLocal.municipio_id) f.municipio_id = filtrosLocal.municipio_id
   if (filtrosLocal.orgao?.trim()) f.orgao = filtrosLocal.orgao.trim()
-  if (filtrosLocal.esfera) f.esfera = filtrosLocal.esfera
-  if (filtrosLocal.status) f.status = filtrosLocal.status
+  if (filtrosLocal.esfera_id) f.esfera_id = filtrosLocal.esfera_id
+  if (filtrosLocal.status_id) f.status_id = filtrosLocal.status_id
   emit('pesquisar', f)
 }
 
@@ -312,21 +332,21 @@ function limparFiltros() {
   filtrosLocal.cpf = undefined
   filtrosLocal.nome = undefined
   filtrosLocal.orgao = undefined
-  filtrosLocal.status = undefined
+  filtrosLocal.status_id = undefined
   if (isUfBloqueada.value) {
-    filtrosLocal.uf = ufSiglaContexto.value
+    filtrosLocal.uf_id = ufSiglaContexto.value
   } else {
-    filtrosLocal.uf = undefined
+    filtrosLocal.uf_id = undefined
   }
   if (isMunicipioBloqueado.value) {
-    filtrosLocal.municipio = municipioIdContexto.value
+    filtrosLocal.municipio_id = municipioIdContexto.value
   } else {
-    filtrosLocal.municipio = undefined
+    filtrosLocal.municipio_id = undefined
   }
   if (isEsferaBloqueada.value) {
-    filtrosLocal.esfera = esferaUsuarioLogado.value
+    filtrosLocal.esfera_id = esferaUsuarioLogado.value
   } else {
-    filtrosLocal.esfera = undefined
+    filtrosLocal.esfera_id = undefined
   }
   emit('limpar')
 }
@@ -338,18 +358,18 @@ onMounted(async () => {
 })
 
 watch(
-  () => filtrosLocal.uf,
+  () => filtrosLocal.uf_id,
   async (uf) => {
     const ufSelecionada = uf ?? ''
 
     if (!aplicandoContextoTerritorial.value) {
-      filtrosLocal.municipio = undefined
+      filtrosLocal.municipio_id = undefined
     }
 
     await municipioStore.carregarMunicipios(ufSelecionada)
 
     if (aplicandoContextoTerritorial.value && municipioIdContexto.value) {
-      filtrosLocal.municipio = municipioIdContexto.value
+      filtrosLocal.municipio_id = municipioIdContexto.value
     }
   },
   { immediate: true },

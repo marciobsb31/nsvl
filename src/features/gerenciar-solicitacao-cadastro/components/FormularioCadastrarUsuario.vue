@@ -46,7 +46,7 @@
                 required
                 :aria-invalid="!!errorsCpf"
                 aria-describedby="cad-cpf-err cad-cpf-hint"
-              @blur="onCpfBlur"
+                @blur="onCpfBlur"
               />
               <span v-if="verificandoCpf" class="cadastro-field-hint cadastro-field-hint--loading"
                 >Verificando CPF...</span
@@ -210,7 +210,12 @@
               required
             />
             <Feedback v-if="uf && errorsMunicipio" :message="errorsMunicipio" type="danger" />
-            <Feedback v-if="alertaCpfAreaAtiva" id="alerta-cpf-area" :message="alertaCpfAreaAtiva" type="danger" />
+            <Feedback
+              v-if="alertaCpfAreaAtiva"
+              id="alerta-cpf-area"
+              :message="alertaCpfAreaAtiva"
+              type="danger"
+            />
           </div>
           <div class="col-12 col-md-6">
             <div class="br-input">
@@ -303,7 +308,11 @@
       </div>
       <div class="formulario-acoes">
         <button class="br-button secondary" type="button" @click="$emit('voltar')">Cancelar</button>
-        <button class="br-button primary" type="submit" :disabled="enviando || !formularioPreenchido">
+        <button
+          class="br-button primary"
+          type="submit"
+          :disabled="enviando || !formularioPreenchido"
+        >
           {{ enviando ? 'Confirmando...' : 'Confirmar' }}
         </button>
       </div>
@@ -354,7 +363,10 @@ const props = withDefaults(
       name?: string
       email?: string
       contexto?: {
-        esfera: string
+        esfera: {
+          id: number
+          nome: string
+        }
         localidade: string
         perfil: string
         uf_id?: string | number
@@ -550,7 +562,7 @@ async function consultarPerfisAtivosDoCpf(digitos: string) {
   verificandoCpf.value = true
   try {
     const res = await verificarCpfDisponivel(digitos, areaAtualParaValidacaoCpf())
-    
+
     const perfisAtivos = Array.isArray(res.perfis_ativos) ? res.perfis_ativos : []
     perfisAtivosCpfIds.value = perfisAtivos
       .map((p) => Number(p.id))
@@ -604,7 +616,10 @@ function resolverUfIdSelecionada(): number | undefined {
 
   const siglaSelecionada = valorSelecionado.toUpperCase()
   const ufEncontrada = ufStore.ufsLista.find(
-    (item) => String(item.sigla ?? '').trim().toUpperCase() === siglaSelecionada,
+    (item) =>
+      String(item.sigla ?? '')
+        .trim()
+        .toUpperCase() === siglaSelecionada,
   )
 
   return ufEncontrada?.id
@@ -614,7 +629,11 @@ const municipioStore = useMunicipioStore()
 const opcoesMunicipio = computed(() => municipioStore.municipiosOptions)
 
 const { opcoesPerfil, carregarPerfis } = usePerfis()
-const PERFIS_FEDERAIS_PERMITIDOS = ['gestor federal', 'administrador federal', 'visitante federal'] as const
+const PERFIS_FEDERAIS_PERMITIDOS = [
+  'gestor federal',
+  'administrador federal',
+  'visitante federal',
+] as const
 const PERFIS_ESTADUAIS_PERMITIDOS = [
   'gestor estadual',
   'administrador estadual',
@@ -655,7 +674,11 @@ const esferaSelecionadaFormulario = computed<'federal' | 'estadual' | 'municipal
 
 const esferaUsuarioLogado = computed(() => {
   const esferaContexto = normalizarTexto(String(props.usuarioLogado?.contexto?.esfera ?? ''))
-  if (esferaContexto === 'federal' || esferaContexto === 'estadual' || esferaContexto === 'municipal') {
+  if (
+    esferaContexto === 'federal' ||
+    esferaContexto === 'estadual' ||
+    esferaContexto === 'municipal'
+  ) {
     return esferaContexto
   }
 
@@ -672,16 +695,23 @@ const ufSiglaContexto = computed(() => {
     if (ufDoContexto?.sigla) return String(ufDoContexto.sigla).toUpperCase()
   }
 
-  const ufLotacao = String(props.usuarioLogado?.uf_lotacao ?? '').trim().toUpperCase()
+  const ufLotacao = String(props.usuarioLogado?.uf_lotacao ?? '')
+    .trim()
+    .toUpperCase()
   return ufLotacao
 })
 
 const ufBloqueadaLabel = computed(() => {
-  const ufSigla = String(uf.value ?? ufSiglaContexto.value ?? '').trim().toUpperCase()
+  const ufSigla = String(uf.value ?? ufSiglaContexto.value ?? '')
+    .trim()
+    .toUpperCase()
   if (!ufSigla) return '—'
 
   const ufEncontrada = ufStore.ufsLista.find(
-    (item) => String(item.sigla ?? '').trim().toUpperCase() === ufSigla,
+    (item) =>
+      String(item.sigla ?? '')
+        .trim()
+        .toUpperCase() === ufSigla,
   )
 
   if (ufEncontrada?.nome) {
@@ -697,10 +727,15 @@ const municipioIdContexto = computed(() => {
     return String(municipioId)
   }
 
-  const municipioLotacao = String(props.usuarioLogado?.municipio_lotacao ?? '').trim().toLowerCase()
+  const municipioLotacao = String(props.usuarioLogado?.municipio_lotacao ?? '')
+    .trim()
+    .toLowerCase()
   if (!municipioLotacao) return ''
   const municipioEncontrado = municipioStore.municipiosLista.find(
-    (item) => String(item.nome ?? '').trim().toLowerCase() === municipioLotacao,
+    (item) =>
+      String(item.nome ?? '')
+        .trim()
+        .toLowerCase() === municipioLotacao,
   )
   return municipioEncontrado ? String(municipioEncontrado.id) : ''
 })
@@ -711,9 +746,7 @@ const isEsferaBloqueada = computed(
 const isUfBloqueada = computed(
   () => esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal',
 )
-const isMunicipioBloqueado = computed(
-  () => esferaUsuarioLogado.value === 'estadual' || esferaUsuarioLogado.value === 'municipal',
-)
+const isMunicipioBloqueado = computed(() => esferaUsuarioLogado.value === 'municipal')
 const opcoesEsferaFiltradas = computed(() => {
   if (esferaUsuarioLogado.value === 'estadual') {
     return opcoesEsfera.value.filter((o) => normalizarTexto(String(o.label)) === 'estadual')
@@ -739,7 +772,9 @@ const opcoesMunicipioFiltradas = computed(() => {
 const esferaBloqueadaLabel = computed(() => {
   const valorSelecionado = String(esferaAtuacao.value ?? '').trim()
   if (valorSelecionado) {
-    const opcaoSelecionada = opcoesEsfera.value.find((opcao) => String(opcao.value) === valorSelecionado)
+    const opcaoSelecionada = opcoesEsfera.value.find(
+      (opcao) => String(opcao.value) === valorSelecionado,
+    )
     const label = String(opcaoSelecionada?.label ?? '').trim()
     if (label) return label
   }
@@ -848,7 +883,7 @@ onMounted(async () => {
   await ufStore.carregarUfs()
   await carregarPerfis()
   aplicarContextoTerritorialNoFormulario()
-  
+
   // Pré-preencher vigência com a data de hoje
   const hoje = new Date().toISOString().split('T')[0] ?? ''
   if (hoje) {
@@ -936,14 +971,19 @@ watch(opcoesMunicipioFiltradas, (opcoes) => {
 
 const { value: orgao, errorMessage: errorsOrgao } = useField<string>('orgao')
 const { value: cargo, errorMessage: errorsCargo } = useField<string>('cargo')
-const { value: perfil, errorMessage: errorsPerfil, meta: perfilMeta } =
-  useField<string | number | null>('perfil')
+const {
+  value: perfil,
+  errorMessage: errorsPerfil,
+  meta: perfilMeta,
+} = useField<string | number | null>('perfil')
 const { value: vigenciaInicio, errorMessage: errorsVigenciaInicio } =
   useField<string>('vigenciaInicio')
 const { value: vigenciaFim, errorMessage: errorsVigenciaFim } = useField<string>('vigenciaFim')
 
 const mostrarErroPerfil = computed(() => {
-  return Boolean(errorsPerfil.value) && (perfilMeta.touched || perfilMeta.dirty || tentouEnviar.value)
+  return (
+    Boolean(errorsPerfil.value) && (perfilMeta.touched || perfilMeta.dirty || tentouEnviar.value)
+  )
 })
 
 const formularioPreenchido = computed(() => {
@@ -1186,7 +1226,11 @@ function validarHierarquiaNoFrontend(_values: Record<string, unknown>): string |
   const nomePerfilSelecionado = normalizarTexto(String(perfilSelecionado?.label ?? ''))
 
   if (esferaUsuarioLogado.value === 'estadual') {
-    if (!PERFIS_ESTADUAIS_PERMITIDOS.includes(nomePerfilSelecionado as (typeof PERFIS_ESTADUAIS_PERMITIDOS)[number])) {
+    if (
+      !PERFIS_ESTADUAIS_PERMITIDOS.includes(
+        nomePerfilSelecionado as (typeof PERFIS_ESTADUAIS_PERMITIDOS)[number],
+      )
+    ) {
       return 'Acesso não permitido.'
     }
     if (esferaVal !== 'estadual') return 'Acesso não permitido.'
@@ -1196,7 +1240,11 @@ function validarHierarquiaNoFrontend(_values: Record<string, unknown>): string |
   }
 
   if (esferaUsuarioLogado.value === 'municipal') {
-    if (!PERFIS_MUNICIPAIS_PERMITIDOS.includes(nomePerfilSelecionado as (typeof PERFIS_MUNICIPAIS_PERMITIDOS)[number])) {
+    if (
+      !PERFIS_MUNICIPAIS_PERMITIDOS.includes(
+        nomePerfilSelecionado as (typeof PERFIS_MUNICIPAIS_PERMITIDOS)[number],
+      )
+    ) {
       return 'Acesso não permitido.'
     }
     if (esferaVal !== 'municipal') return 'Acesso não permitido.'

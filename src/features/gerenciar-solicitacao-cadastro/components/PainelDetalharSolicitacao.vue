@@ -3,7 +3,9 @@
     <div class="painel-header">
       <div class="painel-header-topo">
         <div>
-          <h2 class="painel-titulo">Detalhar / Avaliar cadastro no sistema</h2>
+          <h2 class="painel-titulo">
+            {{ rotuloBotaoDetalhar(statusSolicitacaoNome) }} cadastro no sistema
+          </h2>
         </div>
         <button
           class="br-button secondary small"
@@ -305,7 +307,10 @@
                 <button
                   class="br-button secondary small"
                   type="button"
-                  :disabled="acaoPerfilProprioBloqueada || !operadorPodeConcederPerfil(String(p.perfil ?? ''))"
+                  :disabled="
+                    acaoPerfilProprioBloqueada ||
+                    !operadorPodeConcederPerfil(String(p.perfil ?? ''))
+                  "
                   :title="
                     acaoPerfilProprioBloqueada
                       ? 'Você não pode ativar ou desativar seu próprio cadastro'
@@ -313,7 +318,7 @@
                         ? 'Somente usuários com privilégio de avaliação podem alterar perfis vinculados'
                         : !operadorPodeConcederPerfil(String(p.perfil ?? ''))
                           ? 'Você só pode alterar perfis da sua esfera de atuação'
-                        : undefined
+                          : undefined
                   "
                   @click="
                     $emit('toggle-perfil', {
@@ -380,7 +385,9 @@
             <button
               class="br-button secondary small block"
               type="button"
-              :disabled="acaoPerfilProprioBloqueada || !operadorPodeConcederPerfil(String(p.perfil ?? ''))"
+              :disabled="
+                acaoPerfilProprioBloqueada || !operadorPodeConcederPerfil(String(p.perfil ?? ''))
+              "
               :title="
                 acaoPerfilProprioBloqueada
                   ? 'Você não pode ativar ou desativar seu próprio cadastro'
@@ -388,7 +395,7 @@
                     ? 'Somente usuários com privilégio de avaliação podem alterar perfis vinculados'
                     : !operadorPodeConcederPerfil(String(p.perfil ?? ''))
                       ? 'Você só pode alterar perfis da sua esfera de atuação'
-                    : undefined
+                      : undefined
               "
               @click="
                 $emit('toggle-perfil', {
@@ -706,7 +713,7 @@ function inferirEsferaPerfil(nomePerfil: string): string {
 }
 
 const esferaOperador = computed(() => {
-  const contextoEsfera = String(user.value?.contexto?.esfera ?? '')
+  const contextoEsfera = String(user.value?.contexto?.esfera?.nome ?? '')
     .trim()
     .toLowerCase()
   if (contextoEsfera) return contextoEsfera
@@ -722,7 +729,9 @@ const podeAprovarSolicitacao = computed(
 )
 
 const esferaSolicitacaoNormalizada = computed(() => {
-  return String(esferaSolicitacaoNome.value ?? '').trim().toLowerCase()
+  return String(esferaSolicitacaoNome.value ?? '')
+    .trim()
+    .toLowerCase()
 })
 
 function operadorPodeConcederPerfil(nomePerfilDestino: string): boolean {
@@ -997,6 +1006,10 @@ function compararValores(
     default:
       return 0
   }
+}
+
+function rotuloBotaoDetalhar(status: string) {
+  return status === StatusNomeEnum.EM_ANALISE ? 'Avaliar' : 'Visualizar'
 }
 </script>
 

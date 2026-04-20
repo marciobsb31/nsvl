@@ -18,7 +18,9 @@ export const useAuthStore = defineStore('useAuthStore', () => {
     const hoje = new Date().toISOString().slice(0, 10)
     return (user.value?.perfis ?? []).filter((perfil) => {
       if (!perfil.ativo) return false
-      const inicio = perfil.data_inicio_vigencia ? String(perfil.data_inicio_vigencia).slice(0, 10) : null
+      const inicio = perfil.data_inicio_vigencia
+        ? String(perfil.data_inicio_vigencia).slice(0, 10)
+        : null
       const fim = perfil.data_fim_vigencia ? String(perfil.data_fim_vigencia).slice(0, 10) : null
       const inicioValido = !inicio || inicio <= hoje
       const fimValido = !fim || fim >= hoje
@@ -27,7 +29,7 @@ export const useAuthStore = defineStore('useAuthStore', () => {
   })
 
   const possuiMultiplosPerfis = computed(() => perfisAtivos.value.length > 1)
-  const permissoes = computed(() => user.value?.permissions ?? [])
+  const permissoes = computed(() => user.value?.permissoes ?? [])
 
   const HIERARQUIA_ESFERA: Record<string, number> = {
     federal: 1,
@@ -36,7 +38,13 @@ export const useAuthStore = defineStore('useAuthStore', () => {
   }
 
   function prioridadeEsfera(esfera?: string): number {
-    return HIERARQUIA_ESFERA[String(esfera ?? '').toLowerCase().trim()] ?? 99
+    return (
+      HIERARQUIA_ESFERA[
+        String(esfera ?? '')
+          .toLowerCase()
+          .trim()
+      ] ?? 99
+    )
   }
 
   const perfilHierarquicoMaisAlto = computed(() => {
@@ -48,8 +56,9 @@ export const useAuthStore = defineStore('useAuthStore', () => {
 
   const perfilAtivo = computed(() => {
     if (!user.value) return null
-    const ativoFromApi = perfisAtivos.value.find((p) => p.id === Number(user.value?.contexto?.perfil_usuario_id))
-      ?? perfisAtivos.value.find((p) => p.ativo === true)
+    const ativoFromApi =
+      perfisAtivos.value.find((p) => p.id === Number(user.value?.contexto?.perfil_usuario_id)) ??
+      perfisAtivos.value.find((p) => p.ativo === true)
     if (ativoFromApi) return ativoFromApi
     return perfisAtivos.value[0] ?? null
   })
@@ -74,21 +83,31 @@ export const useAuthStore = defineStore('useAuthStore', () => {
       payload.contexto && typeof payload.contexto === 'object'
         ? (payload.contexto as Record<string, unknown>)
         : null
+
+    const rawEsfera =
+      rawContexto?.esfera && typeof rawContexto.esfera === 'object'
+        ? (rawContexto.esfera as Record<string, unknown>)
+        : null
     user.value = {
       id: Number(payload.id),
       name: String(payload.name ?? ''),
       email: payload.email ? String(payload.email) : undefined,
       sub: payload.sub ? String(payload.sub) : undefined,
       contexto: {
-        esfera: rawContexto?.esfera ? String(rawContexto.esfera) : '',
+        esfera: {
+          id: rawEsfera?.id ? Number(rawEsfera.id) : 0,
+          nome: rawEsfera?.nome ? String(rawEsfera.nome) : '',
+        },
         localidade: rawContexto?.localidade ? String(rawContexto.localidade) : '',
         perfil: rawContexto?.perfil ? String(rawContexto.perfil) : '',
-        perfil_usuario_id: rawContexto?.perfil_usuario_id ? Number(rawContexto.perfil_usuario_id) : undefined,
+        perfil_usuario_id: rawContexto?.perfil_usuario_id
+          ? Number(rawContexto.perfil_usuario_id)
+          : undefined,
         uf_id: rawContexto?.uf_id ? Number(rawContexto.uf_id) : undefined,
         municipio_id: rawContexto?.municipio_id ? Number(rawContexto.municipio_id) : undefined,
       },
       perfis: rawPerfis,
-      permissions: payload.permissions ? (payload.permissions as string[]) : [],
+      permissoes: payload.permissoes ? (payload.permissoes as string[]) : [],
     }
   }
 
@@ -103,8 +122,12 @@ export const useAuthStore = defineStore('useAuthStore', () => {
       return false
     }
 
-    const esferaContexto = String(user.value?.contexto?.esfera ?? '').toLowerCase().trim()
-    const esferaPerfilAtivo = String(perfilAtivo.value?.esfera ?? '').toLowerCase().trim()
+    const esferaContexto = String(user.value?.contexto?.esfera ?? '')
+      .toLowerCase()
+      .trim()
+    const esferaPerfilAtivo = String(perfilAtivo.value?.esfera ?? '')
+      .toLowerCase()
+      .trim()
     if (esferaContexto === 'federal' || esferaPerfilAtivo === 'federal') {
       return true
     }

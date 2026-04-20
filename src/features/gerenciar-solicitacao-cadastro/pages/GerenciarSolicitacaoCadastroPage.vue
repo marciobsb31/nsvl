@@ -490,7 +490,7 @@ function labelStatus(status: string) {
 
 function classeStatus(status: string) {
   const map: Record<string, string> = {
-    [StatusNomeEnum.EM_ANALISE]: 'warning',
+    [StatusNomeEnum.EM_ANALISE]: 'warning text-gray-80',
     [StatusNomeEnum.APROVADO]: 'success',
     [StatusNomeEnum.REPROVADO]: 'danger',
   }
@@ -511,7 +511,7 @@ function labelEsfera(esfera?: string) {
  * Regra: "Em análise" → "Detalhar/Analisar"; demais → "Detalhar"
  */
 function rotuloBotaoDetalhar(status: string) {
-  return status === StatusNomeEnum.EM_ANALISE ? 'Detalhar/Analisar' : 'Detalhar'
+  return status === StatusNomeEnum.EM_ANALISE ? 'Avaliar' : 'Visualizar'
 }
 
 const carregandoDetalhe = ref(false)
@@ -693,17 +693,6 @@ watch(contextKey, () => {
 })
 
 onMounted(() => {
-  const possuiPermissaoVisualizar = hasPermissao('solicitacoes_cadastro.visualizar')
-
-  if (!possuiPermissaoVisualizar) {
-    warning(
-      'O perfil selecionado não possui permissão para gerenciar solicitações. Você será redirecionado para a página inicial.',
-      'Atenção',
-    )
-    router.replace({ name: 'home' })
-    return
-  }
-
   limparEpesquisar()
 })
 

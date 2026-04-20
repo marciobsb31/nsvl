@@ -1,3 +1,5 @@
+import { StatusIdEnum, StatusNomeEnum } from '@/core/enums/StatusEmun'
+
 /**
  * Opções para os filtros da tela Gerenciar Solicitações de Cadastro.
  * Municípios: lista parcial; em produção pode vir de API (ex.: IBGE).
@@ -39,9 +41,9 @@ export const OPCOES_UF = [
 ]
 
 export const OPCOES_STATUS = [
-  { value: 'em_analise', label: 'Em análise' },
-  { value: 'aprovado', label: 'Aprovada' },
-  { value: 'reprovado', label: 'Reprovada' },
+  { value: StatusIdEnum.EM_ANALISE, label: StatusNomeEnum.EM_ANALISE },
+  { value: StatusIdEnum.APROVADO, label: StatusNomeEnum.APROVADO },
+  { value: StatusIdEnum.REPROVADO, label: StatusNomeEnum.REPROVADO },
 ]
 
 /** Municípios (amostra para autocomplete; em produção usar API IBGE) */
