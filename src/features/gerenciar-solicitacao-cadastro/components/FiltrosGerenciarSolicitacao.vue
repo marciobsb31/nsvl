@@ -35,6 +35,8 @@
           label="Estado (UF)"
           placeholder="Selecione"
           :options="opcoesUfFiltradas"
+          :include-empty-option="true"
+          empty-option-label="Selecione"
         />
       </div>
       <div class="col-12 col-md-4">
@@ -55,6 +57,8 @@
           :placeholder="filtrosLocal.uf_id ? 'Selecione o município' : 'Selecione primeiro a UF'"
           :options="opcoesMunicipioFiltradas"
           :disabled="!filtrosLocal.uf_id"
+          :include-empty-option="true"
+          empty-option-label="Selecione"
         />
       </div>
       <div class="col-12 col-md-4">
@@ -80,6 +84,8 @@
           label="Esfera de atuação"
           placeholder="Selecione"
           :options="opcoesEsferaFiltradas"
+          :include-empty-option="true"
+          empty-option-label="Selecione"
         />
       </div>
       <div class="col-12 col-md-4">
@@ -88,6 +94,8 @@
           label="Situação da solicitação"
           placeholder="Selecione"
           :options="opcoesStatus"
+          :include-empty-option="true"
+          empty-option-label="Selecione"
         />
       </div>
     </div>

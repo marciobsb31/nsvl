@@ -198,7 +198,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
       nome: 'Gestor Federal',
       ativo: true,
     }
-    listarSolicitacoesGerenciar.mockResolvedValue([])
+    listarSolicitacoesGerenciar.mockResolvedValue({ itens: [], pagination: { total: 0 } })
     obterSolicitacaoCadastro.mockResolvedValue(detalheBase())
     refreshUserMock.mockResolvedValue(undefined)
   })
@@ -230,7 +230,10 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
   })
 
   it('renderiza tabela com dados retornados pela API', async () => {
-    listarSolicitacoesGerenciar.mockResolvedValue([itemBase({ id: 1, nome: 'Ana' })])
+    listarSolicitacoesGerenciar.mockResolvedValue({
+      itens: [itemBase({ id: 1, nome: 'Ana' })],
+      pagination: { total: 1 },
+    })
     const w = mountPage()
     await flushPromises()
     expect(w.text()).toContain('Ana')
@@ -258,10 +261,10 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
   })
 
   it('alterna ordenação ao clicar no cabeçalho da coluna Nome', async () => {
-    listarSolicitacoesGerenciar.mockResolvedValue([
-      itemBase({ id: 1, nome: 'Zebra' }),
-      itemBase({ id: 2, nome: 'Alpha' }),
-    ])
+    listarSolicitacoesGerenciar.mockResolvedValue({
+      itens: [itemBase({ id: 1, nome: 'Zebra' }), itemBase({ id: 2, nome: 'Alpha' })],
+      pagination: { total: 2 },
+    })
     const w = mountPage()
     await flushPromises()
     const botoes = w.findAll('.th-sort-btn')
@@ -281,17 +284,33 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
     const onze = Array.from({ length: 11 }, (_, i) =>
       itemBase({ id: i + 1, nome: `User ${i + 1}` }),
     )
-    listarSolicitacoesGerenciar.mockResolvedValue(onze)
+    listarSolicitacoesGerenciar.mockResolvedValue({
+      itens: onze,
+      pagination: { total: 11, per_page: 10 },
+    })
     const w = mountPage()
     await flushPromises()
     expect(w.findAll('tbody tr')).toHaveLength(10)
   })
 
   it('prioriza status Em análise na ordenação inicial', async () => {
-    listarSolicitacoesGerenciar.mockResolvedValue([
-      itemBase({ id: 1, nome: 'Aprovado Primeiro', created_at: '2026-12-31T10:00:00Z', status: { id: 2, nome: 'Aprovado' } }),
-      itemBase({ id: 2, nome: 'Em Analise Depois', created_at: '2026-01-01T10:00:00Z', status: { id: 1, nome: 'Em análise' } }),
-    ])
+    listarSolicitacoesGerenciar.mockResolvedValue({
+      itens: [
+        itemBase({
+          id: 1,
+          nome: 'Aprovado Primeiro',
+          created_at: '2026-12-31T10:00:00Z',
+          status: { id: 2, nome: 'Aprovado' },
+        }),
+        itemBase({
+          id: 2,
+          nome: 'Em Analise Depois',
+          created_at: '2026-01-01T10:00:00Z',
+          status: { id: 1, nome: 'Em análise' },
+        }),
+      ],
+      pagination: { total: 2 },
+    })
 
     const w = mountPage()
     await flushPromises()
@@ -334,10 +353,13 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
   })
 
   it('usa rótulo Detalhar/Analisar para status em_analise e Detalhar para demais', async () => {
-    listarSolicitacoesGerenciar.mockResolvedValue([
-      itemBase({ id: 1, status: { id: 1, nome: 'Em análise' } }),
-      itemBase({ id: 2, nome: 'B', status: { id: 2, nome: 'Aprovado' } }),
-    ])
+    listarSolicitacoesGerenciar.mockResolvedValue({
+      itens: [
+        itemBase({ id: 1, status: { id: 1, nome: 'Em análise' } }),
+        itemBase({ id: 2, nome: 'B', status: { id: 2, nome: 'Aprovado' } }),
+      ],
+      pagination: { total: 2 },
+    })
     const w = mountPage()
     await flushPromises()
     const botoes = w.findAll('tbody .br-button')
@@ -348,7 +370,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
   })
 
   it('carrega detalhe e abre painel ao detalhar solicitação', async () => {
-    listarSolicitacoesGerenciar.mockResolvedValue([itemBase()])
+    listarSolicitacoesGerenciar.mockResolvedValue({ itens: [itemBase()], pagination: { total: 1 } })
     obterSolicitacaoCadastro.mockResolvedValue(detalheBase())
     const w = mountPage()
     await flushPromises()
@@ -359,7 +381,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
   })
 
   it('aprova solicitação e recarrega lista', async () => {
-    listarSolicitacoesGerenciar.mockResolvedValue([itemBase()])
+    listarSolicitacoesGerenciar.mockResolvedValue({ itens: [itemBase()], pagination: { total: 1 } })
     obterSolicitacaoCadastro.mockResolvedValue(detalheBase())
     apiAprovar.mockResolvedValue(undefined)
     const w = mountPage()
@@ -376,7 +398,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
   })
 
   it('reprova solicitação e recarrega lista', async () => {
-    listarSolicitacoesGerenciar.mockResolvedValue([itemBase()])
+    listarSolicitacoesGerenciar.mockResolvedValue({ itens: [itemBase()], pagination: { total: 1 } })
     obterSolicitacaoCadastro.mockResolvedValue(detalheBase())
     apiReprovar.mockResolvedValue(undefined)
     const w = mountPage()
@@ -392,7 +414,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
   })
 
   it('ativa perfil vinculado e atualiza detalhe', async () => {
-    listarSolicitacoesGerenciar.mockResolvedValue([itemBase()])
+    listarSolicitacoesGerenciar.mockResolvedValue({ itens: [itemBase()], pagination: { total: 1 } })
     obterSolicitacaoCadastro.mockResolvedValue(detalheBase())
     apiAtivarPerfilVinculado.mockResolvedValue(undefined)
     const w = mountPage()
@@ -407,7 +429,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
   })
 
   it('adiciona perfil vinculado e atualiza detalhe', async () => {
-    listarSolicitacoesGerenciar.mockResolvedValue([itemBase()])
+    listarSolicitacoesGerenciar.mockResolvedValue({ itens: [itemBase()], pagination: { total: 1 } })
     obterSolicitacaoCadastro.mockResolvedValue(detalheBase())
     apiAdicionarPerfilVinculado.mockResolvedValue(undefined)
     const w = mountPage()
@@ -479,11 +501,7 @@ describe('GerenciarSolicitacaoCadastroPage (gerenciar-cadastros)', () => {
   })
 
   it('permite carregamento para perfis gestores (federal, estadual, municipal)', async () => {
-    const perfisGestores = [
-      'Gestor Federal',
-      'Gestor Estadual',
-      'Gestor Municipal',
-    ]
+    const perfisGestores = ['Gestor Federal', 'Gestor Estadual', 'Gestor Municipal']
 
     for (const nomePerfil of perfisGestores) {
       vi.clearAllMocks()

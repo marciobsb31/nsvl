@@ -29,12 +29,18 @@ export interface SolicitacaoGerenciarItem {
   }
   municipio?: Municipio
   orgao?: string
-  pagination?: {
-    current_page?: number
-    last_page?: number
-    per_page?: number
-    total?: number
-  }
+}
+
+export interface PaginationMeta {
+  current_page?: number
+  last_page?: number
+  per_page?: number
+  total?: number
+}
+
+export interface ListarSolicitacoesGerenciarResponse {
+  itens: SolicitacaoGerenciarItem[]
+  pagination?: PaginationMeta
 }
 
 export interface FiltrosGerenciarSolicitacao {
@@ -51,8 +57,7 @@ export async function listarSolicitacoesGerenciar(
   filtros?: FiltrosGerenciarSolicitacao,
   paginaAtual: number = 1,
   itensPorPagina: number = 10,
-  ultimaPagina: number = 1,
-): Promise<SolicitacaoGerenciarItem[]> {
+): Promise<ListarSolicitacoesGerenciarResponse> {
   const params = new URLSearchParams()
   if (filtros?.cpf) params.set('cpf', filtros.cpf.replace(/\D/g, ''))
   if (filtros?.nome) params.set('nome', filtros.nome)
@@ -62,28 +67,21 @@ export async function listarSolicitacoesGerenciar(
   if (filtros?.esfera_id) params.set('esfera_id', filtros.esfera_id)
   if (filtros?.status_id) params.set('status_id', filtros.status_id)
 
-  const itens: SolicitacaoGerenciarItem[] = []
-  do {
-    params.set('page', String(paginaAtual))
-    params.set('per_page', String(itensPorPagina))
+  params.set('page', String(paginaAtual))
+  params.set('per_page', String(itensPorPagina))
 
-    const query = params.toString()
-    const url = query ? `/solicitacoes-cadastro?${query}` : '/solicitacoes-cadastro'
+  const query = params.toString()
+  const url = query ? `/solicitacoes-cadastro?${query}` : '/solicitacoes-cadastro'
 
-    const { data } = await api.get<{
-      data: SolicitacaoGerenciarItem[]
-      meta?: { current_page?: number; last_page?: number; per_page?: number; total?: number }
-    }>(url)
+  const { data } = await api.get<{
+    data: SolicitacaoGerenciarItem[]
+    meta?: PaginationMeta
+  }>(url)
 
-    itens.push(...(data.data ?? []))
-
-    const currentPage = Number(data.meta?.current_page ?? paginaAtual)
-    const lastPage = Number(data.meta?.last_page ?? paginaAtual)
-    paginaAtual = currentPage + 1
-    ultimaPagina = Math.max(1, lastPage)
-  } while (paginaAtual <= ultimaPagina)
-
-  return itens
+  return {
+    itens: data.data,
+    pagination: data.meta,
+  }
 }
 
 export interface AprovarPayload {

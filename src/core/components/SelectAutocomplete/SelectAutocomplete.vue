@@ -62,7 +62,7 @@
         <div class="select-option-row">
           <div class="select-option-row__left">
             <i
-              v-if="modelValue === option.value"
+              v-if="isOptionSelected(option)"
               class="fas fa-check select-option-row__check"
               aria-hidden="true"
             ></i>
@@ -98,6 +98,8 @@ const props = withDefaults(
     label: string
     placeholder: string
     options: SelectAutocompleteOption[]
+    includeEmptyOption?: boolean
+    emptyOptionLabel?: string
     required?: boolean
     modelValue?: string | number | null
     disabled?: boolean
@@ -107,6 +109,8 @@ const props = withDefaults(
     ariaDescribedBy?: string
   }>(),
   {
+    includeEmptyOption: false,
+    emptyOptionLabel: 'Selecione',
     required: false,
     modelValue: null,
     disabled: false,
@@ -134,21 +138,37 @@ function optionId(option: SelectAutocompleteOption) {
   return `opt-${inputId}-${String(option.value)}`
 }
 
+function isOptionSelected(option: SelectAutocompleteOption): boolean {
+  if (props.modelValue == null) return false
+  return String(option.value) === String(props.modelValue)
+}
+
 const activeDescendantId = computed(() => {
   const opt = filteredOptions.value[highlightedIndex.value]
   return opt ? optionId(opt) : undefined
 })
 
+function normalizarBusca(valor: string): string {
+  return String(valor ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
 const filteredOptions = computed(() => {
   if (!props.options.length) return []
-  const term = searchText.value.toLowerCase().trim()
-  if (!term) return props.options
-  return props.options.filter((opt) => String(opt.label).toLowerCase().includes(term))
+  const term = normalizarBusca(searchText.value)
+  if (!term) {
+    if (!props.includeEmptyOption) return props.options
+    return [{ label: props.emptyOptionLabel, value: '' }, ...props.options]
+  }
+  return props.options.filter((opt) => normalizarBusca(opt.label).includes(term))
 })
 
 const displayValue = computed(() => {
   if (searchText.value) return searchText.value
-  const selected = props.options.find((o) => o.value === props.modelValue)
+  const selected = props.options.find((o) => String(o.value) === String(props.modelValue ?? ''))
   return selected?.label ?? ''
 })
 
@@ -182,7 +202,11 @@ function onBlur() {
 }
 
 function selectOption(option: SelectAutocompleteOption) {
-  emit('update:modelValue', option.value)
+  if (props.includeEmptyOption && option.value === '') {
+    emit('update:modelValue', null)
+  } else {
+    emit('update:modelValue', option.value)
+  }
   searchText.value = ''
   isOpen.value = false
 }
