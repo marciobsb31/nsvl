@@ -29,6 +29,12 @@ export interface SolicitacaoGerenciarItem {
   }
   municipio?: Municipio
   orgao?: string
+  pagination?: {
+    current_page?: number
+    last_page?: number
+    per_page?: number
+    total?: number
+  }
 }
 
 export interface FiltrosGerenciarSolicitacao {
@@ -43,6 +49,9 @@ export interface FiltrosGerenciarSolicitacao {
 
 export async function listarSolicitacoesGerenciar(
   filtros?: FiltrosGerenciarSolicitacao,
+  paginaAtual: number = 1,
+  itensPorPagina: number = 10,
+  ultimaPagina: number = 1,
 ): Promise<SolicitacaoGerenciarItem[]> {
   const params = new URLSearchParams()
   if (filtros?.cpf) params.set('cpf', filtros.cpf.replace(/\D/g, ''))
@@ -54,19 +63,16 @@ export async function listarSolicitacoesGerenciar(
   if (filtros?.status_id) params.set('status_id', filtros.status_id)
 
   const itens: SolicitacaoGerenciarItem[] = []
-  let paginaAtual = 1
-  let ultimaPagina = 1
-
   do {
     params.set('page', String(paginaAtual))
-    params.set('per_page', '100')
+    params.set('per_page', String(itensPorPagina))
 
     const query = params.toString()
     const url = query ? `/solicitacoes-cadastro?${query}` : '/solicitacoes-cadastro'
 
     const { data } = await api.get<{
       data: SolicitacaoGerenciarItem[]
-      meta?: { current_page?: number; last_page?: number }
+      meta?: { current_page?: number; last_page?: number; per_page?: number; total?: number }
     }>(url)
 
     itens.push(...(data.data ?? []))

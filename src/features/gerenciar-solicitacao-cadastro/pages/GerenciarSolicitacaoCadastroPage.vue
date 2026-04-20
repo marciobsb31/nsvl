@@ -389,7 +389,7 @@ async function carregarSolicitacoes() {
   jaListou.value = true
   try {
     solicitacoes.value = await listarSolicitacoesGerenciar(filtrosAtivos.value)
-     paginaAtual.value = 1
+    paginaAtual.value = 1
   } catch (e: unknown) {
     solicitacoes.value = []
     const err = e as {
