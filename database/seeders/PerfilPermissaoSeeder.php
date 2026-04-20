@@ -12,10 +12,16 @@ class PerfilPermissaoSeeder extends Seeder
         $perfis = DB::table('perfis')->get()->keyBy('codigo');
         $permissoes = DB::table('permissoes')->get()->keyBy('codigo');
 
+        // Permissões funcionais do sistema (exclui gestão de perfis — não disponível no MVP)
+        $permissoesSemPerfis = $permissoes
+            ->filter(fn ($p) => ! str_starts_with($p->codigo, 'perfis.'))
+            ->keys()
+            ->toArray();
+
         $map = [
-            'gestor_federal' => $permissoes->keys()->toArray(),
-            'gestor_estadual' => $permissoes->keys()->toArray(),
-            'gestor_municipal' => $permissoes->keys()->toArray(),
+            'gestor_federal'   => $permissoesSemPerfis,
+            'gestor_estadual'  => $permissoesSemPerfis,
+            'gestor_municipal' => $permissoesSemPerfis,
 
             'admin_estadual' => [
                 'plano_acao.visualizar', 'plano_acao.cadastrar', 'plano_acao.editar',
@@ -30,10 +36,10 @@ class PerfilPermissaoSeeder extends Seeder
             ],
 
             'visitante_federal' => [
-                'usuarios.visualizar',
                 'solicitacoes_cadastro.visualizar',
                 'plano_acao.visualizar',
                 'relatorio_execucao.visualizar',
+                'relatorios.visualizar',
             ],
 
             'visitante_estadual' => [

@@ -75,30 +75,32 @@ class SolicitacaoCadastroResource extends JsonResource
         }
 
         $hoje = now()->toDateString();
-        $vinculos = $usuario->perfis()
-            ->withPivot(['id', 'data_inicio_vigencia', 'data_fim_vigencia', 'ativo'])
+        $vinculos = $usuario->perfisUsuario()
+            ->with(['perfil', 'abrangencia.esfera', 'abrangencia.uf', 'abrangencia.municipio', 'solicitacaoCadastroOrigem'])
             ->get();
 
-        $perfis = $vinculos->map(function ($perfil, $index) use ($hoje): array {
-            $inicio = $this->formatarData($perfil->pivot->data_inicio_vigencia);
-            $fim = $this->formatarData($perfil->pivot->data_fim_vigencia);
-            $perfilUsuarioId = (int) ($perfil->pivot->id ?? (($this->id * 1000) + $perfil->id + $index));
-            $ativo = (bool) ($perfil->pivot->ativo ?? false);
+        $perfis = $vinculos->map(function ($pu) use ($hoje): array {
+            $inicio = $this->formatarData($pu->data_inicio_vigencia);
+            $fim = $this->formatarData($pu->data_fim_vigencia);
+            $ativo = (bool) ($pu->ativo ?? false);
             $vigente = $ativo && (! $inicio || $inicio <= $hoje) && (! $fim || $fim >= $hoje);
 
+            $abrangencia = $pu->abrangencia;
+            $origem = $pu->solicitacaoCadastroOrigem;
+
             return [
-                'id'                => $perfilUsuarioId,
-                'perfil_usuario_id' => $perfilUsuarioId,
+                'id'                => $pu->id,
+                'perfil_usuario_id' => $pu->id,
                 'ativo'             => $ativo,
-                'perfil'            => $perfil->nome,
+                'perfil'            => $pu->perfil?->nome ?? '—',
                 'vigencia_inicio'   => $inicio ?? '—',
                 'vigencia_fim'      => $fim ?? '—',
                 'vigente'           => $vigente,
-                'esfera'            => $this->esfera?->nome ?? '—',
-                'uf'                => $this->ufRelacao?->sigla ?? '—',
-                'municipio'         => $this->municipioRelacao?->nome ?? '—',
-                'orgao'             => $this->orgao ?? '—',
-                'cargo'             => $this->cargo ?? '—',
+                'esfera'            => $abrangencia?->esfera?->nome ?? '—',
+                'uf'                => $abrangencia?->uf?->sigla ?? '—',
+                'municipio'         => $abrangencia?->municipio?->nome ?? '—',
+                'orgao'             => $origem?->orgao ?? $this->orgao ?? '—',
+                'cargo'             => $origem?->cargo ?? $this->cargo ?? '—',
             ];
         })->all();
 

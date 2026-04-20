@@ -67,21 +67,6 @@ class AuthValidationService
     {
         [$user, $cpf] = $this->resolverUsuarioPorGovBr($govBrUser);
 
-        $existeEmAnalise = SolicitacaoCadastro::query()
-            ->when(
-                $user,
-                fn ($query) => $query->where('usuario_id', $user->id),
-                fn ($query) => $query->whereHas('usuario', fn ($subQuery) => $subQuery->where('cpf', $cpf))
-            )
-            ->where('status_id', StatusSolicitacaoEnum::EM_ANALISE->value)
-            ->exists();
-
-        if ($existeEmAnalise) {
-            throw ValidationException::withMessages([
-                'auth' => 'Já existe uma solicitação em análise para este CPF. Aguarde a avaliação da equipe gestora antes de enviar uma nova solicitação.',
-            ]);
-        }
-
         return [
             'nome'  => $govBrUser->name ?? '',
             'cpf'   => $cpf,
