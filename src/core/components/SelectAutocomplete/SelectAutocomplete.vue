@@ -98,6 +98,8 @@ const props = withDefaults(
     label: string
     placeholder: string
     options: SelectAutocompleteOption[]
+    includeEmptyOption?: boolean
+    emptyOptionLabel?: string
     required?: boolean
     modelValue?: string | number | null
     disabled?: boolean
@@ -107,6 +109,8 @@ const props = withDefaults(
     ariaDescribedBy?: string
   }>(),
   {
+    includeEmptyOption: false,
+    emptyOptionLabel: 'Selecione',
     required: false,
     modelValue: null,
     disabled: false,
@@ -155,7 +159,10 @@ function normalizarBusca(valor: string): string {
 const filteredOptions = computed(() => {
   if (!props.options.length) return []
   const term = normalizarBusca(searchText.value)
-  if (!term) return props.options
+  if (!term) {
+    if (!props.includeEmptyOption) return props.options
+    return [{ label: props.emptyOptionLabel, value: '' }, ...props.options]
+  }
   return props.options.filter((opt) => normalizarBusca(opt.label).includes(term))
 })
 
@@ -195,7 +202,11 @@ function onBlur() {
 }
 
 function selectOption(option: SelectAutocompleteOption) {
-  emit('update:modelValue', option.value)
+  if (props.includeEmptyOption && option.value === '') {
+    emit('update:modelValue', null)
+  } else {
+    emit('update:modelValue', option.value)
+  }
   searchText.value = ''
   isOpen.value = false
 }
