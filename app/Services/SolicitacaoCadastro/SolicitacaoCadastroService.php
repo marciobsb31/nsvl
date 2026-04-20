@@ -134,7 +134,8 @@ class SolicitacaoCadastroService
     public function criar(array $dados): array
     {
         // Validar hierarquia se gestor autenticado
-        $usuarioAutenticado = auth()->user();
+        $usuarioAutenticado = auth('sanctum')->user() ?? auth()->user();
+        $cadastroInterno = (bool) $usuarioAutenticado;
         if ($usuarioAutenticado) {
             $this->validarHierarquiaCadastro($usuarioAutenticado, $dados);
         }
@@ -167,20 +168,22 @@ class SolicitacaoCadastroService
             ]);
         }
 
-        $existente = SolicitacaoCadastro::where('usuario_id', $usuario->id)
-            ->where('status_id', StatusSolicitacaoEnum::EM_ANALISE)
-            ->exists();
-
-        if ($existente) {
-            throw ApiException::unprocessable('Já existe uma solicitação em análise para este CPF. Aguarde a avaliação da equipe gestora antes de enviar uma nova solicitação.');
-        }
-
         $perfilIdSolicitado = isset($dados['perfil_id']) && $dados['perfil_id'] !== null
             ? (int) $dados['perfil_id']
             : (isset($dados['perfilId']) && $dados['perfilId'] !== null ? (int) $dados['perfilId'] : null);
         if ($perfilIdSolicitado === 0) {
             $perfilIdSolicitado = null;
         }
+
+        $esferaId = isset($dados['esfera_id']) && $dados['esfera_id'] !== null
+            ? (int) $dados['esfera_id']
+            : null;
+        $ufId = isset($dados['uf_id']) && $dados['uf_id'] !== null && $dados['uf_id'] !== ''
+            ? (int) $dados['uf_id']
+            : null;
+        $municipioId = isset($dados['municipio_id']) && $dados['municipio_id'] !== null && $dados['municipio_id'] !== ''
+            ? (int) $dados['municipio_id']
+            : null;
 
         if ($usuario && $perfilIdSolicitado) {
             $hoje = now()->toDateString();
@@ -214,6 +217,14 @@ class SolicitacaoCadastroService
             }
         }
 
+        $statusInicial = $cadastroInterno
+            ? StatusSolicitacaoEnum::APROVADO->value
+            : StatusSolicitacaoEnum::EM_ANALISE->value;
+
+        if ($cadastroInterno && ! $perfilIdSolicitado) {
+            throw ApiException::unprocessable('No cadastro interno, o perfil é obrigatório para ativação imediata.');
+        }
+
         $solicitacao = SolicitacaoCadastro::create([
             'usuario_id'             => $usuario->id,
             'email_institucional'    => $dados['email_institucional'],
@@ -227,9 +238,61 @@ class SolicitacaoCadastroService
             'perfil_id'              => $perfilIdSolicitado,
             'vigencia_inicio'        => $dados['vigencia_inicio'] ?? null,
             'vigencia_fim'           => $dados['vigencia_fim'] ?? null,
-            'status_id'              => StatusSolicitacaoEnum::EM_ANALISE->value,
+            'status_id'              => $statusInicial,
             'aceite_termo_at'        => Carbon::now(),
         ]);
+
+        if ($cadastroInterno) {
+            $nomeLocalidade = $solicitacao->municipioRelacao?->nome
+                ?? $solicitacao->ufRelacao?->nome
+                ?? 'Âmbito Nacional';
+
+            $abrangencia = UsuarioAbrangencia::create([
+                'usuario_id'   => $solicitacao->usuario_id,
+                'esfera_id'    => $solicitacao->esfera_id,
+                'uf_id'        => $solicitacao->uf_id,
+                'municipio_id' => $solicitacao->municipio_id,
+                'nome'                  => "{$solicitacao->esfera?->nome} - {$nomeLocalidade}",
+                'origem_tipo'           => 'solicitacao_cadastro',
+                'solicitacao_cadastro_origem_id' => $solicitacao->id,
+                'ativo'                 => true,
+                'criado_por_usuario_id' => auth()->id(),
+            ]);
+
+            $perfilUsuario = PerfilUsuario::create([
+                'usuario_id'                    => $solicitacao->usuario_id,
+                'perfil_id'                     => (int) $perfilIdSolicitado,
+                'usuario_abrangencia_id'        => $abrangencia->id,
+                'data_inicio_vigencia'          => $dados['vigencia_inicio'] ?? now(),
+                'data_fim_vigencia'             => $dados['vigencia_fim'] ?? null,
+                'ativo'                         => true,
+                'origem_tipo'                   => 'solicitacao',
+                'atribuido_por_usuario_id'      => auth()->id(),
+                'solicitacao_cadastro_origem_id'=> $solicitacao->id,
+            ]);
+
+            $solicitacao->usuario->update(['ativo' => true]);
+
+            // Preserva o contexto já selecionado do usuário quando houver um vínculo ativo válido.
+            $contextoAtivoAtual = $solicitacao->usuario->contextoAtivo()->first();
+            $perfilContextoAtivoValido = $contextoAtivoAtual
+                ? PerfilUsuario::query()
+                    ->where('id', $contextoAtivoAtual->perfil_usuario_id)
+                    ->where('usuario_id', $solicitacao->usuario_id)
+                    ->where('ativo', true)
+                    ->exists()
+                : false;
+
+            if (! $perfilContextoAtivoValido) {
+                $solicitacao->usuario->contextoAtivo()->updateOrCreate(
+                    ['usuario_id' => $solicitacao->usuario_id],
+                    [
+                        'perfil_usuario_id'      => $perfilUsuario->id,
+                        'usuario_abrangencia_id' => $abrangencia->id,
+                    ]
+                );
+            }
+        }
 
         $this->audit->log(
             $usuario ? 'gerenciar_cadastros.solicitacao_interna_criada' : 'solicitacao_cadastro.criada',
@@ -251,7 +314,11 @@ class SolicitacaoCadastroService
 
         try {
             $destinatario = $dados['email_institucional'];
-            Mail::to($destinatario)->send(new SolicitacaoCadastroEnviada($solicitacao));
+            if ($cadastroInterno) {
+                Mail::to($destinatario)->send(new SolicitacaoCadastroAvaliada($solicitacao, 'aprovado', null));
+            } else {
+                Mail::to($destinatario)->send(new SolicitacaoCadastroEnviada($solicitacao));
+            }
         } catch (\Throwable $e) {
             logger()->error('Falha ao enviar e-mail de confirmação da solicitação.', [
                 'solicitacao_id'   => $solicitacao->id,
@@ -268,7 +335,9 @@ class SolicitacaoCadastroService
         }
 
         return [
-            'message'        => 'Solicitação registrada com sucesso! Seu pedido está com o status "Em Análise" e será avaliado pela equipe gestora.',
+            'message'        => $cadastroInterno
+                ? 'Cadastro interno realizado com sucesso. Usuário ativado diretamente.'
+                : 'Solicitação registrada com sucesso! Seu pedido está com o status "Em Análise" e será avaliado pela equipe gestora.',
             'solicitacao_id' => $solicitacao->id,
         ];
     }
@@ -338,13 +407,25 @@ class SolicitacaoCadastroService
 
                 $solicitacao->usuario->update(['ativo' => true]);
 
-                $solicitacao->usuario->contextoAtivo()->updateOrCreate(
-                    ['usuario_id' => $solicitacao->usuario_id],
-                    [
-                        'perfil_usuario_id'      => $perfilUsuario->id,
-                        'usuario_abrangencia_id' => $abrangencia->id,
-                    ]
-                );
+                // Preserva o contexto já selecionado do usuário quando houver um vínculo ativo válido.
+                $contextoAtivoAtual = $solicitacao->usuario->contextoAtivo()->first();
+                $perfilContextoAtivoValido = $contextoAtivoAtual
+                    ? PerfilUsuario::query()
+                        ->where('id', $contextoAtivoAtual->perfil_usuario_id)
+                        ->where('usuario_id', $solicitacao->usuario_id)
+                        ->where('ativo', true)
+                        ->exists()
+                    : false;
+
+                if (! $perfilContextoAtivoValido) {
+                    $solicitacao->usuario->contextoAtivo()->updateOrCreate(
+                        ['usuario_id' => $solicitacao->usuario_id],
+                        [
+                            'perfil_usuario_id'      => $perfilUsuario->id,
+                            'usuario_abrangencia_id' => $abrangencia->id,
+                        ]
+                    );
+                }
             }
         });
 
@@ -423,16 +504,6 @@ class SolicitacaoCadastroService
             return ['disponivel' => false, 'mensagem' => 'CPF inválido. Verifique os dígitos informados.'];
         }
 
-        $statusEmAnalise = StatusSolicitacao::idPorNome(StatusSolicitacao::EM_ANALISE);
-
-        $emAnalise = SolicitacaoCadastro::whereHas('usuario', fn ($q) => $q->where('cpf', $cpf))
-            ->where('status_id', $statusEmAnalise)
-            ->exists();
-
-        if ($emAnalise) {
-            return ['disponivel' => false, 'mensagem' => 'Já existe uma solicitação em análise para este CPF.'];
-        }
-
         $usuario = Usuario::where('cpf', $cpf)->first();
         if (! $usuario) {
             return ['disponivel' => true, 'mensagem' => 'CPF disponível para cadastro.', 'perfis_ativos' => []];
@@ -474,11 +545,11 @@ class SolicitacaoCadastroService
             ->all();
 
         $mensagem = count($perfisAtivos) > 0
-            ? 'Este CPF já possui perfil ativo nesta área de atuação. Selecione outro perfil.'
+            ? 'Este CPF já possui perfil ativo nesta área de atuação. Não é possível abrir nova solicitação para esta área.'
             : 'CPF disponível para cadastro.';
 
         return [
-            'disponivel' => true,
+            'disponivel' => count($perfisAtivos) === 0,
             'mensagem' => $mensagem,
             'perfis_ativos' => $perfisAtivos,
         ];
@@ -686,30 +757,32 @@ class SolicitacaoCadastroService
         }
 
         $hoje = now()->toDateString();
-        $vinculos = $usuario->perfis()
-            ->withPivot(['id', 'data_inicio_vigencia', 'data_fim_vigencia', 'ativo'])
+        $vinculos = $usuario->perfisUsuario()
+            ->with(['perfil', 'abrangencia.esfera', 'abrangencia.uf', 'abrangencia.municipio', 'solicitacaoCadastroOrigem'])
             ->get();
 
-        $perfis = $vinculos->map(function ($perfil, $index) use ($hoje, $solicitacao): array {
-            $inicio = $this->normalizarDataPivot($perfil->pivot->data_inicio_vigencia);
-            $fim = $this->normalizarDataPivot($perfil->pivot->data_fim_vigencia);
-            $perfilUsuarioId = (int) ($perfil->pivot->id ?? (($solicitacao->id * 1000) + $perfil->id + $index));
-            $ativo = (bool) ($perfil->pivot->ativo ?? false);
+        $perfis = $vinculos->map(function ($pu) use ($hoje, $solicitacao): array {
+            $inicio = $this->normalizarDataPivot($pu->data_inicio_vigencia);
+            $fim = $this->normalizarDataPivot($pu->data_fim_vigencia);
+            $ativo = (bool) ($pu->ativo ?? false);
             $vigente = $ativo && (! $inicio || $inicio <= $hoje) && (! $fim || $fim >= $hoje);
 
+            $abrangencia = $pu->abrangencia;
+            $origem = $pu->solicitacaoCadastroOrigem;
+
             return [
-                'id'                => $perfilUsuarioId,
-                'perfil_usuario_id' => $perfilUsuarioId,
+                'id'                => $pu->id,
+                'perfil_usuario_id' => $pu->id,
                 'ativo'             => $ativo,
-                'perfil'            => $perfil->nome,
+                'perfil'            => $pu->perfil?->nome ?? '—',
                 'vigencia_inicio'   => $inicio ?? '—',
                 'vigencia_fim'      => $fim ?? '—',
                 'vigente'           => $vigente,
-                'esfera'            => $solicitacao->esfera?->nome ?? '—',
-                'uf'                => $solicitacao->ufRelacao?->sigla ?? '—',
-                'municipio'         => $solicitacao->municipioRelacao?->nome ?? '—',
-                'orgao'             => $solicitacao->orgao ?? '—',
-                'cargo'             => $solicitacao->cargo ?? '—',
+                'esfera'            => $abrangencia?->esfera?->nome ?? '—',
+                'uf'                => $abrangencia?->uf?->sigla ?? '—',
+                'municipio'         => $abrangencia?->municipio?->nome ?? '—',
+                'orgao'             => $origem?->orgao ?? $solicitacao->orgao ?? '—',
+                'cargo'             => $origem?->cargo ?? $solicitacao->cargo ?? '—',
             ];
         })->all();
 

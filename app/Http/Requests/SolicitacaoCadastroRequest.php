@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\EsferaEnum;
 use App\Helpers\Helpers;
+use App\Models\Uf;
 use App\Rules\CpfValidoRule;
 use App\Support\MvpPerfilRules;
 use Illuminate\Foundation\Http\FormRequest;
@@ -13,14 +14,37 @@ class SolicitacaoCadastroRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
+        $ufInput = $this->input('uf_id') ?? $this->input('uf');
+
         $this->merge([
             'cpf'                    => Helpers::onlyDigits($this->cpf ?? ''),
             'telefone_institucional' => Helpers::onlyDigits($this->telefone_institucional ?? ''),
             'telefone_pessoal'       => Helpers::onlyDigits($this->telefone_pessoal ?? ''),
+            'uf_id'                  => $this->resolverUfId($ufInput),
             'perfil_id'              => $this->input('perfilId') ?? $this->input('perfil_id'),
             'vigencia_inicio'        => $this->input('vigenciaInicio') ?? $this->input('vigencia_inicio'),
             'vigencia_fim'           => $this->input('vigenciaFim') ?? $this->input('vigencia_fim'),
         ]);
+    }
+
+    private function resolverUfId(mixed $ufInput): mixed
+    {
+        if ($ufInput === null || $ufInput === '') {
+            return null;
+        }
+
+        if (is_numeric($ufInput)) {
+            return (int) $ufInput;
+        }
+
+        $ufSigla = strtoupper(trim((string) $ufInput));
+        if (strlen($ufSigla) === 2) {
+            return Uf::query()
+                ->where('sigla', $ufSigla)
+                ->value('id') ?? $ufInput;
+        }
+
+        return $ufInput;
     }
 
     public function rules(): array
@@ -41,7 +65,7 @@ class SolicitacaoCadastroRequest extends FormRequest
             'telefone_pessoal'       => ['nullable', 'string', 'max:20'],
 
             'esfera_id' => ['required', 'integer', Rule::in(array_column(EsferaEnum::cases(), 'value'))],
-            'uf_id'     => [$esfera?->requiresUf() ? 'required' : 'nullable', 'exists:ufs,id'],
+            'uf_id'     => [$esfera?->requiresUf() ? 'required' : 'nullable', 'bail', 'integer', 'exists:ufs,id'],
 
             'municipio_id' => [$esfera?->requiresMunicipio() ? 'required' : 'nullable', 'exists:municipios,id'],
 
@@ -72,6 +96,7 @@ class SolicitacaoCadastroRequest extends FormRequest
             'cpf.required'             => 'O CPF é obrigatório.',
             'cpf.size'                 => 'O CPF deve conter 11 dígitos.',
             'uf_id.required'           => 'O estado é obrigatório para esta esfera.',
+            'uf_id.integer'            => 'O estado selecionado é inválido.',
             'uf_id.exists'             => 'O estado selecionado é inválido.',
             'municipio_id.required'    => 'O município é obrigatório para esta esfera.',
             'municipio_id.exists'      => 'O município selecionado é inválido.',
