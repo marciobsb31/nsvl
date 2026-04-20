@@ -62,7 +62,7 @@
         <div class="select-option-row">
           <div class="select-option-row__left">
             <i
-              v-if="modelValue === option.value"
+              v-if="isOptionSelected(option)"
               class="fas fa-check select-option-row__check"
               aria-hidden="true"
             ></i>
@@ -134,6 +134,11 @@ function optionId(option: SelectAutocompleteOption) {
   return `opt-${inputId}-${String(option.value)}`
 }
 
+function isOptionSelected(option: SelectAutocompleteOption): boolean {
+  if (props.modelValue == null) return false
+  return String(option.value) === String(props.modelValue)
+}
+
 const activeDescendantId = computed(() => {
   const opt = filteredOptions.value[highlightedIndex.value]
   return opt ? optionId(opt) : undefined
@@ -156,7 +161,7 @@ const filteredOptions = computed(() => {
 
 const displayValue = computed(() => {
   if (searchText.value) return searchText.value
-  const selected = props.options.find((o) => o.value === props.modelValue)
+  const selected = props.options.find((o) => String(o.value) === String(props.modelValue ?? ''))
   return selected?.label ?? ''
 })
 
