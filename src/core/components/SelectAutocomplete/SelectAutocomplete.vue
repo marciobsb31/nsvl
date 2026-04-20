@@ -139,11 +139,19 @@ const activeDescendantId = computed(() => {
   return opt ? optionId(opt) : undefined
 })
 
+function normalizarBusca(valor: string): string {
+  return String(valor ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
 const filteredOptions = computed(() => {
   if (!props.options.length) return []
-  const term = searchText.value.toLowerCase().trim()
+  const term = normalizarBusca(searchText.value)
   if (!term) return props.options
-  return props.options.filter((opt) => String(opt.label).toLowerCase().includes(term))
+  return props.options.filter((opt) => normalizarBusca(opt.label).includes(term))
 })
 
 const displayValue = computed(() => {
