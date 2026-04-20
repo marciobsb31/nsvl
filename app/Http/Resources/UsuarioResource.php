@@ -18,7 +18,7 @@ class UsuarioResource extends JsonResource
             'municipio_lotacao' => $this->municipio_lotacao,
             'perfis'            => PerfilUsuarioResource::collection($this->whenLoaded('perfisUsuario')),
             'contexto'          => ContextoResource::make($this->contextoAtivo),
-            'permissions'       => $this->when(
+            'permissoes'        => $this->when(
                 $this->contextoAtivo,
                 fn () => $this->contextoAtivo->perfilUsuario
                     ->perfil
