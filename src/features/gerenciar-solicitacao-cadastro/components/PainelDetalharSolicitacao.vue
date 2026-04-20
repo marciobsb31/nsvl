@@ -608,9 +608,9 @@ const esferaSolicitacaoNome = computed(() => {
 const estadoSolicitacaoNome = computed(() => {
   const estado = props.detalhe?.estado
   if (typeof estado === 'string') return estado
-  if (estado && typeof estado === 'object' && 'nome' in estado) {
-    const nome = (estado as { nome?: unknown }).nome
-    if (typeof nome === 'string' && nome.trim() !== '') return nome
+  if (estado && typeof estado === 'object' && 'sigla' in estado) {
+    const sigla = (estado as { sigla?: unknown }).sigla
+    if (typeof sigla === 'string' && sigla.trim() !== '') return sigla
   }
   const fallback = props.detalhe?.uf
   return typeof fallback === 'string' && fallback.trim() !== '' ? fallback : '—'

@@ -83,7 +83,7 @@
             </thead>
             <tbody>
               <tr v-for="s in solicitacoesPaginadas" :key="s.id">
-                <td>{{ s.cpf ?? '—' }}</td>
+                <td>{{ maskCpf(s.cpf) }}</td>
                 <td>{{ s.nome }}</td>
                 <td>{{ labelEsfera(s.esfera.nome) }}</td>
                 <td>{{ s.estado?.nome ?? '—' }}</td>
@@ -125,7 +125,7 @@
           </div>
           <div class="col-6 mb-1">
             <label for="cpf">CPF</label>
-            <p class="m-0">{{ s.cpf }}</p>
+            <p class="m-0">{{ maskCpf(s.cpf) }}</p>
           </div>
           <div class="col-6 mb-1">
             <label for="esfera">Esfera de atuação</label>
@@ -234,6 +234,7 @@ import type { SolicitacaoCadastroDetalhe } from '@/core/types/solicitacao-cadast
 import { usePermissoes } from '@/core/composables/usePermissoes'
 import { StatusNomeEnum } from '@/core/enums/StatusEmun'
 import { useRouter } from 'vue-router'
+import { maskCpf } from '@/core/utils/maskCpf'
 
 defineOptions({ name: 'GerenciarSolicitacaoCadastroPage' })
 
@@ -388,7 +389,7 @@ async function carregarSolicitacoes() {
   jaListou.value = true
   try {
     solicitacoes.value = await listarSolicitacoesGerenciar(filtrosAtivos.value)
-     paginaAtual.value = 1
+    paginaAtual.value = 1
   } catch (e: unknown) {
     solicitacoes.value = []
     const err = e as {
@@ -482,8 +483,10 @@ function formatarData(data: string | undefined) {
 function labelStatus(status: string) {
   const map: Record<string, string> = {
     [StatusNomeEnum.EM_ANALISE]: 'Em análise',
-    [StatusNomeEnum.APROVADO]: 'Aprovada',
-    [StatusNomeEnum.REPROVADO]: 'Reprovada',
+    [StatusNomeEnum.APROVADO]: 'Aprovado',
+    [StatusNomeEnum.REPROVADO]: 'Reprovado',
+    [StatusNomeEnum.PENDENTE]: 'Pendente',
+
   }
   return map[status] ?? status
 }
@@ -493,6 +496,7 @@ function classeStatus(status: string) {
     [StatusNomeEnum.EM_ANALISE]: 'warning text-gray-80',
     [StatusNomeEnum.APROVADO]: 'success',
     [StatusNomeEnum.REPROVADO]: 'danger',
+    [StatusNomeEnum.PENDENTE]: 'info',
   }
   return map[status] ?? ''
 }
