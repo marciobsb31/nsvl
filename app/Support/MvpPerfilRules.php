@@ -33,7 +33,7 @@ class MvpPerfilRules
     public static function allowedTargetCodesForEvaluator(?string $evaluatorProfileCode): array
     {
         return match ($evaluatorProfileCode) {
-            'gestor_federal' => self::mvpProfileCodes(),
+            'gestor_federal'  => self::mvpProfileCodes(),
             'gestor_estadual' => [
                 'gestor_estadual',
                 'admin_estadual',

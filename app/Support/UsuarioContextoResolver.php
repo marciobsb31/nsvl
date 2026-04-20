@@ -40,7 +40,7 @@ class UsuarioContextoResolver
         $usuario->contextoAtivo()->updateOrCreate(
             ['usuario_id' => $usuario->id],
             [
-                'perfil_usuario_id' => $perfilPadrao->id,
+                'perfil_usuario_id'      => $perfilPadrao->id,
                 'usuario_abrangencia_id' => $perfilPadrao->usuario_abrangencia_id,
             ]
         );

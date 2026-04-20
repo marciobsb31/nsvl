@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\TipoAuditoria;
-use App\Http\Resources\UsuarioResource;
 use App\Http\Requests\ContextoRequest;
+use App\Http\Resources\UsuarioResource;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -47,17 +47,17 @@ class TrocaContextoController extends Controller
         $data = $contextos->map(function ($ctx) {
             return [
                 'perfil_usuario_id' => $ctx->id,
-                'nome'             => $ctx->perfil?->nome,
-                'esfera'           => $ctx->abrangencia?->esfera?->nome,
-                'uf'               => $ctx->abrangencia?->uf?->sigla,
-                'municipio'        => $ctx->abrangencia?->municipio?->nome,
-                'orgao'            => $ctx->solicitacaoCadastroOrigem?->orgao,
-                'ativo'            => (bool) $ctx->ativo,
+                'nome'              => $ctx->perfil?->nome,
+                'esfera'            => $ctx->abrangencia?->esfera?->nome,
+                'uf'                => $ctx->abrangencia?->uf?->sigla,
+                'municipio'         => $ctx->abrangencia?->municipio?->nome,
+                'orgao'             => $ctx->solicitacaoCadastroOrigem?->orgao,
+                'ativo'             => (bool) $ctx->ativo,
             ];
         });
 
         return response()->json([
-            'data' => $data,
+            'data'            => $data,
             'perfil_atual_id' => $perfilAtualId,
         ]);
     }
@@ -108,11 +108,11 @@ class TrocaContextoController extends Controller
             'contexto.troca',
             $usuario->id,
             [
-                'perfil_anterior_id' => $perfilAnterior?->id,
+                'perfil_anterior_id'   => $perfilAnterior?->id,
                 'perfil_anterior_nome' => $perfilAnterior?->perfil?->nome,
-                'novo_perfil_id' => $perfilUsuario->id,
-                'novo_perfil_nome' => $perfilUsuario->perfil?->nome,
-                'data_hora_troca' => now()->toDateTimeString(),
+                'novo_perfil_id'       => $perfilUsuario->id,
+                'novo_perfil_nome'     => $perfilUsuario->perfil?->nome,
+                'data_hora_troca'      => now()->toDateTimeString(),
             ],
             TipoAuditoria::UPDATE->name,
             'usuario_contexto',
@@ -144,7 +144,7 @@ class TrocaContextoController extends Controller
 
         return response()->json([
             'message' => 'Contexto alterado com sucesso!',
-            'user' => UsuarioResource::make($usuario),
+            'user'    => UsuarioResource::make($usuario),
         ]);
     }
 }

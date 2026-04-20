@@ -153,16 +153,16 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
         $response = $this
             ->withHeaders(['Authorization' => 'Bearer '.$token])
             ->postJson('/api/solicitacoes-cadastro', [
-                'nome'                  => 'Novo Cadastrado Interno Token',
-                'cpf'                   => $cpfFormulario,
-                'email_institucional'   => 'novo.interno.token@teste.gov.br',
-                'telefone_institucional'=> '61999887766',
-                'telefone_pessoal'      => '61988776655',
-                'esfera_id'             => EsferaEnum::FEDERAL->value,
-                'orgao'                 => 'Ministerio de Testes',
-                'cargo'                 => 'Analista',
-                'perfil_id'             => $perfil->id,
-                'vigencia_inicio'       => now()->toDateString(),
+                'nome'                   => 'Novo Cadastrado Interno Token',
+                'cpf'                    => $cpfFormulario,
+                'email_institucional'    => 'novo.interno.token@teste.gov.br',
+                'telefone_institucional' => '61999887766',
+                'telefone_pessoal'       => '61988776655',
+                'esfera_id'              => EsferaEnum::FEDERAL->value,
+                'orgao'                  => 'Ministerio de Testes',
+                'cargo'                  => 'Analista',
+                'perfil_id'              => $perfil->id,
+                'vigencia_inicio'        => now()->toDateString(),
             ]);
 
         $response
@@ -223,23 +223,23 @@ class SolicitacoesCadastroEndpointsTest extends TestCase
         $response = $this
             ->withHeaders(['Authorization' => 'Bearer '.$token])
             ->postJson('/api/solicitacoes-cadastro', [
-                'nome'                => $usuarioAlvo->nome,
-                'cpf'                 => $usuarioAlvo->cpf,
-                'email_institucional' => 'novo.vinculo@teste.gov.br',
+                'nome'                   => $usuarioAlvo->nome,
+                'cpf'                    => $usuarioAlvo->cpf,
+                'email_institucional'    => 'novo.vinculo@teste.gov.br',
                 'telefone_institucional' => '61999887766',
-                'telefone_pessoal'    => '61988776655',
-                'esfera_id'           => EsferaEnum::FEDERAL->value,
-                'orgao'               => 'Ministerio de Testes',
-                'cargo'               => 'Analista',
-                'perfil_id'           => $perfil->id,
-                'vigencia_inicio'     => now()->toDateString(),
+                'telefone_pessoal'       => '61988776655',
+                'esfera_id'              => EsferaEnum::FEDERAL->value,
+                'orgao'                  => 'Ministerio de Testes',
+                'cargo'                  => 'Analista',
+                'perfil_id'              => $perfil->id,
+                'vigencia_inicio'        => now()->toDateString(),
             ]);
 
         $response->assertCreated();
 
         $this->assertDatabaseHas('perfil_usuario', [
-            'id'     => $perfilAntigo->id,
-            'ativo'  => false,
+            'id'    => $perfilAntigo->id,
+            'ativo' => false,
         ]);
 
         $this->assertSame(
