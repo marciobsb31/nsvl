@@ -445,6 +445,329 @@
                 ]
             }
         },
+        "/api/plano-acao/anexos": {
+            "get": {
+                "tags": [
+                    "Plano de Ação - Anexos"
+                ],
+                "summary": "Lista os anexos do plano de ação do usuário autenticado",
+                "operationId": "33fe30a5d17a1f7cb7b28b793880fe2f",
+                "responses": {
+                    "200": {
+                        "description": "Lista de anexos"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Plano de Ação - Anexos"
+                ],
+                "summary": "Faz upload de um arquivo de anexo",
+                "operationId": "9e459283cb2025071bd62d242c6ae4e1",
+                "responses": {
+                    "201": {
+                        "description": "Arquivo anexado com sucesso"
+                    },
+                    "422": {
+                        "description": "Arquivo inválido"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/plano-acao/anexos/{id}": {
+            "delete": {
+                "tags": [
+                    "Plano de Ação - Anexos"
+                ],
+                "summary": "Remove um anexo do plano de ação",
+                "operationId": "aa88765a21d1b060cc86543eb5a45956",
+                "responses": {
+                    "200": {
+                        "description": "Arquivo removido com sucesso"
+                    },
+                    "404": {
+                        "description": "Arquivo não encontrado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/plano-acao/diagnostico": {
+            "get": {
+                "tags": [
+                    "Plano de Ação - Diagnóstico"
+                ],
+                "summary": "Retorna o diagnóstico do plano de ação do usuário autenticado",
+                "operationId": "2e4507576eebb017594adfe965defadb",
+                "responses": {
+                    "200": {
+                        "description": "Dados do diagnóstico ou null se não preenchido"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Plano de Ação - Diagnóstico"
+                ],
+                "summary": "Cria ou atualiza o diagnóstico do plano de ação",
+                "operationId": "b94d0005bfa3224113f4f28f64a79deb",
+                "responses": {
+                    "200": {
+                        "description": "Rascunho salvo com sucesso"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/plano-acao/eixo/{eixo}": {
+            "get": {
+                "tags": [
+                    "Plano de Ação - Eixos"
+                ],
+                "summary": "Retorna as ações do eixo do plano de ação do usuário autenticado",
+                "operationId": "6f950f55c8eb675ceb74e5a3fc41713a",
+                "responses": {
+                    "200": {
+                        "description": "Dados do eixo ou null se não preenchido"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "422": {
+                        "description": "Eixo inválido"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Plano de Ação - Eixos"
+                ],
+                "summary": "Cria ou atualiza as ações do eixo do plano de ação",
+                "operationId": "24d1986b357bb527dabaaf76c3e5f500",
+                "responses": {
+                    "200": {
+                        "description": "Rascunho salvo com sucesso"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/plano-acao/envio": {
+            "get": {
+                "tags": [
+                    "Plano de Ação - Envio"
+                ],
+                "summary": "Retorna os dados do envio (responsável técnico) do plano de ação",
+                "operationId": "070469e69b41e25f12dca424996bcd56",
+                "responses": {
+                    "200": {
+                        "description": "Dados do envio ou null"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Plano de Ação - Envio"
+                ],
+                "summary": "Salva ou atualiza o rascunho dos dados de envio",
+                "operationId": "ffe3eeedce1738f2889fbc158d79a63d",
+                "responses": {
+                    "200": {
+                        "description": "Rascunho salvo com sucesso"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/plano-acao/envio/enviar": {
+            "post": {
+                "tags": [
+                    "Plano de Ação - Envio"
+                ],
+                "summary": "Envia o plano de ação para análise",
+                "operationId": "72d1e5664454503fecca6be0bac59d26",
+                "responses": {
+                    "200": {
+                        "description": "Plano enviado com sucesso"
+                    },
+                    "422": {
+                        "description": "Validação falhou"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/plano-acao/identificacao": {
+            "get": {
+                "tags": [
+                    "Plano de Ação - Identificação"
+                ],
+                "summary": "Retorna a identificação do plano de ação do usuário autenticado",
+                "operationId": "46777325511b6bb8c55d1458897f02e6",
+                "responses": {
+                    "200": {
+                        "description": "Dados da identificação ou null se não preenchida"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Plano de Ação - Identificação"
+                ],
+                "summary": "Cria ou atualiza a identificação do plano de ação",
+                "operationId": "fc94357286812ec8d19efe4920c5b12c",
+                "responses": {
+                    "200": {
+                        "description": "Rascunho salvo com sucesso"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/plano-acao/observacoes": {
+            "get": {
+                "tags": [
+                    "Plano de Ação - Observações"
+                ],
+                "summary": "Retorna as observações complementares do plano de ação",
+                "operationId": "6d853935ef305d58a579d72c539cc028",
+                "responses": {
+                    "200": {
+                        "description": "Observações ou null"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Plano de Ação - Observações"
+                ],
+                "summary": "Salva ou atualiza as observações complementares",
+                "operationId": "92616c8eae61a4542ed4999722bdee97",
+                "responses": {
+                    "200": {
+                        "description": "Rascunho salvo com sucesso"
+                    },
+                    "422": {
+                        "description": "Dados inválidos"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/solicitacoes-cadastro": {
             "get": {
                 "tags": [
@@ -886,6 +1209,30 @@
         {
             "name": "Perfis",
             "description": "Catálogo oficial para vínculos e formulários"
+        },
+        {
+            "name": "Plano de Ação - Anexos",
+            "description": "Seção 8: anexos do plano de ação"
+        },
+        {
+            "name": "Plano de Ação - Diagnóstico",
+            "description": "Seção 2: diagnóstico de barreiras"
+        },
+        {
+            "name": "Plano de Ação - Eixos",
+            "description": "Seções 3-6: ações por eixo temático"
+        },
+        {
+            "name": "Plano de Ação - Envio",
+            "description": "Seção 9: responsável técnico e envio do plano"
+        },
+        {
+            "name": "Plano de Ação - Identificação",
+            "description": "Seção 1: identificação geral do plano de ação"
+        },
+        {
+            "name": "Plano de Ação - Observações",
+            "description": "Seção 7: observações complementares"
         },
         {
             "name": "Solicitações de cadastro",
